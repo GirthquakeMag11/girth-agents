@@ -67,21 +67,9 @@ and it is not moved to the tracker while the task still needs it fixed.
 
 ## The tracker file
 
-The canonical file:
-
-```markdown
-# BUGS
-
-Bugs the project intends to fix. Entries carry full detail plus a log of
-work already done; see the tracking-bugs skill for the triage rules and
-entry format.
-
-<!-- entries below, newest first, one `##` section each -->
-```
-
-It lives at `tracker/BUGS.md` in the project root. If it does not exist,
-load the bootstrapping skill, follow its BUGS section to create the file,
-then add the entry.
+`tracker/BUGS.md` in the project root. If it does not exist, load the
+bootstrapping skill, create the file per its BUGS section, then add the
+entry.
 
 ## Entry format
 
