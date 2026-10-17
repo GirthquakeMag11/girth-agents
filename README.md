@@ -63,6 +63,7 @@ Start a new OpenCode session and the catalog is live.
 | `tracking-features` | Tracking features in `tracker/FEATURES.md` — user-requested entries, user-approved closure, relationship reconciliation on every create and close |
 | `tracking-questions` | Tracking questions in `tracker/QUESTIONS.md` — ask blocking questions immediately; track the rest with a recorded provisional decision, then apply the ruling to the affected work when it lands |
 | `conventions` | Recording and organizing user rulings — guidelines, rules, procedures, preferences — as `On_<Domain>.md` files under `conventions/`; asking before integrating statements that only sound like rulings |
+| `maintaining-docs` | Writing and keeping current the three standard documents: AGENTS.md (new agents orient immediately), CONTRIBUTING.md (new agents learn the protocols for changing project content), README.md (new humans get up to speed with the project and its current state) |
 
 ### Commands
 
