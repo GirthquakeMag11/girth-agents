@@ -58,20 +58,9 @@ cheap, and a lost lesson is expensive.
 
 ## The tracker file
 
-The canonical file:
-
-```markdown
-# HAZARDS
-
-Expensive lessons are learned once: one entry per obstacle a future agent
-will hit again. See the tracking-hazards skill for criteria and entry format.
-
-<!-- entries below, newest first, one `##` section each -->
-```
-
-It lives at `tracker/HAZARDS.md` in the project root. If it does not exist,
-load the bootstrapping skill, follow its HAZARDS section to create the file,
-then add the entry.
+`tracker/HAZARDS.md` in the project root. If it does not exist, load the
+bootstrapping skill, create the file per its HAZARDS section, then add the
+entry.
 
 ## Entry format
 
