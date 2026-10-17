@@ -54,21 +54,9 @@ Record the closure on the entry; entries are history and stay in the file.
 
 ## The tracker file
 
-The canonical file:
-
-```markdown
-# FEATURES
-
-What the project may become. Entries are created on request and close only
-with the maintainer's approval; see the tracking-features skill for the
-format and the relationship-review rule.
-
-<!-- entries below, newest first, one `##` section each -->
-```
-
-It lives at `tracker/FEATURES.md` in the project root. If it does not
-exist, load the bootstrapping skill, follow its FEATURES section to create
-the file, then add the entry.
+`tracker/FEATURES.md` in the project root. If it does not exist, load the
+bootstrapping skill, create the file per its FEATURES section, then add
+the entry.
 
 ## Entry format
 
