@@ -29,21 +29,9 @@ change future work. Trivia is not tracked.
 
 ## The tracker file
 
-The canonical file:
-
-```markdown
-# QUESTIONS
-
-Questions that deserve a definitive answer but cannot get one yet. Entries
-record the provisional decision made in the meantime, so the ruling can be
-applied to the work later. See the tracking-questions skill.
-
-<!-- entries below, newest first, one `##` section each -->
-```
-
-It lives at `tracker/QUESTIONS.md` in the project root. If it does not
-exist, load the bootstrapping skill, follow its QUESTIONS section to create
-the file, then add the entry.
+`tracker/QUESTIONS.md` in the project root. If it does not exist, load the
+bootstrapping skill, create the file per its QUESTIONS section, then add
+the entry.
 
 ## Entry format
 
