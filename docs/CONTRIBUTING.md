@@ -99,20 +99,28 @@ Optional frontmatter: `description`, `agent`, `model`, `subagent`. Never
 
 ## Skill family maintenance
 
-The skills form a family: `bootstrapping` creates each scaffold piece per a
-minimal default, and each piece's own skill later supersedes that default.
-The process is retroactive — a piece is defined by its own skill, and
-`bootstrapping` follows. When a new piece-skill is written:
+The skills form a family. Two architectural rules:
 
-1. Update that piece's section in the bootstrapping skill: canonical
-   skeleton, remove provisional language, mark it "defined by".
+- **Creation templates live in `bootstrapping` only.** Usage skills
+  (tracking-*, conventions, maintaining-*) carry usage only — they point at
+  bootstrapping when a file is missing, and never contain what a new file
+  looks like.
+- **Each piece's own skill owns its semantics.** Bootstrapping creates the
+  file; the piece's skill defines what goes in it and how it works.
+
+The process is retroactive: the piece's skill defines, and bootstrapping
+follows. When a new piece-skill is written:
+
+1. Update that piece's section in the bootstrapping skill: keep the
+   creation skeleton there, point its semantics at the new skill, remove
+   provisional language.
 2. Check every sibling skill whose boundary text references that piece.
 3. Update the checklist below.
 
 Skillset state: `tracking-hazards` ✅ · `tracking-bugs` ✅ ·
 `tracking-defects` ✅ · `tracking-features` ✅ · `tracking-questions` ✅ ·
-`conventions` ✅ · `agents-documentation` ⬜ · `contributing` ⬜ ·
-`glossary` ⬜ · `readme` ⬜ · `changelog` ⬜
+`conventions` ✅ · `maintaining-docs` ✅ · `maintaining-glossary` ⬜ ·
+`maintaining-changelog` ⬜
 
 ## Release process
 
