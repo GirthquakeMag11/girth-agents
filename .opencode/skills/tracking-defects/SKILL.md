@@ -62,21 +62,9 @@ The differences to keep in mind:
 
 ## The tracker file
 
-The canonical file:
-
-```markdown
-# DEFECTS
-
-Bad but not broken: code smells, convention violations, and design-principle
-breaks. See the tracking-defects skill for the boundary with bugs and the
-entry format.
-
-<!-- entries below, newest first, one `##` section each -->
-```
-
-It lives at `tracker/DEFECTS.md` in the project root. If it does not exist,
-load the bootstrapping skill, follow its DEFECTS section to create the
-file, then add the entry.
+`tracker/DEFECTS.md` in the project root. If it does not exist, load the
+bootstrapping skill, create the file per its DEFECTS section, then add the
+entry.
 
 ## Entry format
 
