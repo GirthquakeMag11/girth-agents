@@ -79,16 +79,15 @@ the piece's own skill, where one exists).
   <!-- Map of the directories an agent will actually touch. -->
 
   ## Conventions
-  <!-- Pointers to conventions/ files and glossary terms agents must honor. -->
+  <!-- Pointers to conventions/ files, the glossary, and the tracker files. -->
   ```
 
 - **Ask (full bootstrap):** the project overview; the build/test/lint
   commands; anything agents commonly get wrong.
 - **Mid-task default:** create the file with overview and conventions filled
   from what is known; leave `<!-- ... -->` placeholders in the rest.
-- **Not defined here:** guidance on *keeping* AGENTS.md alive and how agents
-  should treat it during work — that belongs to the agents-documentation
-  skill (planned).
+- **Not defined here:** what makes AGENTS.md good and how it is kept
+  current — owned by the maintaining-docs skill.
 
 ### CONTRIBUTING.md — `CONTRIBUTING.md`
 
@@ -111,8 +110,8 @@ the piece's own skill, where one exists).
   code style or process preferences.
 - **Mid-task default:** create the skeleton with placeholders intact and a
   note to have the maintainer fill them.
-- **Not defined here:** the contributor-facing process itself — owned by the
-  contributing skill (planned).
+- **Not defined here:** what protocols CONTRIBUTING.md must convey and how
+  it is kept current — owned by the maintaining-docs skill.
 
 ### GLOSSARY.md — `GLOSSARY.md`
 
@@ -131,7 +130,7 @@ the piece's own skill, where one exists).
 - **Mid-task default:** create the skeleton and, if the current task just
   gave a term a working meaning, add that one entry.
 - **Not defined here:** how and when terms are added, renamed, or retired —
-  owned by the glossary skill (planned).
+  owned by the maintaining-glossary skill (not written).
 
 ### README.md — `README.md`
 
@@ -145,6 +144,9 @@ the piece's own skill, where one exists).
   ## Quick start
   <!-- Minimal usage: what the project does and how to run it. -->
 
+  ## Status
+  <!-- The project's current state: stage, what works, what is in flight. -->
+
   ## Documentation
   <!-- Where the real docs live. -->
 
@@ -155,8 +157,8 @@ the piece's own skill, where one exists).
 - **Ask (full bootstrap):** project name, one-line description, license.
 - **Mid-task default:** create the skeleton with what is known; never guess
   the project name — leave the placeholder.
-- **Not defined here:** what a mature README should contain — owned by the
-  readme skill (planned).
+- **Not defined here:** what makes README.md good and how project state is
+  conveyed — owned by the maintaining-docs skill.
 
 ### CHANGELOG.md — `CHANGELOG.md`
 
@@ -181,66 +183,112 @@ the piece's own skill, where one exists).
 - **Ask (full bootstrap):** nothing. Starts empty.
 - **Mid-task default:** same as create.
 - **Not defined here:** when and how entries are written and released —
-  owned by the changelog skill (planned). The default format above may
-  change when that skill lands.
+  owned by the maintaining-changelog skill (not written). The default
+  format above may change when that skill is written.
 
 ### tracker/HAZARDS.md — `tracker/HAZARDS.md`
 
-Defined by the tracking-hazards skill; create its canonical skeleton exactly
-(`# HAZARDS` title, one-line purpose, entries-follow note).
+- **Create** the `tracker/` directory and, if missing, the file with this
+  skeleton:
 
-- **Ask (full bootstrap):** nothing — the definition is settled, so no
-  maintainer interview is needed.
-- **Mid-task default:** same as create; the tracking-hazards skill then
-  guides adding the entry itself.
+  ```markdown
+  # HAZARDS
+
+  Expensive lessons are learned once: one entry per obstacle a future
+  agent will hit again. See the tracking-hazards skill for criteria and
+  entry format.
+
+  <!-- entries below, newest first, one `##` section each -->
+  ```
+
+- **Ask (full bootstrap):** nothing.
+- **Mid-task default:** same as create; the tracking-hazards skill guides
+  adding the entry itself.
 - **Not defined here:** what counts as a hazard and what entries contain —
   owned by the tracking-hazards skill.
 
 ### tracker/BUGS.md — `tracker/BUGS.md`
 
-Defined by the tracking-bugs skill; create its canonical skeleton exactly
-(`# BUGS` title, one-line purpose, entries-follow note).
+- **Create** the `tracker/` directory and, if missing, the file with this
+  skeleton:
 
-- **Ask (full bootstrap):** nothing — the definition is settled, so no
-  maintainer interview is needed.
-- **Mid-task default:** same as create; the tracking-bugs skill then guides
+  ```markdown
+  # BUGS
+
+  Bugs the project intends to fix. Entries carry full detail plus a log of
+  work already done; see the tracking-bugs skill for the triage rules and
+  entry format.
+
+  <!-- entries below, newest first, one `##` section each -->
+  ```
+
+- **Ask (full bootstrap):** nothing.
+- **Mid-task default:** same as create; the tracking-bugs skill guides
   adding the entry itself.
 - **Not defined here:** triage rules, entry format, and workflow — owned by
   the tracking-bugs skill.
 
 ### tracker/DEFECTS.md — `tracker/DEFECTS.md`
 
-Defined by the tracking-defects skill; create its canonical skeleton exactly
-(`# DEFECTS` title, one-line purpose, entries-follow note).
+- **Create** the `tracker/` directory and, if missing, the file with this
+  skeleton:
 
-- **Ask (full bootstrap):** nothing — the definition is settled, so no
-  maintainer interview is needed.
-- **Mid-task default:** same as create; the tracking-defects skill then
-  guides adding the entry itself.
+  ```markdown
+  # DEFECTS
+
+  Bad but not broken: code smells, convention violations, and design-principle
+  breaks. See the tracking-defects skill for the boundary with bugs and the
+  entry format.
+
+  <!-- entries below, newest first, one `##` section each -->
+  ```
+
+- **Ask (full bootstrap):** nothing.
+- **Mid-task default:** same as create; the tracking-defects skill guides
+  adding the entry itself.
 - **Not defined here:** the bug/defect boundary, entry format, and workflow
   — owned by the tracking-defects skill.
 
 ### tracker/FEATURES.md — `tracker/FEATURES.md`
 
-Defined by the tracking-features skill; create its canonical skeleton
-exactly (`# FEATURES` title, one-line purpose, entries-follow note).
+- **Create** the `tracker/` directory and, if missing, the file with this
+  skeleton:
 
-- **Ask (full bootstrap):** nothing — the definition is settled, so no
-  maintainer interview is needed.
-- **Mid-task default:** same as create; the tracking-features skill then
-  guides adding the entry itself.
+  ```markdown
+  # FEATURES
+
+  What the project may become. Entries are created on request and close
+  only with the maintainer's approval; see the tracking-features skill for
+  the format and the relationship-review rule.
+
+  <!-- entries below, newest first, one `##` section each -->
+  ```
+
+- **Ask (full bootstrap):** nothing.
+- **Mid-task default:** same as create; the tracking-features skill guides
+  adding the entry itself.
 - **Not defined here:** entry format, lifecycle, and relationship review —
   owned by the tracking-features skill.
 
 ### tracker/QUESTIONS.md — `tracker/QUESTIONS.md`
 
-Defined by the tracking-questions skill; create its canonical skeleton
-exactly (`# QUESTIONS` title, one-line purpose, entries-follow note).
+- **Create** the `tracker/` directory and, if missing, the file with this
+  skeleton:
 
-- **Ask (full bootstrap):** nothing — the definition is settled, so no
-  maintainer interview is needed.
-- **Mid-task default:** same as create; the tracking-questions skill then
-  guides adding the entry itself.
+  ```markdown
+  # QUESTIONS
+
+  Questions that deserve a definitive answer but cannot get one yet.
+  Entries record the provisional decision made in the meantime, so the
+  ruling can be applied to the work later. See the tracking-questions
+  skill.
+
+  <!-- entries below, newest first, one `##` section each -->
+  ```
+
+- **Ask (full bootstrap):** nothing.
+- **Mid-task default:** same as create; the tracking-questions skill guides
+  adding the entry itself.
 - **Not defined here:** entry format, the ask-now-or-track test, and the
   resolution flow — owned by the tracking-questions skill.
 
@@ -266,11 +314,11 @@ try to load a skill marked "(not written)".
 
 | Piece | Skill |
 | --- | --- |
-| AGENTS.md usage | agents-documentation (not written) |
-| CONTRIBUTING.md usage | contributing (not written) |
-| GLOSSARY.md usage | glossary (not written) |
-| README.md usage | readme (not written) |
-| CHANGELOG.md usage | changelog (not written) |
+| AGENTS.md usage | maintaining-docs |
+| CONTRIBUTING.md usage | maintaining-docs |
+| GLOSSARY.md usage | maintaining-glossary (not written) |
+| README.md usage | maintaining-docs |
+| CHANGELOG.md usage | maintaining-changelog (not written) |
 | tracker/HAZARDS.md usage | tracking-hazards |
 | tracker/BUGS.md usage | tracking-bugs |
 | tracker/DEFECTS.md usage | tracking-defects |
