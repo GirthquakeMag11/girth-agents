@@ -103,6 +103,7 @@ the situation fits.
 | `/wayfind` | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear |
 | `/retro` | Reviews a session and proposes environment improvements, most severe first |
 | `/handoff` | Writes a handoff document for a fresh agent to pick up the conversation |
+| `/wait-what` | Re-pitches the last message that didn't land, in plain English using the glossary's terms |
 
 ## Contributing
 
