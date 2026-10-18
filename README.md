@@ -82,6 +82,7 @@ the situation fits.
 | `specifying` | A settled design needs writing down as a spec |
 | `implementing` | You ask to build something planned — a spec, feature, bug, or defect — and the agent slices it into tickets and works them one at a time |
 | `wayfinding` | An effort is too big or too foggy to spec — the agent charts a live map and resolves its decisions one at a time |
+| `retro` | After a session, the agent reviews the environment and proposes improvements, each routed to its home |
 | `diagnosing-bugs` | Something is broken and the cause is not obvious |
 | `tdd` | Work that should be built or locked down test-first |
 | `code-review` | A branch, PR, or work-in-progress change needs reviewing |
@@ -96,6 +97,7 @@ the situation fits.
 | `/spec` | Turns the current conversation into a spec for your approval |
 | `/implement` | Implements something planned — a spec, feature, bug, or defect — slicing it into tickets if needed, with one checkpoint on the blocking edges before work begins |
 | `/wayfind` | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear |
+| `/retro` | Reviews a session and proposes environment improvements, most severe first |
 
 ## Contributing
 

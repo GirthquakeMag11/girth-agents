@@ -44,6 +44,7 @@ and own none.**
 | | `code-review` — two-axis review, Standards and Spec |
 | | `codebase-design` — the deep-module vocabulary |
 | | `research` — primary-source legwork in the background |
+| | `retro` — review the agent's environment after a session |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
