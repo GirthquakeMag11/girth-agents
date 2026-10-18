@@ -1,23 +1,17 @@
----
-name: Maintaining Changelog
-description: Record user-visible changes in CHANGELOG.md as they are made — under Unreleased, in the right Keep a Changelog section, written for the reader deciding what the change means for them: what changed, why it matters, and what they must do. Use after any change a user of the project could notice, and when the user asks to cut a release.
----
+# CHANGELOG.md — what changed, for the project's users
 
-# Maintaining Changelog
-
-The changelog tells the project's users what changed, release by release.
-Its reader holds a version number and one question: what does this change
-mean for me? Every entry answers that question.
+The changelog's reader holds a version number and one question: what does
+this change mean for me? Every entry answers that question.
 
 ## When to record
 
-- **At change time, in the same change.** The `## [Unreleased]` section is
-  the queue: entries land there as the work lands, not at release time and
-  never reconstructed later from commit history.
+- **At change time, in the same change.** `## [Unreleased]` is the queue:
+  entries land there as the work lands, not at release time and never
+  reconstructed later from commit history.
 - **Every change a user could notice:** a new capability, changed behavior,
   a deprecation, a removal, a fix, a security patch. Changes no one outside
-  the project can observe — refactors, test changes, internal tooling —
-  stay out.
+  the project can observe — refactors, test changes, internal tooling — stay
+  out.
 - **One entry per change.** If the change extends an entry already under
   Unreleased, extend that entry.
 
@@ -34,10 +28,9 @@ Under `## [Unreleased]`, in the section that fits:
 | Fixed | Bug fixes |
 | Security | Vulnerability fixes |
 
-The trackers feed it: a fixed bug from the bugs tracker goes under Fixed; a
-feature whose closure the user approved goes under Added or Changed; a
-remediated defect goes under Changed only when a user could notice the
-difference.
+The trackers feed it: a fixed bug goes under Fixed; a feature whose closure
+the user approved goes under Added or Changed; a remediated defect goes under
+Changed only when a user could notice the difference.
 
 ## Writing an entry
 
@@ -77,22 +70,8 @@ the user asks for one. When asked:
 
 Some projects generate `CHANGELOG.md` with a tool — changesets,
 release-please, git-cliff, a conventional-commits generator. Look for its
-traces (a `.changeset/` directory, `release-please-config.json`,
-`cliff.toml`, release scripts in the package manifest). Where one exists,
-its workflow governs: write the fragment, file, or commit message the tool
+traces: a `.changeset/` directory, `release-please-config.json`,
+`cliff.toml`, release scripts in the package manifest. Where one exists, its
+workflow governs: write the fragment, file, or commit message the tool
 expects, and leave the generated file to the tool. The entry-writing rules
 above still govern what you write.
-
-## The file
-
-`CHANGELOG.md` in the project root. If it does not exist, load the
-bootstrapping skill, create the file per its CHANGELOG section, then add the
-entry.
-
-## Related skills
-
-- bootstrapping — creates `CHANGELOG.md` when it is missing.
-- tracking — where Fixed, Added, and Changed entries come from: fixed bugs,
-  implemented features, remediated defects.
-- domain-modeling — entries name things in the glossary's terms.
-- maintaining-docs — README.md points readers here for what changed.

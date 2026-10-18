@@ -59,9 +59,8 @@ Start a new OpenCode session and the catalog is live.
 | `bootstrapping` | Setting up (or patching) a project's management scaffold — AGENTS.md, CONTRIBUTING.md, GLOSSARY.md, README.md, CHANGELOG.md, the tracker files, conventions/ — either a full bootstrap or a single missing piece |
 | `tracking` | Recording items for later in `tracker/` — hazards, bugs, defects, features, questions — with the rules for when to act now instead, so a task stays on course and nothing is lost |
 | `conventions` | Recording and organizing user rulings — guidelines, rules, procedures, preferences — as `On_<Domain>.md` files under `conventions/`; asking before integrating statements that only sound like rulings |
-| `maintaining-docs` | Writing and keeping current the three standard documents: AGENTS.md (new agents orient immediately), CONTRIBUTING.md (new agents learn the protocols for changing project content), README.md (new humans get up to speed with the project and its current state) |
+| `maintaining-docs` | Keeping the four standard documents true for their readers: AGENTS.md (a new agent orients immediately), CONTRIBUTING.md (a new agent learns the protocols for changing project content), README.md (a new human gets up to speed with the project and its state), CHANGELOG.md (users learn what changed and what it means for them) |
 | `domain-modeling` | Building and sharpening the project's domain model — settling terms in `GLOSSARY.md` the moment the user settles them, and recording hard-to-reverse decisions in `decisions/` |
-| `maintaining-changelog` | Recording user-visible changes in `CHANGELOG.md` at change time, written for the reader (what changed, why it matters, what to do), and cutting releases when the user asks |
 
 ### Commands
 

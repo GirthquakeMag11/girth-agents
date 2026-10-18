@@ -118,8 +118,7 @@ follows. When a new piece-skill is written:
 3. Update the checklist below.
 
 Skillset state: `tracking` ✅ ·
-`conventions` ✅ · `maintaining-docs` ✅ · `domain-modeling` ✅ ·
-`maintaining-changelog` ✅
+`conventions` ✅ · `maintaining-docs` ✅ · `domain-modeling` ✅
 
 ## Release process
 
