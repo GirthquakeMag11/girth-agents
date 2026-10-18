@@ -37,12 +37,12 @@ On a lone ticket the user already named, skip this.
 
 For each open, unblocked ticket, run it by its `Kind:`:
 
-| Kind | How |
-| --- | --- |
-| `bug-fix` | Obvious fix → build it test-first (call the skill tool with `tdd`); otherwise call the skill tool with `diagnosing-bugs` and run its loop, then fix with a regression test. |
-| `feature` | Call the skill tool with `tdd` at the pre-agreed seams from the parent spec, then call the skill tool with `code-review` against that spec. |
-| `research` | Call the skill tool with `research`; the ticket closes with a pointer to the cited notes. |
-| `refactor` | Call the skill tool with `codebase-design` for the discipline, and run the expand–contract chain each ticket declares. |
+| Kind       | How                                                                                                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bug-fix`  | Obvious fix → build it test-first (call the skill tool with `tdd`); otherwise call the skill tool with `diagnosing-bugs` and run its loop, then fix with a regression test. |
+| `feature`  | Call the skill tool with `tdd` at the pre-agreed seams from the parent spec, then call the skill tool with `code-review` against that spec.                                 |
+| `research` | Call the skill tool with `research`; the ticket closes with a pointer to the cited notes.                                                                                   |
+| `refactor` | Call the skill tool with `codebase-design` for the discipline, and run the expand–contract chain each ticket declares.                                                      |
 
 Append dated notes to the ticket file as you work, finished or not — a
 put-down here loses nothing. Recompute the frontier after each close, and

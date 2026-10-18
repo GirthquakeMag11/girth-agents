@@ -18,14 +18,14 @@ item up where another put it down. Its creation template is
 
 Six kinds of item:
 
-| Kind | File | The item | Definition |
-| --- | --- | --- | --- |
-| Hazard | `HAZARDS.md` | An obstacle the project lives with: out of scope to fix, surprising behavior in something it depends on, or a disproven assumption — one a later agent would hit again | `references/hazards.md` |
-| Bug | `BUGS.md` | Something that prevents working when it should, and is the project's to fix | `references/bugs.md` |
-| Defect | `DEFECTS.md` | Something that works but is bad: a code smell, a convention violation, a broken design principle | `references/defects.md` |
-| Feature | `FEATURES.md` | Something the user wants that does not exist yet | `references/features.md` |
-| Question | `QUESTIONS.md` | A question that deserves a definitive answer the user cannot give right now | `references/questions.md` |
-| Ticket | `tickets/` | One slice of scheduled work, sliced from a spec, bug, or defect, and declared for execution | `references/tickets.md` |
+| Kind     | File           | The item                                                                                                                                                               | Definition                |
+| -------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| Hazard   | `HAZARDS.md`   | An obstacle the project lives with: out of scope to fix, surprising behavior in something it depends on, or a disproven assumption — one a later agent would hit again | `references/hazards.md`   |
+| Bug      | `BUGS.md`      | Something that prevents working when it should, and is the project's to fix                                                                                            | `references/bugs.md`      |
+| Defect   | `DEFECTS.md`   | Something that works but is bad: a code smell, a convention violation, a broken design principle                                                                       | `references/defects.md`   |
+| Feature  | `FEATURES.md`  | Something the user wants that does not exist yet                                                                                                                       | `references/features.md`  |
+| Question | `QUESTIONS.md` | A question that deserves a definitive answer the user cannot give right now                                                                                            | `references/questions.md` |
+| Ticket   | `tickets/`     | One slice of scheduled work, sliced from a spec, bug, or defect, and declared for execution                                                                            | `references/tickets.md`   |
 
 Tickets are the exception to the one-file-per-kind shape: one file per
 ticket, not one entry in a shared file — their reference covers it.

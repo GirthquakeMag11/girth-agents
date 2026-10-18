@@ -36,14 +36,14 @@ Keep a Changelog, with SemVer versions. `## [Unreleased]` sits at the top,
 then one `## [<version>] - <YYYY-MM-DD>` section per release, newest first.
 Each holds these sections, in this order:
 
-| Section | For |
-| --- | --- |
-| Added | New capabilities |
-| Changed | Changes to existing behavior |
+| Section    | For                                |
+| ---------- | ---------------------------------- |
+| Added      | New capabilities                   |
+| Changed    | Changes to existing behavior       |
 | Deprecated | Capabilities scheduled for removal |
-| Removed | Capabilities taken out |
-| Fixed | Bug fixes |
-| Security | Vulnerability fixes |
+| Removed    | Capabilities taken out             |
+| Fixed      | Bug fixes                          |
+| Security   | Vulnerability fixes                |
 
 An entry:
 

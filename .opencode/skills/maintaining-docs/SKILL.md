@@ -15,12 +15,12 @@ skills define what each document contains.
 
 Match what changed to the document it affects:
 
-| When this changes | Update | Owner |
-| --- | --- | --- |
-| Structure, commands, or what agents must read before working | `AGENTS.md` | docs |
-| A protocol: setup, verification, conventions, the tracker flow | `CONTRIBUTING.md` | docs |
-| The project's state: what works, what is in flight | `README.md` | docs |
-| Anything a user of the project could notice | `CHANGELOG.md`, in the same change | changelog |
+| When this changes                                              | Update                             | Owner     |
+| -------------------------------------------------------------- | ---------------------------------- | --------- |
+| Structure, commands, or what agents must read before working   | `AGENTS.md`                        | docs      |
+| A protocol: setup, verification, conventions, the tracker flow | `CONTRIBUTING.md`                  | docs      |
+| The project's state: what works, what is in flight             | `README.md`                        | docs      |
+| Anything a user of the project could notice                    | `CHANGELOG.md`, in the same change | changelog |
 
 Write each update to its owner's format:
 
@@ -52,6 +52,16 @@ the user asks for one. When asked:
    the changelog, run the tool's release workflow instead.
 
 Done when the release section exists under the confirmed version.
+
+## Formatting for plain text
+
+These documents are read as raw Markdown at least as often as they are
+rendered. Every table must read as a table in plain text: pad each column
+to its widest cell so the divider dashes and the cell text line up. A table
+whose columns sit ragged against the pipes — everything collapsed into left
+justification, waiting for a renderer to tidy it — is unfinished, because
+nothing else is coming to format it. Write tables the way the source should
+look when finished.
 
 ## Related skills
 

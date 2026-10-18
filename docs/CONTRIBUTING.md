@@ -9,47 +9,47 @@ directory is the product.
 The linter (`node scripts/validate.mjs`) enforces all of these; run it before
 committing.
 
-| Rule | Why |
-| --- | --- |
-| Agents and commands are flat `.md` files | A nested path changes the item's ID (`team/reviewer`), and collisions with a user's own items get confusing. Flat → the filename is the ID. |
-| Skills use the directory form `.opencode/skills/<id>/SKILL.md` | Supporting files (`references/`, `scripts/`) need a private home; paths inside a skill are relative to its directory. |
-| All IDs are lowercase kebab-case (`[a-z0-9]+(-[a-z0-9]+)*`) | Skills especially: OpenCode derives the ID from the directory name and there is no namespacing once installed. |
-| Every agent and skill has a frontmatter `description` | OpenCode only advertises skills with a description, and descriptions are what a parent agent sees when choosing subagents. |
-| Skill descriptions stay under 300 characters (warning) | Every description is loaded into the model's context on every turn. |
-| No OpenCode V1 agent fields (`temperature`, `top_p`, `prompt`, `permission`, `tools`, `disable`, `maxSteps`) | V2 rejects or ignores these; they only mislead. |
-| Command bodies are the template; no `template` frontmatter; bodies never empty | The Markdown body *is* the prompt template ($ARGUMENTS, $1…). |
-| Paths referenced from a skill (`references/…`, `scripts/…`) exist in that skill's directory | Dead paths break the skill at load time. |
-| No `../` paths inside a skill | A skill reaches another skill by name, never by linking into its folder: installed skills are linked one by one and the folder layout is not guaranteed. |
-| Every "Call the skill tool with `<id>`" names a skill in this catalog | Renames and removals otherwise leave dangling calls. |
-| Every skill declares `metadata:` → `girth/role: owner` or `activity` | The schema below depends on it. |
-| Owners are named with nouns, activities with a verb ending in *-ing* | A skill's name says which side of the schema it is on. |
-| Owners keep a `references/template.md` and call no other skill | Owners define; activities act. |
+| Rule                                                                                                         | Why                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agents and commands are flat `.md` files                                                                     | A nested path changes the item's ID (`team/reviewer`), and collisions with a user's own items get confusing. Flat → the filename is the ID.              |
+| Skills use the directory form `.opencode/skills/<id>/SKILL.md`                                               | Supporting files (`references/`, `scripts/`) need a private home; paths inside a skill are relative to its directory.                                    |
+| All IDs are lowercase kebab-case (`[a-z0-9]+(-[a-z0-9]+)*`)                                                  | Skills especially: OpenCode derives the ID from the directory name and there is no namespacing once installed.                                           |
+| Every agent and skill has a frontmatter `description`                                                        | OpenCode only advertises skills with a description, and descriptions are what a parent agent sees when choosing subagents.                               |
+| Skill descriptions stay under 300 characters (warning)                                                       | Every description is loaded into the model's context on every turn.                                                                                      |
+| No OpenCode V1 agent fields (`temperature`, `top_p`, `prompt`, `permission`, `tools`, `disable`, `maxSteps`) | V2 rejects or ignores these; they only mislead.                                                                                                          |
+| Command bodies are the template; no `template` frontmatter; bodies never empty                               | The Markdown body *is* the prompt template ($ARGUMENTS, $1…).                                                                                            |
+| Paths referenced from a skill (`references/…`, `scripts/…`) exist in that skill's directory                  | Dead paths break the skill at load time.                                                                                                                 |
+| No `../` paths inside a skill                                                                                | A skill reaches another skill by name, never by linking into its folder: installed skills are linked one by one and the folder layout is not guaranteed. |
+| Every "Call the skill tool with `<id>`" names a skill in this catalog                                        | Renames and removals otherwise leave dangling calls.                                                                                                     |
+| Every skill declares `metadata:` → `girth/role: owner` or `activity`                                         | The schema below depends on it.                                                                                                                          |
+| Owners are named with nouns, activities with a verb ending in *-ing*                                         | A skill's name says which side of the schema it is on.                                                                                                   |
+| Owners keep a `references/template.md` and call no other skill                                               | Owners define; activities act.                                                                                                                           |
 
 ## The schema
 
 **Owner skills define a scaffold piece; activity skills do work with pieces,
 and own none.**
 
-| Owners: define what a piece is | Activities: what agents do |
-| --- | --- |
-| `glossary` — `GLOSSARY.md` | `bootstrapping` — create the scaffold, whole or one piece |
-| `conventions` — `conventions/` | `tracking` — fix now or record, put down and pick up, ask or track |
-| `decisions` — `decisions/` | `codifying` — turn what the user says into a term, convention, or decision |
-| `tracker` — `tracker/` (five kinds plus `tickets/`) | `maintaining-docs` — keep documents true, changelog at change time, releases |
-| `docs` — AGENTS, CONTRIBUTING, README | `specifying` — turn a settled conversation into a spec |
-| `changelog` — `CHANGELOG.md` | `implementing` — slice an approved thing into tickets and work the frontier by each ticket's kind |
-| `specs` — `specs/` | `wayfinding` — chart a big foggy effort and work its decisions until the way is clear |
-| `plans` — `plans/` | `diagnosing-bugs` — the feedback-loop discipline for hard bugs |
-| | `tdd` — test-first at pre-agreed seams |
-| | `code-review` — two-axis review, Standards and Spec |
-| | `codebase-design` — the deep-module vocabulary |
-| | `research` — primary-source legwork in the background |
-| | `retro` — review the agent's environment after a session |
-| | `prototyping` — throwaway code that answers a design question |
-| | `wizard` — a step-by-step script for human-only procedures |
-| | `grilling` — the interview primitive: work the design tree, one round at a time |
-| | `handoff` — a reference-style summary for the next agent |
-| | `writing-for-agents` — the craft of writing documents agents consume |
+| Owners: define what a piece is                      | Activities: what agents do                                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `glossary` — `GLOSSARY.md`                          | `bootstrapping` — create the scaffold, whole or one piece                                         |
+| `conventions` — `conventions/`                      | `tracking` — fix now or record, put down and pick up, ask or track                                |
+| `decisions` — `decisions/`                          | `codifying` — turn what the user says into a term, convention, or decision                        |
+| `tracker` — `tracker/` (five kinds plus `tickets/`) | `maintaining-docs` — keep documents true, changelog at change time, releases                      |
+| `docs` — AGENTS, CONTRIBUTING, README               | `specifying` — turn a settled conversation into a spec                                            |
+| `changelog` — `CHANGELOG.md`                        | `implementing` — slice an approved thing into tickets and work the frontier by each ticket's kind |
+| `specs` — `specs/`                                  | `wayfinding` — chart a big foggy effort and work its decisions until the way is clear             |
+| `plans` — `plans/`                                  | `diagnosing-bugs` — the feedback-loop discipline for hard bugs                                    |
+|                                                     | `tdd` — test-first at pre-agreed seams                                                            |
+|                                                     | `code-review` — two-axis review, Standards and Spec                                               |
+|                                                     | `codebase-design` — the deep-module vocabulary                                                    |
+|                                                     | `research` — primary-source legwork in the background                                             |
+|                                                     | `retro` — review the agent's environment after a session                                          |
+|                                                     | `prototyping` — throwaway code that answers a design question                                     |
+|                                                     | `wizard` — a step-by-step script for human-only procedures                                        |
+|                                                     | `grilling` — the interview primitive: work the design tree, one round at a time                   |
+|                                                     | `handoff` — a reference-style summary for the next agent                                          |
+|                                                     | `writing-for-agents` — the craft of writing documents agents consume                              |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
@@ -116,13 +116,13 @@ model: anthropic/claude-sonnet-4-5#high
 Review the migration. List findings in severity order with file and line refs.
 ```
 
-| Frontmatter field | Required | Notes |
-| --- | --- | --- |
-| `description` | ✅ | Shown when a parent agent selects a subagent |
-| `mode` | — | `primary`, `subagent`, or `all` |
-| `model` | — | `provider/model#variant` |
-| `permissions` | — | Ordered allow/ask/deny rules |
-| `steps`, `hidden`, `color`, `disabled` | — | See the OpenCode agents guide |
+| Frontmatter field                      | Required | Notes                                        |
+| -------------------------------------- | -------- | -------------------------------------------- |
+| `description`                          | ✅        | Shown when a parent agent selects a subagent |
+| `mode`                                 | —        | `primary`, `subagent`, or `all`              |
+| `model`                                | —        | `provider/model#variant`                     |
+| `permissions`                          | —        | Ordered allow/ask/deny rules                 |
+| `steps`, `hidden`, `color`, `disabled` | —        | See the OpenCode agents guide                |
 
 Then validate and add a row to the README catalog table.
 

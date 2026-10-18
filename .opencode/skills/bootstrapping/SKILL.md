@@ -20,19 +20,19 @@ scaffolding only once the user agrees to add it.
 Paths are relative to the scaffold root: the project root, unless the user
 designates another location.
 
-| Piece | Path | Owner | Asked on a full bootstrap |
-| --- | --- | --- | --- |
-| Agents guide | `AGENTS.md` | docs | Only what exploration cannot fill, plus what agents commonly get wrong here |
-| Contributing guide | `CONTRIBUTING.md` | docs | Setup steps and process preferences exploration cannot find |
-| Readme | `README.md` | docs | Name, description, and license where the project does not state them; current status |
-| Changelog | `CHANGELOG.md` | changelog | Nothing |
-| Glossary | `GLOSSARY.md` | glossary | Nothing; the domain line comes from the project overview |
-| Conventions | `conventions/` | conventions | Whether rulings already exist worth capturing now |
-| Decisions | `decisions/` | decisions | Whether decisions already exist worth recording now |
-| Specs | `specs/` | specs | Whether any design effort needs its spec written now |
-| Plans | `plans/` | plans | Nothing; created when an effort needs a map |
-| Trackers | `tracker/HAZARDS.md`, `BUGS.md`, `DEFECTS.md`, `FEATURES.md`, `QUESTIONS.md` | tracker | Nothing |
-| Tickets | `tracker/tickets/` | tracker | Nothing; created with the first ticket, never at bootstrap |
+| Piece              | Path                                                                         | Owner       | Asked on a full bootstrap                                                            |
+| ------------------ | ---------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| Agents guide       | `AGENTS.md`                                                                  | docs        | Only what exploration cannot fill, plus what agents commonly get wrong here          |
+| Contributing guide | `CONTRIBUTING.md`                                                            | docs        | Setup steps and process preferences exploration cannot find                          |
+| Readme             | `README.md`                                                                  | docs        | Name, description, and license where the project does not state them; current status |
+| Changelog          | `CHANGELOG.md`                                                               | changelog   | Nothing                                                                              |
+| Glossary           | `GLOSSARY.md`                                                                | glossary    | Nothing; the domain line comes from the project overview                             |
+| Conventions        | `conventions/`                                                               | conventions | Whether rulings already exist worth capturing now                                    |
+| Decisions          | `decisions/`                                                                 | decisions   | Whether decisions already exist worth recording now                                  |
+| Specs              | `specs/`                                                                     | specs       | Whether any design effort needs its spec written now                                 |
+| Plans              | `plans/`                                                                     | plans       | Nothing; created when an effort needs a map                                          |
+| Trackers           | `tracker/HAZARDS.md`, `BUGS.md`, `DEFECTS.md`, `FEATURES.md`, `QUESTIONS.md` | tracker     | Nothing                                                                              |
+| Tickets            | `tracker/tickets/`                                                           | tracker     | Nothing; created with the first ticket, never at bootstrap                           |
 
 ## Deviations
 

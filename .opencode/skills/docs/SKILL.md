@@ -14,11 +14,11 @@ Their creation templates are in `references/template.md`.
 
 ## What belongs
 
-| Document | Reader | Its job | Contents |
-| --- | --- | --- | --- |
-| `AGENTS.md` | A new agent | Orient itself in the project immediately | `references/agents.md` |
+| Document          | Reader      | Its job                                                                 | Contents                     |
+| ----------------- | ----------- | ----------------------------------------------------------------------- | ---------------------------- |
+| `AGENTS.md`       | A new agent | Orient itself in the project immediately                                | `references/agents.md`       |
 | `CONTRIBUTING.md` | A new agent | Understand the protocols for adding to or modifying the project content | `references/contributing.md` |
-| `README.md` | A new human | Get up to speed with the project and the state it is in | `references/readme.md` |
+| `README.md`       | A new human | Get up to speed with the project and the state it is in                 | `references/readme.md`       |
 
 The changelog is a document too, with its own format; see the changelog
 skill.

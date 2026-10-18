@@ -10,11 +10,11 @@ metadata:
 A ruling is something the user has settled and agents follow from then on.
 There are three kinds, each with its owner:
 
-| The user settles | Kind | Owner |
-| --- | --- | --- |
-| What a word means | Term | glossary |
-| How something is done | Convention | conventions |
-| Why the project takes one shape over another | Decision | decisions |
+| The user settles                             | Kind       | Owner       |
+| -------------------------------------------- | ---------- | ----------- |
+| What a word means                            | Term       | glossary    |
+| How something is done                        | Convention | conventions |
+| Why the project takes one shape over another | Decision   | decisions   |
 
 Rulings belong to the user. Codifying proposes and records; it never settles
 anything on the user's behalf.
