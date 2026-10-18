@@ -18,18 +18,16 @@ way is clear and it is time to hand off.
 
 When the user brings a loose effort:
 
-1. **Name the destination.** Settle what reaching the end looks like — the
-   spec, decision, or change this effort finds. One question at a time, each
-   with your recommended answer; the destination fixes the scope, so it is
-   settled first.
-2. **Fan out breadth-first.** Surface the open decisions across the whole
-   space rather than going deep on one thread. If this surfaces no fog —
+1. **Chart the front.** Call the skill tool with `grilling`: settle the
+   destination first — the spec, decision, or change this effort finds; it
+   fixes the scope — then fan out **breadth-first** across the open
+   decisions rather than going deep on one thread. If this surfaces no fog —
    the way is already clear — stop: the effort may not need a map, and you
    ask the user how to proceed.
-3. **Write the map** (call the skill tool with `plans`): Destination and
+2. **Write the map** (call the skill tool with `plans`): Destination and
    Notes filled, Decisions so far empty, the fog sketched into Not yet
    specified.
-4. **Track each decision you can state now** as a question (call the skill
+3. **Track each decision you can state now** as a question (call the skill
    tool with `tracking`), the question's Context naming its map. Write
    cross-references between map and questions by title.
 

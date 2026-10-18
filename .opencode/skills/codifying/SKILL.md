@@ -28,10 +28,10 @@ anything on the user's behalf.
    ruling to be formally recorded. If the user is not in the conversation,
    or interrupting is unsuitable, call the skill tool with `tracking` and
    track a question with your provisional reading.
-2. **Clarify it.** When the wording is vague or one word is doing several
-   jobs, propose a precise version: "You're saying *account* — do you mean
-   the Customer or the User?" When a concept's boundary matters, test it
-   with concrete edge cases until the user states it exactly.
+2. **Clarify it.** Call the skill tool with `grilling` and sharpen the
+   ruling one round at a time — vague wording, one word doing several jobs,
+   boundaries that need testing with concrete cases — until the user states
+   it exactly.
 3. **Check it.** Compare it with the recorded terms, conventions, and
    decisions, and with the code. Surface any contradiction before recording:
    "The glossary defines *cancellation* as X, but you seem to mean Y. Which

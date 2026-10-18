@@ -85,6 +85,7 @@ the situation fits.
 | `retro` | After a session, the agent reviews the environment and proposes improvements, each routed to its home |
 | `prototyping` | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict |
 | `wizard` | A procedure only a human can do — the agent generates a step-by-step script that walks them through it |
+| `grilling` | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time |
 | `diagnosing-bugs` | Something is broken and the cause is not obvious |
 | `tdd` | Work that should be built or locked down test-first |
 | `code-review` | A branch, PR, or work-in-progress change needs reviewing |

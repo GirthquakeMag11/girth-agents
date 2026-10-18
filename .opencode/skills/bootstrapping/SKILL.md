@@ -59,9 +59,9 @@ this):
    manifests, build files, CI configuration), layout, any changelog tool.
    Finding facts is your job; the user is asked only for what the project
    cannot tell you.
-3. **Interview once.** Present what you found, then ask the inventory's
-   questions for every missing piece in a single round, each with your
-   recommended answer, worded so "yes" accepts it. Wait for the answers.
+3. **Interview once.** Present what you found, then call the skill tool with
+   `grilling` to work through the inventory's questions for every missing
+   piece in rounds until none remain. Wait for the answers.
 4. **Create every missing piece.** Existing pieces stay untouched. Rulings
    or decisions the user named in the interview are recorded by calling the
    skill tool with `codifying`.
