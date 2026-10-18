@@ -30,6 +30,7 @@ designates another location.
 | Conventions | `conventions/` | conventions | Whether rulings already exist worth capturing now |
 | Decisions | `decisions/` | decisions | Whether decisions already exist worth recording now |
 | Specs | `specs/` | specs | Whether any design effort needs its spec written now |
+| Plans | `plans/` | plans | Nothing; created when an effort needs a map |
 | Trackers | `tracker/HAZARDS.md`, `BUGS.md`, `DEFECTS.md`, `FEATURES.md`, `QUESTIONS.md` | tracker | Nothing |
 | Tickets | `tracker/tickets/` | tracker | Nothing; created with the first ticket, never at bootstrap |
 

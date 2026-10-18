@@ -71,6 +71,7 @@ the situation fits.
 | `docs` | `AGENTS.md`, `CONTRIBUTING.md`, `README.md` — each for its reader |
 | `changelog` | `CHANGELOG.md` — what changed, for the project's users |
 | `specs` | `specs/<slug>.md` — one design document per effort |
+| `plans` | `plans/<slug>.md` — one live map per big, foggy effort |
 
 | Activity | Use it when |
 | --- | --- |
@@ -80,6 +81,7 @@ the situation fits.
 | `maintaining-docs` | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release |
 | `specifying` | A settled design needs writing down as a spec |
 | `implementing` | You ask to build something planned — a spec, feature, bug, or defect — and the agent slices it into tickets and works them one at a time |
+| `wayfinding` | An effort is too big or too foggy to spec — the agent charts a live map and resolves its decisions one at a time |
 | `diagnosing-bugs` | Something is broken and the cause is not obvious |
 | `tdd` | Work that should be built or locked down test-first |
 | `code-review` | A branch, PR, or work-in-progress change needs reviewing |
@@ -93,6 +95,7 @@ the situation fits.
 | `/bootstrap` | Runs a full bootstrap: explores the project, asks you one round of questions with recommended answers, and creates every missing scaffold piece. Text after the command is passed along |
 | `/spec` | Turns the current conversation into a spec for your approval |
 | `/implement` | Implements something planned — a spec, feature, bug, or defect — slicing it into tickets if needed, with one checkpoint on the blocking edges before work begins |
+| `/wayfind` | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear |
 
 ## Contributing
 
