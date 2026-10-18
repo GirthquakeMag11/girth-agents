@@ -46,6 +46,7 @@ and own none.**
 | | `research` — primary-source legwork in the background |
 | | `retro` — review the agent's environment after a session |
 | | `prototyping` — throwaway code that answers a design question |
+| | `wizard` — a step-by-step script for human-only procedures |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
