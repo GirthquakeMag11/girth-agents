@@ -3,6 +3,12 @@
 Bugs move between two states — fixed now, or tracked for later — and neither
 is final until the fix lands.
 
+When a bug is **reported** rather than encountered — the user says it is
+broken, or an issue describes it — verify the claim first by reproducing it
+from the reported steps. A bug written up unverified can steer the next
+agent wrong; when it will not reproduce, record the report with a note that
+it is unconfirmed.
+
 ## Fix now, or track
 
 Three rules, in order:
