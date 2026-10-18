@@ -12,12 +12,46 @@ committing.
 | Rule | Why |
 | --- | --- |
 | Agents and commands are flat `.md` files | A nested path changes the item's ID (`team/reviewer`), and collisions with a user's own items get confusing. Flat → the filename is the ID. |
-| Skills use the directory form `.opencode/skills/<id>/SKILL.md` | Supporting files (`references/`, `scripts/`) need a private home; paths inside `SKILL.md` are relative to its directory. |
+| Skills use the directory form `.opencode/skills/<id>/SKILL.md` | Supporting files (`references/`, `scripts/`) need a private home; paths inside a skill are relative to its directory. |
 | All IDs are lowercase kebab-case (`[a-z0-9]+(-[a-z0-9]+)*`) | Skills especially: OpenCode derives the ID from the directory name and there is no namespacing once installed. |
 | Every agent and skill has a frontmatter `description` | OpenCode only advertises skills with a description, and descriptions are what a parent agent sees when choosing subagents. |
+| Skill descriptions stay under 300 characters (warning) | Every description is loaded into the model's context on every turn. |
 | No OpenCode V1 agent fields (`temperature`, `top_p`, `prompt`, `permission`, `tools`, `disable`, `maxSteps`) | V2 rejects or ignores these; they only mislead. |
 | Command bodies are the template; no `template` frontmatter; bodies never empty | The Markdown body *is* the prompt template ($ARGUMENTS, $1…). |
-| Paths referenced from `SKILL.md` exist next to it | Dead `references/` or `scripts/` paths break the skill at load time. |
+| Paths referenced from a skill (`references/…`, `scripts/…`) exist in that skill's directory | Dead paths break the skill at load time. |
+| No `../` paths inside a skill | A skill reaches another skill by name, never by linking into its folder: installed skills are linked one by one and the folder layout is not guaranteed. |
+| Every "Call the skill tool with `<id>`" names a skill in this catalog | Renames and removals otherwise leave dangling calls. |
+
+## Skill design
+
+These rules come from comparing this catalog with mattpocock/skills; they
+govern every new or changed skill.
+
+- **Invocation.** Skills are model-invoked: the agent can reach them on its
+  own, so each carries a description. Entry points that only a human should
+  trigger are **commands** (`.opencode/commands/`), and they start work by
+  calling a skill.
+- **Descriptions are triggers.** A description says what the skill is for
+  and the distinct situations that should fire it, one trigger per
+  situation. It does not summarize the skill's rules; the body carries
+  those.
+- **When to split.** A behavior becomes its own skill only when it has a
+  distinct trigger of its own, or another skill must reach it. Otherwise it
+  is a branch inside an existing skill.
+- **Disclose by branch.** `SKILL.md` holds what every use of the skill
+  needs. Material only some branches need — one tracker kind, one scaffold
+  piece, one document — goes in `references/<branch>.md`, and `SKILL.md`
+  tells the agent which file to read and when.
+- **Cross-skill calls are explicit.** An operative instruction to use
+  another skill is written as "Call the skill tool with `<id>`". Prose that
+  only mentions a skill for context can name it plainly.
+- **One home per meaning.** Each rule lives in one place; other places
+  point to it. Shared mechanics belong in the owning skill's `SKILL.md`,
+  not repeated across its references.
+- **Positive instructions.** Say what to do. A prohibition earns its place
+  only as a guardrail that cannot be phrased positively.
+- **Skills carry only what an executing agent needs.** Process bookkeeping
+  for this repo lives in these docs, never in a skill.
 
 ## Adding an agent
 
@@ -60,7 +94,7 @@ Then validate and add a row to the README catalog table.
 ```md
 ---
 name: Git Release
-description: Prepare release notes, version bumps, and GitHub releases
+description: Prepare release notes, version bumps, and GitHub releases. Use when the user asks to cut a release.
 ---
 
 1. Read `references/release-policy.md`.
@@ -81,11 +115,10 @@ Create `.opencode/commands/<name>.md`; the body is the template:
 
 ```md
 ---
-description: Review a file for bugs and missing tests
-agent: plan
+description: Bootstrap this project's management scaffold
 ---
 
-Review $ARGUMENTS for bugs and missing tests.
+Call the skill tool with `bootstrapping` and run its full bootstrap.
 ```
 
 Optional frontmatter: `description`, `agent`, `model`, `subagent`. Never
@@ -95,30 +128,28 @@ Optional frontmatter: `description`, `agent`, `model`, `subagent`. Never
 
 - `scripts/validate.mjs` — catalog linter. Zero dependencies, Node 18+.
 - `scripts/install.sh` — symlinks (default) or copies (`--copy`) the catalog
-  into `~/.config/opencode/`. Override the target with `OPENCODE_CONFIG_DIR`.
+  into `~/.config/opencode/`, and prunes links left behind by items removed
+  from the catalog. Override the target with `OPENCODE_CONFIG_DIR`.
 
 ## Skill family maintenance
 
-The skills form a family. Two architectural rules:
+The skills manage a project scaffold whose pieces are listed in the
+bootstrapping skill's inventory — the contract for what counts as
+scaffolding. Two architectural rules:
 
-- **Creation templates live in `bootstrapping` only.** Usage skills
-  (tracking, conventions, maintaining-*) carry usage only — they point at
-  bootstrapping when a file is missing, and never contain what a new file
-  looks like.
-- **Each piece's own skill owns its semantics.** Bootstrapping creates the
-  file; the piece's skill defines what goes in it and how it works.
+- **Creation templates live in `bootstrapping` only**, one
+  `references/<piece>.md` per piece. Usage skills carry usage only: they
+  point at bootstrapping when a file is missing.
+- **Each piece's owning skill defines its semantics.** Bootstrapping creates
+  the file; the owning skill defines what goes in it and how it works.
 
-The process is retroactive: the piece's skill defines, and bootstrapping
-follows. When a new piece-skill is written:
+When a scaffold piece is added, renamed, or retired:
 
-1. Update that piece's section in the bootstrapping skill: keep the
-   creation skeleton there, point its semantics at the new skill, remove
-   provisional language.
-2. Check every sibling skill whose boundary text references that piece.
-3. Update the checklist below.
-
-Skillset state: `tracking` ✅ ·
-`conventions` ✅ · `maintaining-docs` ✅ · `domain-modeling` ✅
+1. Update the bootstrapping inventory and the piece's reference file.
+2. Update the owning skill.
+3. Update the AGENTS.md template (`bootstrapping/references/agents.md`) if
+   agents should read or record the piece.
+4. Check every skill whose boundary text mentions the piece.
 
 ## Release process
 

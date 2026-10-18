@@ -94,6 +94,32 @@ function referencedPaths(body) {
   return out
 }
 
+/** Skill descriptions are loaded into the model's context every turn. */
+const MAX_DESCRIPTION = 300
+/** The operative cross-skill instruction this catalog standardizes on. */
+const SKILL_CALL = /[Cc]all the skill tool with `([^`]+)`/g
+/** A path climbing out of the file's directory, e.g. `../other-skill/FILE.md`. */
+const PARENT_PATH = /(?:^|[\s(`"'])\.\.\//m
+
+const skillIds = new Set()
+/** Every skill tool call found in skills and commands, checked once all skill IDs are known. */
+const skillCalls = []
+
+function collectSkillCalls(where, text) {
+  for (const m of text.matchAll(SKILL_CALL)) skillCalls.push({ where, id: m[1] })
+}
+
+/** Markdown files under dir, recursively, as paths relative to dir (dot-entries skipped). */
+async function markdownFiles(dir, prefix = "") {
+  const out = []
+  for (const e of await entries(dir)) {
+    const rel = prefix ? `${prefix}/${e.name}` : e.name
+    if (e.isDirectory()) out.push(...(await markdownFiles(path.join(dir, e.name), rel)))
+    else if (e.isFile() && e.name.endsWith(".md")) out.push(rel)
+  }
+  return out
+}
+
 async function checkAgents() {
   const dir = path.join(root, ".opencode", "agents")
   const list = await entries(dir)
@@ -151,15 +177,28 @@ async function checkSkills() {
       err(rel, "missing SKILL.md")
       continue
     }
+    skillIds.add(id)
     const { fm, body } = splitFrontmatter(text)
     if (!fm) {
       err(rel, "missing YAML frontmatter (--- ... --- block)")
     } else {
       if (!scalar(fm, "name")) warn(rel, "frontmatter should include a name (display label)")
-      if (!scalar(fm, "description")) err(rel, "frontmatter must include a non-empty description, or OpenCode will never advertise this skill")
+      const description = scalar(fm, "description")
+      if (!description) err(rel, "frontmatter must include a non-empty description, or OpenCode will never advertise this skill")
+      else if (description.length > MAX_DESCRIPTION) {
+        warn(rel, `description is ${description.length} characters; keep it under ${MAX_DESCRIPTION}, since it is loaded into context every turn`)
+      }
     }
-    for (const p of referencedPaths(body)) {
-      if (!(await exists(path.join(sdir, p)))) warn(rel, `references "${p}" but no such file exists next to SKILL.md`)
+    for (const file of await markdownFiles(sdir)) {
+      const where = path.posix.join(rel, file)
+      const content = file === "SKILL.md" ? body : await readFile(path.join(sdir, file), "utf8")
+      if (PARENT_PATH.test(content)) {
+        err(where, 'contains a ../ path; reach another skill by name ("Call the skill tool with `<id>`"), never through its folder')
+      }
+      for (const p of referencedPaths(content)) {
+        if (!(await exists(path.join(sdir, p)))) err(where, `references "${p}", but no such file exists in the skill's directory`)
+      }
+      collectSkillCalls(where, content)
     }
     ok++
   }
@@ -185,6 +224,7 @@ async function checkCommands() {
     if (!KEBAB.test(id)) err(rel, `command name "${id}" must be lowercase kebab-case (a-z, 0-9, single dashes)`)
     const { fm, body } = splitFrontmatter(await readFile(path.join(dir, e.name), "utf8"))
     if (!body.trim()) err(rel, "command body is empty — the Markdown body is the prompt template")
+    collectSkillCalls(rel, body)
     if (fm) {
       if (topLevelKeys(fm).has("template")) err(rel, "do not put template in frontmatter; the Markdown body supplies it")
       if (!scalar(fm, "description")) warn(rel, "frontmatter should include a description (shown in command lists)")
@@ -200,6 +240,10 @@ console.log(`root: ${root}\n`)
 const agents = await checkAgents()
 const skills = await checkSkills()
 const commands = await checkCommands()
+
+for (const { where, id } of skillCalls) {
+  if (!skillIds.has(id)) err(where, `calls the skill tool with "${id}", which is not a skill in this catalog`)
+}
 
 console.log(`scanned: ${agents} agent(s), ${skills} skill(s), ${commands} command(s)`)
 

@@ -54,19 +54,31 @@ Start a new OpenCode session and the catalog is live.
 
 ### Skills
 
+The skills manage a **project scaffold**: a set of files in your project's
+repository that act as its memory across sessions and agents.
+
+| Piece | Path | Managed by |
+| --- | --- | --- |
+| Agent orientation, contributor protocols, readme, changelog | `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md` | `maintaining-docs` |
+| Shared language and significant decisions | `GLOSSARY.md`, `decisions/` | `domain-modeling` |
+| Your rulings on how things are done | `conventions/On_<Domain>.md` | `conventions` |
+| Hazards, bugs, defects, features, open questions | `tracker/*.md` | `tracking` |
+
+The agent reaches for each skill on its own when the situation fits.
+
 | Skill | Use it when |
 | --- | --- |
-| `bootstrapping` | Setting up (or patching) a project's management scaffold — AGENTS.md, CONTRIBUTING.md, GLOSSARY.md, README.md, CHANGELOG.md, the tracker files, conventions/ — either a full bootstrap or a single missing piece |
-| `tracking` | Recording items for later in `tracker/` — hazards, bugs, defects, features, questions — with the rules for when to act now instead, so a task stays on course and nothing is lost |
-| `conventions` | Recording and organizing user rulings — guidelines, rules, procedures, preferences — as `On_<Domain>.md` files under `conventions/`; asking before integrating statements that only sound like rulings |
-| `maintaining-docs` | Keeping the four standard documents true for their readers: AGENTS.md (a new agent orients immediately), CONTRIBUTING.md (a new agent learns the protocols for changing project content), README.md (a new human gets up to speed with the project and its state), CHANGELOG.md (users learn what changed and what it means for them) |
-| `domain-modeling` | Building and sharpening the project's domain model — settling terms in `GLOSSARY.md` the moment the user settles them, and recording hard-to-reverse decisions in `decisions/` |
+| `bootstrapping` | Creating the scaffold, whole or one missing piece |
+| `tracking` | Something comes up that cannot be dealt with now but must not be lost: an obstacle future agents will hit again, a bug, a code smell, a feature request, an open question; or picking up or closing a tracked item |
+| `conventions` | You say how something in the project is or should be done — or say something that might be such a ruling, in which case the agent asks before recording it |
+| `domain-modeling` | Project terminology is being settled, disputed, or changed, or a hard-to-reverse design decision is made |
+| `maintaining-docs` | The project's structure, protocols, or state change; after any user-visible change; or when you ask to cut a release |
 
 ### Commands
 
 | Command | What it does |
 | --- | --- |
-| 🚧 — first commands land here shortly | |
+| `/bootstrap` | Runs a full bootstrap: explores the project, asks you one round of questions with recommended answers, and creates every missing scaffold piece. Text after the command is passed along, e.g. a scaffold location other than the project root |
 
 ## Contributing
 

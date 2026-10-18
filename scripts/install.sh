@@ -18,8 +18,9 @@ your OpenCode global config so every project can use it.
   --help     show this help
 
 Installs into $OPENCODE_CONFIG_DIR when set, otherwise ~/.config/opencode
-(via $XDG_CONFIG_HOME). Re-running is safe: existing links are refreshed and
-real files that were not installed by this script are left alone.
+(via $XDG_CONFIG_HOME). Re-running is safe: existing links are refreshed,
+links to items retired from the catalog are pruned, and real files that
+were not installed by this script are left alone.
 
 Uninstall example:
   find ~/.config/opencode -type l -lname '*girth-agents*' -delete
@@ -66,6 +67,21 @@ echo "installing into $CONFIG_DIR (mode: $MODE)"
 
 shopt -s nullglob
 
+# Links into this repo whose target is gone belong to items retired from the catalog.
+pruned=0
+for link in "$CONFIG_DIR"/agents/* "$CONFIG_DIR"/commands/* "$CONFIG_DIR"/skills/*; do
+  [ -L "$link" ] || continue
+  case "$(readlink "$link")" in
+    "$REPO_ROOT"/*)
+      if [ ! -e "$link" ]; then
+        rm -f "$link"
+        echo "prune $link  (no longer in the catalog)"
+        pruned=$((pruned + 1))
+      fi
+      ;;
+  esac
+done
+
 for f in "$REPO_ROOT/.opencode/agents"/*.md; do
   install_one "$f" "$CONFIG_DIR/agents/$(basename "$f")"
 done
@@ -82,7 +98,7 @@ echo
 if [ "$installed" -eq 0 ] && [ "$skipped" -eq 0 ]; then
   echo "The catalog is empty — there is nothing to install yet."
 else
-  echo "done: $installed installed, $skipped skipped."
+  echo "done: $installed installed, $skipped skipped, $pruned pruned."
 fi
 
 if [ "$installed" -gt 0 ]; then
