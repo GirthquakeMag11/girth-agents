@@ -1,6 +1,6 @@
 ---
 name: Retro
-description: Look back over a session and propose improvements to the agent's environment — navigation pointers, automated checks, standards, steering-file pruning, tool economy, information access — each routed to its proper home. Use after a session, especially one that went sideways, when the user asks what would have helped.
+description: Review a session and propose improvements to the agent's environment — navigation, automated checks, standards, steering files, tool economy, information access — each routed to its home. Use after a session, especially one that went sideways.
 metadata:
   girth/role: activity
 ---
