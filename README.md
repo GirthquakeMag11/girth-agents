@@ -7,7 +7,7 @@ installed into `~/.config/opencode/` with one script.
 ## Install
 
 ```sh
-git clone https://github.com/<your-github-user>/girth-agents.git
+git clone https://github.com/GirthquakeMag11/girth-agents.git
 cd girth-agents
 ./scripts/install.sh
 ```
