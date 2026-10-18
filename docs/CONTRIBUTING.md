@@ -38,7 +38,8 @@ and own none.**
 | `tracker` — `tracker/` (five kinds plus `tickets/`) | `maintaining-docs` — keep documents true, changelog at change time, releases |
 | `docs` — AGENTS, CONTRIBUTING, README | `specifying` — turn a settled conversation into a spec |
 | `changelog` — `CHANGELOG.md` | `implementing` — slice an approved thing into tickets and work the frontier by each ticket's kind |
-| `specs` — `specs/` | `diagnosing-bugs` — the feedback-loop discipline for hard bugs |
+| `specs` — `specs/` | `wayfinding` — chart a big foggy effort and work its decisions until the way is clear |
+| `plans` — `plans/` | `diagnosing-bugs` — the feedback-loop discipline for hard bugs |
 | | `tdd` — test-first at pre-agreed seams |
 | | `code-review` — two-axis review, Standards and Spec |
 | | `codebase-design` — the deep-module vocabulary |
