@@ -64,6 +64,8 @@ Start a new OpenCode session and the catalog is live.
 | `tracking-questions` | Tracking questions in `tracker/QUESTIONS.md` — ask blocking questions immediately; track the rest with a recorded provisional decision, then apply the ruling to the affected work when it lands |
 | `conventions` | Recording and organizing user rulings — guidelines, rules, procedures, preferences — as `On_<Domain>.md` files under `conventions/`; asking before integrating statements that only sound like rulings |
 | `maintaining-docs` | Writing and keeping current the three standard documents: AGENTS.md (new agents orient immediately), CONTRIBUTING.md (new agents learn the protocols for changing project content), README.md (new humans get up to speed with the project and its current state) |
+| `maintaining-glossary` | Building the project's shared language in `GLOSSARY.md` — challenging conflicting terms, sharpening vague ones, recording each term the moment the user settles it, with rejected synonyms |
+| `maintaining-changelog` | Recording user-visible changes in `CHANGELOG.md` at change time, written for the reader (what changed, why it matters, what to do), and cutting releases when the user asks |
 
 ### Commands
 

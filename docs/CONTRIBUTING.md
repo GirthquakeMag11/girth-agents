@@ -119,8 +119,8 @@ follows. When a new piece-skill is written:
 
 Skillset state: `tracking-hazards` ✅ · `tracking-bugs` ✅ ·
 `tracking-defects` ✅ · `tracking-features` ✅ · `tracking-questions` ✅ ·
-`conventions` ✅ · `maintaining-docs` ✅ · `maintaining-glossary` ⬜ ·
-`maintaining-changelog` ⬜
+`conventions` ✅ · `maintaining-docs` ✅ · `maintaining-glossary` ✅ ·
+`maintaining-changelog` ✅
 
 ## Release process
 

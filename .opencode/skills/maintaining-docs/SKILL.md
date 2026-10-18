@@ -73,8 +73,8 @@ describe it truly.
 
 ## Out of scope — the sister skills
 
-- GLOSSARY.md — owned by maintaining-glossary (not written).
-- CHANGELOG.md — owned by maintaining-changelog (not written).
+- GLOSSARY.md — owned by maintaining-glossary.
+- CHANGELOG.md — owned by maintaining-changelog.
 
 When the three documents touch the glossary or the changelog, reference
 those files and let their skills govern; do not define their upkeep here.
@@ -89,7 +89,7 @@ skeleton, then bring it up to the standard above.
 
 - bootstrapping — creates the files when they are missing.
 - maintaining-glossary, maintaining-changelog — the sister skills this one
-  outsources to (not written).
+  outsources to.
 - conventions, tracking-hazards, tracking-bugs, tracking-defects,
   tracking-features, tracking-questions — the scaffold these documents
   point at.

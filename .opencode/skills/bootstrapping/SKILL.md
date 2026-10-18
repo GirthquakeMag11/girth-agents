@@ -120,17 +120,20 @@ the piece's own skill, where one exists).
   ```markdown
   # Glossary
 
-  Terms are added here the first time work gives them a working meaning.
+  <One or two sentences: the domain this project works in.>
 
-  <!-- Entries as `**term** — definition.` one per line, alphabetical.
-       Filled in over time, not during bootstrap. -->
+  The project's shared language: one canonical term per concept. See the
+  maintaining-glossary skill for the entry format.
+
+  ## Terms
   ```
 
-- **Ask (full bootstrap):** nothing.
-- **Mid-task default:** create the skeleton and, if the current task just
-  gave a term a working meaning, add that one entry.
-- **Not defined here:** how and when terms are added, renamed, or retired —
-  owned by the maintaining-glossary skill (not written).
+- **Ask (full bootstrap):** nothing; take the domain line from the project
+  overview gathered for AGENTS.md.
+- **Mid-task default:** create the skeleton; if the current task just
+  settled a term, add it per the maintaining-glossary skill.
+- **Not defined here:** what belongs, how terms are settled, the entry
+  format, and revision — owned by the maintaining-glossary skill.
 
 ### README.md — `README.md`
 
@@ -183,8 +186,8 @@ the piece's own skill, where one exists).
 - **Ask (full bootstrap):** nothing. Starts empty.
 - **Mid-task default:** same as create.
 - **Not defined here:** when and how entries are written and released —
-  owned by the maintaining-changelog skill (not written). The default
-  format above may change when that skill is written.
+  owned by the maintaining-changelog skill. If the project already
+  generates its changelog with a tool, leave creation to that tool.
 
 ### tracker/HAZARDS.md — `tracker/HAZARDS.md`
 
@@ -309,16 +312,15 @@ never during bootstrap.
 
 ## Related skills
 
-Each piece's *usage* is owned by another skill, never by this one. Do not
-try to load a skill marked "(not written)".
+Each piece's *usage* is owned by another skill, never by this one.
 
 | Piece | Skill |
 | --- | --- |
 | AGENTS.md usage | maintaining-docs |
 | CONTRIBUTING.md usage | maintaining-docs |
-| GLOSSARY.md usage | maintaining-glossary (not written) |
+| GLOSSARY.md usage | maintaining-glossary |
 | README.md usage | maintaining-docs |
-| CHANGELOG.md usage | maintaining-changelog (not written) |
+| CHANGELOG.md usage | maintaining-changelog |
 | tracker/HAZARDS.md usage | tracking-hazards |
 | tracker/BUGS.md usage | tracking-bugs |
 | tracker/DEFECTS.md usage | tracking-defects |
