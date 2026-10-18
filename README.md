@@ -87,6 +87,7 @@ the situation fits.
 | `wizard` | A procedure only a human can do — the agent generates a step-by-step script that walks them through it |
 | `grilling` | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time |
 | `handoff` | A session needs continuing elsewhere — the agent writes a handoff document that references, never duplicates |
+| `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning |
 | `diagnosing-bugs` | Something is broken and the cause is not obvious |
 | `tdd` | Work that should be built or locked down test-first |
 | `code-review` | A branch, PR, or work-in-progress change needs reviewing |

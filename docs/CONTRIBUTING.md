@@ -49,6 +49,7 @@ and own none.**
 | | `wizard` — a step-by-step script for human-only procedures |
 | | `grilling` — the interview primitive: work the design tree, one round at a time |
 | | `handoff` — a reference-style summary for the next agent |
+| | `writing-for-agents` — the craft of writing documents agents consume |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
@@ -71,7 +72,9 @@ The rules:
 ## Skill design
 
 These rules come from comparing this catalog with mattpocock/skills; they
-govern every new or changed skill.
+govern every new or changed skill. The *craft* behind them — context
+pointers, the information hierarchy, leading words, pruning — lives in the
+`writing-for-agents` skill; this list is the operational rule set.
 
 - **Invocation.** Skills are model-invoked: the agent can reach them on its
   own, so each carries a description. Entry points that only a human should
