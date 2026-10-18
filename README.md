@@ -86,6 +86,7 @@ the situation fits.
 | `prototyping` | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict |
 | `wizard` | A procedure only a human can do — the agent generates a step-by-step script that walks them through it |
 | `grilling` | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time |
+| `handoff` | A session needs continuing elsewhere — the agent writes a handoff document that references, never duplicates |
 | `diagnosing-bugs` | Something is broken and the cause is not obvious |
 | `tdd` | Work that should be built or locked down test-first |
 | `code-review` | A branch, PR, or work-in-progress change needs reviewing |
@@ -101,6 +102,7 @@ the situation fits.
 | `/implement` | Implements something planned — a spec, feature, bug, or defect — slicing it into tickets if needed, with one checkpoint on the blocking edges before work begins |
 | `/wayfind` | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear |
 | `/retro` | Reviews a session and proposes environment improvements, most severe first |
+| `/handoff` | Writes a handoff document for a fresh agent to pick up the conversation |
 
 ## Contributing
 
