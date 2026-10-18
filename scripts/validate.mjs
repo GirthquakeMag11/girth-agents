@@ -188,7 +188,7 @@ async function checkSkills() {
     }
     const words = id.split("-")
     if (role === "activity" && !words[0].endsWith("ing")) {
-      err(rel, `activity skills are named for their work, a verb ending in -ing (got "${id}")`)
+      warn(rel, `activity names are usually gerunds (got "${id}"); action-nouns and initialisms are allowed where the gerund would be stilted`)
     }
     if (role === "owner" && words[0].endsWith("ing")) {
       warn(rel, `owner skills are named for the piece they own, a noun; "${id}" reads like an activity`)
