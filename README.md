@@ -83,6 +83,7 @@ the situation fits.
 | `implementing` | You ask to build something planned — a spec, feature, bug, or defect — and the agent slices it into tickets and works them one at a time |
 | `wayfinding` | An effort is too big or too foggy to spec — the agent charts a live map and resolves its decisions one at a time |
 | `retro` | After a session, the agent reviews the environment and proposes improvements, each routed to its home |
+| `prototyping` | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict |
 | `diagnosing-bugs` | Something is broken and the cause is not obvious |
 | `tdd` | Work that should be built or locked down test-first |
 | `code-review` | A branch, PR, or work-in-progress change needs reviewing |

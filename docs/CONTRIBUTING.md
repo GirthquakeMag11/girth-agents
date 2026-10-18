@@ -45,6 +45,7 @@ and own none.**
 | | `codebase-design` — the deep-module vocabulary |
 | | `research` — primary-source legwork in the background |
 | | `retro` — review the agent's environment after a session |
+| | `prototyping` — throwaway code that answers a design question |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
