@@ -67,22 +67,32 @@ the situation fits.
 | `glossary` | `GLOSSARY.md` — the shared language: what things are |
 | `conventions` | `conventions/On_<Domain>.md` — your rulings on how things are done |
 | `decisions` | `decisions/NNNN-<slug>.md` — why the project is shaped the way it is |
-| `tracker` | `tracker/*.md` — hazards, bugs, defects, features, open questions |
+| `tracker` | `tracker/` — hazards, bugs, defects, features, open questions, and `tickets/` |
 | `docs` | `AGENTS.md`, `CONTRIBUTING.md`, `README.md` — each for its reader |
 | `changelog` | `CHANGELOG.md` — what changed, for the project's users |
+| `specs` | `specs/<slug>.md` — one design document per effort |
 
 | Activity | Use it when |
 | --- | --- |
 | `bootstrapping` | Creating the scaffold, whole or one missing piece |
-| `tracking` | Something comes up that cannot be dealt with now but must not be lost: an obstacle future agents will hit again, a bug, a code smell, a feature request, an open question; or picking up or closing a tracked item |
+| `tracking` | Something comes up that cannot be dealt with now but must not be lost: an obstacle, a bug, a smell, a feature request, an open question; or picking up or closing a tracked item |
 | `codifying` | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it |
 | `maintaining-docs` | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release |
+| `specifying` | A settled design needs writing down as a spec |
+| `implementing` | You ask to build something planned — a spec, feature, bug, or defect — and the agent slices it into tickets and works them one at a time |
+| `diagnosing-bugs` | Something is broken and the cause is not obvious |
+| `tdd` | Work that should be built or locked down test-first |
+| `code-review` | A branch, PR, or work-in-progress change needs reviewing |
+| `codebase-design` | A module's interface, seam, or depth is being designed or judged |
+| `research` | A question needs facts from primary sources |
 
 ### Commands
 
 | Command | What it does |
 | --- | --- |
-| `/bootstrap` | Runs a full bootstrap: explores the project, asks you one round of questions with recommended answers, and creates every missing scaffold piece. Text after the command is passed along, e.g. a scaffold location other than the project root |
+| `/bootstrap` | Runs a full bootstrap: explores the project, asks you one round of questions with recommended answers, and creates every missing scaffold piece. Text after the command is passed along |
+| `/spec` | Turns the current conversation into a spec for your approval |
+| `/implement` | Implements something planned — a spec, feature, bug, or defect — slicing it into tickets if needed, with one checkpoint on the blocking edges before work begins |
 
 ## Contributing
 

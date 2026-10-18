@@ -1,6 +1,6 @@
 ---
 name: Bootstrapping
-description: Create a project's management scaffold — docs, changelog, glossary, conventions, decisions, trackers — whole, or one missing piece. Use when setting up a project, or when work needs a scaffold piece that does not exist yet.
+description: Create a project's management scaffold — docs, changelog, glossary, conventions, decisions, specs, trackers — whole, or one missing piece. Use when setting up a project, or when work needs a scaffold piece that does not exist yet.
 metadata:
   girth/role: activity
 ---
@@ -29,7 +29,9 @@ designates another location.
 | Glossary | `GLOSSARY.md` | glossary | Nothing; the domain line comes from the project overview |
 | Conventions | `conventions/` | conventions | Whether rulings already exist worth capturing now |
 | Decisions | `decisions/` | decisions | Whether decisions already exist worth recording now |
+| Specs | `specs/` | specs | Whether any design effort needs its spec written now |
 | Trackers | `tracker/HAZARDS.md`, `BUGS.md`, `DEFECTS.md`, `FEATURES.md`, `QUESTIONS.md` | tracker | Nothing |
+| Tickets | `tracker/tickets/` | tracker | Nothing; created with the first ticket, never at bootstrap |
 
 ## Creating a piece
 

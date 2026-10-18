@@ -35,9 +35,14 @@ and own none.**
 | `glossary` — `GLOSSARY.md` | `bootstrapping` — create the scaffold, whole or one piece |
 | `conventions` — `conventions/` | `tracking` — fix now or record, put down and pick up, ask or track |
 | `decisions` — `decisions/` | `codifying` — turn what the user says into a term, convention, or decision |
-| `tracker` — `tracker/*.md` | `maintaining-docs` — keep documents true, changelog at change time, releases |
-| `docs` — AGENTS, CONTRIBUTING, README | |
-| `changelog` — `CHANGELOG.md` | |
+| `tracker` — `tracker/` (five kinds plus `tickets/`) | `maintaining-docs` — keep documents true, changelog at change time, releases |
+| `docs` — AGENTS, CONTRIBUTING, README | `specifying` — turn a settled conversation into a spec |
+| `changelog` — `CHANGELOG.md` | `implementing` — slice an approved thing into tickets and work the frontier by each ticket's kind |
+| `specs` — `specs/` | `diagnosing-bugs` — the feedback-loop discipline for hard bugs |
+| | `tdd` — test-first at pre-agreed seams |
+| | `code-review` — two-axis review, Standards and Spec |
+| | `codebase-design` — the deep-module vocabulary |
+| | `research` — primary-source legwork in the background |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
@@ -49,9 +54,12 @@ The rules:
    owner. How an agent decides or proceeds → an activity.
 2. **Who calls whom.** Activities call owners and other activities. Owners
    call nothing.
-3. **Naming.** Owners are nouns, named for their piece. Activities are
-   verbs ending in *-ing*.
-4. **Growth.** A new piece gets an owner. A new process gets an activity.
+3. **Naming.** Owners are nouns, named for their piece. Activities are named
+   for their work — a gerund where natural; an action-noun or initialism
+   where the gerund would be stilted (`research`, `tdd`).
+4. **Reference-only activities.** An activity may be pure consult-on-demand
+   material with no ordered steps (`codebase-design`); it still owns nothing.
+5. **Growth.** A new piece gets an owner. A new process gets an activity.
    Neither changes the others.
 
 ## Skill design
