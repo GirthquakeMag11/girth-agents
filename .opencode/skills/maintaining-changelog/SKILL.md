@@ -92,7 +92,7 @@ entry.
 ## Related skills
 
 - bootstrapping — creates `CHANGELOG.md` when it is missing.
-- tracking-bugs, tracking-features, tracking-defects — where Fixed, Added,
-  and Changed entries come from.
+- tracking — where Fixed, Added, and Changed entries come from: fixed bugs,
+  implemented features, remediated defects.
 - maintaining-glossary — entries name things in its terms.
 - maintaining-docs — README.md points readers here for what changed.

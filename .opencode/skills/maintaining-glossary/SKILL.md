@@ -46,7 +46,7 @@ to the people who use it: propose, and let the user decide.
   a summary; the inline one is the session's output.
 
 When the user cannot settle a term now, track a question with the
-tracking-questions skill: the term, the competing meanings, and the usage
+tracking skill (questions): the term, the competing meanings, and the usage
 you are proceeding with provisionally.
 
 ## Entry format
@@ -97,6 +97,6 @@ term.
 - bootstrapping — creates `GLOSSARY.md` when it is missing.
 - conventions — rulings about how things are done; the glossary holds only
   what things are.
-- tracking-questions — the channel for terms the user cannot settle yet.
+- tracking — the channel for terms the user cannot settle yet.
 - maintaining-docs, maintaining-changelog — sibling documents written in
   the glossary's language.

@@ -198,17 +198,17 @@ the piece's own skill, where one exists).
   # HAZARDS
 
   Expensive lessons are learned once: one entry per obstacle a future
-  agent will hit again. See the tracking-hazards skill for criteria and
+  agent will hit again. See the tracking skill for criteria and
   entry format.
 
   <!-- entries below, newest first, one `##` section each -->
   ```
 
 - **Ask (full bootstrap):** nothing.
-- **Mid-task default:** same as create; the tracking-hazards skill guides
+- **Mid-task default:** same as create; the tracking skill guides
   adding the entry itself.
 - **Not defined here:** what counts as a hazard and what entries contain —
-  owned by the tracking-hazards skill.
+  owned by the tracking skill.
 
 ### tracker/BUGS.md — `tracker/BUGS.md`
 
@@ -219,17 +219,17 @@ the piece's own skill, where one exists).
   # BUGS
 
   Bugs the project intends to fix. Entries carry full detail plus a log of
-  work already done; see the tracking-bugs skill for the triage rules and
+  work already done; see the tracking skill for the triage rules and
   entry format.
 
   <!-- entries below, newest first, one `##` section each -->
   ```
 
 - **Ask (full bootstrap):** nothing.
-- **Mid-task default:** same as create; the tracking-bugs skill guides
+- **Mid-task default:** same as create; the tracking skill guides
   adding the entry itself.
 - **Not defined here:** triage rules, entry format, and workflow — owned by
-  the tracking-bugs skill.
+  the tracking skill.
 
 ### tracker/DEFECTS.md — `tracker/DEFECTS.md`
 
@@ -240,17 +240,17 @@ the piece's own skill, where one exists).
   # DEFECTS
 
   Bad but not broken: code smells, convention violations, and design-principle
-  breaks. See the tracking-defects skill for the boundary with bugs and the
+  breaks. See the tracking skill for the boundary with bugs and the
   entry format.
 
   <!-- entries below, newest first, one `##` section each -->
   ```
 
 - **Ask (full bootstrap):** nothing.
-- **Mid-task default:** same as create; the tracking-defects skill guides
+- **Mid-task default:** same as create; the tracking skill guides
   adding the entry itself.
 - **Not defined here:** the bug/defect boundary, entry format, and workflow
-  — owned by the tracking-defects skill.
+  — owned by the tracking skill.
 
 ### tracker/FEATURES.md — `tracker/FEATURES.md`
 
@@ -261,17 +261,17 @@ the piece's own skill, where one exists).
   # FEATURES
 
   What the project may become. Entries are created on request and close
-  only with the maintainer's approval; see the tracking-features skill for
+  only with the maintainer's approval; see the tracking skill for
   the format and the relationship-review rule.
 
   <!-- entries below, newest first, one `##` section each -->
   ```
 
 - **Ask (full bootstrap):** nothing.
-- **Mid-task default:** same as create; the tracking-features skill guides
+- **Mid-task default:** same as create; the tracking skill guides
   adding the entry itself.
 - **Not defined here:** entry format, lifecycle, and relationship review —
-  owned by the tracking-features skill.
+  owned by the tracking skill.
 
 ### tracker/QUESTIONS.md — `tracker/QUESTIONS.md`
 
@@ -283,17 +283,17 @@ the piece's own skill, where one exists).
 
   Questions that deserve a definitive answer but cannot get one yet.
   Entries record the provisional decision made in the meantime, so the
-  ruling can be applied to the work later. See the tracking-questions
+  ruling can be applied to the work later. See the tracking
   skill.
 
   <!-- entries below, newest first, one `##` section each -->
   ```
 
 - **Ask (full bootstrap):** nothing.
-- **Mid-task default:** same as create; the tracking-questions skill guides
+- **Mid-task default:** same as create; the tracking skill guides
   adding the entry itself.
 - **Not defined here:** entry format, the ask-now-or-track test, and the
-  resolution flow — owned by the tracking-questions skill.
+  resolution flow — owned by the tracking skill.
 
 ### conventions/ — `conventions/`
 
@@ -321,11 +321,11 @@ Each piece's *usage* is owned by another skill, never by this one.
 | GLOSSARY.md usage | maintaining-glossary |
 | README.md usage | maintaining-docs |
 | CHANGELOG.md usage | maintaining-changelog |
-| tracker/HAZARDS.md usage | tracking-hazards |
-| tracker/BUGS.md usage | tracking-bugs |
-| tracker/DEFECTS.md usage | tracking-defects |
-| tracker/FEATURES.md usage | tracking-features |
-| tracker/QUESTIONS.md usage | tracking-questions |
+| tracker/HAZARDS.md usage | tracking |
+| tracker/BUGS.md usage | tracking |
+| tracker/DEFECTS.md usage | tracking |
+| tracker/FEATURES.md usage | tracking |
+| tracker/QUESTIONS.md usage | tracking |
 | conventions/ usage | conventions |
 
 ## The inventory is the contract

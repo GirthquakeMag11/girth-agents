@@ -90,6 +90,4 @@ skeleton, then bring it up to the standard above.
 - bootstrapping — creates the files when they are missing.
 - maintaining-glossary, maintaining-changelog — the sister skills this one
   outsources to.
-- conventions, tracking-hazards, tracking-bugs, tracking-defects,
-  tracking-features, tracking-questions — the scaffold these documents
-  point at.
+- conventions, tracking — the scaffold these documents point at.

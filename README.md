@@ -57,11 +57,7 @@ Start a new OpenCode session and the catalog is live.
 | Skill | Use it when |
 | --- | --- |
 | `bootstrapping` | Setting up (or patching) a project's management scaffold — AGENTS.md, CONTRIBUTING.md, GLOSSARY.md, README.md, CHANGELOG.md, the tracker files, conventions/ — either a full bootstrap or a single missing piece |
-| `tracking-hazards` | Recording hazards in `tracker/HAZARDS.md` — obstacles outside the project's scope to fix, surprising dependency behavior, or disproven domain assumptions that would trap a future agent again |
-| `tracking-bugs` | Triaging and tracking bugs in `tracker/BUGS.md` — fix blocking or trivially obvious bugs in flight, track the rest with full detail and a log of work already done so any agent can pick them back up |
-| `tracking-defects` | Tracking defects in `tracker/DEFECTS.md` — bad but not broken: code smells and convention/design-principle violations; same mechanics as bugs |
-| `tracking-features` | Tracking features in `tracker/FEATURES.md` — user-requested entries, user-approved closure, relationship reconciliation on every create and close |
-| `tracking-questions` | Tracking questions in `tracker/QUESTIONS.md` — ask blocking questions immediately; track the rest with a recorded provisional decision, then apply the ruling to the affected work when it lands |
+| `tracking` | Recording items for later in `tracker/` — hazards, bugs, defects, features, questions — with the rules for when to act now instead, so a task stays on course and nothing is lost |
 | `conventions` | Recording and organizing user rulings — guidelines, rules, procedures, preferences — as `On_<Domain>.md` files under `conventions/`; asking before integrating statements that only sound like rulings |
 | `maintaining-docs` | Writing and keeping current the three standard documents: AGENTS.md (new agents orient immediately), CONTRIBUTING.md (new agents learn the protocols for changing project content), README.md (new humans get up to speed with the project and its current state) |
 | `maintaining-glossary` | Building the project's shared language in `GLOSSARY.md` — challenging conflicting terms, sharpening vague ones, recording each term the moment the user settles it, with rejected synonyms |

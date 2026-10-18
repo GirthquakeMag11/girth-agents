@@ -49,7 +49,7 @@ recorded, ask before integrating it:
 - **In conversation with the user:** ask directly whether the statement
   counts as a ruling to be formally integrated into the conventions.
 - **Otherwise, or when interrupting is unsuitable:** track the question with
-  the tracking-questions skill — the suspected ruling, its context, and the
+  the tracking skill — the suspected ruling, its context, and the
   provisional decision (treated as a ruling, or not) so the answer can be
   applied to the work later.
 
@@ -60,7 +60,7 @@ Integrate a statement as a convention only once it is a settled ruling.
 - Before deciding how something in the project ought to be done, check the
   domain file that covers it. The newest ruling on the subject governs.
 - A genuine conflict between established conventions is not resolved
-  unilaterally — see the tracking-questions skill.
+  unilaterally — see the tracking skill.
 
 ## The conventions directory
 
@@ -71,7 +71,6 @@ by rulings, not by bootstrap.
 ## Related skills
 
 - bootstrapping — creates the `conventions/` directory.
-- tracking-questions — the channel for suspected-but-unconfirmed rulings,
-  and for resolving conflicts between established conventions.
-- tracking-defects — defects are judged against the standards recorded
-  here.
+- tracking — the questions tracker is the channel for suspected rulings and
+  for conflicts between established conventions; defects are judged against
+  the standards recorded here.

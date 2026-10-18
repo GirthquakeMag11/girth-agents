@@ -102,7 +102,7 @@ Optional frontmatter: `description`, `agent`, `model`, `subagent`. Never
 The skills form a family. Two architectural rules:
 
 - **Creation templates live in `bootstrapping` only.** Usage skills
-  (tracking-*, conventions, maintaining-*) carry usage only — they point at
+  (tracking, conventions, maintaining-*) carry usage only — they point at
   bootstrapping when a file is missing, and never contain what a new file
   looks like.
 - **Each piece's own skill owns its semantics.** Bootstrapping creates the
@@ -117,8 +117,7 @@ follows. When a new piece-skill is written:
 2. Check every sibling skill whose boundary text references that piece.
 3. Update the checklist below.
 
-Skillset state: `tracking-hazards` ✅ · `tracking-bugs` ✅ ·
-`tracking-defects` ✅ · `tracking-features` ✅ · `tracking-questions` ✅ ·
+Skillset state: `tracking` ✅ ·
 `conventions` ✅ · `maintaining-docs` ✅ · `maintaining-glossary` ✅ ·
 `maintaining-changelog` ✅
 
