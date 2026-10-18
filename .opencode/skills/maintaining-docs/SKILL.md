@@ -1,6 +1,6 @@
 ---
 name: Maintaining Docs
-description: Write and keep current the project's three standard documents, each for a different reader: AGENTS.md so a new agent can immediately orient itself in the project; CONTRIBUTING.md so a new agent understands the protocols for adding to or modifying the project content; README.md so a new human gets up to speed with the project and the state it is in. Upkeep of the glossary and changelog belongs to the sister skills maintaining-glossary and maintaining-changelog.
+description: Write and keep current the project's three standard documents, each for a different reader: AGENTS.md so a new agent can immediately orient itself in the project; CONTRIBUTING.md so a new agent understands the protocols for adding to or modifying the project content; README.md so a new human gets up to speed with the project and the state it is in. The glossary belongs to domain-modeling; the changelog to maintaining-changelog.
 ---
 
 # Maintaining Docs
@@ -73,7 +73,7 @@ describe it truly.
 
 ## Out of scope — the sister skills
 
-- GLOSSARY.md — owned by maintaining-glossary.
+- GLOSSARY.md — owned by domain-modeling.
 - CHANGELOG.md — owned by maintaining-changelog.
 
 When the three documents touch the glossary or the changelog, reference
@@ -88,6 +88,6 @@ skeleton, then bring it up to the standard above.
 ## Related skills
 
 - bootstrapping — creates the files when they are missing.
-- maintaining-glossary, maintaining-changelog — the sister skills this one
+- domain-modeling, maintaining-changelog — the skills this one
   outsources to.
 - conventions, tracking — the scaffold these documents point at.

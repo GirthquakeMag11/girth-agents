@@ -94,5 +94,5 @@ entry.
 - bootstrapping — creates `CHANGELOG.md` when it is missing.
 - tracking — where Fixed, Added, and Changed entries come from: fixed bugs,
   implemented features, remediated defects.
-- maintaining-glossary — entries name things in its terms.
+- domain-modeling — entries name things in the glossary's terms.
 - maintaining-docs — README.md points readers here for what changed.
