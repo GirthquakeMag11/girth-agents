@@ -1,8 +1,7 @@
-# Bugs
+# Handling a bug
 
-A bug prevents something from working when it should, and is the project's
-to fix. Bugs move between two states — fixed now, or tracked for later —
-and neither is final until the fix lands.
+Bugs move between two states — fixed now, or tracked for later — and neither
+is final until the fix lands.
 
 ## Fix now, or track
 
@@ -43,44 +42,7 @@ fixed, end of story. If the fix grows larger than the task can bear, report
 the blocked state to the user; the bug is neither worked around nor moved to
 the tracker while the task still needs it fixed.
 
-## Entry format
+## Closing
 
-```markdown
-## <One-line title> — <YYYY-MM-DD>
-
-- **The bug:** <symptoms, where it lives, how to reproduce, why it matters>
-- **Work so far:** <dated, chronological notes — every diagnosis, attempt
-  to recreate, fix attempt, thing learned, and where the effort stopped>
-```
-
-The work log is the point: it is how a later agent picks the bug up where it
-was put down instead of re-earning the ground. Append dated notes as you
-work, finished or not, so a put-down mid-fix loses nothing.
-
-When a tracked bug is fixed, append `- **Fixed — <YYYY-MM-DD>:** <what fixed
-it>`. A fix users could notice also gets a changelog entry, per the
-maintaining-docs skill.
-
-## Picking up a tracked bug
-
-Read the entry completely, especially the work log, and start where it
-stopped. Append to the log as you go; if you put it down again, the log
-already speaks for you.
-
-## Example
-
-```markdown
-## Header nav collapses under focus on Safari — 2026-10-09
-
-- **The bug:** tabbing into the nav triggers `:focus` on the `<details>`
-  wrapper, closing it. Repro: open the site in Safari 18, click "Docs",
-  press Tab twice. Safari only; Chrome and Firefox are fine.
-- **Work so far:**
-  - 2026-10-09: tried `pointer-events: none` on the summary — kills the
-    click toggle instead. Reverted.
-  - 2026-10-09: suspected a Safari `<details>` focus quirk; nothing found
-    inside the task's timebox — tracked.
-  - 2026-10-12: picked up; blurred the summary on `focusout`. Verified in
-    Safari 18 and Chrome.
-- **Fixed — 2026-10-12:** blur-on-focusout handler plus a regression test.
-```
+Close the entry when the fix lands. A fix users could notice also gets a
+changelog entry.

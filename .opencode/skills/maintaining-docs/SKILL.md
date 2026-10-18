@@ -1,44 +1,59 @@
 ---
 name: Maintaining Docs
-description: Keep AGENTS.md, CONTRIBUTING.md, README.md, and CHANGELOG.md true for their readers. Use when the project's structure, protocols, or state change, after any user-visible change, or when the user asks to cut a release.
+description: Keep AGENTS.md, CONTRIBUTING.md, README.md, and CHANGELOG.md true as the project changes, and cut releases. Use when the project's structure, protocols, or state change, after any user-visible change, or when the user asks for a release.
+metadata:
+  girth/role: activity
 ---
 
 # Maintaining Docs
 
-Four standard documents, each written for one reader:
+Drift is the failure mode: a reader who trusts a stale document pays for the
+lie later. This skill keeps the documents true; the docs and changelog
+skills define what each document contains.
 
-| Document | Reader | Its job | Reference |
-| --- | --- | --- | --- |
-| `AGENTS.md` | A new agent | Orient itself in the project immediately | `references/agents.md` |
-| `CONTRIBUTING.md` | A new agent | Understand the protocols for adding to or modifying the project content | `references/contributing.md` |
-| `README.md` | A new human | Get up to speed with the project and the state it is in | `references/readme.md` |
-| `CHANGELOG.md` | The project's users | Learn what changed and what it means for them | `references/changelog.md` |
+## After a change
 
-Read a document's reference before writing it.
+Match what changed to the document it affects:
 
-## Keeping them true
+| When this changes | Update | Owner |
+| --- | --- | --- |
+| Structure, commands, or what agents must read before working | `AGENTS.md` | docs |
+| A protocol: setup, verification, conventions, the tracker flow | `CONTRIBUTING.md` | docs |
+| The project's state: what works, what is in flight | `README.md` | docs |
+| Anything a user of the project could notice | `CHANGELOG.md`, in the same change | changelog |
 
-Drift is the failure mode: a reader who trusts a stale document pays for
-the lie later. Correct the matching document whenever its subject changes:
+Write each update to its owner's format:
 
-| When this changes | Update |
-| --- | --- |
-| Structure, commands, or what agents must read before working | `AGENTS.md` |
-| A protocol: setup, verification, conventions, the tracker flow | `CONTRIBUTING.md` |
-| The project's state: what works, what is in flight | `README.md` |
-| Anything a user of the project could notice | `CHANGELOG.md`, in the same change |
+- `AGENTS.md`, `CONTRIBUTING.md`, `README.md`: call the skill tool with
+  `docs`.
+- `CHANGELOG.md`: call the skill tool with `changelog`.
+
+If the document does not exist, call the skill tool with `bootstrapping` and
+create it first.
+
+The trackers feed the changelog: a fixed bug goes under Fixed, a feature
+whose closure the user approved under Added or Changed, and a remediated
+defect under Changed only when a user could notice the difference.
 
 After changing any scaffold piece, check that the documents still describe
 it truly.
 
-## The files
+Done when every affected document describes the project as it now is.
 
-All four live at the project root. If one does not exist, call the skill
-tool with `bootstrapping`, create it per that piece, then bring it up to its
-reference.
+## Cutting a release
+
+A release is the user's call; changelog entries stay under Unreleased until
+the user asks for one. When asked:
+
+1. Call the skill tool with `changelog`.
+2. Propose the version from what Unreleased holds, per its versioning rules.
+   The user confirms or overrides.
+3. Apply the release to the file per the changelog's format. If a tool owns
+   the changelog, run the tool's release workflow instead.
+
+Done when the release section exists under the confirmed version.
 
 ## Related skills
 
-- domain-modeling — owns `GLOSSARY.md`; the documents use its terms.
+- docs, changelog — the owners of the four documents.
 - tracking — fixed bugs and implemented features feed the changelog.
-- conventions — the standards CONTRIBUTING.md points at.

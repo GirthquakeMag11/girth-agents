@@ -33,14 +33,17 @@ live by OpenCode while you work in this repo: editing a file is testing it.
    relative to that skill's directory, and no skill links into another with
    `../`.
 8. Every "Call the skill tool with `<id>`" names a skill in this catalog.
+9. Every skill declares `metadata:` → `girth/role: owner` or `activity`.
+   Owners are nouns, keep `references/template.md`, and call no skill;
+   activities are named with a verb ending in *-ing*.
 
 ## Designing skills
 
-Follow "Skill design" in `docs/CONTRIBUTING.md` before adding or changing a
-skill: descriptions are triggers, branch-only material goes in
-`references/`, other skills are reached by an explicit skill tool call, and
-skills carry only what an executing agent needs — process bookkeeping
-belongs in the repo docs.
+Skills follow the owner/activity schema: owner skills define a scaffold
+piece; activity skills do work with pieces and own none. Read "The schema"
+and "Skill design" in `docs/CONTRIBUTING.md` before adding or changing a
+skill. Skills carry only what an executing agent needs — process
+bookkeeping belongs in the repo docs.
 
 ## Workflow for adding an item
 

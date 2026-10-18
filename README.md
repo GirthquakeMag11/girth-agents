@@ -57,22 +57,26 @@ Start a new OpenCode session and the catalog is live.
 The skills manage a **project scaffold**: a set of files in your project's
 repository that act as its memory across sessions and agents.
 
-| Piece | Path | Managed by |
-| --- | --- | --- |
-| Agent orientation, contributor protocols, readme, changelog | `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md` | `maintaining-docs` |
-| Shared language and significant decisions | `GLOSSARY.md`, `decisions/` | `domain-modeling` |
-| Your rulings on how things are done | `conventions/On_<Domain>.md` | `conventions` |
-| Hazards, bugs, defects, features, open questions | `tracker/*.md` | `tracking` |
+There are two kinds of skill. **Owners** each define one scaffold piece:
+what belongs in it and its format. **Activities** are what the agent does
+with the pieces; they own none. The agent reaches for each on its own when
+the situation fits.
 
-The agent reaches for each skill on its own when the situation fits.
+| Owner | Defines |
+| --- | --- |
+| `glossary` | `GLOSSARY.md` — the shared language: what things are |
+| `conventions` | `conventions/On_<Domain>.md` — your rulings on how things are done |
+| `decisions` | `decisions/NNNN-<slug>.md` — why the project is shaped the way it is |
+| `tracker` | `tracker/*.md` — hazards, bugs, defects, features, open questions |
+| `docs` | `AGENTS.md`, `CONTRIBUTING.md`, `README.md` — each for its reader |
+| `changelog` | `CHANGELOG.md` — what changed, for the project's users |
 
-| Skill | Use it when |
+| Activity | Use it when |
 | --- | --- |
 | `bootstrapping` | Creating the scaffold, whole or one missing piece |
 | `tracking` | Something comes up that cannot be dealt with now but must not be lost: an obstacle future agents will hit again, a bug, a code smell, a feature request, an open question; or picking up or closing a tracked item |
-| `conventions` | You say how something in the project is or should be done — or say something that might be such a ruling, in which case the agent asks before recording it |
-| `domain-modeling` | Project terminology is being settled, disputed, or changed, or a hard-to-reverse design decision is made |
-| `maintaining-docs` | The project's structure, protocols, or state change; after any user-visible change; or when you ask to cut a release |
+| `codifying` | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it |
+| `maintaining-docs` | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release |
 
 ### Commands
 

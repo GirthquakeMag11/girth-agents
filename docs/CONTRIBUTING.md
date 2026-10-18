@@ -21,6 +21,38 @@ committing.
 | Paths referenced from a skill (`references/…`, `scripts/…`) exist in that skill's directory | Dead paths break the skill at load time. |
 | No `../` paths inside a skill | A skill reaches another skill by name, never by linking into its folder: installed skills are linked one by one and the folder layout is not guaranteed. |
 | Every "Call the skill tool with `<id>`" names a skill in this catalog | Renames and removals otherwise leave dangling calls. |
+| Every skill declares `metadata:` → `girth/role: owner` or `activity` | The schema below depends on it. |
+| Owners are named with nouns, activities with a verb ending in *-ing* | A skill's name says which side of the schema it is on. |
+| Owners keep a `references/template.md` and call no other skill | Owners define; activities act. |
+
+## The schema
+
+**Owner skills define a scaffold piece; activity skills do work with pieces,
+and own none.**
+
+| Owners: define what a piece is | Activities: what agents do |
+| --- | --- |
+| `glossary` — `GLOSSARY.md` | `bootstrapping` — create the scaffold, whole or one piece |
+| `conventions` — `conventions/` | `tracking` — fix now or record, put down and pick up, ask or track |
+| `decisions` — `decisions/` | `codifying` — turn what the user says into a term, convention, or decision |
+| `tracker` — `tracker/*.md` | `maintaining-docs` — keep documents true, changelog at change time, releases |
+| `docs` — AGENTS, CONTRIBUTING, README | |
+| `changelog` — `CHANGELOG.md` | |
+
+Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
+Format → Changing it** — and keeps its piece's creation template in
+`references/template.md`.
+
+The rules:
+
+1. **Where content goes.** True of the piece no matter who edits it → the
+   owner. How an agent decides or proceeds → an activity.
+2. **Who calls whom.** Activities call owners and other activities. Owners
+   call nothing.
+3. **Naming.** Owners are nouns, named for their piece. Activities are
+   verbs ending in *-ing*.
+4. **Growth.** A new piece gets an owner. A new process gets an activity.
+   Neither changes the others.
 
 ## Skill design
 
@@ -133,23 +165,20 @@ Optional frontmatter: `description`, `agent`, `model`, `subagent`. Never
 
 ## Skill family maintenance
 
-The skills manage a project scaffold whose pieces are listed in the
-bootstrapping skill's inventory — the contract for what counts as
-scaffolding. Two architectural rules:
-
-- **Creation templates live in `bootstrapping` only**, one
-  `references/<piece>.md` per piece. Usage skills carry usage only: they
-  point at bootstrapping when a file is missing.
-- **Each piece's owning skill defines its semantics.** Bootstrapping creates
-  the file; the owning skill defines what goes in it and how it works.
+The scaffold's pieces are listed in the bootstrapping skill's inventory —
+the contract for what counts as scaffolding.
 
 When a scaffold piece is added, renamed, or retired:
 
-1. Update the bootstrapping inventory and the piece's reference file.
-2. Update the owning skill.
-3. Update the AGENTS.md template (`bootstrapping/references/agents.md`) if
-   agents should read or record the piece.
-4. Check every skill whose boundary text mentions the piece.
+1. Create, rename, or retire its owner, template included.
+2. Update the bootstrapping inventory.
+3. Update the activities that write through the owner.
+4. Update the AGENTS.md template (in the docs owner's
+   `references/template.md`) if agents should read or record the piece.
+5. Check every skill whose text mentions the piece.
+
+When a process is added, it becomes an activity that writes through the
+existing owners.
 
 ## Release process
 
