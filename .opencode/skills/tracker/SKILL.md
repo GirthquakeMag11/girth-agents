@@ -1,6 +1,6 @@
 ---
 name: Tracker
-description: Defines tracker/, the project's open items — the five kinds (hazards, bugs, defects, features, questions), their boundaries, entry formats, and closing rules. Use when writing or editing a tracker file.
+description: Defines tracker/, the project's open items — six kinds: hazards, bugs, defects, features, questions, and tickets, with their boundaries, entry formats, and closing rules. Use when writing or editing a tracker file.
 metadata:
   girth/role: owner
 ---
@@ -16,7 +16,7 @@ item up where another put it down. Its creation template is
 
 ## What belongs
 
-Five kinds of item, one file each:
+Six kinds of item:
 
 | Kind | File | The item | Definition |
 | --- | --- | --- | --- |
@@ -25,6 +25,10 @@ Five kinds of item, one file each:
 | Defect | `DEFECTS.md` | Something that works but is bad: a code smell, a convention violation, a broken design principle | `references/defects.md` |
 | Feature | `FEATURES.md` | Something the user wants that does not exist yet | `references/features.md` |
 | Question | `QUESTIONS.md` | A question that deserves a definitive answer the user cannot give right now | `references/questions.md` |
+| Ticket | `tickets/` | One slice of scheduled work, sliced from a spec, bug, or defect, and declared for execution | `references/tickets.md` |
+
+Tickets are the exception to the one-file-per-kind shape: one file per
+ticket, not one entry in a shared file — their reference covers it.
 
 The close calls:
 
@@ -42,7 +46,8 @@ and an example.
 
 ## Format
 
-All five files share these rules:
+Five of the six kinds share these rules (tickets use one file per ticket,
+per their reference):
 
 - One `##` section per entry, newest first, headed
   `## <One-line title> — <YYYY-MM-DD>`, with a time added only when it

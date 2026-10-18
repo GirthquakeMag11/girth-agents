@@ -59,3 +59,9 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 ```
+
+`tracker/tickets/`
+
+Create the directory with the first ticket, one file per ticket at
+`tracker/tickets/<NN>-<slug>.md`. The ticket format lives in the tracker
+skill's `references/tickets.md`.
