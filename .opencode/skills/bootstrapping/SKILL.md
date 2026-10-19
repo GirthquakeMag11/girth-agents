@@ -31,6 +31,7 @@ designates another location.
 | Decisions          | `decisions/`                                                                 | decisions   | Whether decisions already exist worth recording now                                  |
 | Specs              | `specs/`                                                                     | specs       | Whether any design effort needs its spec written now                                 |
 | Plans              | `plans/`                                                                     | plans       | Nothing; created when an effort needs a map                                          |
+| Education          | `education/`                                                                 | education   | Whether the user wants an education workspace now                                    |
 | Trackers           | `tracker/HAZARDS.md`, `BUGS.md`, `DEFECTS.md`, `FEATURES.md`, `QUESTIONS.md` | tracker     | Nothing                                                                              |
 | Tickets            | `tracker/tickets/`                                                           | tracker     | Nothing; created with the first ticket, never at bootstrap                           |
 

@@ -62,16 +62,17 @@ what belongs in it and its format. **Activities** are what the agent does
 with the pieces; they own none. The agent reaches for each on its own when
 the situation fits.
 
-| Owner         | Defines                                                                       |
-| ------------- | ----------------------------------------------------------------------------- |
-| `glossary`    | `GLOSSARY.md` — the shared language: what things are                          |
-| `conventions` | `conventions/On_<Domain>.md` — your rulings on how things are done            |
-| `decisions`   | `decisions/NNNN-<slug>.md` — why the project is shaped the way it is          |
-| `tracker`     | `tracker/` — hazards, bugs, defects, features, open questions, and `tickets/` |
-| `docs`        | `AGENTS.md`, `CONTRIBUTING.md`, `README.md` — each for its reader             |
-| `changelog`   | `CHANGELOG.md` — what changed, for the project's users                        |
-| `specs`       | `specs/<slug>.md` — one design document per effort                            |
-| `plans`       | `plans/<slug>.md` — one live map per big, foggy effort                        |
+| Owner         | Defines                                                                               |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `glossary`    | `GLOSSARY.md` — the shared language: what things are                                  |
+| `conventions` | `conventions/On_<Domain>.md` — your rulings on how things are done                    |
+| `decisions`   | `decisions/NNNN-<slug>.md` — why the project is shaped the way it is                  |
+| `tracker`     | `tracker/` — hazards, bugs, defects, features, open questions, and `tickets/`         |
+| `docs`        | `AGENTS.md`, `CONTRIBUTING.md`, `README.md` — each for its reader                     |
+| `changelog`   | `CHANGELOG.md` — what changed, for the project's users                                |
+| `specs`       | `specs/<slug>.md` — one design document per effort                                    |
+| `plans`       | `plans/<slug>.md` — one live map per big, foggy effort                                |
+| `education`   | `education/` — one learner’s workspace: mission, resources, lessons, learning records |
 
 | Activity             | Use it when                                                                                                                                                                      |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -89,6 +90,7 @@ the situation fits.
 | `handoff`            | A session needs continuing elsewhere — the agent writes a handoff document that references, never duplicates                                                                     |
 | `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                      |
 | `to-questionnaire`   | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                    |
+| `teaching`           | The user wants to learn a real skill over time — the agent settles the mission, then teaches lesson by lesson in the zone of proximal development                                |
 | `diagnosing-bugs`    | Something is broken and the cause is not obvious                                                                                                                                 |
 | `tdd`                | Work that should be built or locked down test-first                                                                                                                              |
 | `code-review`        | A branch, PR, or work-in-progress change needs reviewing                                                                                                                         |
@@ -107,6 +109,7 @@ the situation fits.
 | `/handoff`       | Writes a handoff document for a fresh agent to pick up the conversation                                                                                                                 |
 | `/wait-what`     | Re-pitches the last message that didn't land, in plain English using the glossary's terms                                                                                               |
 | `/questionnaire` | Writes a questionnaire for the person who holds the knowledge a decision is blocked on                                                                                                  |
+| `/teach`         | Starts or resumes teaching, using the education workspace for state across sessions                                                                                                     |
 
 ## Contributing
 

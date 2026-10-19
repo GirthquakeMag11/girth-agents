@@ -40,6 +40,7 @@ and own none.**
 | `changelog` — `CHANGELOG.md`                        | `implementing` — slice an approved thing into tickets and work the frontier by each ticket's kind |
 | `specs` — `specs/`                                  | `wayfinding` — chart a big foggy effort and work its decisions until the way is clear             |
 | `plans` — `plans/`                                  | `diagnosing-bugs` — the feedback-loop discipline for hard bugs                                    |
+| `education` — `education/`                          |                                                                                                   |
 |                                                     | `tdd` — test-first at pre-agreed seams                                                            |
 |                                                     | `code-review` — two-axis review, Standards and Spec                                               |
 |                                                     | `codebase-design` — the deep-module vocabulary                                                    |
@@ -51,6 +52,7 @@ and own none.**
 |                                                     | `handoff` — a reference-style summary for the next agent                                          |
 |                                                     | `writing-for-agents` — the craft of writing documents agents consume                              |
 |                                                     | `to-questionnaire` — a questionnaire for the person who can answer a stuck decision               |
+|                                                     | `teaching` — teach a real skill across sessions                                                   |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
