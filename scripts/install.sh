@@ -90,9 +90,10 @@ for f in "$REPO_ROOT/.opencode/commands"/*.md; do
   install_one "$f" "$CONFIG_DIR/commands/$(basename "$f")"
 done
 
-for d in "$REPO_ROOT/.opencode/skills"/*/; do
+while IFS= read -r f; do
+  d="$(dirname "$f")"
   install_one "$d" "$CONFIG_DIR/skills/$(basename "$d")"
-done
+done < <(find "$REPO_ROOT/.opencode/skills" -type f -name SKILL.md)
 
 echo
 if [ "$installed" -eq 0 ] && [ "$skipped" -eq 0 ]; then

@@ -8,7 +8,7 @@ live by OpenCode while you work in this repo: editing a file is testing it.
 
 | Path | Role |
 | --- | --- |
-| `.opencode/skills/<id>/SKILL.md` | One skill per directory; `references/` and `scripts/` live beside `SKILL.md` and are addressed relative to it |
+| `.opencode/skills/{owners,activities}/<id>/SKILL.md` | One skill per directory, grouped by role; `references/` and `scripts/` live beside `SKILL.md` and are addressed relative to it |
 | `.opencode/commands/*.md` | One slash command per file, flat: entry points only a human triggers |
 | `.opencode/agents/*.md` | One distributable agent per file, flat |
 | `scripts/` | Maintainer tooling: catalog linter and installer |
@@ -17,8 +17,10 @@ live by OpenCode while you work in this repo: editing a file is testing it.
 ## Publishing rules (enforced by `node scripts/validate.mjs`)
 
 1. Agents and commands are flat `.md` files — no nested directories.
-2. Skills use the directory form: `.opencode/skills/<id>/SKILL.md`, where the
-   directory name is the skill ID. No flat `<id>.md` skills.
+2. Skills use the directory form at any depth: `.opencode/skills/<id>/SKILL.md`,
+   grouped by role under `owners/` and `activities/`. The directory holding
+   `SKILL.md` is the skill ID, and leaf names stay unique across both groups.
+   No flat `<id>.md` skills.
 3. Every ID (agent/command filename base, skill directory name) is lowercase
    kebab-case: `[a-z0-9]+(-[a-z0-9]+)*`.
 4. Required frontmatter:
@@ -35,7 +37,8 @@ live by OpenCode while you work in this repo: editing a file is testing it.
 8. Every "Call the skill tool with `<id>`" names a skill in this catalog.
 9. Every skill declares `metadata:` → `girth/role: owner` or `activity`.
    Owners are nouns, keep `references/template.md`, and call no skill;
-   activities are named with a verb ending in *-ing*.
+   activities are named for what they do or produce — a gerund where it
+   reads naturally, otherwise the action's own name.
 
 ## Designing skills
 

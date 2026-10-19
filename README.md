@@ -89,7 +89,7 @@ the situation fits.
 | `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                             |
 | `handoff`            | A session needs continuing elsewhere — the agent writes a handoff document that references, never duplicates                                                                     |
 | `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                      |
-| `to-questionnaire`   | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                    |
+| `questionnaire`      | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                    |
 | `teaching`           | The user wants to learn a real skill over time — the agent settles the mission, then teaches lesson by lesson in the zone of proximal development                                |
 | `diagnosing-bugs`    | Something is broken and the cause is not obvious                                                                                                                                 |
 | `tdd`                | Work that should be built or locked down test-first                                                                                                                              |

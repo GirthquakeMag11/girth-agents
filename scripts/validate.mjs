@@ -160,19 +160,36 @@ async function checkAgents() {
 
 async function checkSkills() {
   const dir = path.join(root, ".opencode", "skills")
-  const list = await entries(dir)
-  if (!list.length && !(await exists(dir))) note("no .opencode/skills directory yet")
-  let ok = 0
-  for (const e of list) {
-    const rel = path.posix.join("skills", e.name)
-    if (e.isFile()) {
-      err(rel, "skills must use the directory form .opencode/skills/<id>/SKILL.md where the directory name is the skill ID")
-      continue
+  if (!(await exists(dir))) {
+    note("no .opencode/skills directory yet")
+    return 0
+  }
+  // A skill is any directory holding a SKILL.md, at any depth; the ID is
+  // that directory's name. Group folders do not namespace.
+  const found = []
+  async function walk(d, relPrefix) {
+    for (const e of await entries(d)) {
+      const full = path.join(d, e.name)
+      const rel = path.posix.join(relPrefix, e.name)
+      if (e.isDirectory()) {
+        if (await exists(path.join(full, "SKILL.md"))) found.push({ sdir: full, rel })
+        else await walk(full, rel)
+      } else if (!e.name.startsWith(".")) {
+        err(rel, "files do not belong under skills/; a skill is a directory holding its SKILL.md and supporting files")
+      }
     }
-    if (!e.isDirectory()) continue
-    const id = e.name
-    const sdir = path.join(dir, id)
+  }
+  await walk(dir, "skills")
+
+  const seen = new Map()
+  let ok = 0
+  for (const { sdir, rel } of found) {
+    const id = path.basename(sdir)
     if (!KEBAB.test(id)) err(rel, `skill ID "${id}" must be lowercase kebab-case (a-z, 0-9, single dashes)`)
+    if (seen.has(id)) {
+      err(rel, `skill ID "${id}" is already used by ${seen.get(id)}; grouping directories do not namespace — leaf names must stay unique`)
+    }
+    seen.set(id, rel)
     let text
     try {
       text = await readFile(path.join(sdir, "SKILL.md"), "utf8")
@@ -185,13 +202,6 @@ async function checkSkills() {
     const role = fm ? ROLE.exec(fm)?.[1] : undefined
     if (fm && role !== "owner" && role !== "activity") {
       err(rel, "frontmatter must declare metadata girth/role: owner (defines a scaffold piece) or activity (does work, owns nothing)")
-    }
-    const words = id.split("-")
-    if (role === "activity" && !words[0].endsWith("ing")) {
-      warn(rel, `activity names are usually gerunds (got "${id}"); action-nouns and initialisms are allowed where the gerund would be stilted`)
-    }
-    if (role === "owner" && words[0].endsWith("ing")) {
-      warn(rel, `owner skills are named for the piece they own, a noun; "${id}" reads like an activity`)
     }
     if (role === "owner" && !(await exists(path.join(sdir, "references", "template.md")))) {
       err(rel, "owner skills keep their piece's creation template in references/template.md")

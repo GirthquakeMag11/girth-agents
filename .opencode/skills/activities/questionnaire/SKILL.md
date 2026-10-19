@@ -32,7 +32,7 @@ user could answer the subject, they would not need the recipient.
 
 ## The document
 
-Write `to-questionnaire-<slug>.md` — the slug taken from the topic — to the
+Write `questionnaire-<slug>.md` — the slug taken from the topic — to the
 operating system's temporary directory (`$TMPDIR`, else `/tmp`; `%TEMP%` on
 Windows) and report the path. It leaves the project untouched, like
 `/handoff`'s output.
