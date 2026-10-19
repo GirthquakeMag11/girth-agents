@@ -83,11 +83,9 @@ the situation fits.
 | `specifying`         | A settled design needs writing down as a spec                                                                                                                                    |
 | `implementing`       | You ask to build something planned — a spec, feature, bug, or defect — and the agent slices it into tickets and works them one at a time                                         |
 | `wayfinding`         | An effort is too big or too foggy to spec — the agent charts a live map and resolves its decisions one at a time                                                                 |
-| `retro`              | After a session, the agent reviews the environment and proposes improvements, each routed to its home                                                                            |
 | `prototyping`        | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict                                                               |
 | `wizard`             | A procedure only a human can do — the agent generates a step-by-step script that walks them through it                                                                           |
 | `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                             |
-| `handoff`            | A session needs continuing elsewhere — the agent writes a handoff document that references, never duplicates                                                                     |
 | `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                      |
 | `questionnaire`      | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                    |
 | `teaching`           | The user wants to learn a real skill over time — the agent settles the mission, then teaches lesson by lesson in the zone of proximal development                                |

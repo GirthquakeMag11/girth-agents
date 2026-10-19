@@ -45,13 +45,11 @@ and own none.**
 |                                                     | `code-review` — two-axis review, Standards and Spec                                               |
 |                                                     | `codebase-design` — the deep-module vocabulary                                                    |
 |                                                     | `research` — primary-source legwork in the background                                             |
-|                                                     | `retro` — review the agent's environment after a session                                          |
 |                                                     | `prototyping` — throwaway code that answers a design question                                     |
 |                                                     | `wizard` — a step-by-step script for human-only procedures                                        |
 |                                                     | `grilling` — the interview primitive: work the design tree, one round at a time                   |
-|                                                     | `handoff` — a reference-style summary for the next agent                                          |
 |                                                     | `writing-for-agents` — the craft of writing documents agents consume                              |
-|                                                     | `questionnaire` — a questionnaire for the person who can answer a stuck decision               |
+|                                                     | `questionnaire` — a questionnaire for the person who can answer a stuck decision                  |
 |                                                     | `teaching` — teach a real skill across sessions                                                   |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
@@ -66,8 +64,7 @@ The rules:
    call nothing.
 3. **Naming.** Owners are nouns, named for their piece. Activities are named
    for what they do or produce — a gerund where it reads naturally,
-   otherwise the action's own name (`research`, `retro`, `handoff`, `tdd`,
-   `wizard`).
+   otherwise the action's own name (`research`, `tdd`, `wizard`).
 4. **Reference-only activities.** An activity may be pure consult-on-demand
    material with no ordered steps (`codebase-design`); it still owns nothing.
 5. **Growth.** A new piece gets an owner. A new process gets an activity.

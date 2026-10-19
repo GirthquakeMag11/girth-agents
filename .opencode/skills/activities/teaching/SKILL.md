@@ -62,4 +62,4 @@ easy; practice stays effortful.
 
 - education — the workspace and every format this skill writes to.
 - grilling — the mission interview.
-- handoff — a long teaching run that needs to resume in another session.
+- `/handoff` — a long teaching run that needs to resume in another session.
