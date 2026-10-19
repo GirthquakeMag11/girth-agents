@@ -1,5 +1,8 @@
 # PR body format
 
+<!-- Adapted from the show-me skill by Dex Horthy, Humanlayer;
+     see the repo's THIRD_PARTY_NOTICES.md. -->
+
 Use this shape for the body of a pull request, in the glossary's terms, prose
 kept brief.
 

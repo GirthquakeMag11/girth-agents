@@ -117,4 +117,5 @@ the situation fits.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Material adapted from other repositories is
+accounted for in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
