@@ -23,11 +23,11 @@ solution, and the decisions along the way.
    expectation.
 3. **Write the spec** in the format defined by the specs skill (call the
    skill tool with `specs`), filling every section. No file paths or code
-   snippets in the decisions — they go stale; inline a snippet only when it
-   encodes a decision more precisely than prose.
+   snippets in the Implementation Decisions — they go stale; inline a
+   snippet only when it encodes a decision more precisely than prose.
 4. **Present it to the user** for approval or amendment. The spec governs
-   only once approved; notes that are still open and cannot be settled now
-   are tracked as questions, not silently baked in.
+   only once approved; questions that are still open and cannot be settled
+   now are tracked, not silently baked in.
 
 ## Related skills
 

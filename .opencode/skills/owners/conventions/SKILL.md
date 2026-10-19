@@ -10,7 +10,7 @@ metadata:
 ## Purpose
 
 `conventions/`, at the project root, holds the user's rulings on how
-something in the project is meant to be, or should be, done. It answers *how
+something in the project is meant to be done. It answers *how
 things are done*. Its creation template is `references/template.md`.
 
 ## What belongs

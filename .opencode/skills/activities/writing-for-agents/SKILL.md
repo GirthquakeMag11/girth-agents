@@ -9,8 +9,8 @@ metadata:
 
 Reference for writing any document an agent consumes: a skill, an
 `AGENTS.md`, a doc reached by a pointer. The packaging differs; the writing
-does not — the same levers make each one predictable, because the agent runs
-the same *process* every time rather than producing the same output.
+does not — the same levers make each one predictable, because the writer runs
+the same *process* every time rather than reusing the same output.
 
 ## Context pointers
 
@@ -23,9 +23,8 @@ variance bug: sharpen the wording first; inline the material only if
 sharpening fails.
 
 A pointer does two jobs: state what the material is, and list the
-**branches** that should trigger reaching it — one trigger per branch, with
-the leading word front-loaded, and the identity the body already carries cut
-away.
+**branches** that should trigger reaching it — one trigger per branch, with the leading word front-loaded, and anything
+the body already says left out.
 
 ## The two loads
 
@@ -96,7 +95,7 @@ pretrained word gives free, so reach for an existing word first.
 
 **Negation** is the failure mode beside it: steering by prohibition drags the
 forbidden behaviour into context and makes it *more* available. Prompt the
-positive — state the target behavior so the banned one is never spoken; a
+positive — state the target behaviour so the banned one is never spoken; a
 prohibition earns its place only as a guardrail you cannot phrase
 positively, paired with the positive target.
 

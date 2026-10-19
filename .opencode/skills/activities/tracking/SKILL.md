@@ -14,7 +14,7 @@ this skill is how an agent decides and acts.
 
 ## Handling an item
 
-1. **Classify it.** Call the skill tool with `tracker` for the five kinds and
+1. **Classify it.** Call the skill tool with `tracker` for the item kinds and
    the close calls between them.
 2. **Decide: act now, or record.** Read this skill's reference for the kind
    before acting — `references/hazards.md`, `references/bugs.md`,
@@ -31,8 +31,8 @@ this skill is how an agent decides and acts.
      `bootstrapping` and create it, then write the entry.
 4. **Return to the task.**
 
-The item is handled when it was either dealt with now or recorded in full,
-and the task has resumed.
+The item is handled when it has either been dealt with or recorded in
+full, and the task has resumed.
 
 ## Picking up a tracked item
 
@@ -53,8 +53,8 @@ Some calls belong to the user. When one comes up:
 - Otherwise, make a defensible provisional decision, proceed, and track a
   question recording that decision and where it is embodied.
 
-A question so broad that the task cannot proceed at all is asked now and
-never tracked.
+A question broad enough to stop the task follows
+`references/questions.md`: it is asked now, never tracked.
 
 ## Related skills
 

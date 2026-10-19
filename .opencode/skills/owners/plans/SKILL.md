@@ -63,5 +63,5 @@ A map changes only along its front: a resolved decision is gisted into
 `Decisions so far`; what an answer sharpens graduates from `Not yet
 specified` into a tracker question, and what proves to sit beyond the
 destination moves to `Out of scope`. When the way is clear — every decision
-resolved and nothing left to state — the map is marked `done` and hands off.
+resolved and nothing left to state — the map is marked `done`; the effort proceeds without it.
 A map that is `done` is history; a redrawn destination is a new map.

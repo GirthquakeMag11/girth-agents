@@ -13,8 +13,7 @@ callers, locality for maintainers, testability for everyone.
 
 ## Glossary
 
-Use these terms exactly; don't substitute "component," "service," "API," or
-"boundary." Consistent language is the whole point.
+Use these terms exactly. Consistent language is the whole point.
 
 **Module**: anything with an interface and an implementation. Deliberately
 scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_:

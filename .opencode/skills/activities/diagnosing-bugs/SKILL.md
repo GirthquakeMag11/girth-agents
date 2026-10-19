@@ -1,6 +1,6 @@
 ---
 name: Diagnosing Bugs
-description: Find the cause of a hard bug systematically — build a tight, red-capable reproduction loop before theorising, minimise it, rank falsifiable hypotheses, and fix with a regression test. Use when the user reports something broken or asks to debug it, or when you have tried and failed to fix a bug.
+description: Find the cause of a hard bug systematically through a tight, red-capable reproduction loop, and lock the fix in with a regression test. Use when the user reports something broken or asks to debug it, or when you have tried and failed to fix a bug.
 metadata:
   girth/role: activity
 ---
@@ -26,8 +26,8 @@ loop** — one command that goes red on *this* bug — is what bisection,
 hypothesis-testing, and instrumentation all consume. Without it, staring at
 code saves nothing. Spend disproportionate effort here.
 
-Ways to construct one, roughly in order: a failing test at the seam that
-reaches the bug; a curl or HTTP script against a running dev server; a CLI
+Ways to construct one, roughly in order: a failing test at a seam the
+bug's path crosses; a curl or HTTP script against a running dev server; a CLI
 invocation with a fixture input diffed against a known-good snapshot; a
 headless browser script; replaying a captured trace; a throwaway harness
 that exercises the path with one call; a property or fuzz loop for
@@ -67,7 +67,7 @@ makes the loop go green.
 Generate **3–5 ranked, falsifiable hypotheses** before testing any of them.
 Each states its prediction: "if X is the cause, then changing Y makes the
 bug disappear, or changing Z makes it worse." A hypothesis that cannot state
-a prediction is a vibe — discard or sharpen it. Show the ranked list to
+a prediction is a guess, not a hypothesis — discard or sharpen it. Show the ranked list to
 the user; they often re-rank instantly. Don't block on it — proceed with
 your ranking if the user is away.
 
@@ -83,8 +83,8 @@ baseline, then bisect.
 ## Phase 5: Fix + regression test
 
 Write the regression test **before the fix**, but only at a **correct
-seam** — one that exercises the real bug pattern where it occurs at the
-call site. A too-shallow seam gives false confidence. If **no correct seam
+seam** — one that exercises the real bug pattern at the call site where it
+occurs. A too-shallow seam gives false confidence. If **no correct seam
 exists, that is the finding**: note it, and record it as a defect (call the
 skill tool with `tracking`) — the architecture is preventing the bug from
 being locked down. Otherwise: turn the minimised repro into a failing test,

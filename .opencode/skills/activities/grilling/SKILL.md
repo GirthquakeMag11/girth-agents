@@ -32,7 +32,7 @@ open in this round belongs to a later round.
 
 Finding **facts** is your job, never the user's: look the fact up or
 dispatch a sub-agent for it before asking anything the environment could
-tell you. The **decisions** are the user's: put each to them and wait.
+tell you. The **decisions** are the user's: put each decision to them and wait for their answer.
 
 The session is done when the frontier is empty — every branch of the design
 tree visited, nothing left silently assumed. Do not act on the matter until

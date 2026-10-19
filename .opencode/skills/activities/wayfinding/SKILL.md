@@ -19,11 +19,11 @@ way is clear and it is time to hand off.
 When the user brings a loose effort:
 
 1. **Chart the front.** Call the skill tool with `grilling`: settle the
-   destination first — the spec, decision, or change this effort finds; it
-   fixes the scope — then fan out **breadth-first** across the open
+   destination first — the spec, decision, or change this effort is
+   finding its way to; it fixes the scope — then fan out **breadth-first** across the open
    decisions rather than going deep on one thread. If this surfaces no fog —
-   the way is already clear — stop: the effort may not need a map, and you
-   ask the user how to proceed.
+   the way is already clear — stop: the effort may not need a map; ask
+   the user how to proceed.
 2. **Write the map** (call the skill tool with `plans`): Destination and
    Notes filled, Decisions so far empty, the fog sketched into Not yet
    specified.
@@ -48,6 +48,6 @@ One decision per session, unless the session is only research:
 4. Graduate what the answer sharpened: fog that can now be stated becomes a
    new question, cleared from Not yet specified; a question that now sits
    beyond the destination is ruled out of scope, not resolved.
-5. When the way is clear, mark the map **done** and hand off — the user may
-   then call the skill tool with `specifying`, or the destination was itself
-   the decision.
+5. When the way is clear, mark the map **done** and hand off — the user may then ask for the
+   spec (call the skill tool with `specifying`), or the destination was
+   itself the decision.

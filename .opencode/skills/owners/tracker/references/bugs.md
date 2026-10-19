@@ -37,7 +37,7 @@ ground.
   - 2026-10-09: tried `pointer-events: none` on the summary — kills the
     click toggle instead. Reverted.
   - 2026-10-09: suspected a Safari `<details>` focus quirk; nothing found
-    inside the task's timebox — tracked.
+    inside the task's timebox — entry opened.
   - 2026-10-12: picked up; blurred the summary on `focusout`. Verified in
     Safari 18 and Chrome.
 - **Fixed — 2026-10-12:** blur-on-focusout handler plus a regression test.

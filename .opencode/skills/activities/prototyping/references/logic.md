@@ -28,7 +28,7 @@ Plain HTML/CSS/JS, everything inline, opens by double-click. Top to bottom:
 2. **Current state** — a readable labelled panel, re-rendered after every
    click, calling out what just changed.
 3. **Free-play buttons** — one per action, always available, any order.
-4. **Guided walkthroughs** — scenariness, one per tab: a plain-language
+4. **Guided walkthroughs** — scenarios, one per tab: a plain-language
    description then the ordered buttons to press, each a real button that
    advances the scenario from a known initial state. Pick the awkward cases.
 
@@ -40,7 +40,7 @@ No animations.
 They click through; the interesting feedback is "that shouldn't be possible"
 and "I assumed X" — those are bugs in the *idea*. Once answered: the
 validated logic lifts into the real module, and the HTML shell rides along to
-the throwaway branch that keeps the prototype as a primary source.
+the throwaway branch that keeps the prototype as the evidence behind the verdict.
 
 ## Anti-patterns
 

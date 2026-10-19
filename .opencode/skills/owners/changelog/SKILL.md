@@ -32,7 +32,7 @@ entry rules below still govern what each entry says.
 
 ## Format
 
-Keep a Changelog, with SemVer versions. `## [Unreleased]` sits at the top,
+The format follows Keep a Changelog, with SemVer versions. `## [Unreleased]` sits at the top,
 then one `## [<version>] - <YYYY-MM-DD>` section per release, newest first.
 Each holds these sections, in this order:
 

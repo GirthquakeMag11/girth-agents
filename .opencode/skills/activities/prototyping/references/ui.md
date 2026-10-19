@@ -18,7 +18,7 @@ create a throwaway route, named so it is obviously a prototype.
 
 Default to **3**, cap at 5. Each must be **structurally different** — layout,
 information hierarchy, primary affordance — not just colours. Two similar
-drafts means redoing one. Read-only: point any mutation at a stub.
+drafts mean one gets redone. Read-only: point any mutation at a stub.
 
 ## The switcher
 
@@ -33,7 +33,7 @@ builds. One shared component for both hosting shapes.
 Once a variant wins, capture the verdict (which, and why). Fold the winner
 into the real code — rewritten properly, not promoted as-is — and take the
 losing variants plus the switcher onto the throwaway branch, not main, since
-they are the primary source and rot fast in main.
+they back the verdict and rot fast in main.
 
 ## Anti-patterns
 

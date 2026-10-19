@@ -14,7 +14,7 @@ writes them where they belong, confirms at every stage, and shows how many
 stages are left. It never does a step only the human can do; it makes the
 human's part short and unmissable.
 
-The UX is already solved by `references/template.sh` — stage progress,
+`references/template.sh` already provides the UX — stage progress,
 confirmation gates, cross-platform URL opening, hidden secret entry,
 idempotent `.env` upserts, secret writes, a closing summary. Author only the
 stages; the library above the `STAGES` marker is identical in every wizard
@@ -31,7 +31,7 @@ and never hand-edited.
 2. **Map each stage's journey.** For each stage, the precise path a human
    follows — which URL, what to do there, where the value appears, which
    variable it fills. Where you do not actually know the current UI or the
-   exact command, say so and check; never invent steps that may not exist.
+   exact command, say so and check; invent a step only after verifying it exists.
 3. **Author the wizard.** Copy `references/template.sh` to the target path,
    replace the example with one `stage` per step in dependency order, and
    set `TOTAL_STAGES`. Hold the template's bar: open the URL before asking
@@ -39,7 +39,7 @@ and never hand-edited.
    persisted value, `set_secret` only what CI needs, and `confirm` before
    anything irreversible.
 4. **Verify and hand off.** `bash -n` the script, run `shellcheck` if
-   present, `chmod +x`, and never run it end-to-end yourself — it opens
+   present, `chmod +x`, and leave the end-to-end run to the human — it opens
    browsers and blocks on human input. Trace it statically instead: every
    value captured lands where step 1 said, and every secret name matches a
    `secrets.*` reference in CI. Tell the user how to run it; if it is a

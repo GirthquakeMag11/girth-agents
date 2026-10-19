@@ -25,8 +25,8 @@ keep it?"
 1. Record the answer on the entry.
 2. Fold it into the project where it belongs: when it settles what a term
    means, how something is done, or why the project is shaped a certain
-   way, call the skill tool with `codifying` and record it. The question
-   disappears from the source, not just from the tracker.
+   way, call the skill tool with `codifying` and record it. The answer
+   lands in the project's records, not just in the tracker.
 3. Re-check the work built on the provisional decision: confirm it if the
    answer matches; change it if not.
 4. Record the follow-through on the entry.

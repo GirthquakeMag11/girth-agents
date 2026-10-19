@@ -1,6 +1,6 @@
 ---
 name: TDD
-description: Build and fix code test-first — red, green, refactor — at seams the user has pre-agreed, one vertical slice per cycle. Use when building a feature or fixing a bug, when the user asks to work test-first, or to make a change a regression test can lock down.
+description: Build and fix code test-first — red, green, refactor — at seams the user has pre-agreed. Use when building a feature or fixing a bug, when the user asks to work test-first, or to make a change a regression test can lock down.
 metadata:
   girth/role: activity
 ---
@@ -39,7 +39,7 @@ vocabulary.
 
 ## Anti-patterns
 
-- **Implementation-coupled:** mocks internal collaborators, tests private
+- **Implementation-detail tests:** mocks internal collaborators, tests private
   methods, or verifies through a side channel. The tell: the test breaks on
   a refactor while behavior is unchanged.
 - **Tautological:** the assertion recomputes the expected value the way the

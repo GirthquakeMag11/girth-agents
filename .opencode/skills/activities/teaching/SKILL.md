@@ -41,17 +41,16 @@ Each session reads:
   skill-heavy. Reuse `assets/` before authoring new components, and open the
   lesson for the learner when done.
 - **Reference documents** where the topic rewards them — cheat sheets,
-  glossaries; the compressed units the learner returns to.
-- **A learning record** whenever one of its four triggers fires:
-  understanding demonstrated, prior knowledge disclosed, a misconception
-  corrected, or the mission shifted. Never on coverage alone. New terms
+  the compressed units the learner returns to.
+- **A learning record** whenever the `education` skill's learning-record
+  format calls for one — on a trigger, never on coverage alone. New terms
   enter the workspace glossary only once the learner can use them.
 
 ## Wisdom comes from people
 
 When the learner asks something that needs real-world experience, attempt
-an answer, then delegate: point at the communities in `RESOURCES.md` where
-the skill can be tested against other practitioners. A learner who prefers
+an answer, then hand it over: point at the communities in `RESOURCES.md`
+where the learner can test the skill with other practitioners. A learner who prefers
 not to join communities is respected; `NOTES.md` keeps that and every other
 teaching preference.
 
@@ -62,4 +61,4 @@ easy; practice stays effortful.
 
 - education — the workspace and every format this skill writes to.
 - grilling — the mission interview.
-- `/handoff` — a long teaching run that needs to resume in another session.
+- `/handoff` — the command for a long teaching run that must resume in another session.

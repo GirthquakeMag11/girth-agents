@@ -1,16 +1,16 @@
 ---
-name: To Questionnaire
+name: Questionnaire
 description: Turn a decision that depends on knowledge you do not have into a Markdown questionnaire for the person who does, aimed at exactly what you need back. Use when a decision is blocked on someone outside the conversation.
 metadata:
   girth/role: activity
 ---
 
-# To Questionnaire
+# Questionnaire
 
 When a decision is stuck because someone **outside** the conversation holds
 the missing knowledge, produce a questionnaire that pulls it out of them.
-Everything in-project is handled by `grilling`, the questions tracker, and
-`codifying`; this skill is the outward case, handed over the wall.
+Everything in-project is handled by `grilling`, the tracker's questions
+kind, and `codifying`; this skill is the outward case, handed over the wall.
 
 ## Grill the send, not the subject
 
@@ -33,8 +33,7 @@ user could answer the subject, they would not need the recipient.
 ## The document
 
 Write `questionnaire-<slug>.md` — the slug taken from the topic — to the
-operating system's temporary directory (`$TMPDIR`, else `/tmp`; `%TEMP%` on
-Windows) and report the path. It leaves the project untouched, like
+temporary directory `/handoff` uses, and report the path. It leaves the project untouched, like
 `/handoff`'s output.
 
 ```markdown

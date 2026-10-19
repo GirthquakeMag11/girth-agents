@@ -13,14 +13,14 @@ and why it matters for future sessions.}
 ```
 
 That is the whole format. Optional parts, added only when they carry real
-information: a `Status:` line (`active`, or `superseded by LR-NNNN`),
+information: a `Status:` line (`active`, or `superseded by <NNNN>`),
 `Evidence:` (how the learner demonstrated it), and `Implications:` (what it
 unlocks or rules out).
 
 ## When to write one
 
 1. **Understanding demonstrated** — the learner can use a non-trivial
-   concept correctly, not merely met it.
+   concept correctly, not merely have met it.
 2. **Prior knowledge disclosed** — "I already know X," with the depth
    claimed, so it is never re-taught.
 3. **A misconception corrected** — previously wrong, now seen; these predict
@@ -33,5 +33,5 @@ already in the workspace glossary, and session-by-session activity logs.
 ## Supersession
 
 When a later record contradicts an earlier one, mark the old record
-`Status: superseded by LR-NNNN`; never delete it. The history of how
+`Status: superseded by <NNNN>`; never delete it. The history of how
 understanding evolved is itself signal.

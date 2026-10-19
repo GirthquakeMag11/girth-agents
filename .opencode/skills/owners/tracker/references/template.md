@@ -43,7 +43,7 @@ format.
 # FEATURES
 
 What the project may become. Entries are created on request and close only
-with the maintainer's approval; see the tracker skill for the format.
+with the user's approval; see the tracker skill for the format.
 
 <!-- entries below, newest first, one `##` section each -->
 ```
@@ -63,5 +63,5 @@ applied to the work later. See the tracker skill.
 `tracker/tickets/`
 
 Create the directory with the first ticket, one file per ticket at
-`tracker/tickets/<NN>-<slug>.md`. The ticket format lives in the tracker
-skill's `references/tickets.md`.
+`tracker/tickets/<NN>-<slug>.md`. The ticket format is in
+`references/tickets.md`.

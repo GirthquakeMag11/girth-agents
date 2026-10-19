@@ -19,7 +19,7 @@ Create `specs/` at the project root if needed, then the spec:
 
 ## Implementation Decisions
 <!-- Modules built or changed, their interfaces, architectural decisions,
-     schema changes, API contracts. No file paths or code snippets. -->
+     schema changes, API contracts. No file paths or code snippets; inline a snippet only when it encodes a decision more precisely than prose. -->
 
 ## Testing Decisions
 <!-- What makes a good test here, which modules are tested, prior art. -->

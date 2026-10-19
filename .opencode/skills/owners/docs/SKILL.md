@@ -30,6 +30,11 @@ reference describes. Across all three: point rather than repeat. A line
 naming `tracker/HAZARDS.md` lets that file speak for itself; a copy of its
 contents would go stale.
 
+Tables in any of the three documents are padded for plain text: each column
+is as wide as its widest cell, so the divider dashes line up with the cell
+text. A table whose columns sit ragged against the pipes is unfinished —
+nothing else is coming to format it.
+
 ## Changing it
 
 Each document describes the project as it is now. When its subject changes,

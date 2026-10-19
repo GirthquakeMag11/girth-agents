@@ -24,7 +24,7 @@ entry, or a lone ticket already sliced.
   `research`, or `refactor` as the slice demands.
 - Write the tickets in the format the tracker skill defines (call the skill
   tool with `tracker`), numbered in dependency order, each naming its
-  `Parent:`. A sliced bug or defect entry gains a `Tickets:` pointer.
+  `Parent:`. A sliced bug or defect entry gains a pointer to its tickets.
 
 ## 3. The one checkpoint
 

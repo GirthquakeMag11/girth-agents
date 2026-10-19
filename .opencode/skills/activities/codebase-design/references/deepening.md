@@ -13,7 +13,7 @@ how the deepened module is tested across its seam.
 1. **In-process.** Pure computation, in-memory state, no I/O. Always
    deepenable: merge the modules and test through the new interface
    directly. No adapter needed.
-2. **Local-substitutable.** Dependencies with local test stand-ins (PGLite
+2. **Local-substitutable.** Dependencies with local test stand-ins (PGlite
    for Postgres, an in-memory filesystem). Deepenable where the stand-in
    exists: test with the stand-in in the suite. The seam stays internal; no
    port at the module's external interface.

@@ -7,8 +7,7 @@ metadata:
 
 # Maintaining Docs
 
-Drift is the failure mode: a reader who trusts a stale document pays for the
-lie later. This skill keeps the documents true; the docs and changelog
+Drift is the failure mode. This skill keeps the documents true; the docs and changelog
 skills define what each document contains.
 
 ## After a change
@@ -56,12 +55,8 @@ Done when the release section exists under the confirmed version.
 ## Formatting for plain text
 
 These documents are read as raw Markdown at least as often as they are
-rendered. Every table must read as a table in plain text: pad each column
-to its widest cell so the divider dashes and the cell text line up. A table
-whose columns sit ragged against the pipes — everything collapsed into left
-justification, waiting for a renderer to tidy it — is unfinished, because
-nothing else is coming to format it. Write tables the way the source should
-look when finished.
+rendered. Write tables per the docs skill's Format: padded so each column
+is as wide as its widest cell.
 
 ## Related skills
 

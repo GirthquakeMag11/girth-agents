@@ -1,6 +1,6 @@
 ---
 name: Bootstrapping
-description: Create a project's management scaffold — docs, changelog, glossary, conventions, decisions, specs, trackers — whole, or one missing piece. Use when setting up a project, or when work needs a scaffold piece that does not exist yet.
+description: Create a project's management scaffold — whole, or one missing piece. Use when setting up a project, or when work needs a scaffold piece that does not exist yet.
 metadata:
   girth/role: activity
 ---
@@ -58,8 +58,9 @@ convention — exactly what `conventions/` is for.
 
 Call the skill tool with the piece's owner and read its `template.md`
 reference. Create the piece from the template, filling what is known. Leave
-placeholders for the rest, never guessing the project's name, and leave a
-note in the piece for anything the user should confirm later.
+placeholders for the rest, never guessing facts the project has not
+stated, and leave a note in the piece for anything the user should confirm
+later.
 
 ## One piece, mid-task
 

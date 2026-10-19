@@ -35,4 +35,4 @@ The rules:
 - **Prune ruthlessly.** Wrong, shallow, or off-mission sources get removed,
   not buried.
 - **Record community preferences.** A learner who opted out of communities
-  gets a note here so future sessions stop proposing them.
+  gets a note in `NOTES.md` so future sessions stop proposing them.

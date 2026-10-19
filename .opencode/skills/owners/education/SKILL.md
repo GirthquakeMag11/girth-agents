@@ -37,7 +37,7 @@ not a second mission file.
   understanding demonstrated, prior knowledge disclosed, misconceptions
   corrected, mission shifts. See `references/learning-record-format.md`.
 - `assets/` — reusable lesson components: stylesheets, quiz widgets,
-  simulators. Reused before new ones are written.
+  simulators; existing components are reused before new ones are written.
 - `NOTES.md` — the learner's preferences and working notes.
 
 Everything is created lazily: the workspace starts near-empty and grows as

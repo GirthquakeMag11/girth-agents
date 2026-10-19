@@ -9,7 +9,7 @@ is user-gated:
 - An entry closes only with the user's approval, one of two ways:
   implemented, or cancelled. Implementation alone does not close it.
 - A cancellation records a durable reason: why the project will not do this,
-  in terms that will still hold later — its scope, a constraint, a decision.
+  in terms that will still hold later — scope, a constraint, a decision.
   "Not now" is a deferral, and the entry stays open.
 
 Features relate to each other: prerequisites, components, mutual exclusions,

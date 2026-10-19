@@ -28,7 +28,7 @@ test("user can checkout with valid cart", async () => {
 // BAD: tests implementation details
 test("checkout calls paymentService.process", async () => {
   const mockPayment = mock(paymentService)
-  await checkout(cart, payment)
+  await checkout(cart, mockPayment)
   expect(mockPayment.process).toHaveBeenCalledWith(cart.total)
 })
 ```

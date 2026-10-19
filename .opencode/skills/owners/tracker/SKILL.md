@@ -1,6 +1,6 @@
 ---
 name: Tracker
-description: Defines tracker/, the project's open items — six kinds: hazards, bugs, defects, features, questions, and tickets, with their boundaries, entry formats, and closing rules. Use when writing or editing a tracker file.
+description: Defines tracker/, the project's open items — hazards, bugs, defects, features, questions, and their boundaries, entry formats, and closing rules, plus `tickets/` for scheduled work slices. Use when writing or editing a tracker file.
 metadata:
   girth/role: owner
 ---
@@ -41,8 +41,8 @@ The close calls:
 - **Bug or feature.** It works as intended and the want is for it to do
   more → feature.
 
-Each kind's reference holds its full definition, entry fields, closing line,
-and an example.
+Each kind's reference holds its full definition, entry fields, and closing
+line; some add an example.
 
 ## Format
 

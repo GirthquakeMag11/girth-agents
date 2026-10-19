@@ -1,6 +1,6 @@
 ---
 name: Prototyping
-description: Build throwaway code that answers a design question — a shareable state-machine demo for "does this logic feel right," or switchable UI variations for "what should this look like" — and capture the verdict, not just the artifact. Use when a design question needs making concrete to answer it.
+description: Build throwaway code that answers a design question — a shareable state-machine demo for "does this logic feel right," or switchable UI variations for "what should this look like". Use when a design question needs making concrete to answer it.
 metadata:
   girth/role: activity
 ---
@@ -12,7 +12,7 @@ decides the shape. Identify which question is being asked, from the user's
 prompt and the surrounding code, or by asking if the user is around:
 
 - "Does this logic or state model feel right?" → read `references/logic.md`
-  and build a single shareable HTML drive-the-state demo.
+  and build a single shareable HTML state-machine demo.
 - "What should this look like?" → read `references/ui.md` and build several
   radically different, switchable UI variations.
 
@@ -35,8 +35,8 @@ code, and state the assumption at the top of the prototype.
    the user sees what changed.
 6. **Capture when done.** A decision the prototype validated is recorded by
    calling the skill tool with `codifying`, once the user settles it. The
-   prototype itself is committed to a throwaway branch, out of main, as a
-   primary source — and the *verdict* (the answer, and the question it
+   prototype itself is committed to a throwaway branch, out of main, as
+   the evidence behind the verdict — and the *verdict* (the answer, and the question it
    settled) is captured with it.
 
 ## Related skills

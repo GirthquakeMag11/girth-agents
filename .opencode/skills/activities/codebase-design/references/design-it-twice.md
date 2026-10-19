@@ -8,7 +8,7 @@ skill's vocabulary: **module**, **interface**, **seam**, **adapter**,
 
 ## 1. Frame the problem space
 
-Before spawning anything, write the user-facing paragraph for the candidate
+Before spawning anything, write a user-facing paragraph about the module
 being explored:
 
 - the constraints any new interface must satisfy,

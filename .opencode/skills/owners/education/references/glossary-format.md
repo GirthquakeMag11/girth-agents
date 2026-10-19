@@ -19,7 +19,7 @@ _Avoid_: <rejected synonyms, comma-separated>
 
 The rules:
 
-- **Add a term only when the user understands it.** The glossary records
+- **Add a term only when the learner understands it.** The glossary records
   compressed knowledge, not a reading list. Until the learner can use a
   concept correctly, it waits.
 - **Be opinionated.** Where several words exist for one concept, pick the
