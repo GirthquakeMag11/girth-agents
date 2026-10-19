@@ -51,8 +51,9 @@ Two more sections join the file when first needed:
 - `## Relationships` — settled relationships between terms, one bullet
   each, terms in bold: `- An **Order** holds one or more **Line items**`.
 - `## Flagged ambiguities` — words that meant more than one thing, and how
-  each was resolved: `- "backlog" meant both the tool and the work in it.
-  Resolved: the tool is the **Issue tracker**; "backlog" is retired.`
+  each was resolved: `- "ticket" meant both the reported problem and the
+  follow-up work. Resolved: the problem is a **bug**; the follow-up is a
+  **ticket**.`
 
 ## Changing it
 
