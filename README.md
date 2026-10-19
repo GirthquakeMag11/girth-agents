@@ -88,6 +88,7 @@ the situation fits.
 | `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                             |
 | `handoff`            | A session needs continuing elsewhere — the agent writes a handoff document that references, never duplicates                                                                     |
 | `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                      |
+| `to-questionnaire`   | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                    |
 | `diagnosing-bugs`    | Something is broken and the cause is not obvious                                                                                                                                 |
 | `tdd`                | Work that should be built or locked down test-first                                                                                                                              |
 | `code-review`        | A branch, PR, or work-in-progress change needs reviewing                                                                                                                         |
@@ -96,15 +97,16 @@ the situation fits.
 
 ### Commands
 
-| Command      | What it does                                                                                                                                                                            |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/bootstrap` | Runs a full bootstrap: explores the project, asks you one round of questions with recommended answers, and creates every missing scaffold piece. Text after the command is passed along |
-| `/spec`      | Turns the current conversation into a spec for your approval                                                                                                                            |
-| `/implement` | Implements something planned — a spec, feature, bug, or defect — slicing it into tickets if needed, with one checkpoint on the blocking edges before work begins                        |
-| `/wayfind`   | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear                                                                                         |
-| `/retro`     | Reviews a session and proposes environment improvements, most severe first                                                                                                              |
-| `/handoff`   | Writes a handoff document for a fresh agent to pick up the conversation                                                                                                                 |
-| `/wait-what` | Re-pitches the last message that didn't land, in plain English using the glossary's terms                                                                                               |
+| Command          | What it does                                                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/bootstrap`     | Runs a full bootstrap: explores the project, asks you one round of questions with recommended answers, and creates every missing scaffold piece. Text after the command is passed along |
+| `/spec`          | Turns the current conversation into a spec for your approval                                                                                                                            |
+| `/implement`     | Implements something planned — a spec, feature, bug, or defect — slicing it into tickets if needed, with one checkpoint on the blocking edges before work begins                        |
+| `/wayfind`       | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear                                                                                         |
+| `/retro`         | Reviews a session and proposes environment improvements, most severe first                                                                                                              |
+| `/handoff`       | Writes a handoff document for a fresh agent to pick up the conversation                                                                                                                 |
+| `/wait-what`     | Re-pitches the last message that didn't land, in plain English using the glossary's terms                                                                                               |
+| `/questionnaire` | Writes a questionnaire for the person who holds the knowledge a decision is blocked on                                                                                                  |
 
 ## Contributing
 
