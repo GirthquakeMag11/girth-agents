@@ -1,7 +1,7 @@
 # Slicing
 
-How an approved thing — a spec, a feature, a bug, a defect — becomes
-tickets.
+How a spec, or a bug or defect entry, becomes tickets; a feature is sliced
+through its spec.
 
 A **ticket** is a tracer-bullet vertical slice: a thin but *complete* path
 through every layer (schema, API, UI, tests). Not horizontal — never one

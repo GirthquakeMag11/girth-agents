@@ -81,7 +81,7 @@ the situation fits.
 | `codifying`          | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it     |
 | `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release                                                                |
 | `specifying`         | A settled design needs writing down as a spec                                                                                                                                    |
-| `implementing`       | You ask to build something planned — a spec, feature, bug, or defect — and the agent slices it into tickets and works them one at a time                                         |
+| `implementing`       | You ask to build something planned — a spec, bug, or defect — and the agent slices it into tickets and works them one at a time; a feature implements through its spec           |
 | `wayfinding`         | An effort is too big or too foggy to spec — the agent charts a live map and resolves its decisions one at a time                                                                 |
 | `prototyping`        | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict                                                               |
 | `wizard`             | A procedure only a human can do — the agent generates a step-by-step script that walks them through it                                                                           |
@@ -101,7 +101,7 @@ the situation fits.
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/bootstrap`     | Runs a full bootstrap: explores the project, asks you one round of questions with recommended answers, and creates every missing scaffold piece. Text after the command is passed along |
 | `/spec`          | Turns the current conversation into a spec for your approval                                                                                                                            |
-| `/implement`     | Implements something planned — a spec, feature, bug, or defect — slicing it into tickets if needed, with one checkpoint on the blocking edges before work begins                        |
+| `/implement`     | Implements planned work — a spec, bug, or defect; a feature via its spec — slicing into tickets if needed, with one checkpoint on the blocking edges before work begins                 |
 | `/wayfind`       | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear                                                                                         |
 | `/retro`         | Reviews a session and proposes environment improvements, most severe first                                                                                                              |
 | `/handoff`       | Writes a handoff document for a fresh agent to pick up the conversation                                                                                                                 |

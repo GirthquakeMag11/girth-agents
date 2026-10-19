@@ -24,7 +24,7 @@ after what blocks it. Create `tracker/tickets/` with the first ticket.
 ```markdown
 # <NN>: <Ticket title>
 
-**Parent:** <what this advances: a spec path, a feature, a bug, or a defect>
+**Parent:** <the source this was sliced from: a spec path, a bug, or a defect>
 
 **Kind:** <bug-fix | feature | research | refactor>
 
