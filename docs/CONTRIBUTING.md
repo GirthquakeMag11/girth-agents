@@ -50,6 +50,7 @@ and own none.**
 |                                                     | `grilling` — the interview primitive: work the design tree, one round at a time                   |
 |                                                     | `handoff` — a reference-style summary for the next agent                                          |
 |                                                     | `writing-for-agents` — the craft of writing documents agents consume                              |
+|                                                     | `to-questionnaire` — a questionnaire for the person who can answer a stuck decision               |
 
 Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
 Format → Changing it** — and keeps its piece's creation template in
