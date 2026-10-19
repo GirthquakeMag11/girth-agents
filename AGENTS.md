@@ -12,7 +12,7 @@ live by OpenCode while you work in this repo: editing a file is testing it.
 | `.opencode/commands/*.md` | One slash command per file, flat: entry points only a human triggers |
 | `.opencode/agents/*.md` | One distributable agent per file, flat |
 | `scripts/` | Maintainer tooling: catalog linter and installer |
-| `docs/CONTRIBUTING.md` | The rules below, expanded, plus the skill design rules |
+| `CONTRIBUTING.md` | The rules below, expanded, plus the skill design rules |
 
 ## Publishing rules (enforced by `node scripts/validate.mjs`)
 
@@ -44,7 +44,7 @@ live by OpenCode while you work in this repo: editing a file is testing it.
 
 Skills follow the owner/activity schema: owner skills define a scaffold
 piece; activity skills do work with pieces and own none. Read "The schema"
-and "Skill design" in `docs/CONTRIBUTING.md` before adding or changing a
+and "Skill design" in `CONTRIBUTING.md` before adding or changing a
 skill. Skills carry only what an executing agent needs — process
 bookkeeping belongs in the repo docs.
 
@@ -59,7 +59,7 @@ bookkeeping belongs in the repo docs.
 ## Maintenance notes
 
 - Adding, renaming, or retiring a scaffold piece touches several skills;
-  follow "Skill family maintenance" in `docs/CONTRIBUTING.md`.
+  follow "Skill family maintenance" in `CONTRIBUTING.md`.
 - Maintainer agents (release, linting, catalog generation) intentionally live
   in the maintainer's global OpenCode config, not here — this repo publishes
   catalog content only; it keeps the versioned tooling they run.

@@ -111,7 +111,7 @@ the situation fits.
 
 ## Contributing
 
-- `docs/CONTRIBUTING.md` — how to add agents, skills, and commands; the
+- `CONTRIBUTING.md` — how to add agents, skills, and commands; the
   publishing rules; the tooling.
 - `AGENTS.md` — the same rules, written for an OpenCode agent working on this
   repo.

@@ -3,7 +3,7 @@
  * Catalog linter for girth-agents.
  *
  * Enforces this repo's publishing rules for .opencode/{agents,skills,commands}
- * (see AGENTS.md and docs/CONTRIBUTING.md). Zero dependencies, Node 18+.
+ * (see AGENTS.md and CONTRIBUTING.md). Zero dependencies, Node 18+.
  *
  *   node scripts/validate.mjs [--root <path>]
  *
