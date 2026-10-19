@@ -80,6 +80,13 @@ a small interface and a large implementation; a shallow one near-inverts them.
 3. **Small surface area** — fewer methods and params mean fewer and simpler
    tests.
 
+## Going deeper
+
+- Performing a deepening — merging shallow modules into one deep module,
+  given what the cluster depends on: read `references/deepening.md`.
+- Exploring alternative interfaces for one candidate, instead of anchoring
+  on the first design: read `references/design-it-twice.md`.
+
 ## Rejected framings
 
 - Depth as implementation-lines-to-interface-lines: rewards padding. Use
