@@ -33,7 +33,8 @@ headless browser script; replaying a captured trace; a throwaway harness
 that exercises the path with one call; a property or fuzz loop for
 "sometimes wrong"; a bisection harness between two known states; a
 differential loop (old vs new version); and, last resort, a
-human-in-the-loop script that keeps the loop structured.
+human-in-the-loop script that keeps the loop structured — copy and edit
+`references/hitl-loop.template.sh`.
 
 **Tighten it.** Make it faster, sharper (assert the exact symptom), and more
 deterministic. A 30-second flaky loop is barely better than none; a
