@@ -78,6 +78,7 @@ the situation fits.
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bootstrapping`      | Creating the scaffold, whole or one missing piece; re-running repairs only the gaps it finds and reports when there is nothing to do                                             |
 | `tracking`           | Something comes up that cannot be dealt with now but must not be lost: an obstacle, a bug, a smell, a feature request, an open question; or picking up or closing a tracked item |
+| `domain-modeling`    | A term is doing two jobs or drifting, or project language needs settling — the agent challenges it, proposes the canonical term, and has it recorded                             |
 | `codifying`          | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it     |
 | `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release                                                                |
 | `specifying`         | A settled design needs writing down as a spec                                                                                                                                    |
