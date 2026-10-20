@@ -115,6 +115,68 @@ the situation fits.
 | `/questionnaire` | Writes a questionnaire for the person who holds the knowledge a decision is blocked on                                                                                                  |
 | `/teach`         | Starts or resumes teaching, using the education workspace for state across sessions                                                                                                     |
 
+## How the skills hang together
+
+Skills are the edges; the scaffold pieces they write are the homes;
+commands are the doors. Each branch below is labelled by its trigger —
+the condition is the skill's own "use when" line, composed.
+
+```
+initial ideal
+│
+├─ foggy, too big ── /wayfind → wayfinding · grilling · questionnaire
+│
+├─ needs proof ───── prototyping
+│
+├─ needs facts ───── research → one cited document
+│
+├─ settled design ── /spec → specifying ── /implement → implementing
+│                                                        │
+│         ┌──────────────────────────────────────────────┤
+│         ├── tdd               red, green, refactor
+│         ├── codebase-design   deep modules, real seams
+│         ├── code-review       Standards + Spec
+│         └── diagnosing-bugs   when it breaks
+```
+
+**The rails that run beside every step:**
+
+- **Records** — `codifying` (rulings → conventions/), `domain-modeling`
+  (terms → glossary), and decisions (the load-bearing whys). They fire
+  mid-chain, the moment a meaning settles.
+- **Attention** — `tracking` when anything comes up (act now, or record it
+  by kind) → `/inbox` → `curate-inbox` (one item at a time; answers
+  recorded; revealed work routed, never started) → `/close-inbox` →
+  implementing.
+- **Truth** — `maintaining-docs` after every user-visible change;
+  `/cut-release` when the queue should ship.
+
+**Off the spine** — `find-skills` when a capability is missing (search the
+open ecosystem, verify quality, install), and `teaching` with the
+education workspace for the learning lane.
+
+**The working loop — idea to project to product:** `/bootstrap` once to
+build the skeleton (glossary, conventions, decisions, plans, specs,
+tracker, education, docs, changelog), and again whenever a piece is
+missing.
+
+```
+new thing surfaces
+│
+└─ tracking ────── act now, or record it by kind
+     │
+     └─ questions pile up → /inbox → curate-inbox
+            │
+            ├── ruled terms, conventions → codifying
+            ├── revealed work → routed via tracking, never started in the loop
+            └─ /implement ── tickets by kind, worked with tdd, code-review,
+                              codebase-design, diagnosing-bugs
+                   └─ maintaining-docs ── everything stays true
+                          └─ /cut-release ── the queue ships, dated and tagged
+```
+
+Then the loop turns again.
+
 ## Contributing
 
 - `CONTRIBUTING.md` — how to add agents, skills, and commands; the

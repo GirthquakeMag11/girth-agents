@@ -7,6 +7,9 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+- README documents the skill chains — the branches and the working loop
+  from bare idea to workable project, with the docs owner's README
+  contract extended to keep them true.
 - `curate-inbox`: opens the user's inbox — collects tracker items and
   stray calls for attention, processes them one at a time, records each
   answer, and routes — never starts — the work answers reveal.
