@@ -80,6 +80,7 @@ the situation fits.
 | `tracking`           | Something comes up that cannot be dealt with now but must not be lost: an obstacle, a bug, a smell, a feature request, an open question; or picking up or closing a tracked item |
 | `domain-modeling`    | A term is doing two jobs or drifting, or project language needs settling — the agent challenges it, proposes the canonical term, and has it recorded                             |
 | `codifying`          | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it     |
+| `curate-inbox`       | Open the inbox — collect tracker items and stray calls for attention, process each with the user, record answers, route the work they reveal                                     |
 | `find-skills`        | "How do I do X" where an installable skill might already exist — search skills.sh and the Skills CLI, verify quality, present options, install                                   |
 | `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release, which `/cut-release` cuts on your confirmation                |
 | `specifying`         | A settled design needs writing down as a spec                                                                                                                                    |
@@ -104,6 +105,8 @@ the situation fits.
 | `/bootstrap`     | Runs a full bootstrap: explores what exists, asks one round of questions for the gaps it found, creates missing pieces and repairs gaps, and reports when there is nothing to do        |
 | `/spec`          | Turns the current conversation into a spec for your approval                                                                                                                            |
 | `/cut-release`   | Cuts a release: versions the `[Unreleased]` queue into a dated section and tags it, on your confirmation                                                                                |
+| `/inbox`         | Opens your inbox — collects everything calling for attention and processes it with you one item at a time                                                                               |
+| `/close-inbox`   | Closes the open inbox — wraps up, records the remainder, offers to begin the surfaced work                                                                                              |
 | `/implement`     | Implements planned work — a spec, bug, or defect; a feature via its spec — slicing into tickets if needed, with one checkpoint on the blocking edges before work begins                 |
 | `/wayfind`       | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear                                                                                         |
 | `/retro`         | Reviews a session and proposes environment improvements, most severe first                                                                                                              |

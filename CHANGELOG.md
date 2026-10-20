@@ -7,6 +7,11 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+- `curate-inbox`: opens the user's inbox — collects tracker items and
+  stray calls for attention, processes them one at a time, records each
+  answer, and routes — never starts — the work answers reveal.
+- `/inbox` and `/close-inbox`: enter and leave the curation flow; the close
+  wraps up and offers the surfaced work to execution.
 - `find-skills`: discovers and installs skills from the open ecosystem —
   searches skills.sh and the Skills CLI, verifies quality, presents options,
   installs on confirmation.
