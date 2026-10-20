@@ -7,6 +7,15 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.1.0] - 2026-10-19
+
+### Added
 - Management scaffold: `tracker/`, `GLOSSARY.md`, `decisions/`, and this
   changelog, so items are tracked, the project's terms are shared, and
   decisions are recorded.
@@ -26,7 +35,3 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 - `changelog`: versioning is a ruling recorded in `conventions/`,
   established by interview when nothing states one; establishing it
   produces no changelog entry.
-### Deprecated
-### Removed
-### Fixed
-### Security
