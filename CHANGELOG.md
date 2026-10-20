@@ -11,6 +11,12 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ### Deprecated
 ### Removed
 ### Fixed
+- README: a duplicated chain-map section left from the section
+  rewrite is removed, so the map is documented once.
+### Security
+### Deprecated
+### Removed
+### Fixed
 ### Security
 
 ## [0.2.0] - 2026-10-20
