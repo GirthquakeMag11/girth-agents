@@ -10,6 +10,8 @@ Otherwise, create `CHANGELOG.md` at the project root:
 
 All notable changes to this project are documented in this file.
 Format follows Keep a Changelog (<https://keepachangelog.com>); versions follow SemVer.
+Versioning — the starting version and who approves each bump — is a ruling
+recorded in `conventions/`.
 
 ## [Unreleased]
 

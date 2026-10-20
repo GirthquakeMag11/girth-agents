@@ -65,6 +65,12 @@ An entry:
 - **Speaks to the user, not the implementer.** Internal file and function
   names appear only when they are the user's interface.
 
+The versioning is a project ruling, not a changelog detail: the concrete
+scheme — the starting version and who approves each bump — is recorded in
+`conventions/` as a convention, and the changelog head cites it after the
+SemVer line. When no manifest version, tag, or convention states a scheme,
+interview the user and record the answer; never invent one.
+
 ## Changing it
 
 - `## [Unreleased]` is the queue: entries land there as changes are made.
@@ -76,3 +82,7 @@ An entry:
   or a breaking Change → major; Added or Deprecated → minor; only Fixed or
   Security → patch.
 - Released sections are history and are not rewritten.
+- Establishing the versioning scheme, or repairing head metadata, is not a
+  user-visible change and produces no entry.
+- A changelog adopted after work has begun starts with `## [Unreleased]`
+  and records changes from then on; nothing is reconstructed.

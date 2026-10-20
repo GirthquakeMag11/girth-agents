@@ -11,6 +11,27 @@ Creates a project's management scaffold, whole or one piece at a time. Each
 piece's owner skill holds its creation template; this skill decides what to
 create and runs the creation.
 
+## What a run does
+
+A run adapts to what it finds; exploration comes first, and the interview
+contains only what the exploration surfaced:
+
+- **Empty or new** — nothing exists: the full interview, then every piece
+  is created.
+- **Partial** — some pieces exist: the interview covers the missing
+  pieces' questions and the gaps found inside existing ones — a changelog
+  with no versioning established, a deviation not yet settled.
+- **Complete** — every piece exists and no gaps were found: report that
+  there is nothing to do, and stop.
+- **Work already begun** — the repository has commits, or a changelog is
+  being adopted mid-project: the changelog starts forward-looking, never
+  reconstructing history, and establishing its versioning is an interview
+  item unless the project states one.
+
+Re-running is the normal case: a second run touches nothing that already
+conforms, and previously recorded rulings decide what still counts as a
+deviation.
+
 ## The inventory
 
 The inventory is the contract for what counts as scaffolding. When work
@@ -25,7 +46,7 @@ designates another location.
 | Agents guide       | `AGENTS.md`                                                                  | docs        | Only what exploration cannot fill, plus what agents commonly get wrong here          |
 | Contributing guide | `CONTRIBUTING.md`                                                            | docs        | Setup steps and process preferences exploration cannot find                          |
 | Readme             | `README.md`                                                                  | docs        | Name, description, and license where the project does not state them; current status |
-| Changelog          | `CHANGELOG.md`                                                               | changelog   | Nothing                                                                              |
+| Changelog          | `CHANGELOG.md`                                                               | changelog   | The starting version, when no manifest, tag, or convention states one                |
 | Glossary           | `GLOSSARY.md`                                                                | glossary    | Nothing; the domain line comes from the project overview                             |
 | Conventions        | `conventions/`                                                               | conventions | Whether rulings already exist worth capturing now                                    |
 | Decisions          | `decisions/`                                                                 | decisions   | Whether decisions already exist worth recording now                                  |
@@ -41,7 +62,11 @@ The inventory is the default, not the law: a project's own conventions
 outrank this skill's prescriptions. When exploration finds the project
 deviating from what a section above prescribes — a document kept at another
 path, an existing structure that conflicts with a template — the deviation
-is an interview item, never silently fixed and never silently kept:
+is an interview item, never silently fixed and never silently kept.
+
+Exploration reads `conventions/` before declaring anything a deviation: a
+deviation the user already affirmed and recorded is a ruling, and produces
+no interview item:
 
 - **Recommend the skill's prescription** — moving the piece to its inventory
   path, conforming to the template — and ask the user.
@@ -81,15 +106,24 @@ this):
    path other than the inventory's is a deviation, not a missing piece; the
    Deviations rule governs it. Gather every fact the project can tell you —
    name, purpose, license, build/test/lint commands (package manifests,
-   build files, CI configuration), layout, any changelog tool. Finding facts
+   build files, CI configuration), layout, any changelog tool, and any
+   versioning the project states — a manifest version field, git tags, a
+   versioning convention. Note whether work has already begun. Finding facts
    is your job; the user is asked only for what the project cannot tell you.
 3. **Interview once.** Present what you found, then call the skill tool with
-   `grilling` to work through the inventory's questions for every missing
-   piece in rounds until none remain. Wait for the answers.
-4. **Create every missing piece.** Existing pieces stay untouched. Rulings
-   or decisions the user named in the interview are recorded by calling the
-   skill tool with `codifying`.
+   `grilling` to work through the missing pieces' questions and any gaps
+   the exploration found, in rounds until none remain. A run whose
+   exploration found nothing to create, repair, or settle reports it and
+   stops before interviewing. Wait for the answers.
+4. **Create every missing piece and repair the gaps found.** Existing
+   pieces stay untouched. Rulings or decisions the user named in the
+   interview are recorded by calling the skill tool with `codifying` — the
+   starting version among them, cited in the changelog head per the
+   changelog's format. Establishing or repairing that metadata produces no
+   changelog entries.
 5. **Report** what was created, what already existed, and anything left
    provisional for the user to confirm.
 
-Done when every inventory piece exists and the report is delivered.
+Done when every inventory piece exists, the gaps the run found are
+repaired, and the report is delivered — a run that found nothing to do
+reports just that.
