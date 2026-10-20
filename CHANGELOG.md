@@ -7,7 +7,11 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+- `/cut-release`: versions the `[Unreleased]` queue into a dated, tagged
+  release on confirmation, so a release is always a deliberate call.
 ### Changed
+- `maintaining-docs` no longer cuts releases mid-maintenance; it keeps the
+  changelog release-ready and points at `/cut-release`.
 ### Deprecated
 ### Removed
 ### Fixed

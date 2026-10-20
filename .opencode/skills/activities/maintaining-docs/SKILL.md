@@ -1,6 +1,6 @@
 ---
 name: Maintaining Docs
-description: Keep AGENTS.md, CONTRIBUTING.md, README.md, and CHANGELOG.md true as the project changes, and cut releases. Use when the project's structure, protocols, or state change, after any user-visible change, or when the user asks for a release.
+description: Keep AGENTS.md, CONTRIBUTING.md, README.md, and CHANGELOG.md true as the project changes, and keep the changelog release-ready. Use when the project's structure, protocols, or state change, after any user-visible change, or when the user asks for a release.
 metadata:
   girth/role: activity
 ---
@@ -39,18 +39,14 @@ it truly.
 
 Done when every affected document describes the project as it now is.
 
-## Cutting a release
+## Releasing
 
-A release is the user's call; changelog entries stay under Unreleased until
-the user asks for one. When asked:
-
-1. Call the skill tool with `changelog`.
-2. Propose the version from what Unreleased holds, per its versioning rules.
-   The user confirms or overrides.
-3. Apply the release to the file per the changelog's format. If a tool owns
-   the changelog, run the tool's release workflow instead.
-
-Done when the release section exists under the confirmed version.
+A release is the user's call. An entry lands under `## [Unreleased]` the
+moment the change happens; releasing that queue is a deliberate act the
+user runs, and `/cut-release` carries the full protocol — the versioning
+rules, the confirmation, the tag. Cut nothing mid-maintenance: when the
+user asks for a release, hand them `/cut-release`, and keep the changelog
+release-ready in the meantime.
 
 ## Formatting for plain text
 

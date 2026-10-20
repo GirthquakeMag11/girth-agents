@@ -80,7 +80,7 @@ the situation fits.
 | `tracking`           | Something comes up that cannot be dealt with now but must not be lost: an obstacle, a bug, a smell, a feature request, an open question; or picking up or closing a tracked item |
 | `domain-modeling`    | A term is doing two jobs or drifting, or project language needs settling — the agent challenges it, proposes the canonical term, and has it recorded                             |
 | `codifying`          | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it     |
-| `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release                                                                |
+| `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release, which `/cut-release` cuts on your confirmation                |
 | `specifying`         | A settled design needs writing down as a spec                                                                                                                                    |
 | `implementing`       | You ask to build something planned — a spec, bug, or defect — and the agent slices it into tickets and works them one at a time; a feature implements through its spec           |
 | `wayfinding`         | An effort is too big or too foggy to spec — the agent charts a live map and resolves its decisions one at a time                                                                 |
@@ -102,6 +102,7 @@ the situation fits.
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/bootstrap`     | Runs a full bootstrap: explores what exists, asks one round of questions for the gaps it found, creates missing pieces and repairs gaps, and reports when there is nothing to do        |
 | `/spec`          | Turns the current conversation into a spec for your approval                                                                                                                            |
+| `/cut-release`   | Cuts a release: versions the `[Unreleased]` queue into a dated section and tags it, on your confirmation                                                                                |
 | `/implement`     | Implements planned work — a spec, bug, or defect; a feature via its spec — slicing into tickets if needed, with one checkpoint on the blocking edges before work begins                 |
 | `/wayfind`       | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear                                                                                         |
 | `/retro`         | Reviews a session and proposes environment improvements, most severe first                                                                                                              |
