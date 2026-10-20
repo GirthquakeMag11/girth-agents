@@ -7,6 +7,9 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+- `find-skills`: discovers and installs skills from the open ecosystem —
+  searches skills.sh and the Skills CLI, verifies quality, presents options,
+  installs on confirmation.
 - `/cut-release`: versions the `[Unreleased]` queue into a dated, tagged
   release on confirmation, so a release is always a deliberate call.
 ### Changed

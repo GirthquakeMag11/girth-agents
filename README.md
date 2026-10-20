@@ -80,6 +80,7 @@ the situation fits.
 | `tracking`           | Something comes up that cannot be dealt with now but must not be lost: an obstacle, a bug, a smell, a feature request, an open question; or picking up or closing a tracked item |
 | `domain-modeling`    | A term is doing two jobs or drifting, or project language needs settling — the agent challenges it, proposes the canonical term, and has it recorded                             |
 | `codifying`          | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it     |
+| `find-skills`        | "How do I do X" where an installable skill might already exist — search skills.sh and the Skills CLI, verify quality, present options, install                                   |
 | `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release, which `/cut-release` cuts on your confirmation                |
 | `specifying`         | A settled design needs writing down as a spec                                                                                                                                    |
 | `implementing`       | You ask to build something planned — a spec, bug, or defect — and the agent slices it into tickets and works them one at a time; a feature implements through its spec           |
