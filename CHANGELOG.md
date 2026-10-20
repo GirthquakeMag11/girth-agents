@@ -7,6 +7,15 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.2.0] - 2026-10-20
+
+### Added
 - README documents the skill chains — the branches and the working loop
   from bare idea to workable project, with the docs owner's README
   contract extended to keep them true.
@@ -27,10 +36,6 @@ Versioning is ruled in `conventions/On_Versioning.md`.
   `conventions/On_Chains.md`.
 - `maintaining-docs` no longer cuts releases mid-maintenance; it keeps the
   changelog release-ready and points at `/cut-release`.
-### Deprecated
-### Removed
-### Fixed
-### Security
 
 ## [0.1.0] - 2026-10-19
 
