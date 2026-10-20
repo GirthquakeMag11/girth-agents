@@ -5,8 +5,8 @@ the state it is in**:
 
 - What the project is and does — one honest paragraph.
 - How to get started — the install, run, and use paths that work today.
-- The skill chains — how the skills compose, from bare idea to workable
-  project, and the working loop that carries it along. Kept true as the
+- How the skills hang together — the doors a person runs, the machinery
+  that fires between them, and the recovery rails. Kept true as the
   catalog changes.
 - The current state — development stage, what works, what is in flight,
   what is not there yet. Truthful, not aspirational.

@@ -21,6 +21,10 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 - `/cut-release`: versions the `[Unreleased]` queue into a dated, tagged
   release on confirmation, so a release is always a deliberate call.
 ### Changed
+- README's chain map speaks the flow language — doors, trigger-fired
+  skills, and records; edges mean "typically leads to", and the four
+  recovery rails stay reachable from every step, per
+  `conventions/On_Chains.md`.
 - `maintaining-docs` no longer cuts releases mid-maintenance; it keeps the
   changelog release-ready and points at `/cut-release`.
 ### Deprecated

@@ -170,7 +170,105 @@ new thing surfaces
             ├── ruled terms, conventions → codifying
             ├── revealed work → routed via tracking, never started in the loop
             └─ /implement ── tickets by kind, worked with tdd, code-review,
-                              codebase-design, diagnosing-bugs
+                   │          codebase-design, diagnosing-bugs
+                   └─ maintaining-docs ── everything stays true
+                          └─ /cut-release ── the queue ships, dated and tagged
+```
+
+Then the loop turns again.
+
+## How the skills hang together
+
+A map of the work, not a state machine: no path here is required, and no
+line forbids a move — every skill fires when its trigger matches, wherever
+the agent stands. Three kinds of node: `/doors` are commands, the only
+things you type; *skills* are machinery that fires on its trigger;
+**records** are homes things land in (marked ✓) and later steps consume.
+Edges read `→` *typically leads to*, `·` *choose by situation*, `⇄`
+*repeat until done*. From any step, the four recovery rails stay open:
+**record** the stray (`tracking`), **settle** the meaning (`codifying`),
+**surface** open items (`/inbox`), **re-check** the scaffold
+(`/bootstrap`).
+
+### Driving the catalog
+
+The state you're in picks the door; everything between doors is
+machinery.
+
+| The state you're in                         | What you run     | What happens next                                                      |
+| ------------------------------------------- | ---------------- | ---------------------------------------------------------------------- |
+| The repo is bare, or a scaffold piece is missing | `/bootstrap` | The skeleton is built; gaps found are put to you for approval           |
+| The idea is foggy, too big to spec          | `/wayfind`       | A live map; its key questions are put to you, one per session           |
+| A decision is blocked on an outside person  | `/questionnaire` | A questionnaire for the person who holds the knowledge                  |
+| The design has settled                      | `/spec`          | The conversation becomes a spec for your approval                       |
+| A spec sits approved                        | `/implement`     | Tickets by kind, checkpointed on the blocking edges                     |
+| Open items and questions pile up            | `/inbox`         | One at a time; answers recorded; `/close-inbox` offers the surfaced work |
+| The changelog queue should ship             | `/cut-release`   | A dated, tagged version, on your confirmation                           |
+| You want to learn something                 | `/teach`         | A lesson in the education workspace                                     |
+
+### How the work flows
+
+```
+                       initial idea
+   ┌──────────────┬───────┬┴──────────┬─────────────────────┐
+proof needed  facts needed│      foggy, too big to spec
+prototyping   research    │          /wayfind
+   │               │      │          · wayfinding
+   │               ↘      │          · grilling
+   │          cited doc ✓ │          · /questionnaire
+   │                      │
+   └──────────┬───────────┴──────────┘
+              ▼
+      the design settles ── /spec ↘ spec ✓, approved by you
+                                  /implement
+                                  implementing — one ticket at a time
+                                  ┌──────────────────────────────┐
+                                  │ the execution cycle ⇄        │
+                                  │ tdd · code-review ·          │
+                                  │ codebase-design ·            │
+                                  │ diagnosing-bugs — fires when │
+                                  │ the moment matches           │
+                                  └──────────────────────────────┘
+                                  maintaining-docs ──► /cut-release ↘ release
+```
+
+The four branches are four ways to reach one door: have the design
+settled, or settle it through proof, facts, or walking the fog. A record
+the work makes now — the cited document, the approved spec — is what a
+later step consumes.
+
+**The rails that run beside every step:**
+
+- **Records** — `codifying` (rulings → conventions/), `domain-modeling`
+  (terms → glossary), and decisions (the load-bearing whys). They fire
+  mid-chain, the moment a meaning settles.
+- **Attention** — `tracking` when anything comes up (act now, or record it
+  by kind) → `/inbox` → `curate-inbox` (one item at a time; answers
+  recorded; revealed work routed, never started) → `/close-inbox` →
+  implementing.
+- **Truth** — `maintaining-docs` after every user-visible change;
+  `/cut-release` when the queue should ship.
+
+**Off the spine** — `find-skills` when a capability is missing (search the
+open ecosystem, verify quality, install), and `teaching` with the
+education workspace for the learning lane.
+
+**The working loop — idea to project to product:** `/bootstrap` once to
+build the skeleton (glossary, conventions, decisions, plans, specs,
+tracker, education, docs, changelog), and again whenever a piece is
+missing.
+
+```
+new thing surfaces
+│
+└─ tracking ────── act now, or record it by kind
+     │
+     └─ questions pile up → /inbox → curate-inbox
+            │
+            ├── ruled terms, conventions → codifying
+            ├── revealed work → routed via tracking, never started in the loop
+            └─ /implement ── tickets by kind, worked with tdd, code-review,
+                   │          codebase-design, diagnosing-bugs
                    └─ maintaining-docs ── everything stays true
                           └─ /cut-release ── the queue ships, dated and tagged
 ```
