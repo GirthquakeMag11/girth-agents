@@ -195,41 +195,42 @@ Edges read `→` *typically leads to*, `·` *choose by situation*, `⇄`
 The state you're in picks the door; everything between doors is
 machinery.
 
-| The state you're in                         | What you run     | What happens next                                                      |
-| ------------------------------------------- | ---------------- | ---------------------------------------------------------------------- |
-| The repo is bare, or a scaffold piece is missing | `/bootstrap` | The skeleton is built; gaps found are put to you for approval           |
-| The idea is foggy, too big to spec          | `/wayfind`       | A live map; its key questions are put to you, one per session           |
-| A decision is blocked on an outside person  | `/questionnaire` | A questionnaire for the person who holds the knowledge                  |
-| The design has settled                      | `/spec`          | The conversation becomes a spec for your approval                       |
-| A spec sits approved                        | `/implement`     | Tickets by kind, checkpointed on the blocking edges                     |
-| Open items and questions pile up            | `/inbox`         | One at a time; answers recorded; `/close-inbox` offers the surfaced work |
-| The changelog queue should ship             | `/cut-release`   | A dated, tagged version, on your confirmation                           |
-| You want to learn something                 | `/teach`         | A lesson in the education workspace                                     |
+| The state you're in                              | What you run     | What happens next                                                        |
+| ------------------------------------------------ | ---------------- | ------------------------------------------------------------------------ |
+| The repo is bare, or a scaffold piece is missing | `/bootstrap`     | The skeleton is built; gaps found are put to you for approval            |
+| The idea is foggy, too big to spec               | `/wayfind`       | A live map; its key questions are put to you, one per session            |
+| A decision is blocked on an outside person       | `/questionnaire` | A questionnaire for the person who holds the knowledge                   |
+| The design has settled                           | `/spec`          | The conversation becomes a spec for your approval                        |
+| A spec sits approved                             | `/implement`     | Tickets by kind, checkpointed on the blocking edges                      |
+| Open items and questions pile up                 | `/inbox`         | One at a time; answers recorded; `/close-inbox` offers the surfaced work |
+| The changelog queue should ship                  | `/cut-release`   | A dated, tagged version, on your confirmation                            |
+| You want to learn something                      | `/teach`         | A lesson in the education workspace                                      |
 
 ### How the work flows
 
 ```
                        initial idea
-   ┌──────────────┬───────┬┴──────────┬─────────────────────┐
-proof needed  facts needed│      foggy, too big to spec
-prototyping   research    │          /wayfind
-   │               │      │          · wayfinding
-   │               ↘      │          · grilling
-   │          cited doc ✓ │          · /questionnaire
-   │                      │
-   └──────────┬───────────┴──────────┘
-              ▼
-      the design settles ── /spec ↘ spec ✓, approved by you
-                                  /implement
-                                  implementing — one ticket at a time
-                                  ┌──────────────────────────────┐
-                                  │ the execution cycle ⇄        │
-                                  │ tdd · code-review ·          │
-                                  │ codebase-design ·            │
-                                  │ diagnosing-bugs — fires when │
-                                  │ the moment matches           │
-                                  └──────────────────────────────┘
-                                  maintaining-docs ──► /cut-release ↘ release
+        ┌────────────────┬─────────────────────────┬─────────────────────────┐
+        │ proof needed   │ facts needed            │ foggy, too big to spec
+        │ prototyping    │ research                │ /wayfind
+        │                │                         │
+        │                │ ↘                       │ · wayfinding
+        │                │ cited doc ✓             │ · grilling
+        │                │                         │ · /questionnaire
+        │                │                         │
+        └────────────────┴─────────────────────────┴─────────────────────────┘
+                        ▼
+                 the design settles
+                 /spec ↘ spec ✓, approved by you
+                        │
+                   /implement
+                        │
+                 implementing — one ticket at a time
+                        │
+   the execution cycle ⇄ per ticket — tdd · code-review · codebase-design ·
+   diagnosing-bugs, until the ticket closes
+                        │
+                maintaining-docs ──► /cut-release ↘ release
 ```
 
 The four branches are four ways to reach one door: have the design
