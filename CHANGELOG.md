@@ -2,6 +2,7 @@
 
 All notable changes to this project are documented in this file.
 Format follows Keep a Changelog (<https://keepachangelog.com>); versions follow SemVer.
+Versioning is ruled in `conventions/On_Versioning.md`.
 
 ## [Unreleased]
 
