@@ -363,19 +363,24 @@ fi
 # install_one <source> <destination>
 install_one() {
   local src="$1" dst="$2"
-  local action fp
+  local action fp skip_reason=""
   local was_link=0
 
-  if [ -L "$dst" ]; then action="refresh"; was_link=1
-  elif [ -e "$dst" ]; then action="skip"
+  if [ -L "$dst" ]; then
+    case "$(readlink "$dst")" in
+      "$REPO_ROOT"/*) action="refresh"; was_link=1 ;;
+      *) action="skip"; skip_reason="a symlink you made already exists there" ;;
+    esac
+  elif [ -e "$dst" ]; then
+    action="skip"; skip_reason="a real file already exists there"
   elif [ "$MODE" = "copy" ]; then action="copy"
   else action="link"; fi
 
   if [ "$action" = "skip" ]; then
     if [ "$DRY_RUN" -eq 1 ]; then
-      say "skip $(basename "$dst")  (a real file already exists there)"
+      say "skip $(basename "$dst")  ($skip_reason)"
     else
-      echo "skip  $(basename "$dst")  (a real file already exists there — not touching it)" >&2
+      echo "skip  $(basename "$dst")  ($skip_reason — not touching it)" >&2
     fi
     skipped=$((skipped + 1))
     return 0

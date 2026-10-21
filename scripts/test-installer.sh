@@ -133,6 +133,19 @@ test_user_file_preserved() {
   if [ -L "$c/skills/mine" ]; then fail "$FUNCNAME: user directory overwritten by a link"; else ok; fi
 }
 
+test_user_symlink_preserved() {
+  local f="$TMP/linkmine-fixture" c="$TMP/linkmine-config"
+  mk_fixture "$f"
+  add_skill "$f" mine
+  mkdir -p "$c/skills" "$c/myown"
+  ln -s "$c/myown" "$c/skills/mine"
+  run_install "$f" "$c"
+
+  grep -q 'symlink you made' "$c.out" && ok || fail "$FUNCNAME: no skip reported"
+  [ "$(readlink "$c/skills/mine")" = "$c/myown" ] && ok \
+    || fail "$FUNCNAME: user symlink replaced or re-pointed"
+}
+
 test_retired_item_pruned() {
   local f="$TMP/prune-fixture" c="$TMP/prune-config"
   mk_fixture "$f"
@@ -361,7 +374,7 @@ test_update_pull_reconciles() {
   run_update "$f" "$c"
 
   [ "$U_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: update failed"
-  grep -q -- '->' "$c.up.out" && ok || fail "$FUNCNAME: no before/after reported"
+  grep -q '^updated .*->' "$c.up.out" && ok || fail "$FUNCNAME: no before/after reported"
   expect_absent "$c/skills/charlie" "$FUNCNAME"
   expect_link "$c/skills/echo" "$FUNCNAME"
   expect_link "$c/skills/bravo" "$FUNCNAME"
@@ -420,6 +433,7 @@ test_update_dry_run() {
 test_symlink_install
 test_copy_install
 test_user_file_preserved
+test_user_symlink_preserved
 test_retired_item_pruned
 test_broken_catalog_refused
 test_clean_install_records

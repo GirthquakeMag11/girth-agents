@@ -32,6 +32,8 @@ and the catalog is live.
 - **No symlinks (Windows, unusual filesystems):** `./scripts/install.sh
   install --copy` copies instead — `update` re-copies the items whose
   source changed.
+- **Updating a dirty checkout:** `update` refuses to pull over uncommitted
+  changes in the checkout — commit or stash them first.
 - **Uninstall:** `./scripts/install.sh uninstall` removes exactly what an
   install put there — links and copies — and asks first; `--yes` skips.
   Files you added or changed yourself are left alone.

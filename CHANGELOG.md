@@ -8,6 +8,7 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 
 ### Added
 - `/slice`: turns an approved spec — or an oversized bug or defect — into tickets, checkpointed for approval, handing the frontier to `/implement`.
+- The installer is one script, three verbs — `install`, `uninstall`, `update` — that verifies the catalog before installing, records every placement in `girth.yaml`, removes exactly what it recorded, and reconciles on update; covered by a 77-assertion test harness.
 ### Changed
 - `implementing` no longer slices: the spec-to-tickets step and its checkpoint move to `/slice`, and `/implement` works already-sliced tickets.
 - `specifying`: the spec is written first from the settled conversation, and `grilling` then fills and refines its gaps — the old no-second-interview rule is gone.
