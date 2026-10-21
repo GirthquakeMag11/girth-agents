@@ -3,7 +3,8 @@
 #
 # One entry point, three verbs: install (the default), uninstall, update.
 # install verifies the catalog and records what it places in girth.yaml;
-# uninstall and update land in the steps that follow and refuse until then.
+# uninstall removes exactly what the record lists; update lands in the step
+# that follows.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,6 +13,7 @@ CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$DEFAULT_CONFIG}"
 RECORD="girth.yaml"
 MODE="symlink"
 DRY_RUN=0
+YES=0
 VERB="install"
 
 usage() {
@@ -28,6 +30,7 @@ OpenCode global config.
 
   --copy     copy files instead of symlinking
   --dry-run  print what would happen, change nothing
+  --yes      (uninstall) skip the confirmation
   --help     show this help
 
 Installs into $OPENCODE_CONFIG_DIR when set, otherwise ~/.config/opencode
@@ -41,17 +44,11 @@ for arg in "$@"; do
     --help|-h) usage; exit 0 ;;
     --copy) MODE="copy" ;;
     --dry-run) DRY_RUN=1 ;;
+    --yes|-y) YES=1 ;;
     install|uninstall|update) VERB="$arg" ;;
     *) printf 'install.sh: unknown argument: %s\n' "$arg" >&2; usage >&2; exit 2 ;;
   esac
 done
-
-case "$VERB" in
-  uninstall|update)
-    printf 'install.sh: %s is not here yet — install is the only verb so far.\n' "$VERB" >&2
-    exit 2
-    ;;
-esac
 
 # --- helpers ---------------------------------------------------------------
 
@@ -86,6 +83,94 @@ verify_catalog() {
 }
 
 say() { if [ "$DRY_RUN" -eq 1 ]; then printf 'would %s\n' "$*"; else printf '%s\n' "$*"; fi; }
+
+# still_ours <how> <dest> <source> <fingerprint> — is the destination still
+# exactly what the record says we installed there?
+still_ours() {
+  case "$1" in
+    link) [ -L "$2" ] && [ "$(readlink "$2")" = "$3" ] ;;
+    copy) [ -e "$2" ] && [ "$(fingerprint "$2")" = "$4" ] ;;
+    *) return 1 ;;
+  esac
+}
+
+# uninstall — remove exactly what the record lists, nothing else.
+uninstall() {
+  local rec="$CONFIG_DIR/$RECORD"
+  if [ ! -f "$rec" ]; then
+    echo "nothing recorded at $rec — nothing to uninstall."
+    exit 0
+  fi
+
+  local items changed=0 todo=0
+  local todo_lines=""
+  local how dest src fp
+  items="$(awk '
+    /^  - source:/      { s=$0; sub(/^  - source: /, "", s) }
+    /^    dest:/        { d=$0; sub(/^    dest: /, "", d) }
+    /^    how:/         { h=$0; sub(/^    how: /, "", h) }
+    /^    fingerprint:/ { f=$0; sub(/^    fingerprint: /, "", f)
+                          print h "\t" d "\t" s "\t" f }
+  ' "$rec")"
+
+  while IFS=$'\t' read -r how dest src fp; do
+    [ -n "$how" ] || continue
+    if ! still_ours "$how" "$dest" "$src" "$fp"; then
+      echo "left  $dest  (changed since install — not touching it)" >&2
+      changed=$((changed + 1))
+      continue
+    fi
+    todo_lines="$todo_lines$dest"$'\n'
+    todo=$((todo + 1))
+  done <<< "$items"
+
+  if [ "$todo" -eq 0 ]; then
+    echo "nothing to remove ($((changed)) recorded item(s) left in place)."
+    [ "$DRY_RUN" -eq 0 ] || echo "dry run — nothing changed."
+    exit 0
+  fi
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "uninstalling $todo item(s) (dry run):"
+    while IFS= read -r dest; do
+      [ -n "$dest" ] && say "remove $dest"
+    done <<< "$todo_lines"
+    say "remove $rec"
+    echo "dry run — nothing changed."
+    exit 0
+  fi
+
+  if [ "$YES" -ne 1 ]; then
+    printf 'remove %s item(s)? [y/N] ' "$todo"
+    local ans
+    read -r ans
+    case "$ans" in
+      y|Y|yes|YES) ;;
+      *) echo "not removing anything."; exit 0 ;;
+    esac
+  fi
+
+  echo "removing:"
+  while IFS= read -r dest; do
+    [ -n "$dest" ] || continue
+    rm -rf "$dest"
+    echo "removed  $dest"
+  done <<< "$todo_lines"
+  rm -f "$rec"
+  echo "removed  $rec"
+  rmdir "$CONFIG_DIR/agents" "$CONFIG_DIR/commands" "$CONFIG_DIR/skills" 2>/dev/null || true
+  echo
+  echo "done: $todo removed, $changed left in place."
+  exit 0
+}
+
+case "$VERB" in
+  uninstall) uninstall ;;
+  update)
+    printf 'install.sh: update is not here yet — install and uninstall exist so far.\n' >&2
+    exit 2
+    ;;
+esac
 
 # --- install ---------------------------------------------------------------
 

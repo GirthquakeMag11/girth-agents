@@ -205,6 +205,98 @@ test_help_mentions_verbs() {
   done
 }
 
+# uninstall_with <fixture> <config> <stdin> [extra args...] — runs the
+# uninstall verb, feeding $3 as stdin, capturing output and UN_STATUS.
+uninstall_with() {
+  local f="$1" c="$2" input="$3"; shift 3
+  set +e
+  printf '%s\n' "$input" | OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" uninstall "$@" >"$c.un.out" 2>&1
+  UN_STATUS=$?
+  set -e
+}
+
+test_uninstall_links() {
+  local f="$TMP/unlink-fixture" c="$TMP/unlink-config"
+  mk_fixture "$f"
+  add_agent "$f" alpha
+  add_skill "$f" bravo
+  add_cmd "$f" delta
+  run_install "$f" "$c"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+
+  uninstall_with "$f" "$c" "" --yes
+  [ "$UN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: uninstall failed"
+  expect_absent "$c/girth.yaml" "$FUNCNAME"
+  expect_absent "$c/agents/alpha.md" "$FUNCNAME"
+  expect_absent "$c/skills/bravo" "$FUNCNAME"
+  expect_absent "$c/commands/delta.md" "$FUNCNAME"
+  [ -z "$(list_installed "$c")" ] && ok || fail "$FUNCNAME: items left behind"
+}
+
+test_uninstall_copies() {
+  local f="$TMP/uncopy-fixture" c="$TMP/uncopy-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  add_cmd "$f" delta
+  run_install "$f" "$c" --copy
+  expect_file "$c/skills/bravo/SKILL.md" "$FUNCNAME"
+
+  uninstall_with "$f" "$c" "" --yes
+  [ "$UN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: uninstall failed"
+  expect_absent "$c/girth.yaml" "$FUNCNAME"
+  expect_absent "$c/skills/bravo" "$FUNCNAME"
+  expect_absent "$c/commands/delta.md" "$FUNCNAME"
+}
+
+test_uninstall_preserves_user_files() {
+  local f="$TMP/unpreserve-fixture" c="$TMP/unpreserve-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c"
+
+  # user replaces the link with their own directory
+  rm "$c/skills/bravo"
+  mkdir "$c/skills/bravo"
+  printf 'handmade\n' > "$c/skills/bravo/KEEP"
+  # and a user skill of their own, never recorded
+  mkdir "$c/skills/mine"
+
+  uninstall_with "$f" "$c" "" --yes
+  [ "$UN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: uninstall failed"
+  expect_file "$c/skills/bravo/KEEP" "$FUNCNAME"
+  [ -d "$c/skills/mine" ] && ok || fail "$FUNCNAME: user's own skill removed"
+  grep -q 'left' "$c.un.out" && ok || fail "$FUNCNAME: replaced file not reported"
+}
+
+test_uninstall_confirmation() {
+  local f="$TMP/confirm-fixture" c="$TMP/confirm-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c"
+
+  uninstall_with "$f" "$c" "n"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  expect_file "$c/girth.yaml" "$FUNCNAME"
+  grep -q 'not removing' "$c.un.out" && ok || fail "$FUNCNAME: no 'not removing'"
+
+  uninstall_with "$f" "$c" "y"
+  expect_absent "$c/skills/bravo" "$FUNCNAME"
+  expect_absent "$c/girth.yaml" "$FUNCNAME"
+}
+
+test_uninstall_dry_run() {
+  local f="$TMP/undry-fixture" c="$TMP/undry-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c"
+
+  uninstall_with "$f" "$c" "" --dry-run
+  [ "$UN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: dry run failed"
+  grep -q 'would' "$c.un.out" && ok || fail "$FUNCNAME: no would-preview"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  expect_file "$c/girth.yaml" "$FUNCNAME"
+}
+
 test_symlink_install
 test_copy_install
 test_user_file_preserved
@@ -213,6 +305,11 @@ test_broken_catalog_refused
 test_clean_install_records
 test_dry_run_changes_nothing
 test_help_mentions_verbs
+test_uninstall_links
+test_uninstall_copies
+test_uninstall_preserves_user_files
+test_uninstall_confirmation
+test_uninstall_dry_run
 
 echo
 echo "installer harness: $PASS passed, $FAIL failed"
