@@ -94,10 +94,11 @@ description.
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/bootstrap`     | Runs a full bootstrap: explores what exists, asks one round of questions for the gaps it found, creates missing pieces and repairs gaps, and reports when there is nothing to do        |
 | `/spec`          | Turns the current conversation into a spec for your approval                                                                                                                            |
+| `/slice`         | Slices an approved spec — or an oversized bug or defect — into tickets, presented for your approval before `/implement` works them                                                      |
 | `/cut-release`   | Cuts a release: versions the `[Unreleased]` queue into a dated section and tags it, on your confirmation                                                                                |
 | `/inbox`         | Opens your inbox — collects everything calling for attention and processes it with you one item at a time                                                                               |
 | `/close-inbox`   | Closes the open inbox — wraps up, records the remainder, offers to begin the surfaced work                                                                                              |
-| `/implement`     | Implements planned work — a spec, bug, or defect; a feature via its spec — slicing into tickets if needed, with one checkpoint on the blocking edges before work begins                 |
+| `/implement`     | Works the ticket frontier — one ticket at a time, each by its Kind                                                                                                                      |
 | `/wayfind`       | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear                                                                                         |
 | `/retro`         | Reviews a session and proposes environment improvements, most severe first                                                                                                              |
 | `/handoff`       | Writes a handoff document for a fresh agent to pick up the conversation                                                                                                                 |
@@ -129,7 +130,8 @@ machinery.
 | The idea is foggy, too big to spec               | `/wayfind`       | A live map; its key questions are put to you, one per session            |
 | A decision is blocked on an outside person       | `/questionnaire` | A questionnaire for the person who holds the knowledge                   |
 | The design has settled                           | `/spec`          | The conversation becomes a spec for your approval                        |
-| A spec sits approved                             | `/implement`     | Tickets by kind, checkpointed on the blocking edges                      |
+| A spec sits approved                             | `/slice`         | It becomes tickets, checkpointed for your approval                       |
+| Open tickets await work                          | `/implement`     | The frontier, one ticket at a time, each by its Kind                     |
 | Open items and questions pile up                 | `/inbox`         | One at a time; answers recorded; `/close-inbox` offers the surfaced work |
 | The changelog queue should ship                  | `/cut-release`   | A dated, tagged version, on your confirmation                            |
 | You want to learn something                      | `/teach`         | A lesson in the education workspace                                      |
@@ -150,6 +152,8 @@ machinery.
                         ▼
                  the design settles
                  /spec ↘ spec ✓, approved by you
+                        │
+                 /slice ↘ tickets ✓, approved
                         │
                    /implement
                         │
