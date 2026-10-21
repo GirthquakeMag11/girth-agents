@@ -7,19 +7,26 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.3.0] - 2026-10-21
+
+### Added
 - `/slice`: turns an approved spec — or an oversized bug or defect — into tickets, checkpointed for approval, handing the frontier to `/implement`.
-- The installer is one script, three verbs — `install`, `uninstall`, `update` — that verifies the catalog before installing, records every placement in `girth.yaml`, removes exactly what it recorded, and reconciles on update; covered by a 77-assertion test harness.
+- The installer is one script, three verbs — `install`, `uninstall`, `update` — that verifies the catalog before installing, records every placement in `girth.yaml`, removes exactly what it recorded, and reconciles on update; covered by a 79-assertion test harness.
 ### Changed
 - `implementing` no longer slices: the spec-to-tickets step and its checkpoint move to `/slice`, and `/implement` works already-sliced tickets.
 - `specifying`: the spec is written first from the settled conversation, and `grilling` then fills and refines its gaps — the old no-second-interview rule is gone.
 - The catalog has one skill class. Nine skills that only held scaffold formats — `glossary`, `conventions`, `decisions`, `tracker`, `docs`, `changelog`, `specs`, `plans`, `education` — fold into the skills that work those pieces, so every skill stands alone and the list drops from 30 to 21.
-### Deprecated
 ### Removed
 - `glossary`, `conventions`, `decisions`, `tracker`, `docs`, `changelog`, `specs`, `plans`, and `education` as standalone skills; their formats now travel as `references/` in `tracking`, `domain-modeling`, `codifying`, `maintaining-docs`, `specifying`, `wayfinding`, and `teaching`.
 ### Fixed
 - README: a duplicated chain-map section left from the section
   rewrite is removed, so the map is documented once.
-### Security
 
 ## [0.2.0] - 2026-10-20
 
