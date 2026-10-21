@@ -28,3 +28,4 @@ would do without doing it.
   interrupted install leaves no half-record.
 - [ ] `--dry-run` changes nothing on disk; `--help` documents install,
   uninstall, and update.
+- **Done — 2026-10-21:** install gained the verb dispatch, a lint-gate that refuses a broken catalog before touching the config, and a girth.yaml record (mode, release, per-item source/dest/how/fingerprint, written last via temp+rename). --dry-run previews and --help documents all three verbs. Harness grew to 32 assertions.

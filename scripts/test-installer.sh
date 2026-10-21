@@ -27,6 +27,7 @@ mk_fixture() { # $1 fixture dir
   local d="$1"
   mkdir -p "$d/scripts" "$d/.opencode/agents" "$d/.opencode/skills" "$d/.opencode/commands"
   cp "$INSTALLER" "$d/scripts/install.sh"
+  cp "$REPO_ROOT/scripts/validate.mjs" "$d/scripts/validate.mjs"
 }
 
 add_agent() { # $1 fixture  $2 id
@@ -40,6 +41,10 @@ add_skill() { # $1 fixture  $2 id
 
 add_cmd() { # $1 fixture  $2 id
   printf -- '# %s\nfixture body\n' "$2" > "$1/.opencode/commands/$2.md"
+}
+
+add_broken_cmd() { # $1 fixture — a command whose empty body fails the linter
+  : > "$1/.opencode/commands/empty.md"
 }
 
 # --- assertions -------------------------------------------------------------
@@ -73,9 +78,12 @@ expect_installed() {
   fi
 }
 
-run_install() { # $1 fixture  $2 config dir  [--copy]
+run_install() { # $1 fixture  $2 config dir  [extra args...]
   local f="$1" c="$2"; shift 2
+  set +e
   OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" "$@" >"$c.out" 2>&1
+  RUN_STATUS=$?
+  set -e
 }
 
 # --- tests ------------------------------------------------------------------
@@ -141,10 +149,70 @@ test_retired_item_pruned() {
   if grep -q 'prune' "$c.out"; then ok; else fail "$FUNCNAME: no prune reported"; fi
 }
 
+test_broken_catalog_refused() {
+  local f="$TMP/broken-fixture" c="$TMP/broken-config"
+  mk_fixture "$f"
+  add_broken_cmd "$f"
+  run_install "$f" "$c"
+
+  [ "$RUN_STATUS" -ne 0 ] && ok || fail "$FUNCNAME: expected a non-zero exit"
+  grep -qi 'validation\|not installing' "$c.out" && ok || fail "$FUNCNAME: no refusal message"
+  expect_absent "$c/girth.yaml" "$FUNCNAME"
+  [ ! -e "$c/agents" ] && [ ! -e "$c/skills" ] && [ ! -e "$c/commands" ] \
+    && ok || fail "$FUNCNAME: something was placed"
+}
+
+test_clean_install_records() {
+  local f="$TMP/record-fixture" c="$TMP/record-config"
+  mk_fixture "$f"
+  add_agent "$f" alpha
+  add_skill "$f" bravo
+  add_cmd "$f" delta
+  run_install "$f" "$c"
+
+  [ "$RUN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: install failed"
+  expect_file "$c/girth.yaml" "$FUNCNAME"
+  grep -q '^mode: symlink$' "$c/girth.yaml" \
+    && ok || fail "$FUNCNAME: mode not recorded"
+  grep -q '^    how: link$' "$c/girth.yaml" \
+    && ok || fail "$FUNCNAME: link method not recorded"
+  local n; n="$(grep -c '^    fingerprint:' "$c/girth.yaml" 2>/dev/null || true)"
+  [ "${n:-0}" -eq 3 ] && ok || fail "$FUNCNAME: recorded ${n:-0} items, wanted 3"
+}
+
+test_dry_run_changes_nothing() {
+  local f="$TMP/dry-fixture" c="$TMP/dry-config"
+  mk_fixture "$f"
+  add_agent "$f" alpha
+  add_skill "$f" bravo
+  run_install "$f" "$c" --dry-run
+
+  [ "$RUN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: --dry-run failed"
+  grep -q 'would' "$c.out" && ok || fail "$FUNCNAME: no would-preview"
+  expect_absent "$c/girth.yaml" "$FUNCNAME"
+  [ ! -e "$c/agents" ] && [ ! -e "$c/skills" ] && [ ! -e "$c/commands" ] \
+    && ok || fail "$FUNCNAME: dry run wrote something to disk"
+}
+
+test_help_mentions_verbs() {
+  local f="$TMP/help-fixture" c="$TMP/help-config"
+  mk_fixture "$f"
+  run_install "$f" "$c" --help
+
+  [ "$RUN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: --help failed"
+  for v in install uninstall update; do
+    grep -q "$v" "$c.out" && ok || fail "$FUNCNAME: --help omits $v"
+  done
+}
+
 test_symlink_install
 test_copy_install
 test_user_file_preserved
 test_retired_item_pruned
+test_broken_catalog_refused
+test_clean_install_records
+test_dry_run_changes_nothing
+test_help_mentions_verbs
 
 echo
 echo "installer harness: $PASS passed, $FAIL failed"
