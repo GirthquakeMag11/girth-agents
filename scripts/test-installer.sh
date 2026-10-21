@@ -297,6 +297,126 @@ test_uninstall_dry_run() {
   expect_file "$c/girth.yaml" "$FUNCNAME"
 }
 
+# git_fixture <dir> — a git repository holding the installer; one base commit.
+git_fixture() {
+  mk_fixture "$1"
+  git -C "$1" init -q -b main
+  git -C "$1" config user.email "test@example.com"
+  git -C "$1" config user.name "test"
+  git -C "$1" add -A
+  git -C "$1" commit -qm "base"
+}
+
+# run_update <fixture> <config> [extra args...] — runs the update verb.
+run_update() {
+  local f="$1" c="$2"; shift 2
+  set +e
+  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" update "$@" </dev/null >"$c.up.out" 2>&1
+  U_STATUS=$?
+  set -e
+}
+
+test_update_refuses_dirty_checkout() {
+  local f="$TMP/dirty-fixture" c="$TMP/dirty-config"
+  git_fixture "$f"
+  add_skill "$f" bravo
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog"
+  run_install "$f" "$c"
+
+  echo "dirty" >> "$f/.opencode/skills/bravo/SKILL.md"
+  run_update "$f" "$c"
+
+  [ "$U_STATUS" -ne 0 ] && ok || fail "$FUNCNAME: expected a non-zero exit"
+  grep -qi 'uncommitted' "$c.up.out" && ok || fail "$FUNCNAME: no dirty-checkout message"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  expect_file "$c/girth.yaml" "$FUNCNAME"
+}
+
+test_update_pull_reconciles() {
+  local origin="$TMP/origin.git" f="$TMP/pull-fixture" c="$TMP/pull-config" work="$TMP/pull-work"
+  git init -q --bare "$origin"
+  git -C "$origin" symbolic-ref HEAD refs/heads/main
+  git_fixture "$f"
+  add_skill "$f" bravo
+  add_skill "$f" charlie
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog"
+  git -C "$f" remote add origin "$origin"
+  git -C "$f" push -q -u origin main
+  run_install "$f" "$c"
+  expect_link "$c/skills/charlie" "$FUNCNAME"
+
+  # author a new release in a separate clone: retire charlie, add echo
+  git clone -q "$origin" "$work"
+  git -C "$work" config user.email "test@example.com"
+  git -C "$work" config user.name "test"
+  rm -rf "$work/.opencode/skills/charlie"
+  add_skill "$work" echo
+  git -C "$work" add -A
+  git -C "$work" commit -qm "retire charlie, add echo"
+  git -C "$work" push -q origin main
+
+  # the fixture sits a release behind; update pulls and reconciles
+  run_update "$f" "$c"
+
+  [ "$U_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: update failed"
+  grep -q -- '->' "$c.up.out" && ok || fail "$FUNCNAME: no before/after reported"
+  expect_absent "$c/skills/charlie" "$FUNCNAME"
+  expect_link "$c/skills/echo" "$FUNCNAME"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  grep -q 'retired' "$c.up.out" && ok || fail "$FUNCNAME: retirement not reported"
+}
+
+test_update_copy_only_changed() {
+  local origin="$TMP/copy-origin.git" f="$TMP/copy-fixture" c="$TMP/copy-config" work="$TMP/copy-work"
+  git init -q --bare "$origin"
+  git -C "$origin" symbolic-ref HEAD refs/heads/main
+  git_fixture "$f"
+  add_skill "$f" bravo
+  add_skill "$f" charlie
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog"
+  git -C "$f" remote add origin "$origin"
+  git -C "$f" push -q -u origin main
+  run_install "$f" "$c" --copy
+  local t0; t0="$(stat -c %Y "$c/skills/bravo/SKILL.md")"
+
+  git clone -q "$origin" "$work"
+  git -C "$work" config user.email "test@example.com"
+  git -C "$work" config user.name "test"
+  printf -- '---\ndescription: fixture skill\n---\n# charlie changed\n' > "$work/.opencode/skills/charlie/SKILL.md"
+  git -C "$work" add -A
+  git -C "$work" commit -qm "change charlie"
+  git -C "$work" push -q origin main
+
+  # update without --copy: it must carry over copy mode from the record
+  run_update "$f" "$c"
+
+  [ "$U_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: update failed"
+  grep -q 'charlie changed' "$c/skills/charlie/SKILL.md" && ok || fail "$FUNCNAME: changed copy not re-copied"
+  [ "$(stat -c %Y "$c/skills/bravo/SKILL.md")" = "$t0" ] && ok || fail "$FUNCNAME: unchanged copy was touched"
+  grep -q 're-copied' "$c.up.out" && ok || fail "$FUNCNAME: re-copy not reported"
+}
+
+test_update_dry_run() {
+  local f="$TMP/updry-fixture" c="$TMP/updry-config"
+  git_fixture "$f"
+  add_skill "$f" bravo
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog"
+  run_install "$f" "$c"
+  local head; head="$(git -C "$f" rev-parse HEAD)"
+
+  run_update "$f" "$c" --dry-run
+
+  [ "$U_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: dry run failed"
+  grep -q 'would' "$c.up.out" && ok || fail "$FUNCNAME: no would-preview"
+  [ "$(git -C "$f" rev-parse HEAD)" = "$head" ] && ok || fail "$FUNCNAME: dry run pulled"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  expect_file "$c/girth.yaml" "$FUNCNAME"
+}
+
 test_symlink_install
 test_copy_install
 test_user_file_preserved
@@ -310,6 +430,10 @@ test_uninstall_copies
 test_uninstall_preserves_user_files
 test_uninstall_confirmation
 test_uninstall_dry_run
+test_update_refuses_dirty_checkout
+test_update_pull_reconciles
+test_update_copy_only_changed
+test_update_dry_run
 
 echo
 echo "installer harness: $PASS passed, $FAIL failed"

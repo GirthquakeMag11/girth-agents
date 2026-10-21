@@ -3,8 +3,8 @@
 #
 # One entry point, three verbs: install (the default), uninstall, update.
 # install verifies the catalog and records what it places in girth.yaml;
-# uninstall removes exactly what the record lists; update lands in the step
-# that follows.
+# uninstall removes exactly what the record lists; update pulls the checkout
+# forward and reconciles the install against the new catalog.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,6 +12,7 @@ DEFAULT_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$DEFAULT_CONFIG}"
 RECORD="girth.yaml"
 MODE="symlink"
+COPY_FLAG=0
 DRY_RUN=0
 YES=0
 VERB="install"
@@ -42,7 +43,7 @@ EOF
 for arg in "$@"; do
   case "$arg" in
     --help|-h) usage; exit 0 ;;
-    --copy) MODE="copy" ;;
+    --copy) MODE="copy"; COPY_FLAG=1 ;;
     --dry-run) DRY_RUN=1 ;;
     --yes|-y) YES=1 ;;
     install|uninstall|update) VERB="$arg" ;;
@@ -94,7 +95,55 @@ still_ours() {
   esac
 }
 
-# uninstall — remove exactly what the record lists, nothing else.
+record_item() { # $1 source  $2 dest  $3 how  $4 fingerprint
+  {
+    printf '  - source: %s\n' "$1"
+    printf '    dest: %s\n' "$2"
+    printf '    how: %s\n' "$3"
+    printf '    fingerprint: %s\n' "$4"
+  } >> "$RECORD_TMP"
+}
+
+# catalog_pairs — one "src<TAB>dst" line per item, current catalog order.
+catalog_pairs() {
+  shopt -s nullglob
+  local f d
+  for f in "$REPO_ROOT"/.opencode/agents/*.md; do
+    printf '%s\t%s\n' "$f" "$CONFIG_DIR/agents/$(basename "$f")"
+  done
+  for f in "$REPO_ROOT"/.opencode/commands/*.md; do
+    printf '%s\t%s\n' "$f" "$CONFIG_DIR/commands/$(basename "$f")"
+  done
+  while IFS= read -r f; do
+    d="$(dirname "$f")"
+    printf '%s\t%s\n' "$d" "$CONFIG_DIR/skills/$(basename "$d")"
+  done < <(find "$REPO_ROOT/.opencode/skills" -type f -name SKILL.md)
+}
+
+# record_items — the record's items as dest<TAB>source<TAB>how<TAB>fingerprint.
+record_items() { # $1 record file, or stdin record when omitted — no, file arg
+  awk '
+    /^  - source:/      { s=$0; sub(/^  - source: /, "", s) }
+    /^    dest:/        { d=$0; sub(/^    dest: /, "", d) }
+    /^    how:/         { h=$0; sub(/^    how: /, "", h) }
+    /^    fingerprint:/ { f=$0; sub(/^    fingerprint: /, "", f)
+                          print d "\t" s "\t" h "\t" f }
+  ' "$1"
+}
+
+OLD_ITEMS=""
+old_entry() { # $1 dest -> "source\thow\tfingerprint" or nothing
+  local d="$1" line src how fp
+  while IFS=$'\t' read -r line src how fp; do
+    [ "$line" = "$d" ] || continue
+    printf '%s\t%s\t%s' "$src" "$how" "$fp"
+    return 0
+  done <<< "$OLD_ITEMS"
+  return 1
+}
+
+# --- uninstall -------------------------------------------------------------
+
 uninstall() {
   local rec="$CONFIG_DIR/$RECORD"
   if [ ! -f "$rec" ]; then
@@ -105,15 +154,9 @@ uninstall() {
   local items changed=0 todo=0
   local todo_lines=""
   local how dest src fp
-  items="$(awk '
-    /^  - source:/      { s=$0; sub(/^  - source: /, "", s) }
-    /^    dest:/        { d=$0; sub(/^    dest: /, "", d) }
-    /^    how:/         { h=$0; sub(/^    how: /, "", h) }
-    /^    fingerprint:/ { f=$0; sub(/^    fingerprint: /, "", f)
-                          print h "\t" d "\t" s "\t" f }
-  ' "$rec")"
+  items="$(record_items "$rec")"
 
-  while IFS=$'\t' read -r how dest src fp; do
+  while IFS=$'\t' read -r dest src how fp; do
     [ -n "$how" ] || continue
     if ! still_ours "$how" "$dest" "$src" "$fp"; then
       echo "left  $dest  (changed since install — not touching it)" >&2
@@ -164,15 +207,136 @@ uninstall() {
   exit 0
 }
 
-case "$VERB" in
-  uninstall) uninstall ;;
-  update)
-    printf 'install.sh: update is not here yet — install and uninstall exist so far.\n' >&2
-    exit 2
-    ;;
-esac
+# --- update ----------------------------------------------------------------
+
+# reconcile — make the install match the (already-pulled) catalog.
+reconcile() {
+  local rec="$CONFIG_DIR/$RECORD"
+  OLD_ITEMS="$([ -f "$rec" ] && record_items "$rec" || true)"
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    RECORD_TMP=""
+  else
+    mkdir -p "$CONFIG_DIR/agents" "$CONFIG_DIR/commands" "$CONFIG_DIR/skills"
+    RECORD_TMP="$(mktemp)"
+    trap 'rm -f "$RECORD_TMP"' EXIT
+    {
+      printf 'version: 1\n'
+      printf 'mode: %s\n' "$MODE"
+      printf 'release: %s\n' "$(release_name)"
+      printf 'items:\n'
+    } > "$RECORD_TMP"
+  fi
+
+  local seen="" kept=0 added=0 changed=0 removed=0 skipped=0
+  local src dst fp o_src o_how ofp
+  while IFS=$'\t' read -r src dst; do
+    [ -n "$src" ] || continue
+    seen="$seen$dst"$'\n'
+    fp="$(fingerprint "$src")"
+
+    local oe; oe="$(old_entry "$dst" || true)"
+    if [ -n "$oe" ]; then
+      o_src="${oe%%$'\t'*}"; o_how="${oe#*$'\t'}"; o_how="${o_how%%$'\t'*}"; ofp="${oe##*$'\t'}"
+      if still_ours "$o_how" "$dst" "$o_src" "$ofp"; then
+        if [ "$MODE" = "copy" ] && [ "$o_how" = "copy" ] && [ "$ofp" != "$fp" ]; then
+          if [ "$DRY_RUN" -eq 1 ]; then say "re-copy $dst <- $src"
+          else rm -rf "$dst"; cp -R "$src" "$dst"; echo "copy  $dst  (changed)"; record_item "$src" "$dst" copy "$fp"; fi
+          changed=$((changed + 1))
+        else
+          [ "$DRY_RUN" -eq 0 ] && record_item "$src" "$dst" "$o_how" "$fp"
+          kept=$((kept + 1))
+        fi
+        continue
+      fi
+    fi
+
+    if [ -e "$dst" ] || [ -L "$dst" ]; then
+      if [ "$DRY_RUN" -eq 1 ]; then say "skip $(basename "$dst")  (a real file already exists there)"
+      else echo "skip  $(basename "$dst")  (a real file already exists there — not touching it)" >&2; fi
+      skipped=$((skipped + 1))
+    elif [ "$DRY_RUN" -eq 1 ]; then
+      say "$MODE $dst <- $src"
+      added=$((added + 1))
+    elif [ "$MODE" = "copy" ]; then
+      cp -R "$src" "$dst"; echo "copy  $dst"; record_item "$src" "$dst" copy "$fp"
+      added=$((added + 1))
+    elif ln -s "$src" "$dst" 2>/dev/null; then
+      echo "link  $dst -> $src"; record_item "$src" "$dst" link "$fp"; added=$((added + 1))
+    else
+      cp -R "$src" "$dst"; echo "copy  $dst  (symlinks unavailable)"; record_item "$src" "$dst" copy "$fp"; added=$((added + 1))
+    fi
+  done < <(catalog_pairs)
+
+  # recorded items no longer in the catalog are retired
+  local d2 s2 h2 f2
+  while IFS=$'\t' read -r d2 s2 h2 f2; do
+    [ -n "$d2" ] || continue
+    printf '%s\n' "$seen" | grep -Fxq "$d2" && continue
+    if still_ours "$h2" "$d2" "$s2" "$f2"; then
+      if [ "$DRY_RUN" -eq 1 ]; then say "remove $d2  (retired)"
+      else rm -rf "$d2"; echo "removed  $d2  (retired)"; fi
+      removed=$((removed + 1))
+    else
+      echo "left  $d2  (changed since install — not touching it)" >&2
+    fi
+  done <<< "$OLD_ITEMS"
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo
+    echo "reconcile (dry run): $added to add, $changed to re-copy, $removed retired, $skipped skipped, $kept unchanged."
+    return 0
+  fi
+
+  mv "$RECORD_TMP" "$rec"
+  trap - EXIT
+  echo "recorded $rec"
+  echo "done: $added added, $changed re-copied, $removed retired, $skipped skipped, $kept unchanged."
+}
+
+update() {
+  local rec="$CONFIG_DIR/$RECORD"
+  if [ ! -d "$REPO_ROOT/.git" ]; then
+    printf 'install.sh: update needs a git checkout; %s is not one.\n' "$REPO_ROOT" >&2
+    exit 1
+  fi
+  if [ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]; then
+    printf 'install.sh: the checkout has uncommitted changes — not pulling over them.\n' >&2
+    exit 1
+  fi
+
+  # carry on in the mode the last install used, unless --copy overrides
+  if [ "$COPY_FLAG" -eq 0 ] && [ -f "$rec" ]; then
+    local m; m="$(sed -n 's/^mode: //p' "$rec" | head -1)"
+    [ "$m" = "copy" ] && MODE="copy"
+  fi
+
+  local before; before="$(release_name)"
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "update: would pull $REPO_ROOT, then reconcile (dry run):"
+    reconcile
+    echo "dry run — nothing changed."
+    exit 0
+  fi
+
+  if ! git -C "$REPO_ROOT" pull --ff-only >&2; then
+    printf 'install.sh: git pull failed — nothing changed.\n' >&2
+    exit 1
+  fi
+
+  local after; after="$(release_name)"
+  echo "updated $before -> $after"
+  reconcile
+  exit 0
+}
 
 # --- install ---------------------------------------------------------------
+
+case "$VERB" in
+  uninstall) uninstall ;;
+  update) update ;;
+esac
 
 verify_catalog
 
@@ -195,15 +359,6 @@ else
     printf 'items:\n'
   } > "$RECORD_TMP"
 fi
-
-record_item() { # $1 source  $2 dest  $3 how  $4 fingerprint
-  {
-    printf '  - source: %s\n' "$1"
-    printf '    dest: %s\n' "$2"
-    printf '    how: %s\n' "$3"
-    printf '    fingerprint: %s\n' "$4"
-  } >> "$RECORD_TMP"
-}
 
 # install_one <source> <destination>
 install_one() {
@@ -269,18 +424,10 @@ for link in "$CONFIG_DIR"/agents/* "$CONFIG_DIR"/commands/* "$CONFIG_DIR"/skills
   esac
 done
 
-for f in "$REPO_ROOT/.opencode/agents"/*.md; do
-  install_one "$f" "$CONFIG_DIR/agents/$(basename "$f")"
-done
-
-for f in "$REPO_ROOT/.opencode/commands"/*.md; do
-  install_one "$f" "$CONFIG_DIR/commands/$(basename "$f")"
-done
-
-while IFS= read -r f; do
-  d="$(dirname "$f")"
-  install_one "$d" "$CONFIG_DIR/skills/$(basename "$d")"
-done < <(find "$REPO_ROOT/.opencode/skills" -type f -name SKILL.md)
+while IFS=$'\t' read -r src dst; do
+  [ -n "$src" ] || continue
+  install_one "$src" "$dst"
+done < <(catalog_pairs)
 
 if [ "$DRY_RUN" -eq 1 ]; then
   echo
