@@ -6,20 +6,19 @@ live by OpenCode while you work in this repo: editing a file is testing it.
 
 ## Layout
 
-| Path | Role |
-| --- | --- |
-| `.opencode/skills/{owners,activities}/<id>/SKILL.md` | One skill per directory, grouped by role; `references/` and `scripts/` live beside `SKILL.md` and are addressed relative to it |
-| `.opencode/commands/*.md` | One slash command per file, flat: entry points only a human triggers |
-| `.opencode/agents/*.md` | One distributable agent per file, flat |
-| `scripts/` | Maintainer tooling: catalog linter and installer |
-| `CONTRIBUTING.md` | The rules below, expanded, plus the skill design rules |
+| Path                             | Role                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `.opencode/skills/<id>/SKILL.md` | One skill per directory; `references/` and `scripts/` live beside `SKILL.md` and are addressed relative to it |
+| `.opencode/commands/*.md`        | One slash command per file, flat: entry points only a human triggers                                          |
+| `.opencode/agents/*.md`          | One distributable agent per file, flat                                                                        |
+| `scripts/`                       | Maintainer tooling: catalog linter and installer                                                              |
+| `CONTRIBUTING.md`                | The rules below, expanded, plus the skill design rules                                                        |
 
 ## Publishing rules (enforced by `node scripts/validate.mjs`)
 
 1. Agents and commands are flat `.md` files — no nested directories.
-2. Skills use the directory form at any depth: `.opencode/skills/<id>/SKILL.md`,
-   grouped by role under `owners/` and `activities/`. The directory holding
-   `SKILL.md` is the skill ID, and leaf names stay unique across both groups.
+2. Skills use the directory form: `.opencode/skills/<id>/SKILL.md`. The
+   directory holding `SKILL.md` is the skill ID, and leaf names stay unique.
    No flat `<id>.md` skills.
 3. Every ID (agent/command filename base, skill directory name) is lowercase
    kebab-case: `[a-z0-9]+(-[a-z0-9]+)*`.
@@ -35,17 +34,17 @@ live by OpenCode while you work in this repo: editing a file is testing it.
    relative to that skill's directory, and no skill links into another with
    `../`.
 8. Every "Call the skill tool with `<id>`" names a skill in this catalog.
-9. Every skill declares `metadata:` → `girth/role: owner` or `activity`.
-   Owners are nouns, keep `references/template.md`, and call no skill;
-   activities are named for what they do or produce — a gerund where it
-   reads naturally, otherwise the action's own name.
+9. Skills are named for what they do or produce — a gerund where it reads
+   naturally, otherwise the action's own name. A skill that owns a scaffold
+   piece carries the piece's creation template and formats in `references/`,
+   and names the piece in its description.
 
 ## Designing skills
 
-Skills follow the owner/activity schema: owner skills define a scaffold
-piece; activity skills do work with pieces and own none. Read "The schema"
-and "Skill design" in `CONTRIBUTING.md` before adding or changing a
-skill. Skills carry only what an executing agent needs — process
+Skills are one class: each is one thing the agent does, named for it. A
+skill that owns a scaffold piece carries the piece's formats in
+`references/`. Read "The schema" and "Skill design" in `CONTRIBUTING.md`
+before adding or changing a skill. Skills carry only what an executing agent needs — process
 bookkeeping belongs in the repo docs.
 
 ## Workflow for adding an item

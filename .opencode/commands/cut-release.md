@@ -11,7 +11,8 @@ Cut a release for this project, per the versioning ruling in
    Change → major; Added or Deprecated → minor; only Fixed or Security →
    patch — and present the entries grouped by section. Ask me to confirm or
    override; my confirmation is the release.
-3. Apply per the changelog's format (call the skill tool with `changelog`):
+3. Apply per the changelog's format (call the skill tool with
+   `maintaining-docs`):
    retitle the queue as `## [<version>] - <YYYY-MM-DD>`, drop its empty
    sections, and open a fresh `## [Unreleased]` above it with the full set
    of empty sections. Update comparison links if the project keeps them. If

@@ -12,7 +12,7 @@ committing.
 | Rule                                                                                                                                   | Why                                                                                                                                                      |
 | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Agents and commands are flat `.md` files                                                                                               | A nested path changes the item's ID (`team/reviewer`), and collisions with a user's own items get confusing. Flat → the filename is the ID.              |
-| Skills use the directory form `.opencode/skills/{owners,activities}/<id>/SKILL.md`, grouped by role; the leaf directory name is the ID | Supporting files (`references/`, `scripts/`) need a private home; paths inside a skill are relative to its directory.                                    |
+| Skills use the directory form `.opencode/skills/<id>/SKILL.md`; the leaf directory name is the ID                                      | Supporting files (`references/`, `scripts/`) need a private home; paths inside a skill are relative to its directory.                                    |
 | All IDs are lowercase kebab-case (`[a-z0-9]+(-[a-z0-9]+)*`)                                                                            | Skills especially: OpenCode derives the ID from the directory name and there is no namespacing once installed.                                           |
 | Every agent and skill has a frontmatter `description`                                                                                  | OpenCode only advertises skills with a description, and descriptions are what a parent agent sees when choosing subagents.                               |
 | Skill descriptions stay under 300 characters (warning)                                                                                 | Every description is loaded into the model's context on every turn.                                                                                      |
@@ -21,54 +21,42 @@ committing.
 | Paths referenced from a skill (`references/…`, `scripts/…`) exist in that skill's directory                                            | Dead paths break the skill at load time.                                                                                                                 |
 | No `../` paths inside a skill                                                                                                          | A skill reaches another skill by name, never by linking into its folder: installed skills are linked one by one and the folder layout is not guaranteed. |
 | Every "Call the skill tool with `<id>`" names a skill in this catalog                                                                  | Renames and removals otherwise leave dangling calls.                                                                                                     |
-| Every skill declares `metadata:` → `girth/role: owner` or `activity`                                                                   | The schema below depends on it.                                                                                                                          |
-| Owners are named with nouns; activities named for what they do or produce                                                              | A skill's name says which side of the schema it is on.                                                                                                   |
-| Owners keep a `references/template.md` and call no other skill                                                                         | Owners define; activities act.                                                                                                                           |
+| Skills are named for what they do or produce — a gerund where it reads naturally                                                       | A skill's name is the first thing an agent reads.                                                                                                        |
+| A skill that owns a scaffold piece keeps the piece's creation template and formats in `references/`                                    | One home per meaning; formats travel with the skill that owns them.                                                                                      |
 
 ## The schema
 
-**Owner skills define a scaffold piece; activity skills do work with pieces,
-and own none.**
+One class of skill: each is one thing the agent does, named for that thing.
+Most own nothing beyond their instructions; seven carry a scaffold piece,
+whose formats and creation template travel in the skill's `references/`:
 
-| Owners: define what a piece is                               | Activities: what agents do                                                                        |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `glossary` — `GLOSSARY.md`                                   | `bootstrapping` — create the scaffold, whole or one piece                                         |
-| `conventions` — `conventions/`                               | `tracking` — fix now or record, put down and pick up, ask or track                                |
-| `decisions` — `decisions/`                                   | `codifying` — turn what the user says into a term, convention, or decision                        |
-| `tracker` — `tracker/` (the open-item kinds plus `tickets/`) | `maintaining-docs` — keep documents true, changelog at change time, releases                      |
-| `docs` — AGENTS, CONTRIBUTING, README                        | `specifying` — turn a settled conversation into a spec                                            |
-| `changelog` — `CHANGELOG.md`                                 | `implementing` — slice an approved thing into tickets and work the frontier by each ticket's kind |
-| `specs` — `specs/`                                           | `wayfinding` — chart a big foggy effort and work its decisions until the way is clear             |
-| `plans` — `plans/`                                           | `diagnosing-bugs` — the feedback-loop discipline for hard bugs                                    |
-| `education` — `education/`                                   |                                                                                                   |
-|                                                              | `tdd` — test-first at pre-agreed seams                                                            |
-|                                                              | `code-review` — two-axis review, Standards and Spec                                               |
-|                                                              | `codebase-design` — the deep-module vocabulary                                                    |
-|                                                              | `research` — primary-source legwork in the background                                             |
-|                                                              | `prototyping` — throwaway code that answers a design question                                     |
-|                                                              | `wizard` — a step-by-step script for human-only procedures                                        |
-|                                                              | `grilling` — the interview primitive: work the design tree, one round at a time                   |
-|                                                              | `writing-for-agents` — the craft of writing documents agents consume                              |
-|                                                              | `questionnaire` — a questionnaire for the person who can answer a stuck decision                  |
-|                                                              | `teaching` — teach a real skill across sessions                                                   |
-
-Every owner's `SKILL.md` uses the same outline — **Purpose → What belongs →
-Format → Changing it** — and keeps its piece's creation template in
-`references/template.md`.
+| Skill              | Owns                                                        |
+| ------------------ | ----------------------------------------------------------- |
+| `tracking`         | `tracker/` — the six open-item kinds plus `tickets/`        |
+| `domain-modeling`  | `GLOSSARY.md` — the project's shared language               |
+| `codifying`        | `conventions/` and `decisions/` — its two ruling formats    |
+| `maintaining-docs` | `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md` |
+| `specifying`       | `specs/` — the spec format and template                     |
+| `wayfinding`       | `plans/` — the live-map format and template                 |
+| `teaching`         | `education/` — the learning workspace and every file in it  |
 
 The rules:
 
-1. **Where content goes.** True of the piece no matter who edits it → the
-   owner. How an agent decides or proceeds → an activity.
-2. **Who calls whom.** Activities call owners and other activities. Owners
-   call nothing.
-3. **Naming.** Owners are nouns, named for their piece. Activities are named
-   for what they do or produce — a gerund where it reads naturally,
-   otherwise the action's own name (`research`, `tdd`, `wizard`).
-4. **Reference-only activities.** An activity may be pure consult-on-demand
-   material with no ordered steps (`codebase-design`); it still owns nothing.
-5. **Growth.** A new piece gets an owner. A new process gets an activity.
-   Neither changes the others.
+1. **Where content goes.** Everything about a piece — what belongs in it,
+   its format, its creation template — lives in the owning skill's
+   `references/`. How an agent decides or proceeds lives in the skill body.
+2. **Who calls whom.** Any skill may call another by name; there is no
+   direction restriction. A skill that writes a piece reads the owning
+   skill's references for the format.
+3. **Naming.** Named for what the skill does or produces — a gerund where
+   it reads naturally, otherwise the action's own name (`research`, `tdd`,
+   `wizard`). The name names the doing, not a role.
+4. **Reference-only skills.** A skill may be pure consult-on-demand
+   material with no ordered steps (`codebase-design`); it owns nothing, and
+   that is fine.
+5. **Growth.** A new piece attaches to an existing skill's references, or to
+   a new owning skill; a new process is a new skill. Neither forces a second
+   class.
 
 ## Skill design
 
@@ -131,14 +119,12 @@ Then validate and add a row to the README catalog table.
 
 ```text
 .opencode/skills/
-├── owners/            # one per scaffold piece
-└── activities/        # one per process
-    └── git-release/
-        ├── SKILL.md
-        ├── references/
-        │   └── release-policy.md
-        └── scripts/
-            └── changelog.ts
+└── git-release/
+    ├── SKILL.md
+    ├── references/
+    │   └── release-policy.md
+    └── scripts/
+        └── changelog.ts
 ```
 
 `SKILL.md`:
@@ -190,15 +176,17 @@ the contract for what counts as scaffolding.
 
 When a scaffold piece is added, renamed, or retired:
 
-1. Create, rename, or retire its owner, template included.
-2. Update the bootstrapping inventory.
-3. Update the activities that write through the owner.
-4. Update the AGENTS.md template (in the docs owner's
-   `references/template.md`) if agents should read or record the piece.
+1. Add, rename, or retire the piece's formats and creation template in its
+   owning skill's `references/` — or attach the piece to a new owning skill
+   when no existing skill fits.
+2. Update the bootstrapping inventory's row for the piece.
+3. Update the skills that write through the piece.
+4. Update the AGENTS.md template in `maintaining-docs`'s
+   `references/doc-template.md` if agents should read or record the piece.
 5. Check every skill whose text mentions the piece.
 
-When a process is added, it becomes an activity that writes through the
-existing owners.
+When a process is added, it becomes a skill that writes through the
+existing owning skills.
 
 ## Release process
 

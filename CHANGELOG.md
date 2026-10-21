@@ -8,15 +8,13 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 
 ### Added
 ### Changed
+- The catalog has one skill class. Nine skills that only held scaffold formats — `glossary`, `conventions`, `decisions`, `tracker`, `docs`, `changelog`, `specs`, `plans`, `education` — fold into the skills that work those pieces, so every skill stands alone and the list drops from 30 to 21.
 ### Deprecated
 ### Removed
+- `glossary`, `conventions`, `decisions`, `tracker`, `docs`, `changelog`, `specs`, `plans`, and `education` as standalone skills; their formats now travel as `references/` in `tracking`, `domain-modeling`, `codifying`, `maintaining-docs`, `specifying`, `wayfinding`, and `teaching`.
 ### Fixed
 - README: a duplicated chain-map section left from the section
   rewrite is removed, so the map is documented once.
-### Security
-### Deprecated
-### Removed
-### Fixed
 ### Security
 
 ## [0.2.0] - 2026-10-20

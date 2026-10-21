@@ -1,5 +1,7 @@
 # Owner/activity schema for skills
 
+Status: superseded by 0003
+
 The catalog's skills split into **owners** — one per scaffold piece, each
 defining that piece and calling no other skill — and **activities**, work
 processes that own nothing. Decided when the flat one-skill-per-idea layout

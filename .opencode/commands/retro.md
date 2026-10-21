@@ -32,7 +32,7 @@ Present the candidates in severity order, each with a recommendation. Apply
 only what the user approves:
 
 - A **navigation pointer**, or a steering-file cut: call the skill tool with
-  `docs` and write it per that owner.
+  `maintaining-docs` and write it per that skill's doc references.
 - A **standard**: call the skill tool with `codifying` — a judgment call
   becomes a convention; a mechanical one becomes a convention *and* the
   offer of its automated check.
@@ -42,4 +42,4 @@ only what the user approves:
 ## Related skills
 
 - codifying — where standards accrue as rulings.
-- docs — where navigation pointers and steering-file pruning land.
+- maintaining-docs — where navigation pointers and steering-file pruning land.

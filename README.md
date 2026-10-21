@@ -57,46 +57,36 @@ Start a new OpenCode session and the catalog is live.
 The skills manage a **project scaffold**: a set of files in your project's
 repository that act as its memory across sessions and agents.
 
-There are two kinds of skill. **Owners** each define one scaffold piece:
-what belongs in it and its format. **Activities** are what the agent does
-with the pieces; they own none. The agent reaches for each on its own when
-the situation fits.
+Each skill is one thing the agent does, reached on its own when the
+situation fits. Where that thing owns a scaffold piece — `tracker/`,
+`GLOSSARY.md`, and the four standard documents — `AGENTS.md`,
+`CONTRIBUTING.md`, `README.md`, `CHANGELOG.md` — the skill carries the
+piece's format in its `references/` and names the piece in its
+description.
 
-| Owner         | Defines                                                                               |
-| ------------- | ------------------------------------------------------------------------------------- |
-| `glossary`    | `GLOSSARY.md` — the shared language: what things are                                  |
-| `conventions` | `conventions/On_<Domain>.md` — your rulings on how things are done                    |
-| `decisions`   | `decisions/NNNN-<slug>.md` — why the project is shaped the way it is                  |
-| `tracker`     | `tracker/` — hazards, bugs, defects, features, open questions, and `tickets/`         |
-| `docs`        | `AGENTS.md`, `CONTRIBUTING.md`, `README.md` — each for its reader                     |
-| `changelog`   | `CHANGELOG.md` — what changed, for the project's users                                |
-| `specs`       | `specs/<slug>.md` — one design document per effort                                    |
-| `plans`       | `plans/<slug>.md` — one live map per big, foggy effort                                |
-| `education`   | `education/` — one learner’s workspace: mission, resources, lessons, learning records |
-
-| Activity             | Use it when                                                                                                                                                                      |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bootstrapping`      | Creating the scaffold, whole or one missing piece; re-running repairs only the gaps it finds and reports when there is nothing to do                                             |
-| `tracking`           | Something comes up that cannot be dealt with now but must not be lost: an obstacle, a bug, a smell, a feature request, an open question; or picking up or closing a tracked item |
-| `domain-modeling`    | A term is doing two jobs or drifting, or project language needs settling — the agent challenges it, proposes the canonical term, and has it recorded                             |
-| `codifying`          | You say what something means, how something is done, or why the project takes a shape — or say something that might be one, in which case the agent asks before recording it     |
-| `curate-inbox`       | Open the inbox — collect tracker items and stray calls for attention, process each with the user, record answers, route the work they reveal                                     |
-| `find-skills`        | "How do I do X" where an installable skill might already exist — search skills.sh and the Skills CLI, verify quality, present options, install                                   |
-| `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or when you ask for a release, which `/cut-release` cuts on your confirmation                |
-| `specifying`         | A settled design needs writing down as a spec                                                                                                                                    |
-| `implementing`       | You ask to build something planned — a spec, bug, or defect — and the agent slices it into tickets and works them one at a time; a feature implements through its spec           |
-| `wayfinding`         | An effort is too big or too foggy to spec — the agent charts a live map and resolves its decisions one at a time                                                                 |
-| `prototyping`        | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict                                                               |
-| `wizard`             | A procedure only a human can do — the agent generates a step-by-step script that walks them through it                                                                           |
-| `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                             |
-| `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                      |
-| `questionnaire`      | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                    |
-| `teaching`           | The user wants to learn a real skill over time — the agent settles the mission, then teaches lesson by lesson in the zone of proximal development                                |
-| `diagnosing-bugs`    | Something is broken and the cause is not obvious                                                                                                                                 |
-| `tdd`                | Work that should be built or locked down test-first                                                                                                                              |
-| `code-review`        | A branch, PR, or work-in-progress change needs reviewing                                                                                                                         |
-| `codebase-design`    | A module's interface, seam, or depth is being designed or judged                                                                                                                 |
-| `research`           | A question needs facts from primary sources                                                                                                                                      |
+| Skill                | Use it when                                                                                                                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bootstrapping`      | Creating the scaffold, whole or one missing piece; re-running repairs only the gaps it finds and reports when there is nothing to do                                                                  |
+| `tracking`           | The tracker: something comes up that cannot be dealt with now but must not be lost — classify it, decide now-or-record, and write it in the tracker's format; or picking up or closing a tracked item |
+| `domain-modeling`    | A term is doing two jobs or drifting, or project language needs settling — the agent challenges it and has it recorded; owns GLOSSARY.md, its terms and format                                        |
+| `codifying`          | You say what a thing means, how something is done, or why the project takes a shape — the agent records it in conventions/ or decisions/ (or the glossary, via domain-modeling)                       |
+| `curate-inbox`       | Open the inbox — collect tracker items and stray calls for attention, process each with the user, record answers, route the work they reveal                                                          |
+| `find-skills`        | "How do I do X" where an installable skill might already exist — search skills.sh and the Skills CLI, verify quality, present options, install                                                        |
+| `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or for a release via `/cut-release` — keeps AGENTS.md, CONTRIBUTING.md, README.md, CHANGELOG.md true              |
+| `specifying`         | A settled design needs writing down as a spec — the agent writes it per the specs format and hands it to you to approve                                                                               |
+| `implementing`       | You ask to build something planned — a spec, bug, or defect — and the agent slices it into tickets and works them one at a time; a feature implements through its spec                                |
+| `wayfinding`         | An effort is too big or too foggy to spec — the agent charts a plans/ map and resolves its decisions one at a time                                                                                    |
+| `prototyping`        | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict                                                                                    |
+| `wizard`             | A procedure only a human can do — the agent generates a step-by-step script that walks them through it                                                                                                |
+| `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                                                  |
+| `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                                           |
+| `questionnaire`      | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                                         |
+| `teaching`           | The user wants to learn a real skill over time — the agent teaches from the education/ workspace it owns                                                                                              |
+| `diagnosing-bugs`    | Something is broken and the cause is not obvious                                                                                                                                                      |
+| `tdd`                | Work that should be built or locked down test-first                                                                                                                                                   |
+| `code-review`        | A branch, PR, or work-in-progress change needs reviewing                                                                                                                                              |
+| `codebase-design`    | A module's interface, seam, or depth is being designed or judged                                                                                                                                      |
+| `research`           | A question needs facts from primary sources                                                                                                                                                           |
 
 ### Commands
 
@@ -149,13 +139,13 @@ machinery.
 ```
                        initial idea
         ┌────────────────┬─────────────────────────┬─────────────────────────┐
-        │ proof needed   │ facts needed            │ foggy, too big to spec
-        │ prototyping    │ research                │ /wayfind
-        │                │                         │
-        │                │ ↘                       │ · wayfinding
-        │                │ cited doc ✓             │ · grilling
-        │                │                         │ · /questionnaire
-        │                │                         │
+        │ proof needed   │ facts needed            │ foggy, too big to spec  │
+        │ prototyping    │ research                │ /wayfind                │
+        │                │                         │                         │
+        │                │ ↘                       │ · wayfinding            │
+        │                │ cited doc ✓             │ · grilling              │
+        │                │                         │ · /questionnaire        │
+        │                │                         │                         │
         └────────────────┴─────────────────────────┴─────────────────────────┘
                         ▼
                  the design settles

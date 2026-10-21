@@ -98,9 +98,6 @@ function referencedPaths(body) {
 const MAX_DESCRIPTION = 300
 /** The operative cross-skill instruction this catalog standardizes on. */
 const SKILL_CALL = /[Cc]all(?:ing|s)?\s+the\s+skill\s+tool\s+with\s+`([^`]+)`/g
-const SKILL_CALL_TEST = /[Cc]all(?:ing|s)?\s+the\s+skill\s+tool\s+with\s+`[^`]+`/
-/** Schema role, declared in frontmatter as `metadata:` → `girth/role: owner|activity`. */
-const ROLE = /^[ \t]+girth\/role:[ \t]*([a-z]+)[ \t]*$/m
 /** A path climbing out of the file's directory, e.g. `../other-skill/FILE.md`. */
 const PARENT_PATH = /(?:^|[\s(`"'])\.\.\//m
 
@@ -199,13 +196,6 @@ async function checkSkills() {
     }
     skillIds.add(id)
     const { fm, body } = splitFrontmatter(text)
-    const role = fm ? ROLE.exec(fm)?.[1] : undefined
-    if (fm && role !== "owner" && role !== "activity") {
-      err(rel, "frontmatter must declare metadata girth/role: owner (defines a scaffold piece) or activity (does work, owns nothing)")
-    }
-    if (role === "owner" && !(await exists(path.join(sdir, "references", "template.md")))) {
-      err(rel, "owner skills keep their piece's creation template in references/template.md")
-    }
     if (!fm) {
       err(rel, "missing YAML frontmatter (--- ... --- block)")
     } else {
@@ -224,9 +214,6 @@ async function checkSkills() {
       }
       for (const p of referencedPaths(content)) {
         if (!(await exists(path.join(sdir, p)))) err(where, `references "${p}", but no such file exists in the skill's directory`)
-      }
-      if (role === "owner" && SKILL_CALL_TEST.test(content)) {
-        err(where, "owner skills call no other skill; operative skill calls belong in activities")
       }
       collectSkillCalls(where, content)
     }
