@@ -62,9 +62,10 @@ bookkeeping belongs in the repo docs.
 - Maintainer agents (release, linting, catalog generation) intentionally live
   in the maintainer's global OpenCode config, not here — this repo publishes
   catalog content only; it keeps the versioned tooling they run.
-- `scripts/install.sh` symlinks (or copies) the catalog into a user's global
-  config; changes here reach users on their next `git pull`, and re-running
-  the installer prunes links to retired items.
+- `scripts/install.sh` installs (symlink by default, copy with `--copy`),
+  uninstalls, and updates the catalog into a user's global config; changes
+  here reach users on their next update, and re-running it prunes links to
+  retired items.
 - The layout is ready for a future GitHub Pages skill catalog: a
   `scripts/gen-catalog.mjs` and a pages workflow can be added later without
   restructuring anything.

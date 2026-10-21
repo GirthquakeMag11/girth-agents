@@ -12,7 +12,9 @@ cd girth-agents
 ./scripts/install.sh
 ```
 
-The script symlinks each item into your OpenCode global config:
+One script, three verbs — `install` (the default), `uninstall`, and
+`update`. Install verifies the catalog is lint-clean, then links each item
+into your OpenCode global config:
 
 | Artifact | Source                    | Installed to                      |
 | -------- | ------------------------- | --------------------------------- |
@@ -20,28 +22,29 @@ The script symlinks each item into your OpenCode global config:
 | Skills   | `.opencode/skills/<id>/`  | `~/.config/opencode/skills/<id>/` |
 | Commands | `.opencode/commands/*.md` | `~/.config/opencode/commands/`    |
 
-Because the items are symlinks, `git pull` updates everything in place.
-Start a new OpenCode session and the catalog is live.
+Because the items are symlinks, `./scripts/install.sh update` pulls the
+checkout and reconciles everything in place. Start a new OpenCode session
+and the catalog is live.
 
 <details>
-<summary>Alternatives and uninstalling</summary>
+<summary>Alternatives and details</summary>
 
-- **No symlinks (Windows, unusual filesystems):** `./scripts/install.sh --copy`
-  copies instead — re-run it after updates.
-- **Skills only, via config:** skip the installer and point the `skills` array
-  at this checkout in your global `opencode.json(c)`:
+- **No symlinks (Windows, unusual filesystems):** `./scripts/install.sh
+  install --copy` copies instead — `update` re-copies the items whose
+  source changed.
+- **Uninstall:** `./scripts/install.sh uninstall` removes exactly what an
+  install put there — links and copies — and asks first; `--yes` skips.
+  Files you added or changed yourself are left alone.
+- **Preview first:** any verb takes `--dry-run` to print what it would do
+  and change nothing. `--help` shows everything.
+- **Skills only, via config:** skip the installer and point the `skills`
+  array at this checkout in your global `opencode.json(c)`:
 
   ```jsonc
   "skills": ["/path/to/girth-agents/.opencode/skills"]
   ```
 
-- **Uninstall:**
-
-  ```sh
-  find ~/.config/opencode -type l -lname '*girth-agents*' -delete
-  ```
-
-  (For copies, delete the files you copied.)
+  (The installer leaves this entry alone; you manage it yourself.)
 </details>
 
 ## Catalog
