@@ -1,0 +1,24 @@
+# 05: README tells the three-verb story
+
+**Parent:** specs/installer.md
+
+**Kind:** feature
+
+**Blocked by:** 03 (uninstall), 04 (update)
+
+## What it delivers
+
+The README's install section becomes the published surface of the new
+script: a three-line install, a one-line uninstall, a one-line update, and
+the alternatives (copy mode, skills-by-path) and warnings (dirty checkout,
+files the installer will not touch) stated in the same three verbs rather
+than a pasted `find` one-liner.
+
+## Acceptance criteria
+
+- [ ] The Install section shows install, uninstall, and update as the three
+  entry-point verbs, with install as the default.
+- [ ] The `find … -delete` uninstall one-liner is gone; copy-mode
+  uninstalling is covered by the uninstall verb.
+- [ ] The copy-mode and skills-by-path alternatives still read correctly
+  against the new verbs.
