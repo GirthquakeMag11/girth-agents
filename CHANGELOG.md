@@ -8,6 +8,7 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 
 ### Added
 ### Changed
+- `specifying`: the spec is written first from the settled conversation, and `grilling` then fills and refines its gaps — the old no-second-interview rule is gone.
 - The catalog has one skill class. Nine skills that only held scaffold formats — `glossary`, `conventions`, `decisions`, `tracker`, `docs`, `changelog`, `specs`, `plans`, `education` — fold into the skills that work those pieces, so every skill stands alone and the list drops from 30 to 21.
 ### Deprecated
 ### Removed
