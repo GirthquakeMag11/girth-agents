@@ -9,9 +9,15 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ### Added
 - `handoff`: a skill carrying a session's context across agents — HANDOFF.md's format, the staleness playbook (untrue → modify or excise, unimportant → replace or excise), and the write-and-sweep and pickup protocols.
 - `/pickup`: resumes the project's handoff, consuming context as the work makes it stale, and deletes the document once fully consumed.
+- `status`: the installer's fourth verb — installed release, latest cut release, update policy, and the gap; `status --notes` prints the changelog sections between the two.
+- The update policy — manual, notify, or auto — asked at install, recorded beside it, and obeyed by update.
 
 ### Changed
 - `/handoff`: writes HANDOFF.md into the project's repository and commits it (`docs(handoff): record <slug>`), obeying an `On_Handoffs.md` conventions override where one exists — no longer the temp directory.
+- The installer is interactive by default: a menu of deeds beside Configuration, the two recorded questions answered at install and re-shaped only there; a flagless scripted run fails naming the flag it needed rather than guessing.
+- `update` honors the policy — auto checks the checkout out onto the latest cut release, notify reports a newer release and how to take it — and shows the changelog notes after a sync.
+- `/cut-release` publishes the GitHub Release — the changelog section as notes, the one-line install in the body — via gh, routing a missing gh to bootstrapping's setup wizard; a declination is recorded in conventions and skipped thereafter.
+- `bootstrapping` checks for the gh CLI and offers a setup wizard; a recorded declination skips the check from then on.
 - `grilling`: asks through the question-asking tool when one is available — one prompt per frontier question, the recommendation as the first option, numbered text as the fallback.
 - `specifying`: before the approval ask, the written spec is submitted to an independent fresh-context review — grilling may run again after it if findings open new questions — and the approval itself is put to the user as three options: Approve (Commit), Approve and Slice, Stop and Amend, the freeform fourth coming free with the question tool, offered by hand without one.
 

@@ -166,9 +166,10 @@ Optional frontmatter: `description`, `agent`, `model`, `subagent`. Never
 
 - `scripts/validate.mjs` — catalog linter. Zero dependencies, Node 18+.
 - `scripts/install.sh` — installs the catalog into `~/.config/opencode/`
-  (symlinks by default, copies with `--copy`), uninstalls it, and updates it
-  by pull-and-reconcile; prunes links left behind by items removed from the
-  catalog. Override the target with `OPENCODE_CONFIG_DIR`.
+  (interactive by default: links or copies, and an update policy — manual,
+  notify, or auto), uninstalls it, updates it by policy, and reports
+  `status`; prunes links left behind by items removed from the catalog.
+  Override the target with `OPENCODE_CONFIG_DIR`.
 - `scripts/test-installer.sh` — the installer's test harness, driven against
   a scratch config and a fixture catalog.
 

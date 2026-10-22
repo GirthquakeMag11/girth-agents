@@ -6,15 +6,28 @@ installed into `~/.config/opencode/` with one script.
 
 ## Install
 
+One line, run inside the project you use:
+
 ```sh
-git clone https://github.com/GirthquakeMag11/girth-agents.git
-cd girth-agents
-./scripts/install.sh
+git clone https://github.com/GirthquakeMag11/girth-agents.git && cd girth-agents && ./scripts/install.sh
 ```
 
-One script, three verbs — `install` (the default), `uninstall`, and
-`update`. Install verifies the catalog is lint-clean, then links each item
-into your OpenCode global config:
+Running the script opens a small menu — the deeds and Configuration side by
+side. A fresh install asks two questions: how items land (links,
+recommended, or copies) and how updates behave (manual, notify, or auto).
+Your answers are recorded with the install, and re-shaped any time through
+Configuration — never by editing a file.
+
+| Verb      | What it does                                                                                                                        |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| install   | Verify the catalog, then link — or, with `--copy`, copy — it                                                                            |
+| update    | Bring it current per your policy: manual pulls as today, notify also tells you when a newer release is cut, auto moves you onto the latest cut release |
+| status    | Installed release, latest cut release, your policy, and the gap; `status --notes` shows what changed                                   |
+| uninstall | Remove exactly what an install put there (asks first)                                                                               |
+
+The verbs also run scripted: `./scripts/install.sh install --copy --policy
+auto`. A flagless run with no terminal fails naming the flag it needed,
+rather than guessing — safe inside scripts and CI.
 
 | Artifact | Source                    | Installed to                      |
 | -------- | ------------------------- | --------------------------------- |
@@ -22,21 +35,20 @@ into your OpenCode global config:
 | Skills   | `.opencode/skills/<id>/`  | `~/.config/opencode/skills/<id>/` |
 | Commands | `.opencode/commands/*.md` | `~/.config/opencode/commands/`    |
 
-Because the items are symlinks, `./scripts/install.sh update` pulls the
-checkout and reconciles everything in place. Start a new OpenCode session
-and the catalog is live.
+Because the items are symlinks, update reconciles everything in place.
+Start a new OpenCode session and the catalog is live.
 
 <details>
 <summary>Alternatives and details</summary>
 
 - **No symlinks (Windows, unusual filesystems):** `./scripts/install.sh
-  install --copy` copies instead — `update` re-copies the items whose
-  source changed.
-- **Updating a dirty checkout:** `update` refuses to pull over uncommitted
+  install --copy` copies instead — update re-copies the items whose source
+  changed.
+- **Updating a dirty checkout:** update refuses to pull over uncommitted
   changes in the checkout — commit or stash them first.
-- **Uninstall:** `./scripts/install.sh uninstall` removes exactly what an
-  install put there — links and copies — and asks first; `--yes` skips.
-  Files you added or changed yourself are left alone.
+- **Uninstall:** removes exactly what an install put there — links and
+  copies — and asks first; `--yes` skips. Files you added or changed
+  yourself are left alone.
 - **Preview first:** any verb takes `--dry-run` to print what it would do
   and change nothing. `--help` shows everything.
 - **Skills only, via config:** skip the installer and point the `skills`
@@ -101,7 +113,7 @@ description.
 | `/bootstrap`     | Runs a full bootstrap: explores what exists, asks one round of questions for the gaps it found, creates missing pieces and repairs gaps, and reports when there is nothing to do        |
 | `/spec`          | Turns the current conversation into a spec for your approval                                                                                                                            |
 | `/slice`         | Slices an approved spec — or an oversized bug or defect — into tickets, presented for your approval before `/implement` works them                                                      |
-| `/cut-release`   | Cuts a release: versions the `[Unreleased]` queue into a dated section and tags it, on your confirmation                                                                                |
+| `/cut-release`   | Cuts a release: versions the `[Unreleased]` queue into a dated section, tags it, and publishes the GitHub Release — on your confirmation                                                                 |
 | `/inbox`         | Opens your inbox — collects everything calling for attention and processes it with you one item at a time                                                                               |
 | `/close-inbox`   | Closes the open inbox — wraps up, records the remainder, offers to begin the surfaced work                                                                                              |
 | `/implement`     | Works the ticket frontier — one ticket at a time, each by its Kind                                                                                                                      |
