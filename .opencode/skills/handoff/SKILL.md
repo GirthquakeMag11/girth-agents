@@ -81,3 +81,32 @@ The `/handoff` command starts here; this protocol is the machinery.
 
 Done when a fresh agent reading only the handoff knows what was settled,
 what is open, and which artifacts hold the detail.
+
+## Pickup protocol
+
+The `/pickup` command starts here; this protocol is the machinery.
+
+1. **Locate the document** as in the write protocol: the project's
+   `On_Handoffs.md` first, else `HANDOFF.md` at the repository root. No
+   document anywhere → report that there is nothing to pick up, and stop.
+2. **Read it.** The Context section says what is settled; the Open work
+   section says what remains; the `Skills for the pickup:` line names the
+   catalog skills to call. Call them.
+3. **Work, consuming as you go.** You are the context consumer of
+   whatever your actions render stale. The moment your work makes a claim
+   or task no longer true or no longer important, excise that line — in
+   the same commit as the work that consumed it, never struck through and
+   left behind. Context made stale by anyone else's action, or no one's,
+   is treated the same at the next read: modify or excise it anyway.
+4. **Rewrite what is only partly consumed.** When work has consumed some
+   parts of a unit while the rest stands untouched and fresh, rewrite the
+   line in place to hold only what remains — never strike the whole line
+   while any part of it still deserves attention.
+5. **Delete at full consumption.** When nothing un-consumed remains,
+   delete the document and commit the deletion; the handoff is finished.
+   A settled claim still standing when the work finishes is excised with
+   the deletion — a finished handoff does not linger, and the repository
+   the document lived in keeps the record of it.
+
+A bare freshness check — a trigger this skill names — is the staleness
+playbook run over the document with nothing to add: sweep, then stop.
