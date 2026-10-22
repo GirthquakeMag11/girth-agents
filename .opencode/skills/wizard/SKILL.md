@@ -65,5 +65,5 @@ Commit it only when the user wants a repeatable setup path.
 
 ## Related skills
 
-- conventions — a repeatable wizard the project relies on is a candidate for
-  a ruling on how setup is done.
+- codifying — a repeatable wizard the project relies on may be ruled
+  structurally integral to the project through its conventions.
