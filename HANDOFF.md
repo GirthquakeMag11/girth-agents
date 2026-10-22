@@ -11,6 +11,7 @@
 - The installer is interactive by default (a menu, plus Configuration). Run from inside this checkout with a terminal, or script it: `./scripts/install.sh install --copy --policy manual` answers its questions by flag.
 - The install records `girth.yaml` in `~/.config/opencode/` (override with `OPENCODE_CONFIG_DIR`); `status` reports installed and latest release, and `update` follows the policy (manual / notify / auto).
 - Start a fresh OpenCode session after installing — the catalog's skills and commands register only then.
+- The pickup spans two sessions by design: the first ends once the install is done and the new session has begun; the second — now holding the catalog — resumes wherever the remaining lines point.
 - Development rules live in `AGENTS.md` (an agent's view) and `CONTRIBUTING.md` (skill design, publishing rules); both are enforced by the linter.
 - The machine gates: `node scripts/validate.mjs` (zero dependencies) and `bash scripts/test-installer.sh` (a 127-assertion harness) — both must be green before committing.
 - Rulings live in `conventions/` (versioning, chains) and `decisions/` (0001-0004); the shared language is `GLOSSARY.md`.
