@@ -582,6 +582,65 @@ test_update_notify_reports_newer() {
   expect_link "$c/skills/echo" "$FUNCNAME"
 }
 
+# run_status <fixture> <config> [extra args...] — runs the status verb.
+run_status() {
+  local f="$1" c="$2"; shift 2
+  set +e
+  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" status "$@" </dev/null >"$c.st.out" 2>&1
+  ST_STATUS=$?
+  set -e
+}
+
+test_status_reports() {
+  local f="$TMP/st-fixture" c="$TMP/st-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c" --policy manual
+  run_status "$f" "$c"
+
+  [ "$ST_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: status failed"
+  grep -q '^installed release:' "$c.st.out" && ok || fail "$FUNCNAME: no installed release"
+  grep -q '^latest cut release:' "$c.st.out" && ok || fail "$FUNCNAME: no latest release"
+  grep -q '^update policy:     manual$' "$c.st.out" && ok || fail "$FUNCNAME: policy not reported"
+  grep -q '^gap:' "$c.st.out" && ok || fail "$FUNCNAME: no gap line"
+}
+
+test_status_notes() {
+  local f="$TMP/stnotes-fixture" c="$TMP/stnotes-config"
+  git_fixture "$f"
+  add_skill "$f" bravo
+  printf '# Changelog\n\n## [v1.0.0] - 2026-01-01\n\n### Added\n- the fixture ship\n' > "$f/CHANGELOG.md"
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog with changelog"
+  git -C "$f" tag v1.0.0
+  run_install "$f" "$c" --policy manual
+  run_status "$f" "$c" --notes
+
+  grep -q 'the fixture ship' "$c.st.out" && ok || fail "$FUNCNAME: notes not printed"
+  grep -q '^installed release: v1.0.0$' "$c.st.out" && ok || fail "$FUNCNAME: installed release not the tag"
+}
+
+test_notify_lag_on_install() {
+  local origin="$TMP/notifyinst-origin.git" f="$TMP/notifyinst-fixture" c="$TMP/notifyinst-config" work="$TMP/notifyinst-work"
+  git init -q --bare "$origin"
+  git -C "$origin" symbolic-ref HEAD refs/heads/main
+  git_fixture "$f"
+  add_skill "$f" bravo
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog"
+  git -C "$f" remote add origin "$origin"
+  git -C "$f" push -q -u origin main
+  git clone -q "$origin" "$work"
+  git -C "$work" config user.email "test@example.com"
+  git -C "$work" config user.name "test"
+  git -C "$work" tag v2.0.0
+  git -C "$work" push -q origin v2.0.0
+
+  run_install "$f" "$c" --policy notify
+
+  grep -q 'newer than' "$c.out" && ok || fail "$FUNCNAME: install did not report the lag"
+}
+
 test_symlink_install
 test_copy_install
 test_user_file_preserved
@@ -609,6 +668,9 @@ test_update_copy_only_changed
 test_update_dry_run
 test_update_auto_checks_out_tag
 test_update_notify_reports_newer
+test_status_reports
+test_status_notes
+test_notify_lag_on_install
 
 echo
 echo "installer harness: $PASS passed, $FAIL failed"

@@ -16,22 +16,25 @@ POLICY=""
 COPY_FLAG=0
 DRY_RUN=0
 YES=0
+NOTES=0
 VERB=""
 
 usage() {
   cat <<'EOF'
-usage: install.sh [install | uninstall | update] [--copy] [--policy POLICY] [--dry-run] [--help]
+usage: install.sh [install | uninstall | update | status] [--copy] [--policy POLICY] [--notes] [--dry-run] [--help]
 
 Publish the girth-agents catalog (agents, skills, commands) into your
 OpenCode global config.
 
   install    verify the catalog, then link — or, with --copy, copy — it.
-             The default verb.
+             The default deed from the interactive menu.
   uninstall  remove exactly what an install put there (asks first).
-  update     pull the checkout forward and reconcile the install.
+  update     bring the install current per your policy.
+  status     report the installed and latest releases, policy, and gap.
 
   --copy     copy files instead of symlinking
   --policy   how updates behave: manual, notify, or auto
+  --notes    (status) also print the changelog notes between the releases
   --dry-run  print what would happen, change nothing
   --yes      (uninstall) skip the confirmation
   --help     show this help
@@ -48,6 +51,7 @@ while [ "$#" -gt 0 ]; do
     --copy) MODE="copy"; COPY_FLAG=1 ;;
     --dry-run) DRY_RUN=1 ;;
     --yes|-y) YES=1 ;;
+    --notes) NOTES=1 ;;
     --policy)
       shift
       [ "$#" -gt 0 ] || { printf 'install.sh: --policy needs a value\n' >&2; usage >&2; exit 2; }
@@ -57,7 +61,7 @@ while [ "$#" -gt 0 ]; do
         *) printf 'install.sh: unknown policy: %s (manual, notify, or auto)\n' "$POLICY" >&2; exit 2 ;;
       esac
       ;;
-    install|uninstall|update) VERB="$1" ;;
+    install|uninstall|update|status) VERB="$1" ;;
     *) printf 'install.sh: unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
   shift
@@ -116,13 +120,15 @@ menu_run() {
     echo "girth-agents installer"
     echo "  i. install        — bring the catalog into your config"
     echo "  u. update         — bring it current per your policy"
+    echo "  s. status         — what is installed and where it stands"
     echo "  x. uninstall      — remove exactly what an install put there"
     echo "  c. Configuration  — review and change your recorded choices"
-    printf 'choose [i/u/x/c] '
+    printf 'choose [i/u/s/x/c] '
     read -r ans || { echo; exit 1; }
     case "$ans" in
       i|install) VERB="install"; return 0 ;;
       u|update)  VERB="update";  return 0 ;;
+      s|status)  VERB="status";  return 0 ;;
       x|un|uninstall) VERB="uninstall"; return 0 ;;
       c|C|config|config ) configure ;;
       q|quit) exit 0 ;;
@@ -155,7 +161,7 @@ record_header() {
 # latest_release_tag — the newest cut release among the checkout's tags.
 latest_release_tag() {
   git -C "$REPO_ROOT" tag --sort=-v:refname 2>/dev/null \
-    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true
 }
 
 # report_lag — under notify, one line when a newer cut release exists than
@@ -170,6 +176,28 @@ report_lag() {
   [ -n "$inst" ] || return 0
   [ "$latest" != "$inst" ] || return 0
   echo "note: release $latest is newer than your installed $inst — ./scripts/install.sh update --policy auto takes you to it."
+}
+
+record_release() {
+  sed -n 's/^release: //p' "$CONFIG_DIR/$RECORD" 2>/dev/null | head -1
+}
+
+# notify_lag — under the notify policy only, the one-line lag notice.
+notify_lag() {
+  local p; p="$(policy_value)"
+  [ "$p" = "notify" ] || return 0
+  report_lag "$(record_release)"
+}
+
+# changelog_section — print one release's section from the checkout's
+# changelog, or stay quiet when the release cannot be found there.
+changelog_section() { # $1 release
+  local file="$REPO_ROOT/CHANGELOG.md"
+  [ -f "$file" ] || return 0
+  awk -v tag="[$1]" '
+    /^## \[/ { if (seen) exit; if (index($0, "## " tag) == 1) seen=1 }
+    seen { print }
+  ' "$file"
 }
 
 hash_input() {
@@ -265,6 +293,7 @@ uninstall() {
     echo "nothing recorded at $rec — nothing to uninstall."
     exit 0
   fi
+  notify_lag
 
   local items changed=0 todo=0
   local todo_lines=""
@@ -451,6 +480,34 @@ update() {
   echo "updated $before -> $after"
   reconcile
   [ "$policy" = "notify" ] && report_lag "$before"
+  if [ -n "$(git -C "$REPO_ROOT" describe --tags --exact-match 2>/dev/null)" ]; then
+    changelog_section "$after"
+  fi
+  exit 0
+}
+
+# --- status ----------------------------------------------------------------
+
+status() {
+  local inst pol latest
+  [ -f "$CONFIG_DIR/$RECORD" ] || {
+    echo "nothing installed — no record at $CONFIG_DIR/$RECORD."
+    exit 0
+  }
+  inst="$(record_release)"
+  pol="$(policy_value)"
+  git -C "$REPO_ROOT" fetch --quiet --tags 2>/dev/null || true
+  latest="$(latest_release_tag)"
+
+  echo "installed release: ${inst:-unknown}"
+  echo "latest cut release: ${latest:-none}"
+  echo "update policy:     ${pol:-not recorded}"
+  if [ -n "$inst" ] && [ -n "$latest" ] && [ "$inst" != "$latest" ]; then
+    echo "gap: release $latest is newer than your $inst."
+  else
+    echo "gap: none — on the latest cut release."
+  fi
+  [ "$NOTES" -eq 1 ] && changelog_section "$inst"
   exit 0
 }
 
@@ -464,7 +521,7 @@ if [ -z "$VERB" ]; then
   if interactive; then
     menu_run
   else
-    printf 'install.sh: give a verb (install|update|uninstall) and the flags that answer its questions (--copy, --policy manual|notify|auto); a bare run in a terminal presents a menu.\n' >&2
+    printf 'install.sh: give a verb (install|update|uninstall|status) and the flags that answer its questions (--copy, --policy manual|notify|auto); a bare run in a terminal presents a menu.\n' >&2
     exit 2
   fi
 fi
@@ -489,6 +546,7 @@ esac
 case "$VERB" in
   uninstall) uninstall ;;
   update) update ;;
+  status) status ;;
 esac
 
 verify_catalog
@@ -598,6 +656,7 @@ if [ "$installed" -eq 0 ] && [ "$skipped" -eq 0 ]; then
 else
   echo "done: $installed installed, $skipped skipped, $pruned pruned."
 fi
+notify_lag
 
 if [ "$installed" -gt 0 ]; then
   echo
