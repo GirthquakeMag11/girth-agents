@@ -7,7 +7,11 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+- `handoff`: a skill carrying a session's context across agents — HANDOFF.md's format, the staleness playbook (untrue → modify or excise, unimportant → replace or excise), and the write-and-sweep and pickup protocols.
+- `/pickup`: resumes the project's handoff, consuming context as the work makes it stale, and deletes the document once fully consumed.
+
 ### Changed
+- `/handoff`: writes HANDOFF.md into the project's repository and commits it (`docs(handoff): record <slug>`), obeying an `On_Handoffs.md` conventions override where one exists — no longer the temp directory.
 ### Deprecated
 ### Removed
 ### Fixed

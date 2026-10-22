@@ -92,6 +92,7 @@ description.
 | `code-review`        | A branch, PR, or work-in-progress change needs reviewing                                                                                                                                              |
 | `codebase-design`    | A module's interface, seam, or depth is being designed or judged                                                                                                                                      |
 | `research`           | A question needs facts from primary sources                                                                                                                                                           |
+| `handoff`           | A session hands its work to a fresh agent, or one picks the work up — write HANDOFF.md, sweep it for stale context, consume it as work proceeds                                                       |
 
 ### Commands
 
@@ -106,7 +107,8 @@ description.
 | `/implement`     | Works the ticket frontier — one ticket at a time, each by its Kind                                                                                                                      |
 | `/wayfind`       | Charts a big, foggy effort as a live map and works its decisions until the way forward is clear                                                                                         |
 | `/retro`         | Reviews a session and proposes environment improvements, most severe first                                                                                                              |
-| `/handoff`       | Writes a handoff document for a fresh agent to pick up the conversation                                                                                                                 |
+| `/handoff`      | Writes this conversation into the project's handoff and commits it, sweeping stale context                                                                                                   |
+| `/pickup`       | Resumes this project's handoff — works and consumes context as it goes stale                                                                                                                 |
 | `/wait-what`     | Re-pitches the last message that didn't land, in plain English using the glossary's terms                                                                                               |
 | `/questionnaire` | Writes a questionnaire for the person who holds the knowledge a decision is blocked on                                                                                                  |
 | `/teach`         | Starts or resumes teaching, using the education workspace for state across sessions                                                                                                     |
@@ -140,6 +142,8 @@ machinery.
 | Open items and questions pile up                 | `/inbox`         | One at a time; answers recorded; `/close-inbox` offers the surfaced work |
 | The changelog queue should ship                  | `/cut-release`   | A dated, tagged version, on your confirmation                            |
 | You want to learn something                      | `/teach`         | A lesson in the education workspace                                      |
+| The session is ending with work in flight        | `/handoff`       | A swept, extended HANDOFF.md, committed                                  |
+| A handoff awaits a fresh session                 | `/pickup`        | The work resumes; consumed context leaves as it goes stale               |
 
 ### How the work flows
 

@@ -59,4 +59,5 @@ easy; practice stays effortful.
 ## Related skills
 
 - grilling — the mission interview.
-- `/handoff` — the command for a long teaching run that must resume in another session.
+- `/handoff` and `/pickup` — the doors that carry a long teaching run
+  across sessions: hand it off when it pauses, pick it up when it resumes.

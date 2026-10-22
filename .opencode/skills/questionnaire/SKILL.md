@@ -31,8 +31,8 @@ user could answer the subject, they would not need the recipient.
 ## The document
 
 Write `questionnaire-<slug>.md` — the slug taken from the topic — to the
-temporary directory `/handoff` uses, and report the path. It leaves the project untouched, like
-`/handoff`'s output.
+operating system's temporary directory, and report the path. It leaves the
+project untouched.
 
 ```markdown
 # <Questionnaire title>
