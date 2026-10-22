@@ -12,11 +12,19 @@ that hang off it.
 Work the tree in **rounds**. The **frontier** is every decision whose
 prerequisites are already settled — the questions you can ask *now* without
 guessing at answers you haven't heard yet. Ask the whole frontier in one
-round: number each question and give your recommended answer, then wait for
-the user's answers before the next round. Word each question so "yes"
-accepts your recommended answer.
+round and wait for the user's answers before the next round. Word each
+question so "yes" accepts your recommended answer.
 
-Format a round like so:
+Establish first whether a question-asking tool is available to you. If it
+is, prefer it for the rounds: one tool prompt per frontier question, your
+recommended answer as the first option (marked Recommended), the honest
+alternatives as the other options, the recommendation restated in the
+question body. A round is as many consecutive prompts as the frontier
+takes. Fall back to the numbered text format — one numbered question per
+line, recommendation beneath — only when no such tool is available, or
+when a question needs prose that fixed options cannot carry.
+
+Format a text round like so:
 
 > ❓ **Q1 — question title**: the question, which may run to several
 > lines and carry multiple choices.

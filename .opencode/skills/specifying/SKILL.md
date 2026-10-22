@@ -31,8 +31,20 @@ expected, not a failure: the second pass fills them.
    with the spec as the design tree, work its open questions and fuzzy spots
    until they are filled or ruled out. The interview happens *after* the
    spec is written, never in its place; every answer lands back in the spec.
-5. **Present it to the user** for approval or amendment. The spec governs
-   only once approved; questions still open are tracked, not silently baked
+5. **Put the approval to the user** with these options, numbered:
+
+   1. **Approve (Commit)** — commit the spec; it governs from here.
+   2. **Approve and Slice** — commit the spec, then hand it to `/slice`
+      and run the slicing, its graph checkpoint included.
+   3. **Stop and Amend** — discuss the spec further before anything is
+      committed or sliced.
+   4. **Other** — a freeform answer.
+
+   Prefer the question-asking tool for this ask when one is available: it
+   adds a freeform "type your own answer" entry of its own, so offer only
+   options 1–3 through it. With no question tool, offer all four
+   yourself, the fourth as the open freeform entry. The spec governs only
+   once approved; questions still open are tracked, not silently baked
    in.
 
 ## Related skills
