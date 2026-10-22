@@ -193,6 +193,37 @@ test_clean_install_records() {
   [ "${n:-0}" -eq 3 ] && ok || fail "$FUNCNAME: recorded ${n:-0} items, wanted 3"
 }
 
+test_policy_flag_recorded() {
+  local f="$TMP/pol-fixture" c="$TMP/pol-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c" --policy notify
+
+  [ "$RUN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: install failed"
+  grep -q '^policy: notify$' "$c/girth.yaml" && ok || fail "$FUNCNAME: policy not recorded"
+}
+
+test_policy_carried_on_reinstall() {
+  local f="$TMP/polcarry-fixture" c="$TMP/polcarry-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c" --policy auto
+  run_install "$f" "$c"
+
+  grep -q '^policy: auto$' "$c/girth.yaml" && ok || fail "$FUNCNAME: recorded policy was lost"
+}
+
+test_policy_invalid_rejected() {
+  local f="$TMP/polbad-fixture" c="$TMP/polbad-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c" --policy sometimes
+
+  [ "$RUN_STATUS" -eq 2 ] && ok || fail "$FUNCNAME: expected exit 2, got $RUN_STATUS"
+  grep -q 'unknown policy' "$c.out" && ok || fail "$FUNCNAME: no unknown-policy message"
+  expect_absent "$c/girth.yaml" "$FUNCNAME"
+}
+
 test_dry_run_changes_nothing() {
   local f="$TMP/dry-fixture" c="$TMP/dry-config"
   mk_fixture "$f"
@@ -437,6 +468,9 @@ test_user_symlink_preserved
 test_retired_item_pruned
 test_broken_catalog_refused
 test_clean_install_records
+test_policy_flag_recorded
+test_policy_carried_on_reinstall
+test_policy_invalid_rejected
 test_dry_run_changes_nothing
 test_help_mentions_verbs
 test_uninstall_links

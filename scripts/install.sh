@@ -12,6 +12,7 @@ DEFAULT_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$DEFAULT_CONFIG}"
 RECORD="girth.yaml"
 MODE="symlink"
+POLICY=""
 COPY_FLAG=0
 DRY_RUN=0
 YES=0
@@ -19,7 +20,7 @@ VERB="install"
 
 usage() {
   cat <<'EOF'
-usage: install.sh [install | uninstall | update] [--copy] [--dry-run] [--help]
+usage: install.sh [install | uninstall | update] [--copy] [--policy POLICY] [--dry-run] [--help]
 
 Publish the girth-agents catalog (agents, skills, commands) into your
 OpenCode global config.
@@ -30,6 +31,7 @@ OpenCode global config.
   update     pull the checkout forward and reconcile the install.
 
   --copy     copy files instead of symlinking
+  --policy   how updates behave: manual, notify, or auto
   --dry-run  print what would happen, change nothing
   --yes      (uninstall) skip the confirmation
   --help     show this help
@@ -40,21 +42,48 @@ retired items pruned, and files this script did not install are left alone.
 EOF
 }
 
-for arg in "$@"; do
-  case "$arg" in
+while [ "$#" -gt 0 ]; do
+  case "$1" in
     --help|-h) usage; exit 0 ;;
     --copy) MODE="copy"; COPY_FLAG=1 ;;
     --dry-run) DRY_RUN=1 ;;
     --yes|-y) YES=1 ;;
-    install|uninstall|update) VERB="$arg" ;;
-    *) printf 'install.sh: unknown argument: %s\n' "$arg" >&2; usage >&2; exit 2 ;;
+    --policy)
+      shift
+      [ "$#" -gt 0 ] || { printf 'install.sh: --policy needs a value\n' >&2; usage >&2; exit 2; }
+      POLICY="$1"
+      case "$POLICY" in
+        manual|notify|auto) ;;
+        *) printf 'install.sh: unknown policy: %s (manual, notify, or auto)\n' "$POLICY" >&2; exit 2 ;;
+      esac
+      ;;
+    install|uninstall|update) VERB="$1" ;;
+    *) printf 'install.sh: unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
+  shift
 done
 
 # --- helpers ---------------------------------------------------------------
 
 release_name() {
   git -C "$REPO_ROOT" describe --tags --always 2>/dev/null || printf 'unknown'
+}
+
+# The effective policy: the flag wins; else the recorded one; else empty.
+policy_value() {
+  if [ -n "$POLICY" ]; then printf '%s\n' "$POLICY"; return; fi
+  if [ -f "$CONFIG_DIR/$RECORD" ]; then
+    sed -n 's/^policy: //p' "$CONFIG_DIR/$RECORD" | head -1
+  fi
+}
+
+# record_header — the record's fixed top, written to the open record.
+record_header() {
+  printf 'version: 1\n'
+  printf 'mode: %s\n' "$MODE"
+  printf 'policy: %s\n' "$(policy_value)"
+  printf 'release: %s\n' "$(release_name)"
+  printf 'items:\n'
 }
 
 hash_input() {
@@ -220,12 +249,7 @@ reconcile() {
     mkdir -p "$CONFIG_DIR/agents" "$CONFIG_DIR/commands" "$CONFIG_DIR/skills"
     RECORD_TMP="$(mktemp)"
     trap 'rm -f "$RECORD_TMP"' EXIT
-    {
-      printf 'version: 1\n'
-      printf 'mode: %s\n' "$MODE"
-      printf 'release: %s\n' "$(release_name)"
-      printf 'items:\n'
-    } > "$RECORD_TMP"
+    record_header > "$RECORD_TMP"
   fi
 
   local seen="" kept=0 added=0 changed=0 removed=0 skipped=0
@@ -352,12 +376,7 @@ else
   echo "installing into $CONFIG_DIR (mode: $MODE)"
   RECORD_TMP="$(mktemp)"
   trap 'rm -f "$RECORD_TMP"' EXIT
-  {
-    printf 'version: 1\n'
-    printf 'mode: %s\n' "$MODE"
-    printf 'release: %s\n' "$(release_name)"
-    printf 'items:\n'
-  } > "$RECORD_TMP"
+  record_header > "$RECORD_TMP"
 fi
 
 # install_one <source> <destination>
