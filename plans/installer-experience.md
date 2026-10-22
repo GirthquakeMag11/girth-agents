@@ -1,6 +1,6 @@
 # Installer experience and release-synced updates
 
-**Status:** charting
+**Status:** done
 
 ## Destination
 
@@ -9,6 +9,9 @@ uninstall, update — as a polished, guided experience: GitHub releases cut
 by `/cut-release`, an update policy per user (manual / notify / auto), and
 a local install that stays meaningfully synced with the latest cut
 release.
+
+Reached 2026-10-21: the way is clear — `specs/installer-experience.md`
+is approved and governs from here.
 
 ## Notes
 
@@ -56,6 +59,11 @@ release.
   (2026-10-21)
 - The one-liner's home: the README's Install section leads with it, and
   `/cut-release`'s GitHub Release body carries it. (2026-10-21)
+- gh and the cut: the bootstrapping skill checks for gh and offers a
+  setup wizard when it is missing; `/cut-release` points at that wizard;
+  a declination, at bootstrapping or the cut, is recorded in the
+  project's conventions and the check skips silently thereafter.
+  (2026-10-21)
 
 ## Not yet specified
 
