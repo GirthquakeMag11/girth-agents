@@ -31,7 +31,16 @@ expected, not a failure: the second pass fills them.
    with the spec as the design tree, work its open questions and fuzzy spots
    until they are filled or ruled out. The interview happens *after* the
    spec is written, never in its place; every answer lands back in the spec.
-5. **Put the approval to the user** with these options, numbered:
+5. **Check the spec independently.** Hand a fresh-context reviewer —
+   never the agent that wrote it — the draft together with the
+   conversation's settled statements, and have it verify: the spec format
+   from `references/spec-format.md`, every settled statement against them,
+   and agreement with the project's own documents — the glossary's terms,
+   the decisions that touch the area, the standing conventions. The
+   reviewer reports findings; amend the draft from them. If the findings
+   open new questions, clear them with `grilling` before the approval
+   ask.
+6. **Put the approval to the user** with these options, numbered:
 
    1. **Approve (Commit)** — commit the spec; it governs from here.
    2. **Approve and Slice** — commit the spec, then hand it to `/slice`

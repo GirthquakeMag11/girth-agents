@@ -13,7 +13,7 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ### Changed
 - `/handoff`: writes HANDOFF.md into the project's repository and commits it (`docs(handoff): record <slug>`), obeying an `On_Handoffs.md` conventions override where one exists — no longer the temp directory.
 - `grilling`: asks through the question-asking tool when one is available — one prompt per frontier question, the recommendation as the first option, numbered text as the fallback.
-- `specifying`: the written spec's approval is put to the user as three options — Approve (Commit), Approve and Slice, Stop and Amend — the freeform fourth coming free with the question tool, offered by hand without one.
+- `specifying`: before the approval ask, the written spec is submitted to an independent fresh-context review — grilling may run again after it if findings open new questions — and the approval itself is put to the user as three options: Approve (Commit), Approve and Slice, Stop and Amend, the freeform fourth coming free with the question tool, offered by hand without one.
 
 ### Deprecated
 ### Removed
