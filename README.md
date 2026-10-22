@@ -94,7 +94,7 @@ description.
 | `implementing`       | You ask to build something planned — a spec, bug, or defect — and the agent slices it into tickets and works them one at a time; a feature implements through its spec                                |
 | `wayfinding`         | An effort is too big or too foggy to spec — the agent charts a plans/ map and resolves its decisions one at a time                                                                                    |
 | `prototyping`        | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict                                                                                    |
-| `wizard`             | A procedure only a human can do — the agent generates a step-by-step script that walks them through it                                                                                                |
+| `wizard`             | You have to ask the user for a password or secret to pass to a command you need to run, or they must do a step themselves — the agent generates a script, then runs it for them in a new terminal (asking first if that isn't established) |
 | `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                                                  |
 | `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                                           |
 | `questionnaire`      | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                                         |
@@ -124,6 +124,7 @@ description.
 | `/wait-what`     | Re-pitches the last message that didn't land, in plain English using the glossary's terms                                                                                               |
 | `/questionnaire` | Writes a questionnaire for the person who holds the knowledge a decision is blocked on                                                                                                  |
 | `/teach`         | Starts or resumes teaching, using the education workspace for state across sessions                                                                                                     |
+| `/wizard`        | Generates a wizard for capturing a secret or walking you through a hands-on procedure, then runs it in a new terminal                                                                        |
 
 ## How the skills hang together
 

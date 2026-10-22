@@ -1,13 +1,14 @@
 ---
 name: Wizard
-description: Generate an interactive bash wizard that walks a human through steps only they can perform — credentials, CI secrets, third-party dashboards, one-off migrations. Use when a procedure needs a human in front of a browser, and the agent cannot do the steps itself.
+description: Generate an interactive bash wizard for a password or other secret a command needs, or a procedure only the human can do. Use whenever you must ask the user for a secret to pass to a command; run it in a new terminal for them, asking first if that isn't established.
 ---
 
 # Wizard
 
 A **wizard** is a bash script that walks a human, step by step, through a
 manual procedure that is tedious to do by hand and tedious to re-explain:
-it opens each URL, says exactly what to click and copy, captures the values,
+it asks for the password, token, or other secret a command needs, or opens
+each URL and says exactly what to click and copy, captures the values,
 writes them where they belong, confirms at every stage, and shows how many
 stages are left. It never does a step only the human can do; it makes the
 human's part short and unmissable.
@@ -17,6 +18,21 @@ confirmation gates, cross-platform URL opening, hidden secret entry,
 idempotent `.env` upserts, secret writes, a closing summary. Author only the
 stages; the library above the `STAGES` marker is identical in every wizard
 and never hand-edited.
+
+## Trigger
+
+This skill fires whenever you need to ask the user for a password or secret
+to pass through to whatever command you needed run — authentication, a token,
+an API key, a credential read by `sudo`, a CI secret, a login, anything that
+should not be echoed to the log or typed into the conversation. It also fires
+for the wider class it always has: a procedure only the human can perform.
+Either way, once you realize you need something from the user, you own
+running the wizard.
+
+You are responsible for running the wizard for the user in a new terminal —
+do not paste the secret into the conversation, and do not prompt for it
+inline. If it is not already established that you may open a terminal and
+run it, ask the user's permission to do so before you do.
 
 ## Process
 
