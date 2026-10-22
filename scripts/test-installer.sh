@@ -519,6 +519,69 @@ test_update_dry_run() {
   expect_file "$c/girth.yaml" "$FUNCNAME"
 }
 
+test_update_auto_checks_out_tag() {
+  local origin="$TMP/auto-origin.git" f="$TMP/auto-fixture" c="$TMP/auto-config" work="$TMP/auto-work"
+  git init -q --bare "$origin"
+  git -C "$origin" symbolic-ref HEAD refs/heads/main
+  git_fixture "$f"
+  add_skill "$f" bravo
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog"
+  git -C "$f" remote add origin "$origin"
+  git -C "$f" push -q -u origin main
+  run_install "$f" "$c" --policy auto
+
+  git clone -q "$origin" "$work"
+  git -C "$work" config user.email "test@example.com"
+  git -C "$work" config user.name "test"
+  add_skill "$work" echo
+  git -C "$work" add -A
+  git -C "$work" commit -qm "release with echo"
+  git -C "$work" tag v2.0.0
+  git -C "$work" push -q origin main v2.0.0
+
+  run_update "$f" "$c" --policy auto
+
+  [ "$U_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: update failed"
+  [ "$(git -C "$f" describe --tags --exact-match 2>/dev/null)" = "v2.0.0" ] && ok \
+    || fail "$FUNCNAME: checkout not on v2.0.0"
+  expect_link "$c/skills/echo" "$FUNCNAME"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  grep -q '^release: v2.0.0$' "$c/girth.yaml" && ok || fail "$FUNCNAME: record not on the release"
+}
+
+test_update_notify_reports_newer() {
+  local origin="$TMP/nfy-origin.git" f="$TMP/nfy-fixture" c="$TMP/nfy-config" work="$TMP/nfy-work"
+  git init -q --bare "$origin"
+  git -C "$origin" symbolic-ref HEAD refs/heads/main
+  git_fixture "$f"
+  add_skill "$f" bravo
+  git -C "$f" add -A
+  git -C "$f" commit -qm "catalog"
+  git -C "$f" remote add origin "$origin"
+  git -C "$f" push -q -u origin main
+  run_install "$f" "$c" --policy notify
+
+  git clone -q "$origin" "$work"
+  git -C "$work" config user.email "test@example.com"
+  git -C "$work" config user.name "test"
+  git -C "$work" tag v2.0.0
+  git -C "$work" push -q origin v2.0.0
+  # main moves past the cut, so notify's pull must not land on the tag
+  add_skill "$work" echo
+  git -C "$work" add -A
+  git -C "$work" commit -qm "unreleased work after the cut"
+  git -C "$work" push -q origin main
+
+  run_update "$f" "$c" --policy notify
+
+  [ "$U_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: update failed"
+  grep -q 'newer than' "$c.up.out" && ok || fail "$FUNCNAME: no newer-release notice"
+  [ -z "$(git -C "$f" tag --points-at HEAD)" ] && ok || fail "$FUNCNAME: notify moved the install onto the release"
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  expect_link "$c/skills/echo" "$FUNCNAME"
+}
+
 test_symlink_install
 test_copy_install
 test_user_file_preserved
@@ -544,6 +607,8 @@ test_update_refuses_dirty_checkout
 test_update_pull_reconciles
 test_update_copy_only_changed
 test_update_dry_run
+test_update_auto_checks_out_tag
+test_update_notify_reports_newer
 
 echo
 echo "installer harness: $PASS passed, $FAIL failed"

@@ -152,6 +152,26 @@ record_header() {
   printf 'items:\n'
 }
 
+# latest_release_tag — the newest cut release among the checkout's tags.
+latest_release_tag() {
+  git -C "$REPO_ROOT" tag --sort=-v:refname 2>/dev/null \
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1
+}
+
+# report_lag — under notify, one line when a newer cut release exists than
+# the release named in $1; quiet when unreachable or when there is nothing
+# to say.
+report_lag() {
+  git -C "$REPO_ROOT" fetch --quiet --tags 2>/dev/null || return 0
+  local latest inst
+  latest="$(latest_release_tag)"
+  [ -n "$latest" ] || return 0
+  inst="$1"
+  [ -n "$inst" ] || return 0
+  [ "$latest" != "$inst" ] || return 0
+  echo "note: release $latest is newer than your installed $inst — ./scripts/install.sh update --policy auto takes you to it."
+}
+
 hash_input() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum | awk '{print $1}'
   elif command -v shasum >/dev/null 2>&1; then shasum -a 256 | awk '{print $1}'
@@ -400,22 +420,37 @@ update() {
   fi
 
   local before; before="$(release_name)"
+  local policy; policy="$(policy_value)"
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    echo "update: would pull $REPO_ROOT, then reconcile (dry run):"
+    echo "update: would reconcile (dry run):"
     reconcile
     echo "dry run — nothing changed."
     exit 0
   fi
 
-  if ! git -C "$REPO_ROOT" pull --ff-only >&2; then
-    printf 'install.sh: git pull failed — nothing changed.\n' >&2
-    exit 1
-  fi
+  case "$policy" in
+    auto)
+      git -C "$REPO_ROOT" fetch --quiet --tags
+      local tag; tag="$(latest_release_tag)"
+      if [ -z "$tag" ]; then
+        printf 'install.sh: no tagged release in the checkout to follow.\n' >&2
+        exit 1
+      fi
+      git -C "$REPO_ROOT" checkout --quiet "$tag"
+      ;;
+    *)
+      if ! git -C "$REPO_ROOT" pull --ff-only >&2; then
+        printf 'install.sh: git pull failed — nothing changed.\n' >&2
+        exit 1
+      fi
+      ;;
+  esac
 
   local after; after="$(release_name)"
   echo "updated $before -> $after"
   reconcile
+  [ "$policy" = "notify" ] && report_lag "$before"
   exit 0
 }
 
