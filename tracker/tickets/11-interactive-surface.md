@@ -36,3 +36,7 @@ the flag that would answer it.
   via `script`, plus the two failure cases). One spec sentence that
   overreached during review ("a flag never re-records a prior answer") is
   tightened to the honest rule. Validator green.
+- **Follow-up — 2026-10-21:** the whole-feature review found Configuration
+  could not actually re-shape mode; fixed — a chosen mode is honored (the
+  carry only applies when nothing was chosen) and reconcile re-lays every
+  item into the new mode, tested in both directions.

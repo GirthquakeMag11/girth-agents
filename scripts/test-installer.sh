@@ -280,6 +280,54 @@ test_menu_configure_changes() {
   grep -q '^mode: copy$' "$c/girth.yaml" && ok || fail "$FUNCNAME: mode lost on configure"
 }
 
+test_menu_mode_change_to_links() {
+  local f="$TMP/mmode-fixture" c="$TMP/mmode-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c" --copy --policy manual
+  expect_file "$c/skills/bravo/SKILL.md" "$FUNCNAME"
+  printf 'c\nmode\nlinks\nq\n' | script -qec "OPENCODE_CONFIG_DIR='$c' bash '$f/scripts/install.sh'" /dev/null >"$c.out" 2>&1
+
+  grep -q '^mode: symlink$' "$c/girth.yaml" && ok || fail "$FUNCNAME: mode not re-recorded"
+  grep -q '    how: link$' "$c/girth.yaml" && ok || fail "$FUNCNAME: item not relinked"
+  [ -L "$c/skills/bravo" ] && ok || fail "$FUNCNAME: dest not a symlink"
+}
+
+test_menu_mode_change_to_copies() {
+  local f="$TMP/mmode2-fixture" c="$TMP/mmode2-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c" --policy manual
+  expect_link "$c/skills/bravo" "$FUNCNAME"
+  printf 'c\nmode\ncopies\nq\n' | script -qec "OPENCODE_CONFIG_DIR='$c' bash '$f/scripts/install.sh'" /dev/null >"$c.out" 2>&1
+
+  grep -q '^mode: copy$' "$c/girth.yaml" && ok || fail "$FUNCNAME: mode not re-recorded"
+  grep -q '    how: copy$' "$c/girth.yaml" && ok || fail "$FUNCNAME: item not copied"
+  expect_file "$c/skills/bravo/SKILL.md" "$FUNCNAME"
+}
+
+test_status_notes_between() {
+  local f="$TMP/stnotes2-fixture" c="$TMP/stnotes2-config"
+  git_fixture "$f"
+  add_skill "$f" bravo
+  printf '# Changelog\n\n## [v2.0.0] - 2026-02-01\n\n### Added\n- two ship\n\n## [v1.0.0] - 2026-01-01\n\n### Added\n- one ship\n' > "$f/CHANGELOG.md"
+  git -C "$f" add -A
+  git -C "$f" commit -qm "v1.0.0 catalog"
+  git -C "$f" tag v1.0.0
+  git -C "$f" checkout -q v1.0.0
+  run_install "$f" "$c" --policy manual
+
+  git -C "$f" checkout -q main
+  add_skill "$f" charlie
+  git -C "$f" add -A
+  git -C "$f" commit -qm "v2.0.0 catalog"
+  git -C "$f" tag v2.0.0
+  run_status "$f" "$c" --notes
+
+  grep -q 'two ship' "$c.st.out" && ok || fail "$FUNCNAME: latest section not printed"
+  if grep -q 'one ship' "$c.st.out"; then fail "$FUNCNAME: installed section leaked"; else ok; fi
+}
+
 test_dry_run_changes_nothing() {
   local f="$TMP/dry-fixture" c="$TMP/dry-config"
   mk_fixture "$f"
@@ -655,6 +703,9 @@ test_interactive_install
 test_flagless_scripted_install_fails
 test_bare_scripted_run_fails
 test_menu_configure_changes
+test_menu_mode_change_to_links
+test_menu_mode_change_to_copies
+test_status_notes_between
 test_dry_run_changes_nothing
 test_help_mentions_verbs
 test_uninstall_links

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # girth-agents installer.
 #
-# One entry point, three verbs: install (the default), uninstall, update.
-# install verifies the catalog and records what it places in girth.yaml;
-# uninstall removes exactly what the record lists; update pulls the checkout
-# forward and reconciles the install against the new catalog.
+# Interactive by default: a bare run opens a menu (install, update, status,
+# uninstall, Configuration). Four verbs, driven by flags in scripts. The
+# record — girth.yaml — holds mode, policy, release, and what was placed;
+# uninstall removes exactly what it lists; update reconciles per policy.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,6 +12,7 @@ DEFAULT_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$DEFAULT_CONFIG}"
 RECORD="girth.yaml"
 MODE="symlink"
+MODE_CHOSEN=0
 POLICY=""
 COPY_FLAG=0
 DRY_RUN=0
@@ -48,7 +49,7 @@ EOF
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --help|-h) usage; exit 0 ;;
-    --copy) MODE="copy"; COPY_FLAG=1 ;;
+    --copy) MODE="copy"; COPY_FLAG=1; MODE_CHOSEN=1 ;;
     --dry-run) DRY_RUN=1 ;;
     --yes|-y) YES=1 ;;
     --notes) NOTES=1 ;;
@@ -76,6 +77,7 @@ record_mode() { sed -n 's/^mode: //p' "$CONFIG_DIR/$RECORD" 2>/dev/null | head -
 ask_mode() {
   printf 'how should items land — links (recommended) or copies? [links/copies] '
   read -r ans || return 1
+  MODE_CHOSEN=1
   case "$ans" in
     copies|copy|c) MODE="copy" ;;
     *) MODE="symlink" ;;
@@ -121,14 +123,16 @@ menu_run() {
     echo "  i. install        — bring the catalog into your config"
     echo "  u. update         — bring it current per your policy"
     echo "  s. status         — what is installed and where it stands"
+    echo "  n. notes          — what changed since your installed release"
     echo "  x. uninstall      — remove exactly what an install put there"
     echo "  c. Configuration  — review and change your recorded choices"
-    printf 'choose [i/u/s/x/c] '
+    printf 'choose [i/u/s/n/x/c] '
     read -r ans || { echo; exit 1; }
     case "$ans" in
       i|install) VERB="install"; return 0 ;;
       u|update)  VERB="update";  return 0 ;;
       s|status)  VERB="status";  return 0 ;;
+      n|notes)   VERB="status"; NOTES=1; return 0 ;;
       x|un|uninstall) VERB="uninstall"; return 0 ;;
       c|C|config|config ) configure ;;
       q|quit) exit 0 ;;
@@ -148,6 +152,9 @@ policy_value() {
     sed -n 's/^policy: //p' "$CONFIG_DIR/$RECORD" | head -1
   fi
 }
+
+# how_name — the record's word for the current mode.
+how_name() { if [ "$MODE" = "copy" ]; then printf 'copy'; else printf 'link'; fi; }
 
 # record_header — the record's fixed top, written to the open record.
 record_header() {
@@ -197,6 +204,18 @@ changelog_section() { # $1 release
   awk -v tag="[$1]" '
     /^## \[/ { if (seen) exit; if (index($0, "## " tag) == 1) seen=1 }
     seen { print }
+  ' "$file"
+}
+
+# changelog_between — the sections newer than $1 up to and including $2.
+changelog_between() { # $1 installed  $2 latest
+  local file="$REPO_ROOT/CHANGELOG.md"
+  [ -f "$file" ] || return 0
+  [ -n "$2" ] || { changelog_section "$1"; return 0; }
+  awk -v lo="[$1]" -v hi="[$2]" '
+    /^## \[/ && index($0, "## " hi) == 1 { inrange=1 }
+    /^## \[/ && index($0, "## " lo) == 1 { exit }
+    inrange { print }
   ' "$file"
 }
 
@@ -356,7 +375,7 @@ uninstall() {
 # reconcile — make the install match the (already-pulled) catalog.
 reconcile() {
   local rec="$CONFIG_DIR/$RECORD"
-  if [ "$COPY_FLAG" -eq 0 ] && [ -f "$rec" ]; then
+  if [ "$MODE_CHOSEN" -eq 0 ] && [ -f "$rec" ]; then
     local m; m="$(sed -n 's/^mode: //p' "$rec" | head -1)"
     [ "$m" = "copy" ] && MODE="copy"
   fi
@@ -382,7 +401,18 @@ reconcile() {
     if [ -n "$oe" ]; then
       o_src="${oe%%$'\t'*}"; o_how="${oe#*$'\t'}"; o_how="${o_how%%$'\t'*}"; ofp="${oe##*$'\t'}"
       if still_ours "$o_how" "$dst" "$o_src" "$ofp"; then
-        if [ "$MODE" = "copy" ] && [ "$o_how" = "copy" ] && [ "$ofp" != "$fp" ]; then
+        if [ "$o_how" != "$(how_name)" ]; then
+          if [ "$DRY_RUN" -eq 1 ]; then say "re-lay $dst as $(how_name)"
+          else
+            rm -rf "$dst"
+            if [ "$MODE" = "copy" ]; then
+              cp -R "$src" "$dst"; echo "copy  $dst  (mode changed)"; record_item "$src" "$dst" copy "$fp"
+            else
+              ln -s "$src" "$dst"; echo "link  $dst  (mode changed)"; record_item "$src" "$dst" link "$fp"
+            fi
+          fi
+          changed=$((changed + 1))
+        elif [ "$MODE" = "copy" ] && [ "$o_how" = "copy" ] && [ "$ofp" != "$fp" ]; then
           if [ "$DRY_RUN" -eq 1 ]; then say "re-copy $dst <- $src"
           else rm -rf "$dst"; cp -R "$src" "$dst"; echo "copy  $dst  (changed)"; record_item "$src" "$dst" copy "$fp"; fi
           changed=$((changed + 1))
@@ -481,7 +511,7 @@ update() {
   reconcile
   [ "$policy" = "notify" ] && report_lag "$before"
   if [ -n "$(git -C "$REPO_ROOT" describe --tags --exact-match 2>/dev/null)" ]; then
-    changelog_section "$after"
+    changelog_between "$before" "$after"
   fi
   exit 0
 }
@@ -507,7 +537,13 @@ status() {
   else
     echo "gap: none — on the latest cut release."
   fi
-  [ "$NOTES" -eq 1 ] && changelog_section "$inst"
+  if [ "$NOTES" -eq 1 ]; then
+    if [ -z "$latest" ] || [ "$inst" = "$latest" ]; then
+      changelog_section "$inst"
+    else
+      changelog_between "$inst" "$latest"
+    fi
+  fi
   exit 0
 }
 

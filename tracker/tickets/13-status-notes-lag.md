@@ -31,3 +31,7 @@ cheaply and stays silent when the network is unreachable.
   uninstall also report a lagging release, quiet when the network is
   unreachable. Harness: 117 green (status, notes, and notify-on-install
   driven against fixture remotes and tags). Validator green.
+- **Follow-up — 2026-10-21:** the whole-feature review found the menu
+  offered no notes and the notes printed only one section; fixed — the
+  menu gains an `n. notes` deed, and notes print every section between the
+  installed and latest release.
