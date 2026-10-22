@@ -1,5 +1,7 @@
 # Session-lifecycle acts live in their commands
 
+Status: superseded in part by 0004 — the retro fold stands.
+
 The `handoff` and `retro` skills — human-triggered, end-of-session acts with
 no callers and no payload beyond prose — were folded into their `/handoff`
 and `/retro` commands, and the skills retired. A behavior earns a skill only
