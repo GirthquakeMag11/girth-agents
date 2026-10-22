@@ -7,6 +7,15 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.4.0] - 2026-10-21
+
+### Added
 - `handoff`: a skill carrying a session's context across agents — HANDOFF.md's format, the staleness playbook (untrue → modify or excise, unimportant → replace or excise), and the write-and-sweep and pickup protocols.
 - `/pickup`: resumes the project's handoff, consuming context as the work makes it stale, and deletes the document once fully consumed.
 - `status`: the installer's fourth verb — installed release, latest cut release, update policy, and the gap; `status --notes` prints the changelog sections between the two.
@@ -20,11 +29,6 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 - `bootstrapping` checks for the gh CLI and offers a setup wizard; a recorded declination skips the check from then on.
 - `grilling`: asks through the question-asking tool when one is available — one prompt per frontier question, the recommendation as the first option, numbered text as the fallback.
 - `specifying`: before the approval ask, the written spec is submitted to an independent fresh-context review — grilling may run again after it if findings open new questions — and the approval itself is put to the user as three options: Approve (Commit), Approve and Slice, Stop and Amend, the freeform fourth coming free with the question tool, offered by hand without one.
-
-### Deprecated
-### Removed
-### Fixed
-### Security
 
 ## [0.3.0] - 2026-10-21
 
