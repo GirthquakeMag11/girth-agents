@@ -54,6 +54,22 @@ designates another location.
 | Trackers           | `tracker/HAZARDS.md`, `BUGS.md`, `DEFECTS.md`, `FEATURES.md`, `QUESTIONS.md` | tracking         | Nothing                                                                              |
 | Tickets            | `tracker/tickets/`                                                           | tracking         | Nothing; created with the first ticket, never at bootstrap                           |
 
+## Release tooling: the gh CLI
+
+The scaffold's release flow leans on one tool beyond the repository
+itself: the `gh` CLI, which `/cut-release` uses to open the GitHub
+Release. Bootstrapping checks for it. The check is a concern, not an
+inventory piece — the wizard below is the piece, and it lives in this
+skill's `references/`.
+
+- **Present** — nothing to do, and nothing asked.
+- **Missing** — the interview offers to set it up: walk the user through
+  `references/gh-setup-wizard.md`, which installs and readies gh. The
+  offer is never pushed on a user who declines.
+- **Declined** — at bootstrap or later at `/cut-release` — the declination
+  is a ruling: record it in `conventions/` by calling the skill tool with
+  `codifying`, and the check skips silently from then on.
+
 ## Deviations
 
 The inventory is the default, not the law: a project's own conventions
@@ -106,8 +122,9 @@ this):
    name, purpose, license, build/test/lint commands (package manifests,
    build files, CI configuration), layout, any changelog tool, and any
    versioning the project states — a manifest version field, git tags, a
-   versioning convention. Note whether work has already begun. Finding facts
-   is your job; the user is asked only for what the project cannot tell you.
+   versioning convention. Note whether work has already begun and whether
+   the `gh` CLI is installed. Finding facts is your job; the user is asked
+   only for what the project cannot tell you.
 3. **Interview once.** Present what you found, then call the skill tool with
    `grilling` to work through the missing pieces' questions and any gaps
    the exploration found, in rounds until none remain. A run whose
