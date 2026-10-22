@@ -7,7 +7,11 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+- `/wizard`: a command that generates a wizard and runs it for you, so a secret or a hands-on procedure can be captured without spelling it out for the agent.
+
 ### Changed
+- `wizard`: now also fires whenever a command needs a password or secret the agent does not have, and runs the wizard in a new terminal for you (asking first if that isn't established), so secrets are never typed into the conversation.
+
 ### Deprecated
 ### Removed
 ### Fixed
