@@ -82,9 +82,9 @@ flag and the policy flag — plus the standard surface every verb shares:
 help and dry-run, and yes for the uninstall confirmation. An unanswered
 question is never defaulted silently: with no terminal and a question
 unanswered, the run fails naming the flag that would answer it. A
-recorded choice — mode or policy — changes only in Configuration; a flag
-answers its question while it is pending and never silently re-records an
-answer made before.
+recorded choice changes through Configuration, or is re-answered by
+passing its flag again on a later run; the record shows whichever took
+effect, and nothing ever changes that was not chosen or passed.
 
 ### The policy and its home
 

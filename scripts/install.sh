@@ -16,7 +16,7 @@ POLICY=""
 COPY_FLAG=0
 DRY_RUN=0
 YES=0
-VERB="install"
+VERB=""
 
 usage() {
   cat <<'EOF'
@@ -64,6 +64,72 @@ while [ "$#" -gt 0 ]; do
 done
 
 # --- helpers ---------------------------------------------------------------
+
+interactive() { [ -t 0 ] && [ -t 1 ]; }
+
+record_mode() { sed -n 's/^mode: //p' "$CONFIG_DIR/$RECORD" 2>/dev/null | head -1; }
+
+ask_mode() {
+  printf 'how should items land — links (recommended) or copies? [links/copies] '
+  read -r ans || return 1
+  case "$ans" in
+    copies|copy|c) MODE="copy" ;;
+    *) MODE="symlink" ;;
+  esac
+}
+
+ask_policy() {
+  while :; do
+    printf 'how should updates behave — manual, notify, or auto? [manual/notify/auto] '
+    read -r ans || return 1
+    case "$ans" in
+      manual|notify|auto) POLICY="$ans"; return 0 ;;
+      *) echo "choose manual, notify, or auto" ;;
+    esac
+  done
+}
+
+configure() {
+  local m p ans
+  echo
+  echo "Configuration — your recorded choices:"
+  m="$(record_mode)"; [ "${m:-symlink}" = "copy" ] && m="copies" || m="links"
+  p="$(policy_value)"
+  echo "  how items land:     $m"
+  echo "  how updates behave: ${p:-not chosen yet}"
+  printf 'change mode, policy, or go back? [mode/policy/back] '
+  read -r ans || return 1
+  case "$ans" in
+    mode) ask_mode ;;
+    policy) ask_policy ;;
+    *) return 0 ;;
+  esac
+  # Re-record the changed choices now, so the change outlives this run.
+  [ -f "$CONFIG_DIR/$RECORD" ] && reconcile
+  return 0
+}
+
+menu_run() {
+  local ans
+  while :; do
+    echo
+    echo "girth-agents installer"
+    echo "  i. install        — bring the catalog into your config"
+    echo "  u. update         — bring it current per your policy"
+    echo "  x. uninstall      — remove exactly what an install put there"
+    echo "  c. Configuration  — review and change your recorded choices"
+    printf 'choose [i/u/x/c] '
+    read -r ans || { echo; exit 1; }
+    case "$ans" in
+      i|install) VERB="install"; return 0 ;;
+      u|update)  VERB="update";  return 0 ;;
+      x|un|uninstall) VERB="uninstall"; return 0 ;;
+      c|C|config|config ) configure ;;
+      q|quit) exit 0 ;;
+      *) echo "please choose i, u, x, or c" ;;
+    esac
+  done
+}
 
 release_name() {
   git -C "$REPO_ROOT" describe --tags --always 2>/dev/null || printf 'unknown'
@@ -241,6 +307,10 @@ uninstall() {
 # reconcile — make the install match the (already-pulled) catalog.
 reconcile() {
   local rec="$CONFIG_DIR/$RECORD"
+  if [ "$COPY_FLAG" -eq 0 ] && [ -f "$rec" ]; then
+    local m; m="$(sed -n 's/^mode: //p' "$rec" | head -1)"
+    [ "$m" = "copy" ] && MODE="copy"
+  fi
   OLD_ITEMS="$([ -f "$rec" ] && record_items "$rec" || true)"
 
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -329,12 +399,6 @@ update() {
     exit 1
   fi
 
-  # carry on in the mode the last install used, unless --copy overrides
-  if [ "$COPY_FLAG" -eq 0 ] && [ -f "$rec" ]; then
-    local m; m="$(sed -n 's/^mode: //p' "$rec" | head -1)"
-    [ "$m" = "copy" ] && MODE="copy"
-  fi
-
   local before; before="$(release_name)"
 
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -356,6 +420,36 @@ update() {
 }
 
 # --- install ---------------------------------------------------------------
+
+# Entry: the verb, the terminal, the unanswered questions. Placed here so the
+# helpers and record readers above are defined by the time it runs.
+
+# A bare run in a terminal opens the menu; a bare scripted run cannot guess.
+if [ -z "$VERB" ]; then
+  if interactive; then
+    menu_run
+  else
+    printf 'install.sh: give a verb (install|update|uninstall) and the flags that answer its questions (--copy, --policy manual|notify|auto); a bare run in a terminal presents a menu.\n' >&2
+    exit 2
+  fi
+fi
+
+# A deed whose question stands unanswered is never defaulted silently.
+case "$VERB" in
+  install|update)
+    if [ -z "$(policy_value)" ]; then
+      if interactive; then
+        if [ "$VERB" = "install" ] && [ "$COPY_FLAG" -eq 0 ] && [ ! -f "$CONFIG_DIR/$RECORD" ]; then
+          ask_mode
+        fi
+        ask_policy
+      else
+        printf 'install.sh: the update policy is unanswered — pass --policy manual|notify|auto, or run in a terminal and choose.\n' >&2
+        exit 2
+      fi
+    fi
+    ;;
+esac
 
 case "$VERB" in
   uninstall) uninstall ;;

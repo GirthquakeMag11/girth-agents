@@ -80,8 +80,11 @@ expect_installed() {
 
 run_install() { # $1 fixture  $2 config dir  [extra args...]
   local f="$1" c="$2"; shift 2
+  local args=("install")
+  [ $# -gt 0 ] && args+=("$@")
+  case " $* " in *" --policy "*) ;; *) args+=("--policy" "manual") ;; esac
   set +e
-  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" "$@" >"$c.out" 2>&1
+  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" "${args[@]}" >"$c.out" 2>&1
   RUN_STATUS=$?
   set -e
 }
@@ -208,7 +211,11 @@ test_policy_carried_on_reinstall() {
   mk_fixture "$f"
   add_skill "$f" bravo
   run_install "$f" "$c" --policy auto
-  run_install "$f" "$c"
+  set +e
+  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" install </dev/null >"$c.out" 2>&1
+  RUN_STATUS=$?
+  set -e
+  [ "$RUN_STATUS" -eq 0 ] && ok || fail "$FUNCNAME: re-install failed"
 
   grep -q '^policy: auto$' "$c/girth.yaml" && ok || fail "$FUNCNAME: recorded policy was lost"
 }
@@ -222,6 +229,55 @@ test_policy_invalid_rejected() {
   [ "$RUN_STATUS" -eq 2 ] && ok || fail "$FUNCNAME: expected exit 2, got $RUN_STATUS"
   grep -q 'unknown policy' "$c.out" && ok || fail "$FUNCNAME: no unknown-policy message"
   expect_absent "$c/girth.yaml" "$FUNCNAME"
+}
+
+test_interactive_install() {
+  local f="$TMP/inter-fixture" c="$TMP/inter-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  printf 'copies\nnotify\n' | script -qec "OPENCODE_CONFIG_DIR='$c' bash '$f/scripts/install.sh' install" /dev/null >"$c.out" 2>&1
+
+  grep -q 'links (recommended)' "$c.out" && ok || fail "$FUNCNAME: mode question not asked"
+  grep -q 'manual, notify, or auto' "$c.out" && ok || fail "$FUNCNAME: policy question not asked"
+  grep -q '^mode: copy$' "$c/girth.yaml" && ok || fail "$FUNCNAME: copies not recorded"
+  grep -q '^policy: notify$' "$c/girth.yaml" && ok || fail "$FUNCNAME: notify not recorded"
+  expect_file "$c/skills/bravo/SKILL.md" "$FUNCNAME"
+}
+
+test_flagless_scripted_install_fails() {
+  local f="$TMP/flagless-fixture" c="$TMP/flagless-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  set +e
+  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" install </dev/null >"$c.out" 2>&1
+  RUN_STATUS=$?
+  set -e
+  [ "$RUN_STATUS" -eq 2 ] && ok || fail "$FUNCNAME: wanted exit 2, got $RUN_STATUS"
+  grep -q 'policy is unanswered' "$c.out" && ok || fail "$FUNCNAME: no unanswered-policy message"
+  expect_absent "$c/girth.yaml" "$FUNCNAME"
+}
+
+test_bare_scripted_run_fails() {
+  local f="$TMP/bare-fixture" c="$TMP/bare-config"
+  mk_fixture "$f"
+  set +e
+  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" </dev/null >"$c.out" 2>&1
+  RUN_STATUS=$?
+  set -e
+  [ "$RUN_STATUS" -eq 2 ] && ok || fail "$FUNCNAME: wanted exit 2, got $RUN_STATUS"
+  grep -q 'give a verb' "$c.out" && ok || fail "$FUNCNAME: no give-a-verb message"
+}
+
+test_menu_configure_changes() {
+  local f="$TMP/confmenu-fixture" c="$TMP/confmenu-config"
+  mk_fixture "$f"
+  add_skill "$f" bravo
+  run_install "$f" "$c" --copy --policy manual
+  printf 'c\npolicy\nnotify\nq\n' | script -qec "OPENCODE_CONFIG_DIR='$c' bash '$f/scripts/install.sh'" /dev/null >"$c.out" 2>&1
+
+  grep -q 'Configuration' "$c.out" && ok || fail "$FUNCNAME: no Configuration shown"
+  grep -q '^policy: notify$' "$c/girth.yaml" && ok || fail "$FUNCNAME: policy change not recorded"
+  grep -q '^mode: copy$' "$c/girth.yaml" && ok || fail "$FUNCNAME: mode lost on configure"
 }
 
 test_dry_run_changes_nothing() {
@@ -354,8 +410,10 @@ git_fixture() {
 # run_update <fixture> <config> [extra args...] — runs the update verb.
 run_update() {
   local f="$1" c="$2"; shift 2
+  local args=("$@")
+  case " $* " in *" --policy "*) ;; *) args+=("--policy" "manual") ;; esac
   set +e
-  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" update "$@" </dev/null >"$c.up.out" 2>&1
+  OPENCODE_CONFIG_DIR="$c" bash "$f/scripts/install.sh" update "${args[@]}" </dev/null >"$c.up.out" 2>&1
   U_STATUS=$?
   set -e
 }
@@ -471,6 +529,10 @@ test_clean_install_records
 test_policy_flag_recorded
 test_policy_carried_on_reinstall
 test_policy_invalid_rejected
+test_interactive_install
+test_flagless_scripted_install_fails
+test_bare_scripted_run_fails
+test_menu_configure_changes
 test_dry_run_changes_nothing
 test_help_mentions_verbs
 test_uninstall_links
