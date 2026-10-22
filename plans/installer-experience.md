@@ -36,17 +36,33 @@ release.
 - Transport: the clone stays the only transport (user deferred to the
   maintainer) — the copy-paste story is one `git clone … && cd
   girth-agents && ./scripts/install.sh` line; Auto git-fetches and
-  checks out the latest release tag, then reconciles. Provisional — see
-  question "Snapshot bootstrap for one-command install". (2026-10-21)
+  checks out the latest release tag, then reconciles. A curl bootstrap is
+  deferred to the feature tracker. (2026-10-21)
 - Reach: the guided first run (mode, policy) plus humane polish of every
   verb's output, prompts, and errors. (2026-10-21)
+- Interactive-first: running the script with no flags is the assumed
+  state — it asks, and unanswered questions are mandatory. Flags exist
+  only to answer those questions ahead of time, and a script run with no
+  terminal but unanswered questions fails naming the flag that would
+  answer each. No flag finer-grained than a question the interaction
+  would ask; users who avoid the interaction are assumed able to configure
+  the install themselves. (2026-10-21)
+- Policy switching is an interaction with the program, never a flag.
+  (2026-10-21)
+- Notify consults the latest release on every verb run — cheap, and
+  silently skipped when the network is unreachable. (2026-10-21)
+- Release notes: update and status show the changelog sections between
+  the installed and latest release; status offers them on demand.
+  (2026-10-21)
+- The one-liner's home: the README's Install section leads with it, and
+  `/cut-release`'s GitHub Release body carries it. (2026-10-21)
 
 ## Not yet specified
 
 - The guided first run's exact prompts and the polished output shapes.
-- When and how release notes are shown after a sync.
-- The one-liner's canonical home (README Install section, release bodies,
-  both).
+- When and how release notes are shown after a sync — now settled, see
+  Decisions so far.
+- The one-liner's canonical home — now settled, see Decisions so far.
 
 ## Out of scope
 

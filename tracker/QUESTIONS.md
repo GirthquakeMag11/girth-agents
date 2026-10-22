@@ -18,6 +18,9 @@ applied to the work later. See the tracker skill.
   at the repo URL, read out of the client's local config; runs that
   cannot reach the network print nothing about releases and proceed.
   Embodied in the map's Decisions so far; will be pinned in the spec.
+- **Answered — 2026-10-21:** every verb run consults the latest release,
+  quietly skipped when offline (user).
+- **Follow-up:** map updated; the spec pins the wording.
 
 ## Non-interactive installs — 2026-10-21
 
@@ -29,6 +32,9 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** fail with a message telling the user to pass
   the policy flag; the mandatory-selection rule survives scripted runs.
   Embodied in the map's Decisions so far; will be pinned in the spec.
+- **Answered — 2026-10-21:** no terminal and unanswered questions → fail
+  naming the flag that would answer each (user).
+- **Follow-up:** map updated; the spec pins the wording.
 
 ## Switching policy after install — 2026-10-21
 
@@ -40,6 +46,11 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** the policy flag re-records it on any later
   install or update run — cheapest surface, no new verb. Embodied in the
   map's Decisions so far; will be pinned in the spec.
+- **Answered — 2026-10-21:** switching the policy is an interaction with
+  the program, never a flag; flags only pre-answer the questions the
+  interaction would ask (user).
+- **Follow-up:** map updated — the provisional is superseded; the spec
+  pins the wording.
 
 ## Snapshot bootstrap for one-command install — 2026-10-21
 
@@ -54,3 +65,7 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** clone-only transport; the copy-paste story is
   the plain git one-liner; Auto pins the checkout to the latest release
   tag. Embodied in the map's Decisions so far; will be pinned in the spec.
+- **Answered — 2026-10-21:** clone one-liner is the documented story; the
+  curl bootstrap goes to the feature tracker to consider later (user).
+- **Follow-up:** map updated; the bootstrap is now FEATURES.md's "Curl
+  bootstrap for one-command install".
