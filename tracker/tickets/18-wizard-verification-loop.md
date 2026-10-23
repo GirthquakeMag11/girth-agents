@@ -29,3 +29,19 @@ persisted, and steps that can fail carry checks too.
 - [ ] The closing summary lists skipped and failing items with their
       exact errors; the exit code stays true to failures.
 - [ ] The skill's authoring guidance states the per-value probe floor.
+
+- **Done — 2026-10-23:** the library gains `check` (labelled probe:
+  green ✓ on pass, red ✗ plus the probe's own output verbatim on fail),
+  `ask_checked` (ask → check → re-ask in the same stage until pass or
+  explicit skip, skip recorded never mistaken for a pass), and `try`
+  (a fail-able step that records and carries on instead of aborting).
+  `finish` lists skipped and still-failing items with their exact errors
+  and returns 1 when any check still fails — corrected and skipped
+  checks clear their earlier failures. The template's example stage and
+  the skill's authoring step state the floor: a probe per captured
+  value, format check at minimum, run before persisting. Probed
+  red→green on four canned cases (pass; wrong-then-corrected; skip;
+  failing step) with exit codes 0/0/0/1. Two bugs caught and fixed
+  during probing: the color block had no RED, and set -e aborted runs
+  on skips and corrected failures before the summary could report.
+  Validator green.
