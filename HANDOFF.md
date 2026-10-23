@@ -19,6 +19,6 @@
 
 ## Open work
 
-- [ ] Slice the approved `specs/wizard-redesign.md`, then implement it.
+- [ ] Implement the wizard redesign frontier — tickets 16–22 under `tracker/tickets/`.
 - [ ] Pick up development at the open tracker items — the curl bootstrap and the orchestrator agent in `tracker/FEATURES.md` — or the work the user names first.
 - [ ] Leave this repository's own handoff home alone unless the user settles one: a committed `HANDOFF.md` at the root applies until a `conventions/On_Handoffs.md` says otherwise.
