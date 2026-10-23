@@ -7,10 +7,10 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
-- `/wizard`: a command that generates a wizard and runs it for you, so a secret or a hands-on procedure can be captured without spelling it out for the agent.
+- `/wizard`: a command that generates a wizard for a secret or a hands-on procedure and takes the same offer-to-launch path, so manual use matches triggered use.
 
 ### Changed
-- `wizard`: now also fires whenever a command needs a password or secret the agent does not have, and runs the wizard in a new terminal for you (asking first if that isn't established), so secrets are never typed into the conversation.
+- `wizard`: the trigger now leads with the moment — a command that needs a password, token, API key, or other secret, or a procedure only the user can do. The skill offers to launch the wizard in a new terminal and waits for an explicit yes every time; secret input is censored with a visible mask per keystroke; every captured value is checked before it is persisted, failures re-ask in place, and a run ends listing anything skipped or still failing with the exact error.
 
 ### Deprecated
 ### Removed
