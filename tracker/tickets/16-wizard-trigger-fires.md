@@ -26,3 +26,11 @@ needed. The wording is the trigger; the scenario gate validates it.
       mechanics.
 - [ ] The skill's purpose and template pointer survive the rewrite.
 - [ ] Validator green.
+
+- **Done — 2026-10-23:** the description is the spec's pinned string
+  word-for-word (284 chars, under the 300 ceiling) and the Trigger section
+  now lists the five scenarios as moments — sudo install/prompt, auth
+  prompt, registry token, CI secret, dashboard procedure — closing with
+  the catch-yourself rule. Code-review: Spec axis clean; the Standards
+  axis's one borderline note is the spec's own deliberate framing
+  (generate-a-wizard last). Validator green.
