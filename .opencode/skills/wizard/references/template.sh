@@ -118,16 +118,38 @@ ask() {
   printf -v "$key" '%s' "$input"
 }
 
-# ask_secret KEY "Prompt" is like ask, but input is hidden.
+# ask_secret KEY "Prompt" is like ask, but the input is censored, not
+# invisible: every keystroke and every character of a paste echoes as a mask
+# character, backspace erases one, and Enter submits — so the user knows
+# mid-entry whether the keys registered and the paste arrived whole. On a
+# re-run the saved value is still the Enter-keeps-it default, offered as
+# filled mask characters showing nothing more than its length.
 ask_secret() {
-  local key="$1" prompt="$2" current input rc=0
+  local key="$1" prompt="$2" current input="" ch rc=0
   current=$(_existing "$key" || true)
+  printf '  %s%s%s ' "$BOLD" "$prompt" "$RESET"
   if [[ -n "$current" ]]; then
-    printf '  %s%s%s %s[Enter keeps current]%s ' "$BOLD" "$prompt" "$RESET" "$DIM" "$RESET"
-  else
-    printf '  %s%s%s ' "$BOLD" "$prompt" "$RESET"
+    printf '%s[Enter keeps current]%s ' "$DIM" "$RESET"
+    local hint="" i
+    for ((i = 0; i < ${#current}; i++)); do hint+='•'; done
+    printf '%s%s%s' "$DIM" "$hint" "$RESET"
   fi
-  read -rs input || rc=1
+  while IFS= read -rs -n1 ch; do
+    case "$ch" in
+      $'\x7f'|$'\x08')               # backspace erases the last typed char
+        [[ -n "$input" ]] || continue
+        input="${input%?}"
+        printf '\b \b'
+        ;;
+      ''|$'\n'|$'\r')                # Enter submits
+        break
+        ;;
+      *)
+        input+="$ch"
+        printf '•'
+        ;;
+    esac
+  done || rc=1
   printf '\n'
   if (( rc )) && [[ -z "$input" ]]; then return 1; fi
   [[ -z "$input" && -n "$current" ]] && input="$current"
