@@ -31,3 +31,14 @@ summary, never a duplicate step.
 - [ ] The proofread step forbids any required instruction living only in
       the chat.
 - [ ] Validator green.
+
+- **Done — 2026-10-23:** the process now reads author → static checks →
+  proofread → offer to launch; the offer is one line and waits for an
+  explicit yes every time, with no standing permission. The launch
+  reference lists the per-platform terminal-open commands (GNOME, KDE,
+  any-desktop, macOS, Windows, WSL) with a read-pause so the closing
+  summary stays on screen, plus the degradation sentence — no terminal
+  openable → print the one-line command, never run the interactive
+  wizard inside the chat session. Red→green through the linter's
+  dead-path rule: referencing the launch file before creating it failed
+  validation, and landing it turned the run green.
