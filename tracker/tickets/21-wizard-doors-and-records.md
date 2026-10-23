@@ -23,3 +23,11 @@ rework as user-visible changes, beside the /wizard entry already queued.
       protocol.
 - [ ] The changelog's Unreleased section carries the Changed entries.
 - [ ] Validator green.
+
+- **Done — 2026-10-23:** the /wizard command now spells the reworked
+  process (scope, author, statically check, proofread for
+  self-containment, offer to launch and wait for the yes); the README's
+  skill row names the trigger, the mask, the per-value checks, and the
+  every-time yes, and its /wizard row names the same path; the
+  changelog's Unreleased section now leads with the redesign as the
+  wizard's Changed entry beside the /wizard Add. Validator green.
