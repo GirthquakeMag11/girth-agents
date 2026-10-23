@@ -172,6 +172,10 @@ Optional frontmatter: `description`, `agent`, `model`, `subagent`. Never
   Override the target with `OPENCODE_CONFIG_DIR`.
 - `scripts/test-installer.sh` — the installer's test harness, driven against
   a scratch config and a fixture catalog.
+- `scripts/test-wizard.sh` — the wizard library's test harness: canned
+  answers piped through fixture wizards built from the real template
+  library, asserting the mask echo, the check helper, the re-ask loop,
+  and the closing summary.
 
 ## Skill family maintenance
 
