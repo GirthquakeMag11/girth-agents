@@ -1,6 +1,6 @@
 # Wizard redesign — trigger, launch, censored input, verification
 
-**Status:** charting
+**Status:** done
 
 ## Destination
 
@@ -10,6 +10,9 @@ censored secret input, self-contained instructions, and built-in
 verification — touching the skill body, `references/template.sh`, a launch
 reference, the `/wizard` command, and the README rows. The approved spec
 then slices and implements, as installer-experience was done.
+
+Reached 2026-10-23: the way is clear — `specs/wizard-redesign.md` is
+approved and governs from here.
 
 ## Notes
 
@@ -62,17 +65,8 @@ then slices and implements, as installer-experience was done.
 
 ## Not yet specified
 
-- The exact trigger description string — drafted in the spec from the
-  settled decision and the catalog's 300-character rule.
-- The censored-input mechanism in `references/template.sh` (visible mask,
-  per keystroke).
-- The check-helper interface — how a stage declares its probe and the
-  library reports ✓/✗ with the command's own error.
-- The cross-platform launch table (terminal-open commands) as a skill
-  reference.
-- The scenario list's contents — drawn from the user's real tests (sudo
-  installs, auth prompts, registry tokens, CI secrets).
-- Which probe fits which secret kind.
+Cleared — every item here is pinned in the approved spec; the probe
+mechanics and the launch table are delegated to implementation.
 
 ## Out of scope
 
