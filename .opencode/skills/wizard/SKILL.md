@@ -52,9 +52,12 @@ never prompted inline — the wizard collects it in its own terminal.
 3. **Author the wizard.** Copy `references/template.sh` to the target path,
    replace the example with one `stage` per step in dependency order, and
    set `TOTAL_STAGES`. Hold the template's bar: open the URL before asking
-   for its value, `ask_secret` for anything secret, `write_env` every
-   persisted value, `set_secret` only what CI needs, and `confirm` before
-   anything irreversible.
+   for its value, `ask_secret` for anything secret, a probe per captured
+   value — the cheapest meaningful one, a format check at the very least,
+   a live check wherever one exists — run by `ask_checked` before the value
+   is persisted, `write_env` every persisted value, `set_secret` only what
+   CI needs, and `confirm` before anything irreversible; steps that can
+   fail carry a `try` too.
 4. **Verify and hand off.** `bash -n` the script, run `shellcheck` if
    present, `chmod +x`, and leave the end-to-end run to the human — it opens
    browsers and blocks on human input. Trace it statically instead: every

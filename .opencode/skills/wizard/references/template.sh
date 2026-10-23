@@ -14,9 +14,9 @@ set -euo pipefail
 
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
   BOLD=$(tput bold); DIM=$(tput dim); RESET=$(tput sgr0)
-  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
+  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3); RED=$(tput setaf 1)
 else
-  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""
+  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""; RED=""
 fi
 
 # Author sets this at the top of the stages section.
@@ -27,6 +27,7 @@ ENV_FILE="${ENV_FILE:-.env}"
 WRITTEN_ENV=()    # KEYs written to ENV_FILE this run
 WRITTEN_SECRET=() # secret NAMEs set this run
 SKIPPED=()        # things we couldn't do (e.g. gh missing)
+FAILED=()         # checks that failed this run, each with its exact error
 
 # _clear wipes the terminal so only the current step is on screen. No-op when
 # output isn't a terminal, so piped logs stay readable.
@@ -200,17 +201,82 @@ set_var() {
   warn "skipped GitHub variable $name, gh not ready; set it later"
 }
 
+# _unfail LABEL clears the label's recorded failures, so a value that passed
+# on a later attempt — or was skipped — is not reported as still failing.
+_unfail() {
+  local label="$1" f tmp=()
+  for f in "${FAILED[@]}"; do [[ "$f" == "$label — "* ]] || tmp+=("$f"); done
+  FAILED=("${tmp[@]}")
+}
+
+# check LABEL PROBE... runs a probe (a stage-defined function, or a command)
+# and reports the truth: a pass prints the label green, a fail prints it red
+# with the probe's own output, verbatim, and is recorded. Returns 0/1. The
+# probe reads the captured variables itself, so every re-run of a check
+# sees the value as it stands now. A pass clears the label's earlier
+# failures — only what is still failing stays recorded.
+check() {
+  local label="$1" out rc; shift
+  out=$("$@" 2>&1) || rc=$?
+  if (( ${rc:-0} == 0 )); then
+    printf '  %s✓ %s%s\n' "$GREEN" "$label" "$RESET"
+    _unfail "$label"
+    return 0
+  fi
+  printf '  %s✗ %s%s\n' "$RED" "$label" "$RESET"
+  [[ -n "$out" ]] && printf '%s\n' "$out" | sed 's/^/    /'
+  FAILED+=("$label — $(printf '%s' "$out" | tr '\n' ' ')")
+  return 1
+}
+
+# ask_checked MODE KEY "Prompt" LABEL PROBE... loops: ask (or ask_secret),
+# check, and on failure re-ask in the same stage — the error stays on
+# screen, the re-ask fixes the value in place, and Enter on a re-run keeps
+# the current value. The loop ends when the probe passes, or when the user
+# explicitly skips: the skip is recorded, never mistaken for a pass. MODE is
+# "secret" or "plain"; PROBE is a stage-defined function reading the
+# variables directly.
+ask_checked() {
+  local mode="$1" key="$2" prompt="$3" label="$4" reply; shift 4
+  while :; do
+    if [[ "$mode" == "secret" ]]; then ask_secret "$key" "$prompt"
+    else ask "$key" "$prompt"; fi
+    if check "$label" "$@"; then return 0; fi
+    printf '  %sSkip this check and move on? [y/N]%s ' "$YELLOW" "$RESET"
+    read -r reply || { printf '\n'; SKIPPED+=("$label (skipped by you)"); _unfail "$label"; printf '  %s⚠ skipped%s %s — recorded, not passed\n' "$YELLOW" "$RESET" "$label"; return 0; }
+    [[ "$reply" =~ ^[Yy] ]] || continue
+    SKIPPED+=("$label (skipped by you)")
+    _unfail "$label"
+    printf '  %s⚠ skipped%s %s — recorded, not passed\n' "$YELLOW" "$RESET" "$label"
+    return 0
+  done
+}
+
+# try LABEL PROBE... is check for a step that may fail: the failure prints
+# and is recorded, and the run carries on — the closing summary reports it.
+# Never aborts the wizard.
+try() {
+  check "$@" || return 0
+}
+
 # finish clears, then shows a closing summary of everything configured.
 finish() {
   _clear
+  local failed=0
   printf '\n%s%s  ✓ Setup complete%s\n' "$BOLD" "$GREEN" "$RESET"
   (( ${#WRITTEN_ENV[@]} ))    && note "wrote ${#WRITTEN_ENV[@]} value(s) to $ENV_FILE: ${WRITTEN_ENV[*]}"
   (( ${#WRITTEN_SECRET[@]} )) && note "set ${#WRITTEN_SECRET[@]} GitHub secret(s): ${WRITTEN_SECRET[*]}"
+  if (( ${#FAILED[@]} )); then
+    printf '\n'; warn "checks that failed:"
+    for f in "${FAILED[@]}"; do note "  - $f"; done
+    failed=1
+  fi
   if (( ${#SKIPPED[@]} )); then
     printf '\n'; warn "still to do by hand:"
     for s in "${SKIPPED[@]}"; do note "  - $s"; done
   fi
   printf '\n'
+  return $failed
 }
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -218,6 +284,9 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # Keep every stage inside run_wizard and the last line as is: bash then parses
 # the whole file before the first prompt, so an edit mid-run can't break it.
+# Every captured value gets a probe — a format check at the very least, a
+# live check wherever one exists — run by ask_checked before anything is
+# persisted; steps that can fail carry a try.
 # ──────────────────────────────────────────────────────────────────────────
 
 run_wizard() {
@@ -226,14 +295,25 @@ TOTAL_STAGES=1
 
 banner "Stripe setup"
 
+# Define one probe function per captured value. The function reads the
+# captured variables itself, so the re-ask loop always checks the fresh
+# value; it prints the failure's own words, which check shows verbatim.
+probe_stripe_pub() { [[ "$STRIPE_PUBLISHABLE_KEY" == pk_test_* ]] \
+  || { echo "expected a key starting with pk_test_"; return 1; }; }
+probe_stripe_secret() { curl -fsS -u "$STRIPE_SECRET_KEY:" \
+  "https://api.stripe.com/v1/account" >/dev/null \
+  || { echo "Stripe rejected the secret key — re-check the dashboard"; return 1; }; }
+
 # ── Example stage: replace with your real steps ───────────────────────────
 stage "Stripe: API keys"
 say "We'll grab your Stripe test keys and store them for local dev + CI."
 open_url "https://dashboard.stripe.com/test/apikeys"
 step "On the API keys page, copy the Publishable key (starts pk_test_)."
-ask STRIPE_PUBLISHABLE_KEY "Paste the publishable key:"
+ask_checked plain STRIPE_PUBLISHABLE_KEY "Paste the publishable key:" \
+  "publishable key looks right" probe_stripe_pub
 step "Click 'Reveal test key' on the Secret key row, then copy it."
-ask_secret STRIPE_SECRET_KEY "Paste the secret key:"
+ask_checked secret STRIPE_SECRET_KEY "Paste the secret key:" \
+  "Stripe accepts the secret key" probe_stripe_secret
 write_env STRIPE_PUBLISHABLE_KEY "$STRIPE_PUBLISHABLE_KEY"
 write_env STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY"
 set_secret STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY"   # CI needs this one
