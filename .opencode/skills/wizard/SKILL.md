@@ -58,13 +58,22 @@ never prompted inline — the wizard collects it in its own terminal.
    is persisted, `write_env` every persisted value, `set_secret` only what
    CI needs, and `confirm` before anything irreversible; steps that can
    fail carry a `try` too.
-4. **Verify and hand off.** `bash -n` the script, run `shellcheck` if
-   present, `chmod +x`, and leave the end-to-end run to the human — it opens
-   browsers and blocks on human input. Trace it statically instead: every
-   value captured lands where step 1 said, and every secret name matches a
-   `secrets.*` reference in CI. Tell the user how to run it; if it is a
-   repeatable setup, commit it and link it from the readme so the next person
-   runs the script instead of asking.
+4. **Verify statically.** `bash -n` the script, run `shellcheck` if
+   present, `chmod +x`, and trace it statically instead of running it
+   end-to-end — it opens browsers and blocks on human input. Every value
+   captured lands where step 1 said, and every secret name matches a
+   `secrets.*` reference in CI.
+5. **Proofread for self-containment.** Walk the finished wizard as a user
+   who has only the terminal: every instruction or clarification still
+   living only in the chat is written into the wizard's own lines. The
+   chat never holds a required step.
+6. **Offer, then launch.** Offer in one line — what the wizard does, and
+   asking to run it in a new terminal — and wait for an explicit yes,
+   every time, with no standing permission. On the yes, open a fresh
+   terminal with the wizard running per `references/launching.md` and stay
+   with the user until the closing summary lands; if no terminal can be
+   opened, print the exact one-line command for the user's own terminal
+   and stop.
 
 A wizard is ephemeral by default: built for one run, deleted when done.
 Commit it only when the user wants a repeatable setup path.
