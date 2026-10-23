@@ -13,12 +13,12 @@
 - Rulings live in `conventions/` (versioning, chains) and `decisions/` (0001-0004); the shared language is `GLOSSARY.md`.
 - The design trail: `specs/installer-experience.md` (governs the installer), `specs/handoff-pickup.md` (governs this document's own lifecycle), `specs/installer.md` (older, superseded where they overlap).
 - Work flows spec → slice → implement.
-- Everything planned is shipped: `tracker/tickets/` holds 15 closed tickets; `tracker/QUESTIONS.md` is settled. In flight: the wizard redesign — `specs/wizard-redesign.md` is approved and awaits slicing.
+- Everything planned is shipped: `tracker/tickets/` holds 15 closed tickets; `tracker/QUESTIONS.md` is settled. In flight: the wizard redesign — implemented through tickets 16–21; the scenario gate (22) awaits the user's fresh-session tests.
 - Two features wait in `tracker/FEATURES.md`: a curl bootstrap for one-command install, and an orchestrator agent for divide-and-conquer long-form work. No tickets are sliced for either.
 - This document consumes as you act: strike a line the moment its work is done, and delete the file (committed) when nothing remains.
 
 ## Open work
 
-- [ ] Implement the wizard redesign frontier — tickets 16–22 under `tracker/tickets/`.
+- [ ] Run the wizard redesign's scenario gate — ticket 22 — across fresh sessions and models; the redesign is done only when it passes.
 - [ ] Pick up development at the open tracker items — the curl bootstrap and the orchestrator agent in `tracker/FEATURES.md` — or the work the user names first.
 - [ ] Leave this repository's own handoff home alone unless the user settles one: a committed `HANDOFF.md` at the root applies until a `conventions/On_Handoffs.md` says otherwise.

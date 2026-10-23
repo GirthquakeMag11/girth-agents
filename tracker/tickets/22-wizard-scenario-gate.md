@@ -25,3 +25,12 @@ tracked. The spec is not done until this passes.
 - [ ] Every launch waited for an explicit yes.
 - [ ] Mask and re-ask behaviors observed correct in real runs.
 - [ ] Results recorded; any failure fixed or tracked.
+
+- **2026-10-23 — ready to run:** every blocker (16–19) is closed and
+  the installed catalog carries the reworked trigger, mask, checks, and
+  offer-to-launch. Run each scenario in a fresh session: the sudo
+  install, the auth prompt, the registry token, the CI secret, the
+  dashboard procedure. Record per scenario: did the wizard fire (not
+  instructions), did every launch wait for an explicit yes, did the
+  mask and re-ask behave. A failure is fixed or tracked, and the spec
+  is not done until this passes.
