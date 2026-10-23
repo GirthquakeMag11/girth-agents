@@ -6,6 +6,94 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Wizard redesign — destination and scope — 2026-10-22
+
+- **The question:** Is the destination an approved spec redesigning the
+  wizard skill end to end — trigger, launch protocol, censored input,
+  self-contained instructions, built-in verification (touching the skill
+  body, template.sh, a launch reference, `/wizard`, and the README rows) —
+  then slice → implement?
+- **Context:** map `Wizard redesign — trigger, launch, censored input,
+  verification`; the skill's trigger has failed every scenario test so far.
+- **Decided (provisional):** approved spec, full redesign — the
+  installer-experience shape.
+- **Answered — 2026-10-22:** approved spec, full redesign (user).
+- **Follow-up:** map updated; the spec is the destination.
+
+## Wizard launch protocol — offer then wait — 2026-10-22
+
+- **The question:** After authoring and statically checking the wizard,
+  what does the agent do? The observed failure is both extremes: no offer
+  at all, or launching without asking.
+- **Context:** map `Wizard redesign — trigger, launch, censored input,
+  verification`.
+- **Decided (provisional):** offer to launch the wizard in a new terminal,
+  then wait for the user's explicit yes — every time.
+- **Answered — 2026-10-22:** offer, then wait for an explicit yes — every
+  time; that middle ground is the requirement (user).
+- **Follow-up:** map updated; the spec pins the protocol wording and the
+  launch table.
+
+## Wizard verification — every value carries a check — 2026-10-22
+
+- **The question:** How does a run know whether something went wrong, and
+  what, without edit-and-relaunch loops? Must every captured value (and
+  every step that can fail) carry a check the wizard runs itself?
+- **Context:** map `Wizard redesign — trigger, launch, censored input,
+  verification`.
+- **Decided (provisional):** yes — a check per value and per fail-able
+  step; cheapest meaningful probe, format check at minimum, live probe
+  where possible.
+- **Answered — 2026-10-22:** yes, every value gets a check (user).
+- **Follow-up:** map updated; the spec pins the check-helper interface.
+
+## Wizard failure handling — in-stage retry loop — 2026-10-22
+
+- **The question:** What happens when a check fails mid-run?
+- **Context:** map `Wizard redesign — trigger, launch, censored input,
+  verification`.
+- **Decided (provisional):** re-ask within the same stage and re-check,
+  looping until the value passes or the user explicitly skips; the closing
+  summary lists skipped or still-failing items with the exact error.
+- **Answered — 2026-10-22:** in-stage retry loop with a skip (user).
+- **Follow-up:** map updated; the spec pins the retry mechanics.
+
+## Wizard trigger — description-first rewrite — 2026-10-22
+
+- **The question:** The trigger fails to fire: the agent defers to the user
+  (instructions to run things themselves) at the exact moment the skill
+  should fire. How is the trigger made to fire?
+- **Context:** map `Wizard redesign — trigger, launch, censored input,
+  verification`; researched — OpenCode lists skills per step by ID, name,
+  and description, alphabetically; firing is the model matching the
+  situation to the description, with no guaranteed-fire mechanism. The
+  current description matches only after the agent has already decided to
+  ask, and lacks the moment's anchor words (sudo, password, token,
+  credential).
+- **Decided (provisional):** description rewritten trigger-first with the
+  situation's anchor words, generate-a-wizard framing last; a concrete
+  scenario list joins the skill's Trigger section; validated against the
+  user's real-world scenario tests.
+- **Answered — 2026-10-22:** trigger-first rewrite plus the scenario list,
+  validated by real-world tests (user).
+- **Follow-up:** map updated; the spec pins the exact string (≤ 300
+  characters) and the scenario list.
+
+## Headless wizard runs — 2026-10-22
+
+- **The question:** What happens when no GUI terminal exists to open (SSH,
+  headless machine)?
+- **Context:** map `Wizard redesign — trigger, launch, censored input,
+  verification`.
+- **Decided (provisional):** hand the user a one-line command to run in
+  their own terminal; the agent still owns the run, but the terminal is the
+  user's.
+- **Answered — 2026-10-22:** the situation does not arise — the user's
+  sessions always have a terminal to open; do not design a branch for it
+  (user).
+- **Follow-up:** map rules the case out of scope; the launch reference
+  degrades by printing the one-line command when opening a terminal fails.
+
 ## Notify's network machinery — 2026-10-21
 
 - **The question:** Notify reports a release lag on every verb run. Which
