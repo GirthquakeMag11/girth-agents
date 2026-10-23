@@ -1,6 +1,6 @@
 ---
 name: Wizard
-description: Generate an interactive bash wizard for a password or other secret a command needs, or a procedure only the human can do. Use whenever you must ask the user for a secret to pass to a command; run it in a new terminal for them, asking first if that isn't established.
+description: Use when a command needs a password, token, API key, or other secret from the user — such as a sudo or authentication prompt — or when a procedure is the user's alone to perform. Generates an interactive bash wizard and offers to run it in a new terminal, waiting for an explicit yes.
 ---
 
 # Wizard
@@ -21,18 +21,21 @@ and never hand-edited.
 
 ## Trigger
 
-This skill fires whenever you need to ask the user for a password or secret
-to pass through to whatever command you needed run — authentication, a token,
-an API key, a credential read by `sudo`, a CI secret, a login, anything that
-should not be echoed to the log or typed into the conversation. It also fires
-for the wider class it always has: a procedure only the human can perform.
-Either way, once you realize you need something from the user, you own
-running the wizard.
+This skill fires the moment a command needs something from the user —
+before asking for it inline, and before handing the user commands to run
+themselves. The moments:
 
-You are responsible for running the wizard for the user in a new terminal —
-do not paste the secret into the conversation, and do not prompt for it
-inline. If it is not already established that you may open a terminal and
-run it, ask the user's permission to do so before you do.
+- A command you are about to run needs a password — a `sudo` install or
+  prompt, a login, an SSH passphrase.
+- A tool needs a token, API key, or other credential you do not have — an
+  authentication prompt, a registry token, a CI secret.
+- A procedure is the user's alone to perform — a dashboard setting, a
+  browser-only step, a one-off migration.
+
+When you catch yourself about to ask for a secret, or about to tell the
+user to run something themselves because a password is needed, stop: this
+skill fires instead. A secret is never typed into the conversation and
+never prompted inline — the wizard collects it in its own terminal.
 
 ## Process
 
