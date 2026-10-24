@@ -47,3 +47,20 @@ When the user brings a loose effort:
 5. When the way is clear, mark the map **done** and hand off — the user may then ask for the
    spec (call the skill tool with `specifying`), or the destination was
    itself the decision.
+
+## The tracker walks beside the map
+
+The map owns wayfinding's questions; the tracker owns everything else
+that surfaces along the way. When something shows up that is not the
+next map decision, record it where it belongs and carry on — it must not
+bend the charting off course, and it must not be lost:
+
+- **A bug is spotted** — send a background agent to investigate it and,
+  if necessary, create the tracked bug item (its kind's format — call
+  the skill tool with `tracking`); the charting moves on while it works.
+- **A question comes up that is not relevant to wayfinding, or is
+  otherwise deferred** — create a tracked question item rather than
+  putting it to the user here: the map's own questions go through
+  `grilling`; everything else waits where it cannot be lost.
+- **A feature or defect surfaces** — create the tracked feature or
+  defect item, the same way.
