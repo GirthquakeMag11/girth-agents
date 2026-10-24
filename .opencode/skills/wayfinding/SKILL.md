@@ -31,8 +31,6 @@ When the user brings a loose effort:
 
 ## Work the map
 
-One decision per session, unless the session is only research:
-
 1. Read the map and pick the next decision — the next open question, or the
    one the user names.
 2. Resolve it:
