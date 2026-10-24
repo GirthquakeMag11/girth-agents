@@ -6,7 +6,7 @@ The session-lifecycle fold of 0002 is unwound for handoff alone: the
 consumption protocol the two doors share. `retro` stays folded in its
 command. The design being implemented is `specs/handoff-pickup.md`.
 
-Status: accepted
+Status: superseded in part by 0005 — the skill behind two doors stands; its governing-design pointer is narrowed there.
 
 ## Considered options
 

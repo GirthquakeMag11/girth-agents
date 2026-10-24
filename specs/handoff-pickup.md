@@ -1,5 +1,10 @@
 # Handoff and Pickup
 
+*Superseded in part by `decisions/0005-handoff-continuation-vs-deferral.md`:*
+*the document is written only when the user runs `/handoff` and stays until*
+*`/pickup` consumes it; open work is session continuation, deferral remains*
+*the tracker's; the freshness-check trigger is gone.*
+
 ## Problem Statement
 
 When a session ends, `/handoff` writes a document so a fresh agent can
