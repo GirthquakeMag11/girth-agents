@@ -12,7 +12,7 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ### Changed
 - `wizard`: the trigger now leads with the moment — a command that needs a password, token, API key, or other secret, or a procedure only the user can do. The skill offers to launch the wizard in a new terminal and waits for an explicit yes every time; secret input is censored with a visible mask per keystroke; every captured value is checked before it is persisted, failures re-ask in place, and a run ends listing anything skipped or still failing with the exact error.
 - `handoff` and `tracking`: the handoff and the tracker are no longer two competing places for open work — `decisions/0005` rules the junction. The handoff carries a session's own continuation across the gap, written only when `/handoff` is run and consumed to deletion by `/pickup`; the tracker alone defers work. The freshness-check trigger is gone: staleness is handled at the two doors, never in between.
-- `wayfinding`: the one-decision-per-session pacing rule is removed from the Work-the-map step — the per-session cadence it assumed is not how wayfinding runs.
+- `wayfinding`: the one-decision-per-session pacing rule is removed from the Work-the-map step, and its echoes in the skill's description and the README follow — the per-session cadence it assumed is not how wayfinding runs.
 - `wayfinding`: the tracker's place beside the map is stated — a bug spotted mid-charting goes to a background agent that investigates and creates the tracked bug item where necessary; off-course or deferred questions become tracked questions, never interruptions; features and defects surfaced along the way get tracked items too.
 
 ### Deprecated

@@ -1,6 +1,6 @@
 ---
 name: Wayfinding
-description: Chart a big, foggy effort as a live map in plans/, and work its decision questions one per session until the way to the destination is clear. Use when an effort is too big or too unclear to spec directly.
+description: Chart a big, foggy effort as a live map in plans/, and work its decision questions until the way to the destination is clear. Use when an effort is too big or too unclear to spec directly.
 ---
 
 # Wayfinding

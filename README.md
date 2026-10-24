@@ -147,7 +147,7 @@ machinery.
 | The state you're in                              | What you run     | What happens next                                                        |
 | ------------------------------------------------ | ---------------- | ------------------------------------------------------------------------ |
 | The repo is bare, or a scaffold piece is missing | `/bootstrap`     | The skeleton is built; gaps found are put to you for approval            |
-| The idea is foggy, too big to spec               | `/wayfind`       | A live map; its key questions are put to you, one per session            |
+| The idea is foggy, too big to spec               | `/wayfind`       | A live map; its key questions are put to you, one at a time              |
 | A decision is blocked on an outside person       | `/questionnaire` | A questionnaire for the person who holds the knowledge                   |
 | The design has settled                           | `/spec`          | The conversation becomes a spec for your approval                        |
 | A spec sits approved                             | `/slice`         | It becomes tickets, checkpointed for your approval                       |
