@@ -1,16 +1,23 @@
 ---
 name: Handoff
-description: Carry a session's context across agents — write and sweep HANDOFF.md, resume and consume it at pickup, keep it free of stale context. Use when handing work off, picking it up, or checking a handoff for freshness.
+description: Carry a session's context across the gap between sessions — write and sweep HANDOFF.md when handing work off, consume it to nothing when picking it up, and leave it alone between the two. Use when the user hands work off or picks it up.
 ---
 
 # Handoff
 
-Carry a session's context from one agent to the next through one
-document: HANDOFF.md at the repository root, committed after every
-change. When a session hands its work over, extend the document with what
-the next agent needs. When one picks the work up, work the document and
-consume it as it goes stale. The point of both is the same: no reader
-should inherit context that is no longer true or no longer important.
+Carry a session's context across the gap between sessions through one
+document: HANDOFF.md at the repository root, committed when it changes.
+The document comes into being only when the hand-off door is opened, and
+it lives until the pickup consumes all of it — then it is deleted. The
+point of both acts is the same: no reader should inherit context that is
+no longer true or no longer important.
+
+The handoff is not the system for deferring work — the tracker is. It
+carries the continuing session's own work across the gap: work already
+tracked is referenced, never copied; the pickup works handoff cargo
+through, never deposits it into the tracker; and an item that proves
+during that continuation to be deferral takes the ordinary
+decide-now-or-record call.
 
 ## Where the handoff lives
 
@@ -67,13 +74,18 @@ The `/handoff` command starts here; this protocol is the machinery.
 2. **Sweep the existing document.** If one is already there, run the
    staleness playbook over every line before writing anything: still true
    and still important → keep; stale → modify or excise, now. A new
-   session extends the document; it never starts a second one.
+   session extends the document; it never starts a second one. This
+   protocol runs because the door was opened; between the doors, the
+   document is left alone.
 3. **Redact.** Strip anything sensitive — secrets, passwords, access
    tokens, personally identifiable information — before it is written.
 4. **Write.** Extend the document per the format: settled claims under
    Context, what remains to do under Open work, one unit per line.
    Reference — don't duplicate — material already captured in specs,
-   plans, the tracker, decisions, commits, and diffs: point to it.
+   plans, the tracker, decisions, commits, and diffs: point to it. Open
+   work here is the session's own continuation, not the tracker's
+   backlog; anything that is deferral belongs in the tracker, not
+   carried here.
 5. **Commit.** One commit for the sweep and the write:
    `docs(handoff): record <slug>`, the session's short name as the slug.
    Skip this step where the project's conventions say the handoff is not
@@ -97,7 +109,12 @@ The `/pickup` command starts here; this protocol is the machinery.
    or task no longer true or no longer important, excise that line — in
    the same commit as the work that consumed it, never struck through and
    left behind. Context made stale by anyone else's action, or no one's,
-   is treated the same at the next read: modify or excise it anyway.
+   is treated the same at the next read: modify or excise it anyway. The
+   Open work tasks are the session's continuation, not backlog: work them
+   through — do not deposit them into the tracker. An item is recorded
+   there only when, during the work, it proves to be deferral — the
+   ordinary decide-now-or-record call — and that recording is a decision
+   made item by item, never the pickup's first act.
 4. **Rewrite what is only partly consumed.** When work has consumed some
    parts of a unit while the rest stands untouched and fresh, rewrite the
    line in place to hold only what remains — never strike the whole line
@@ -108,5 +125,5 @@ The `/pickup` command starts here; this protocol is the machinery.
    the deletion — a finished handoff does not linger, and the repository
    the document lived in keeps the record of it.
 
-A bare freshness check — a trigger this skill names — is the staleness
-playbook run over the document with nothing to add: sweep, then stop.
+Between the two doors the document is left alone: staleness is handled
+when the hand-off sweeps it and when the pickup works it, nowhere else.

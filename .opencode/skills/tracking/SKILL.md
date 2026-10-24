@@ -108,3 +108,7 @@ line, and stays in the file.
 - maintaining-docs — user-visible fixes and features also get a changelog
   entry.
 - bootstrapping — creating a tracker file when one is missing.
+- handoff — a session's continuation across a gap, not this tracker's
+  cargo: its open work is worked through at pickup, and an item comes
+  here only when it proves during that continuation to be deferral — the
+  ordinary decide-now-or-record call.
