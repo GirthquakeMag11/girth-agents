@@ -6,6 +6,81 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## The change cloud — harvesting the item-level changes — 2026-10-25
+
+- **The question:** What is the complete set of changes the user's
+  test-driving surfaced — the workflows to optimize for, the
+  bloat/imprecision to root out, and the item-level edits aimed at
+  cross-cutting concerns?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the user
+  reports too many disorganized ideas to enumerate linearly — "changes to
+  individual items meant to affect cross cutting concerns in a way that I
+  can't easily explain in terms of a linear chain". Round 1 confirmed all
+  five known workflow areas (spec→slice→implement, tracker/handoff
+  junction, bootstrap→conventions/specs, wizard/secret handling,
+  release/update) and bloat classes spanning scaffold/docs overhead,
+  pacing rigidity, dead commands, overlapping skills, and skill-to-skill
+  connections to tighten or loosen.
+- **Decided (provisional):** the cloud is harvested into a scratch dump
+  and organized into the map's tree by the agent; nothing is designed
+  until it is organized.
+
+## The channel — 2026-10-25
+
+- **The question:** How does the plugin reach users — an npm package
+  managed by `opencode plugin add/update`, a git spec, or both channels
+  alive?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the user
+  deferred the decision for further consideration. `plans/installer-experience.md`
+  ruled package-manager channels out of scope for the installer; this map
+  supersedes that ruling where it lands.
+- **Decided (provisional):** undecided by choice — the map treats the
+  repo as source of truth and the package layout as channel-agnostic
+  until this is answered; nothing is built on a guess.
+
+## Installer and release machinery under the plugin — 2026-10-25
+
+- **The question:** Does the `install.sh`/update-policy/harness machinery
+  retire once the plugin brings its own channel (`opencode plugin
+  add/update/check`), and what becomes of `/cut-release`, the gh GitHub
+  Release, and the clone one-liner?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the user
+  had not had the machinery in mind but is open to the case. The agent's
+  view, for when the channel is settled: retire the end-user transport;
+  keep the lint gate and test harnesses as maintainer tooling (candidates
+  for plugin tools later); keep versioning/changelog; re-scope
+  `/cut-release` to publishing the plugin.
+- **Decided (provisional):** undecided — held with the channel; no
+  machinery is retired until the channel answer lands.
+
+## Destination shape — 2026-10-25
+
+- **The question:** Does wayfinding end once the decision is recorded and
+  the specs are approved, and is the spec set one umbrella spec or one
+  per area?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the effort
+  must land all at once because the parts are defined by their
+  relationships.
+- **Decided (provisional):** one umbrella spec covering all five areas,
+  approved once; the decision record is written first and the spec
+  references it; building/slicing is the next effort.
+- **Answered — 2026-10-25:** one umbrella spec, approved once (user).
+- **Follow-up:** map updated; the spec's single-source coherence is the
+  destination's shape.
+
+## Markdown's place in the plugin — 2026-10-25
+
+- **The question:** How do the Markdown skills, commands, and agents ship
+  inside the plugin?
+- **Context:** map `The skillset becomes an OpenCode plugin`; Markdown is
+  the catalog's identity; the plugin transforms register skills, commands,
+  and agents with path and content.
+- **Decided (provisional):** bundle the Markdown files and register them
+  at plugin setup; Markdown stays the source of truth; nothing converts
+  to code unless a trigger needs it.
+- **Answered — 2026-10-25:** bundle + register at setup (user).
+- **Follow-up:** map updated; the spec pins the packaging mechanics.
+
 ## Wizard redesign — destination and scope — 2026-10-22
 
 - **The question:** Is the destination an approved spec redesigning the
