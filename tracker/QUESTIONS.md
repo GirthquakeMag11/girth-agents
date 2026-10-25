@@ -6,6 +6,22 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Slicing skill — the /slice door's fate — 2026-10-25
+
+- **The question:** Slicing becomes its own skill, outside the command.
+  Does `/slice` survive as the human door — its body shrunk to "Call the
+  skill tool with `slicing`" — or does slicing become model-invoked only,
+  with the command retired?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the user
+  ruled the skill's existence; the procedure currently lives in the
+  `/slice` command body; the catalog's door-calls-skill shape is
+  `/spec` → specifying, `/wayfind` → wayfinding; `implementing` and
+  `specifying` ("Approve and Slice") point at `/slice`.
+- **Decided (provisional):** the door survives as the thin call — the
+  catalog's shape is doors that call skills, and `/slice` is the one the
+  README's chain and `/implement` point at; the procedure moves wholesale
+  into the skill's body.
+
 ## The change cloud — harvesting the item-level changes — 2026-10-25
 
 - **The question:** What is the complete set of changes the user's

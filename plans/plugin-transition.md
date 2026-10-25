@@ -30,6 +30,8 @@ after approval.
 
 ## Decisions so far
 
+- Slicing: becomes its own skill; the procedure moves out of the `/slice`
+  command body into the skill. (2026-10-25, narrated)
 - Destination shape: one umbrella spec covering all five areas, approved
   once; the `decisions/` record is written first and the spec references
   it. (2026-10-25, round 1 — see "Destination shape" in QUESTIONS.md)
@@ -38,6 +40,10 @@ after approval.
 
 ## Not yet specified
 
+- Slicing: the `/slice` door's fate — survive as the thin call that starts
+  the skill, or model-invoked only — plus the skill's trigger description
+  and the knock-ons: `implementing`'s and `specifying`'s `/slice` pointers
+  and the README rows. Tracked as "Slicing skill — the /slice door's fate".
 - The change cloud — the full set of changes to skills, commands, agents,
   tools, and code, narrated in chat and organized into the tree as it
   arrives. Tracked as "The change cloud".
