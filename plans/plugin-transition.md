@@ -39,7 +39,8 @@ after approval.
 ## Not yet specified
 
 - The change cloud — the full set of changes to skills, commands, agents,
-  tools, and code. Tracked as "The change cloud".
+  tools, and code, narrated in chat and organized into the tree as it
+  arrives. Tracked as "The change cloud".
 - The channel — npm package, git spec, or both; deferred by the user.
   Tracked as "The channel".
 - The installer/release machinery's fate under the plugin. Tracked as

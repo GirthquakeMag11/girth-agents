@@ -21,9 +21,10 @@ applied to the work later. See the tracker skill.
   release/update) and bloat classes spanning scaffold/docs overhead,
   pacing rigidity, dead commands, overlapping skills, and skill-to-skill
   connections to tighten or loosen.
-- **Decided (provisional):** the cloud is harvested into a scratch dump
-  and organized into the map's tree by the agent; nothing is designed
-  until it is organized.
+- **Decided (provisional):** the cloud is narrated in chat over as many
+  messages as it takes, and the agent organizes it into the map's tree as
+  it comes — the map and the tracker questions are the only durable home
+  between sessions; nothing is designed until it is organized.
 
 ## The channel — 2026-10-25
 
