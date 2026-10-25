@@ -50,7 +50,6 @@ designates another location.
 | Decisions          | `decisions/`                                                                 | codifying        | Whether decisions already exist worth recording now                                  |
 | Specs              | `specs/`                                                                     | specifying       | Whether any design effort needs its spec written now                                 |
 | Plans              | `plans/`                                                                     | wayfinding       | Nothing; created when an effort needs a map                                          |
-| Education          | `education/`                                                                 | teaching         | Whether the user wants an education workspace now                                    |
 | Trackers           | `tracker/HAZARDS.md`, `BUGS.md`, `DEFECTS.md`, `FEATURES.md`, `QUESTIONS.md` | tracking         | Nothing                                                                              |
 | Tickets            | `tracker/tickets/`                                                           | tracking         | Nothing; created with the first ticket, never at bootstrap                           |
 

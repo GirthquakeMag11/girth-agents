@@ -17,6 +17,7 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 
 ### Deprecated
 ### Removed
+- `teaching` and `/teach`: the learning lane leaves the catalog — teaching across sessions is judged not a fit for this skillset, so the skill and its command go, and the `education/` scaffold piece they owned retires from the bootstrapping inventory with them. Ruled in `decisions/0006`.
 ### Fixed
 ### Security
 

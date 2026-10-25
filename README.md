@@ -98,7 +98,6 @@ description.
 | `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                                                  |
 | `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                                           |
 | `questionnaire`      | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                                         |
-| `teaching`           | The user wants to learn a real skill over time — the agent teaches from the education/ workspace it owns                                                                                              |
 | `diagnosing-bugs`    | Something is broken and the cause is not obvious                                                                                                                                                      |
 | `tdd`                | Work that should be built or locked down test-first                                                                                                                                                   |
 | `code-review`        | A branch, PR, or work-in-progress change needs reviewing                                                                                                                                              |
@@ -123,7 +122,6 @@ description.
 | `/pickup`       | Resumes this project's handoff — works and consumes it as it goes stale, deletes it when nothing remains                                                                          |
 | `/wait-what`     | Re-pitches the last message that didn't land, in plain English using the glossary's terms                                                                                               |
 | `/questionnaire` | Writes a questionnaire for the person who holds the knowledge a decision is blocked on                                                                                                  |
-| `/teach`         | Starts or resumes teaching, using the education workspace for state across sessions                                                                                                     |
 | `/wizard`        | Generates a wizard for a secret or a hands-on procedure, then offers to run it in a new terminal, waiting for my yes                                                                        |
 
 ## How the skills hang together
@@ -154,7 +152,6 @@ machinery.
 | Open tickets await work                          | `/implement`     | The frontier, one ticket at a time, each by its Kind                     |
 | Open items and questions pile up                 | `/inbox`         | One at a time; answers recorded; `/close-inbox` offers the surfaced work |
 | The changelog queue should ship                  | `/cut-release`   | A dated, tagged version, on your confirmation                            |
-| You want to learn something                      | `/teach`         | A lesson in the education workspace                                      |
 | The session is ending with work in flight        | `/handoff`       | A HANDOFF.md carrying the session's continuation, committed              |
 | A handoff awaits a fresh session                 | `/pickup`        | The work resumes; the document is worked, consumed, and deleted when nothing remains |
 
@@ -205,12 +202,11 @@ later step consumes.
   `/cut-release` when the queue should ship.
 
 **Off the spine** — `find-skills` when a capability is missing (search the
-open ecosystem, verify quality, install), and `teaching` with the
-education workspace for the learning lane.
+open ecosystem, verify quality, install).
 
 **The working loop — idea to project to product:** `/bootstrap` once to
 build the skeleton (glossary, conventions, decisions, plans, specs,
-tracker, education, docs, changelog), and again whenever a piece is
+tracker, docs, changelog), and again whenever a piece is
 missing.
 
 ```

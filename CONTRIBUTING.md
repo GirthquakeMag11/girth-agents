@@ -27,7 +27,7 @@ committing.
 ## The schema
 
 One class of skill: each is one thing the agent does, named for that thing.
-Most own nothing beyond their instructions; seven carry a scaffold piece,
+Most own nothing beyond their instructions; six carry a scaffold piece,
 whose formats and creation template travel in the skill's `references/`:
 
 | Skill              | Owns                                                        |
@@ -38,7 +38,6 @@ whose formats and creation template travel in the skill's `references/`:
 | `maintaining-docs` | `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md` |
 | `specifying`       | `specs/` — the spec format and template                     |
 | `wayfinding`       | `plans/` — the live-map format and template                 |
-| `teaching`         | `education/` — the learning workspace and every file in it  |
 
 The rules:
 
