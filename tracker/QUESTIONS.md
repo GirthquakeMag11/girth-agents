@@ -6,6 +6,31 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Pro-active flow — what counts as an entry-point-producing session — 2026-10-25
+
+- **The question:** When does a session formally count as a pro-active
+  flow — must it end in exactly one valid entry-point document, at least
+  one, and how are several queued into the engine?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared: a
+  pro-active flow is any session that produces a valid entry-point
+  document; the entry-point tool validates.
+- **Decided (provisional):** at least one valid entry-point document;
+  several in one session queue as several inputs in document order; the
+  exact accounting is pinned in the spec.
+
+## Re-active flow — how system requests land in the inbox — 2026-10-25
+
+- **The question:** What item shape does a system-to-user request take in
+  the inbox — the tracker's question kind, or a new inbox-owned kind —
+  and does the existing `/inbox` → curate-inbox machinery present it?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  the re-active flow reaches the user through their inbox; the tracker
+  question kind already means "deserves a definitive answer"; the
+  engine's needs-information moments are candidates to become tracked
+  questions automatically.
+- **Decided (provisional):** undecided — the inbox surface is settled,
+  the item kind and the writer are not; nothing is built on a guess.
+
 ## Entry points — how outputs and cleared products are marked — 2026-10-25
 
 - **The question:** What marks a file as a valid entry point, and what

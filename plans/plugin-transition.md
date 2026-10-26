@@ -30,6 +30,13 @@ after approval.
 
 ## Decisions so far
 
+- The two flows: declared — the user interfaces with the system through
+  two formally accounted workflows. The pro-active flow: the user
+  provokes the system into re-action — any session that produces a valid
+  entry-point document. The re-active flow: the system provokes the user
+  into re-action — when the system needs information or action from the
+  user, the request reaches the user through their inbox. (2026-10-25,
+  narrated)
 - The engine: declared — a driver for the system's automated aspects,
   whose working loop continuously seeks inputs prepared to become outputs
   (a new plan is the input to a review-and-refinement loop whose output
@@ -61,6 +68,14 @@ after approval.
 
 ## Not yet specified
 
+- The two flows — open mechanics: what a session must produce to count as
+  a pro-active flow (one entry point? at least one? how several queue);
+  how a system-to-user request lands in the inbox — the tracker question
+  kind, or a new inbox-owned kind — and how curate-inbox's "stray calls
+  for attention" changes; how the flows interleave (an inbox answer may
+  itself produce the next entry-point document). Tracked as "Re-active
+  flow — how system requests land in the inbox" and "Pro-active flow —
+  what counts as an entry-point-producing session".
 - The engine and the entry-point tool — mechanics still fog: whether the
   engine is plugin runtime (server-side, event-driven, across sessions)
   or an agent-driven loop; which files count as valid entry points
