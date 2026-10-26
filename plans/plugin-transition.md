@@ -73,6 +73,11 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- Checkpoints: settled — after a stage PASSes, the work proceeds on its
+  own; the old per-stage approvals (spec's Approve / Approve-and-Slice /
+  Stop-and-Amend, slice's ticket-graph approval) fold into the gate.
+  The user's one approval stays where direction is set — the plan at
+  wayfinding's end. (2026-10-26, user)
 - The plugin's layout: settled — the plugin's package file and code
   live at the repo root, beside the catalog and the records; the
   install points at the repo itself, no extra path segment.
@@ -334,10 +339,11 @@ after approval.
   the cycle is a tool in the code, the criteria are engine-compiled from
   the upstream document, the reports live in their own pile with the
   verdict stamped on the work, and the cap and time limits are enforced
-  by the tool (all settled). What remains: the interplay with the
-  existing checkpoints
-  (slice's user approval, spec's approval options). Existing precedent:
-  specifying's own fresh-context review, which this generalizes.
+  by the tool (all settled). The checkpoints are settled too: PASS
+  carries the work forward; the old per-stage approvals fold into the
+  gate, and the plan approval at wayfinding's end is the one human stop.
+  Existing precedent: specifying's own fresh-context review, which this
+  generalizes.
   Tracked as "Review loop — the mechanism".
 - Slicing's knock-ons — the skill's trigger description, and re-pointing
   `implementing`'s and `specifying`'s `/slice` references and the README
