@@ -30,6 +30,13 @@ after approval.
 
 ## Decisions so far
 
+- `find-skills` and `/wait-what`: dead — removed from the catalog; their
+  surfaces (the README's off-the-spine find-skills line, `/wait-what`'s
+  rows) go with them. (2026-10-25, narrated)
+- Renames: `writing-for-agents` becomes `technical-writing`; `tdd`
+  becomes `test-driving`. Knock-ons: CONTRIBUTING's craft pointer, the
+  README's chain diagram and rails, `implementing`'s execution cycle.
+  (2026-10-25, narrated)
 - Bootstrapping: declared — done eagerly and programmatically to the
   extent possible: the scaffold is created on the system's initiative,
   not on invitation, with everything derivable from the project derived
@@ -72,6 +79,9 @@ after approval.
 
 ## Not yet specified
 
+- The renames' open detail: whether `test-driving` purely renames `tdd`
+  or carries a re-scope with it — the user's own "test driving" phrasing
+  hints the practice matters to this effort's shape.
 - Eager bootstrapping — what remains human-asked, and where those asks
   travel: the interview's fate (derivation fills everything the project
   can state; the rest travels to the inbox per the re-active flow rather
