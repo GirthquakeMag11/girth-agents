@@ -34,6 +34,13 @@ after approval.
 
 ## Decisions so far
 
+- The engine spawns sessions: declared — the engine can spawn fresh
+  OpenCode sessions and pass information between them; this is the
+  substrate the build-verify-rectify loop runs on — each stage a fresh
+  session, the reviewer separate, hand-offs through the records. Heavy
+  inspiration from the zeroshot project (the-open-engine); how to take
+  that inspiration in practice is a research task inside this wayfinding.
+  (2026-10-25, narrated; research pending)
 - Tracked questions: two kinds — questions tracked for lack of
   authority (answerable only by the user) and lack of information
   (answerable by the user or by an agent that acquires the information);
@@ -106,6 +113,11 @@ after approval.
 
 ## Not yet specified
 
+- Zeroshot research — a thorough investigation into how to take the
+  zeroshot (the-open-engine) inspiration in practice: its
+  session-spawning and information-passing mechanics, what transfers,
+  what does not. This wayfinding's first research question. Tracked as
+  "Zeroshot inspiration — how to take it in practice".
 - Tracked-question kinds — knock-ons: the `tracking` skill's questions
   reference and entry format gain the kind field (authority |
   information), and existing entries — this map's among them — retrofit

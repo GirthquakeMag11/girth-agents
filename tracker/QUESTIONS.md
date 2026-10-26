@@ -6,6 +6,20 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Zeroshot inspiration — how to take it in practice — 2026-10-25
+
+- **The question:** What exactly should the engine borrow from the
+  zeroshot project (the-open-engine) for spawning fresh OpenCode
+  sessions and passing information between them — and what should it
+  not borrow, given this system's records-first design?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the engine
+  must spawn sessions for the build-verify-rectify loop; the user takes
+  heavy inspiration from zeroshot; the investigation is part of this
+  wayfinding and records findings with a pointer to cited notes.
+- **Kind:** information
+- **Decided (provisional):** undecided — the research runs before any
+  mechanics are designed; nothing is built on a guess.
+
 ## Information-kind questions — who acquires the answer — 2026-10-25
 
 - **The question:** Does the engine itself dispatch an information-kind
