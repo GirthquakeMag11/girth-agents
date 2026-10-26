@@ -31,8 +31,27 @@ after approval.
   slots (`sidebar.content`); a package ships a `./tui` export beside its
   server export — one package, two entries; CLI-only plugins configure
   separately in `cli.json`; plugin routes register whole screens through
-  the TUI router, and the Escape-accessible menu (command palette)
-  carries entries.
+  the TUI router; the menu is the command palette (Ctrl+P; Escape is
+  interrupt, not a menu).
+- Ground research (2026-10-25 survey, three cited notes in
+  `docs/research/`): engine mechanics — spawning, driving, and awaiting
+  sessions, always-awake lifetime, and detection all supported by the
+  plugin context; TUI + distribution — routes, sidebar slots, palette,
+  git-spec install, and the "inbox" name-collision flag; repo grounds —
+  the full inventory, sweep lists, and the open-questions checklist.
+- Keystones still unverified (do not build on them until checked): the
+  git-spec plugin's `./tui` export actually auto-loading; sidebar-slot
+  live-reactivity; `ctx.storage` restart durability and location; the
+  full event catalog and `session.idle` payload; adding brand-new agent
+  IDs from a plugin (the editor has no `add`); `codemode` semantics for
+  plugin tools.
+- Survey inconsistencies to fold in before the spec: 0003 lacks a
+  superseded marker (still counts seven owners incl. `teaching`);
+  stale `teaching` references remain in `specs/handoff-pickup.md` and
+  `tracker/tickets/08`; the `tdd`/`writing-for-agents` renames must be
+  one atomic change (the linter fires mid-rename); the channel's
+  supersession of the installer's clone-only transport ruling is not
+  yet recorded in `decisions/`.
 
 ## Decisions so far
 
@@ -112,8 +131,9 @@ after approval.
   assertable as trustworthy — test results that map to real confidence,
   not green theater. (2026-10-25, narrated)
 - The inbox is its own TUI screen: declared — no longer a pseudo-mode
-  activated and deactivated by a command; reached by a command or the
-  Escape menu, visually an email inbox, items sorted in received order,
+  activated and deactivated by a command; reached by a command and the
+  command palette (Ctrl+P), visually an email inbox, items sorted in
+  received order,
   scrollable and selectable. Opening an item enters a new chat session
   with an agent seeded with the message asking the user the question —
   prepared to discuss, then to record the user's response for the engine
