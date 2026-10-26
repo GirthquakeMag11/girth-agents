@@ -34,6 +34,11 @@ after approval.
 
 ## Decisions so far
 
+- Tracked questions: two kinds — questions tracked for lack of
+  authority (answerable only by the user) and lack of information
+  (answerable by the user or by an agent that acquires the information);
+  each tracked question entry declares which kind it is. (2026-10-25,
+  narrated)
 - The sidebar also breaks down currently ongoing work — analogous in form
   to OpenCode's experimental todo lists (their list is an agent's
   private per-session tasks via `todowrite`; ours is the system's
@@ -101,6 +106,13 @@ after approval.
 
 ## Not yet specified
 
+- Tracked-question kinds — knock-ons: the `tracking` skill's questions
+  reference and entry format gain the kind field (authority |
+  information), and existing entries — this map's among them — retrofit
+  at implementation. Open lead: whether the engine itself dispatches an
+  information-kind question to a research agent when it can, so only
+  authority-kind questions surface to the user via the inbox. Tracked as
+  "Information-kind questions — who acquires the answer".
 - Sidebar ongoing-work breakdown — what counts as ongoing: the open
   ticket frontier, review loops in flight, PASS-pending hand-offs, inbox
   items awaiting the user? And what the display reads — a derived view

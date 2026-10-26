@@ -6,6 +6,19 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Information-kind questions — who acquires the answer — 2026-10-25
+
+- **The question:** Does the engine itself dispatch an information-kind
+  tracked question to a research agent when it can, so only
+  authority-kind questions need the user — or does the user choose the
+  answerer every time?
+- **Context:** map `The skillset becomes an OpenCode plugin`; ruled:
+  tracked questions declare their kind — authority kinds are the user's
+  alone; information kinds can be answered by the user or by an agent
+  that acquires the information.
+- **Decided (provisional):** undecided — the capability is ruled, the
+  dispatch policy is not; nothing is built on a guess.
+
 ## Sidebar ongoing-work breakdown — what counts and what it reads — 2026-10-25
 
 - **The question:** What counts as "currently ongoing work" for the
