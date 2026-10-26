@@ -216,6 +216,9 @@ applied to the work later. See the tracker skill.
   the project can state; what genuinely needs the user goes to the
   inbox, never to a blocking in-session interview; the door's fate and
   the exact whitelist of human-only asks are pinned in the spec.
+- **Note — 2026-10-25:** the door's place is settled — `/bootstrap` is
+  the engine's start switch, necessary in the first place; what remains
+  open is the human-only ask whitelist and its inbox travel.
 
 ## Pro-active flow — what counts as an entry-point-producing session — 2026-10-25
 

@@ -36,6 +36,12 @@ after approval.
 
 ## Decisions so far
 
+- The start switch: settled — bootstrapping is how the engine is
+  started in a project; the engine operates only where it has been
+  started. The `/bootstrap` command is the necessary on-switch — without
+  it the always-awake engine would scatter files wherever OpenCode's
+  working directory happened to be. Eager and programmatic, but always
+  *within* a deliberately started project. (2026-10-25, user)
 - Information-kind dispatch: settled — the engine sends its own help to
   answer an information-kind question. That help cannot fabricate, so
   it can fail openly; when it fails and the failure is not itself the
@@ -227,10 +233,10 @@ after approval.
 - Eager bootstrapping — what remains human-asked, and where those asks
   travel: the interview's fate (derivation fills everything the project
   can state; the rest travels to the inbox per the re-active flow rather
-  than blocking in session), the gh CLI check and deviations under an
-  eager programmatic run, and whether `/bootstrap` survives as the
-  human-triggered re-run door. Tracked as "Eager bootstrapping — what
-  stays human-asked and where it travels".
+  than blocking in session), and the gh CLI check and deviations under
+  an eager programmatic run. (`/bootstrap`'s place is settled: the
+  start switch.) Tracked as "Eager bootstrapping — what stays
+  human-asked and where it travels".
 - The two flows — open mechanics: what a session must produce to count as
   a pro-active flow (one entry point? at least one? how several queue);
   how a system-to-user request lands in the inbox — settled in
@@ -242,11 +248,11 @@ after approval.
   and form", and "Pro-active flow — what counts as an
   entry-point-producing session".
 - The engine and the entry-point tool — mechanics mostly settled: the
-  engine is awake in the plugin on a strict leash, and running the tool
-  on a file is the act that clears it. What remains fog: which files the
-  tool accepts as entry points (plans, specs, tickets, work — every
-  stage output?), and the engine's scope (one project, or everywhere).
-  Tracked as "The engine and the entry-point tool — mechanics".
+  engine is awake in the plugin on a strict leash, runs only in started
+  projects, and running the tool on a file is the act that clears it.
+  What remains fog: which files the tool accepts as entry points (plans,
+  specs, tickets, work — every stage output?). Tracked as
+  "The engine and the entry-point tool — mechanics".
 - The review gate — the PASS/FAIL review-and-rectify loop, now applied at
   every stage: task → agent performs → a separate agent reviews against
   criteria and writes a report → PASS/FAIL → FAIL rectifies and
