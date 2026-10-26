@@ -36,6 +36,11 @@ after approval.
 
 ## Decisions so far
 
+- `test-driving`: re-scoped — the renamed skill becomes the broad
+  practice of testing changes in real cases before trusting them; the
+  plugin's own testing system is part of what it teaches and drives.
+  It is not just tests-first-then-code under a new name. (2026-10-25,
+  user)
 - Slicing's door: `/slice` survives as the thin shortcut that starts the
   skill — its body shrinks to the starting instruction. (2026-10-25,
   user)
@@ -177,12 +182,10 @@ after approval.
   dormant; when and how retirement lands on decision 0005 and
   `specs/handoff-pickup.md`. Tracked as "Handoff and pickup — what the
   shelf means for the plugin".
-- The renames' open detail: whether `test-driving` purely renames `tdd`
-  or carries a re-scope with it — the user's own "test driving" phrasing
-  hints the practice matters to this effort's shape. A later narration
-  declared a whole-project testing system — real-case test-driving —
-  which strengthens the reading that `test-driving` names that broader
-  practice, not TDD alone.
+- The renames' knock-ons — mechanical only now: the skill's body is
+  written for the broad practice; the names, README rows, and references
+  sweep in implementation. (`writing-for-agents` → `technical-writing`
+  is a plain rename.)
 - Eager bootstrapping — what remains human-asked, and where those asks
   travel: the interview's fate (derivation fills everything the project
   can state; the rest travels to the inbox per the re-active flow rather
