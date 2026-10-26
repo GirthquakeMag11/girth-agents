@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- Handoff's shelf: settled — the handoff and pickup pair stays out of
+  the plugin for now, kept privately in the repo; retirement lands
+  later, once the engine has proved out the replacement. (2026-10-25,
+  user)
 - `test-driving`: re-scoped — the renamed skill becomes the broad
   practice of testing changes in real cases before trusting them; the
   plugin's own testing system is part of what it teaches and drives.
@@ -177,11 +181,9 @@ after approval.
   over the system's records, or a new state record that itself needs a
   home. Tracked as "Sidebar ongoing-work breakdown — what counts and
   what it reads".
-- Handoff on the shelf — what the shelf means for the plugin: parked out
-  of the published surface until the replacement proves out, or shipped
-  dormant; when and how retirement lands on decision 0005 and
-  `specs/handoff-pickup.md`. Tracked as "Handoff and pickup — what the
-  shelf means for the plugin".
+- Handoff's retirement — when the engine's replacement proves out, the
+  retirement lands on `decisions/0005` and `specs/handoff-pickup.md`;
+  date and form decided then. (The shelf itself is settled.)
 - The renames' knock-ons — mechanical only now: the skill's body is
   written for the broad practice; the names, README rows, and references
   sweep in implementation. (`writing-for-agents` → `technical-writing`

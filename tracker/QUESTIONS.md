@@ -165,6 +165,10 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** parked out of the plugin's shipped surface;
   the repo keeps the skill, commands, and spec until the replacement
   proves out; 0005 stands unchanged until retirement is declared.
+- **Answered — 2026-10-25:** leave them out of the plugin for now —
+  kept privately in the repo, nothing half-dead ships (user).
+- **Follow-up:** map updated; retirement's date and form stay open until
+  the engine's replacement proves out.
 
 ## Eager bootstrapping — what stays human-asked and where it travels — 2026-10-25
 
