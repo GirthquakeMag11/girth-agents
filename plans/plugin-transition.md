@@ -73,6 +73,11 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The testing system: settled — a committed automated harness drives
+  the real pieces (parser, review loop, session spawn, inbox record,
+  TUI slot) with assertions that map to trust; it gates merges to main
+  with no manual step, and releases tag only from a green main, keeping
+  the release chain clean. (2026-10-26, user)
 - The builder: settled — one named helper does every stage's building,
   pointed at each brief in turn; the stage differences live in the
   briefs and the skills, not in separate agent descriptions. (2026-10-26,

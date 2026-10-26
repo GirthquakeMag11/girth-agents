@@ -35,6 +35,11 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** undecided — the harness's shape and the
   gate's position are pinned in the spec; the existing harnesses seed
   it; nothing is built on a guess.
+- **Answered — 2026-10-26:** a committed automated harness drives the
+  real pieces with trust-mapping assertions, gates merges to main with
+  no manual step, and releases tag only from a green main (user).
+- **Follow-up:** map updated; the existing harnesses (validate.mjs,
+  test-installer.sh, test-wizard.sh) are the seeds.
 
 ## The inbox answering session — agent and recorded answer — 2026-10-25
 
