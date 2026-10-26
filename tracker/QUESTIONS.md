@@ -6,6 +6,44 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Session scope — fresh plus explicit continue? — 2026-10-25
+
+- **The question:** Is the engine's session-scope model zeroshot's —
+  fresh session per stage execution, the rectifying worker keeping its
+  session across repair passes through an explicit session ID (with
+  lost-session detection), reviewers always fresh?
+- **Context:** map `The skillset becomes an OpenCode plugin`;
+  `docs/research/zeroshot-open-engine.md`; put to the user 2026-10-25
+  with the borrowing recommendation; the user held it.
+- **Kind:** authority
+- **Decided (provisional):** undecided — held by the user's "decide
+  later"; the research notes carry the material.
+
+## Loop discipline — machinery or model? — 2026-10-25
+
+- **The question:** Are the loop's guarantees — bounded loops, attempt
+  caps, per-stage timeouts, retry/idempotency semantics — enforced by
+  the machinery, never delegated to the model's judgment?
+- **Context:** map `The skillset becomes an OpenCode plugin`;
+  `docs/research/zeroshot-open-engine.md`; put to the user 2026-10-25
+  with the borrowing recommendation; the user held it.
+- **Kind:** authority
+- **Decided (provisional):** undecided — held by the user's "decide
+  later"; the research notes carry the material.
+
+## Session hand-off payload — typed state only? — 2026-10-25
+
+- **The question:** Does the engine pass only typed state between
+  sessions — authored briefs compiled from the records, verdict
+  signals and diagnostics, a machine-generated JSON contract — and
+  never transcripts?
+- **Context:** map `The skillset becomes an OpenCode plugin`;
+  `docs/research/zeroshot-open-engine.md`; put to the user 2026-10-25
+  with the borrowing recommendation; the user held it.
+- **Kind:** authority
+- **Decided (provisional):** undecided — held by the user's "decide
+  later"; the research notes carry the material.
+
 ## Zeroshot inspiration — how to take it in practice — 2026-10-25
 
 - **The question:** What exactly should the engine borrow from the
@@ -32,6 +70,9 @@ applied to the work later. See the tracker skill.
 - **Follow-up:** map updated — three borrowing decisions graduate to the
   frontier: typed-state-only hand-offs, machinery-enforced guarantees,
   and the session-scope model.
+- **Note — 2026-10-25:** the three were put to the user as a grilling
+  round; the user held all three ("decide later"). Each is tracked as
+  its own authority-kind question, with these notes as its material.
 
 ## Information-kind questions — who acquires the answer — 2026-10-25
 

@@ -114,11 +114,14 @@ after approval.
 ## Not yet specified
 
 - Zeroshot borrowing — research done (`docs/research/zeroshot-open-engine.md`);
-  the fog cleared into three borrowing decisions now on the frontier:
-  typed-state-only hand-offs between sessions, machinery-enforced
+  the fog cleared into three borrowing decisions, each put to the user
+  and held ("decide later"): typed-state-only hand-offs, machinery-enforced
   guarantees, and the session-scope model. Borrowing exclusions: the
   workspace-restore/copy-checkout, config-outside-repo,
-  live-worktree-verification, and single-writer assumptions.
+  live-worktree-verification, and single-writer assumptions. Tracked as
+  "Session hand-off payload — typed state only?",
+  "Loop discipline — machinery or model?", and
+  "Session scope — fresh plus explicit continue?".
 - Tracked-question kinds — knock-ons: the `tracking` skill's questions
   reference and entry format gain the kind field (authority |
   information), and existing entries — this map's among them — retrofit
