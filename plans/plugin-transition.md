@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- Reports' home: settled — the graded reports live in their own pile (a
+  new scaffold piece in each project), and the verdict is also stamped
+  on the checked work, so the engine and the sidebar read one place.
+  (2026-10-25, user)
 - Criteria: settled — the engine compiles the reviewer's checklist
   straight from the earlier approved document (plan for the spec, spec
   for the tickets, tickets for the work); the checker only grades
@@ -236,10 +240,10 @@ after approval.
   reviews against the plan; slicing against the spec; implementing
   against the tickets. Open: the checker is a named reviewer agent type,
   the cycle is a tool in the code, and the criteria are compiled by the
-  engine from the upstream document (all settled); what remains — where
-  graded reports live (a new scaffold piece would enter bootstrapping's
-  inventory), whether rectification is bounded; the interplay with the
-  existing checkpoints
+  engine from the upstream document (all settled); the reports' home is
+  its own pile, a new scaffold piece, with the verdict stamped on the
+  work (settled); what remains — whether rectification is bounded; the
+  interplay with the existing checkpoints
   (slice's user approval, spec's approval options). Existing precedent:
   specifying's own fresh-context review, which this generalizes.
   Tracked as "Review loop — the mechanism" and "Review loop — where

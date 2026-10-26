@@ -271,6 +271,12 @@ applied to the work later. See the tracker skill.
   verdict is recorded on the artifact itself, the way tracker closing
   lines are appended; a reports home that becomes a scaffold piece
   follows the scaffold-family maintenance path.
+- **Answered — 2026-10-25:** their own pile in each project — a new
+  scaffold piece — with the verdict also stamped on the checked work
+  (user).
+- **Follow-up:** map updated; the piece needs an owning skill and a
+  bootstrapping-inventory row — the scaffold-family maintenance, done
+  with the spec.
 
 ## Review loop — the mechanism — 2026-10-25
 
