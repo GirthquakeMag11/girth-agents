@@ -36,6 +36,15 @@ after approval.
 
 ## Decisions so far
 
+- The engine is awake: settled — the engine lives in the plugin and
+  watches on its own, advancing ready work even between messages, on a
+  strict leash: it touches only work it made itself, and files an agent
+  has cleared. (2026-10-25, user)
+- Entry points are the clearance: settled — the entry-point tool is how
+  an agent tells the engine a newly introduced file is safe to touch;
+  running the tool on a file is the act that makes it an entry point.
+  A file the tool has never been pointed at stays out of the engine's
+  hands. (2026-10-25, user)
 - Session scope: settled — every stage runs fresh; the fixing agent
   keeps its session across fix-rounds (the engine detects and recovers
   a lost session); the checker is always fresh. (2026-10-25, user)
@@ -224,15 +233,12 @@ after approval.
   flow — how system requests land in the inbox", "The inbox item's home
   and form", and "Pro-active flow — what counts as an
   entry-point-producing session".
-- The engine and the entry-point tool — mechanics still fog: whether the
-  engine is plugin runtime (server-side, event-driven, across sessions)
-  or an agent-driven loop; which files count as valid entry points
-  (plans, specs, tickets, work — every stage output?); what markers
-  distinguish known outputs from cleared and undetermined user products;
-  the interplay with "Review loop — the mechanism" (the engine likely
-  hosts the loop). Tracked as
-  "The engine and the entry-point tool — mechanics" and "Entry points —
-  how outputs and cleared products are marked".
+- The engine and the entry-point tool — mechanics mostly settled: the
+  engine is awake in the plugin on a strict leash, and running the tool
+  on a file is the act that clears it. What remains fog: which files the
+  tool accepts as entry points (plans, specs, tickets, work — every
+  stage output?), and the engine's scope (one project, or everywhere).
+  Tracked as "The engine and the entry-point tool — mechanics".
 - The review gate — the PASS/FAIL review-and-rectify loop, now applied at
   every stage: task → agent performs → a separate agent reviews against
   criteria and writes a report → PASS/FAIL → FAIL rectifies and

@@ -222,6 +222,9 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** at least one valid entry-point document;
   several in one session queue as several inputs in document order; the
   exact accounting is pinned in the spec.
+- **Note — 2026-10-25:** "produces a valid entry-point document" now
+  means an agent ran the entry-point tool on it and it accepted — the
+  clearance act is the flow's output, counted by the tool's acceptance.
 
 ## Re-active flow — how system requests land in the inbox — 2026-10-25
 
@@ -254,6 +257,11 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** undecided — the marker grammar is pinned in
   the spec once the parser's input kinds are set; until then the
   boundary rule alone governs.
+- **Answered — 2026-10-25:** the marker is the act itself — running the
+  tool on a file is the clearance; a file never pointed at stays out of
+  the engine's hands (user).
+- **Follow-up:** map updated; what remains in the parser is the accepted
+  file kinds — spec detail.
 
 ## The engine and the entry-point tool — mechanics — 2026-10-25
 
@@ -268,6 +276,9 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** undecided — the spine is declared but its
   mechanical home waits for the agent-type and tool cloud items to land;
   nothing is built on a guess.
+- **Note — 2026-10-25:** the always-awake engine (strict leash) and
+  clearance-by-run are now settled; what remains is the parser's
+  accepted kinds and the engine's scope.
 
 ## Review loop — where graded reports live — 2026-10-25
 
