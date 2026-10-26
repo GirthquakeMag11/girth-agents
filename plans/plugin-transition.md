@@ -73,6 +73,11 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The fixer: settled — no separate type; the builder repairs its own
+  FAILed piece from the report, keeping its session across fix-rounds —
+  settled from the start, in the loop's first narration ("the first
+  agent rectifies") and again in the session-scope answer. (2026-10-26,
+  user, re-affirmed)
 - The fact-finder: settled — its own named agent type; it acquires
   answers for information-kind questions and is one of the helpers
   built to fail openly rather than fabricate. The third named agent
@@ -334,9 +339,10 @@ after approval.
   step). Tracked as "Installer and release machinery under the
   plugin".
 - Agent types and the plugin's tool/code surface — the reviewer, the
-  inbox answerer, and the fact-finder are the named types so far; the
-  fixer's fate (own type, or the builder repairing) is the open one;
-  the rest hangs off the change cloud.
+  inbox answerer, and the fact-finder are the named types; the builder
+  repairs its own FAILs (no separate fixer); whether the builder is one
+  helper or one per stage is still open; anything else hangs off the
+  change cloud.
 - The plugin package's layout inside the repo — where the plugin's
   entrypoints sit (repo root, or a subdirectory named with the git
   plugin's path selector), now that the repo itself is the distribution.
