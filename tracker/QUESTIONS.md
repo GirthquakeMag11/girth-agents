@@ -255,6 +255,13 @@ applied to the work later. See the tracker skill.
 - **Note — 2026-10-25:** the door's place is settled — `/bootstrap` is
   the engine's start switch, necessary in the first place; what remains
   open is the human-only ask whitelist and its inbox travel.
+- **Answered — 2026-10-26:** the run is synchronous — the user is
+  present, the engine is not yet alive, and there is no inbox, so the
+  residual asks happen in that session; the whitelist is just the
+  derivation-exhausted items (name, purpose, license when undeclared;
+  starting version when unstated; the gh install as an action), spec
+  detail (user).
+- **Follow-up:** map updated.
 
 ## Pro-active flow — what counts as an entry-point-producing session — 2026-10-25
 

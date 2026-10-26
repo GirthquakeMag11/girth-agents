@@ -73,6 +73,12 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- Bootstrap is synchronous: settled — the run begins with the command
+  and the user is present, so the residual asks happen right there, not
+  through the inbox; at bootstrap the engine is not yet alive, nothing
+  else is pending, and there is no inbox to put things in. Eager and
+  programmatic describe the filling — everything derivable is derived —
+  not the moment. (2026-10-26, user)
 - `/retro`: shelved — joins handoff and pickup on the shelf for now,
   kept privately out of the plugin; its fate re-judged when the engine
   exists. (2026-10-26, user)
@@ -246,7 +252,8 @@ after approval.
 - Bootstrapping: declared — done eagerly and programmatically to the
   extent possible: the scaffold is created on the system's initiative,
   not on invitation, with everything derivable from the project derived
-  rather than asked. (2026-10-25, narrated)
+  rather than asked. (2026-10-25, narrated; reconciled 2026-10-26 —
+  see "Bootstrap is synchronous")
 - The two flows: declared — the user interfaces with the system through
   two formally accounted workflows. The pro-active flow: the user
   provokes the system into re-action — any session that produces a valid
@@ -316,13 +323,12 @@ after approval.
   written for the broad practice; the names, README rows, and references
   sweep in implementation. (`writing-for-agents` → `technical-writing`
   is a plain rename.)
-- Eager bootstrapping — what remains human-asked, and where those asks
-  travel: the interview's fate (derivation fills everything the project
-  can state; the rest travels to the inbox per the re-active flow rather
-  than blocking in session), and the gh CLI check and deviations under
-  an eager programmatic run. (`/bootstrap`'s place is settled: the
-  start switch.) Tracked as "Eager bootstrapping — what stays
-  human-asked and where it travels".
+- Eager bootstrapping — settled in shape: the run is command-initiated
+  and synchronous; the engine derives everything the project can state,
+  and the few remaining asks (name, purpose, license when undeclared;
+  starting version when nothing states one; the gh install as an
+  action) happen in that same session — no inbox exists yet. The exact
+  whitelist is spec detail.
 - The two flows — open mechanics: what a session must produce to count as
   a pro-active flow (one entry point? at least one? how several queue);
   how a system-to-user request lands in the inbox — settled in
