@@ -344,6 +344,13 @@ applied to the work later. See the tracker skill.
   `/cut-release` to publishing the plugin.
 - **Decided (provisional):** undecided — held with the channel; no
   machinery is retired until the channel answer lands.
+- **Answered — 2026-10-25:** the end-user transport retires; the checker
+  and test harnesses stay as builder tooling (candidates for plugin
+  tools); the release is a tag on the repo (user; the channel settled to
+  GitHub-pointing).
+- **Follow-up:** map updated; the gh Release-notes step is the one
+  remaining open point, to be settled when the tagged-release question
+  comes up.
 
 ## Destination shape — 2026-10-25
 

@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- The old install path retires: settled — users reach the plugin only by
+  pointing OpenCode at the repo; the download-and-run-a-script method
+  retires. The builder-side tools stay: the catalog checker and the test
+  harnesses. (2026-10-25, user)
 - The channel: settled — no package store. People point OpenCode
   straight at the GitHub project to load the plugin; OpenCode's own
   plugin-update keeps installs current from the repo. The repo is both
@@ -225,11 +229,12 @@ after approval.
 - The change cloud — the full set of changes to skills, commands, agents,
   tools, and code, narrated in chat and organized into the tree as it
   arrives. Tracked as "The change cloud".
-- The installer/release machinery's fate under the plugin — settled in
-  part by the channel: the end-user transport retires (no more
-  clone-and-install); the release becomes a tag on the repo; whether the
-  GitHub Release notes step survives is its own open point. Tracked as
-  "Installer and release machinery under the plugin".
+- The installer/release machinery — settled: the end-user script
+  retires, the builder-side checker and test harnesses stay (candidates
+  to become plugin tools), the release is a tag on the repo. The one
+  open point: whether each tag also gets GitHub release notes (the gh
+  step). Tracked as "Installer and release machinery under the
+  plugin".
 - Agent types and the plugin's tool/code surface — hang off the change
   cloud and the just-settled channel.
 - The plugin package's layout inside the repo — where the plugin's
