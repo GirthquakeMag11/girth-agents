@@ -61,6 +61,9 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — held by the user's "decide
   later"; the research notes carry the material.
+- **Answered — 2026-10-25:** fresh stages, the fixing agent keeps its
+  session, lost-session recovery, checkers always fresh (user).
+- **Follow-up:** map updated.
 
 ## Loop discipline — machinery or model? — 2026-10-25
 
@@ -309,6 +312,12 @@ applied to the work later. See the tracker skill.
   criteria as engine-compiled from the upstream document. Nothing of the
   mechanism remains open here; the reports' home and bounded
   rectification are tracked where they belong.
+- **Answered — 2026-10-25:** the loop is carried by a named reviewer
+  agent, a code tool for the cycle, engine-compiled criteria, a reports
+  pile with stamped verdicts, and tool-enforced caps (user, across the
+  day's rounds).
+- **Follow-up:** map updated; the gate's only open thread left is the
+  interplay with the existing checkpoints.
 
 ## Slicing skill — the /slice door's fate — 2026-10-25
 

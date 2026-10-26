@@ -36,6 +36,9 @@ after approval.
 
 ## Decisions so far
 
+- Session scope: settled — every stage runs fresh; the fixing agent
+  keeps its session across fix-rounds (the engine detects and recovers
+  a lost session); the checker is always fresh. (2026-10-25, user)
 - Hand-offs: settled — only typed essentials travel between
   stage-sessions: the brief compiled from the records, the checklist,
   and the verdict with its report. Raw chat never carries over.
@@ -184,13 +187,6 @@ after approval.
   engine picks it up. Tracked as "The inbox answering session — agent
   and recorded answer" and "The old inbox helpers — deferred until the
   shape is visible".
-- Zeroshot borrowing — research done (`docs/research/zeroshot-open-engine.md`);
-  three borrowing decisions came out of it: typed-essentials hand-offs
-  and tool-enforced limits are settled; the session-scope model is the
-  one still held. Borrowing exclusions: the workspace-restore/copy-checkout,
-  config-outside-repo, live-worktree-verification, and single-writer
-  assumptions. Tracked as "Session scope — fresh plus explicit
-  continue?".
 - Tracked-question kinds — knock-ons: the `tracking` skill's questions
   reference and entry format gain the kind field (authority |
   information), and existing entries — this map's among them — retrofit
@@ -274,3 +270,7 @@ after approval.
 ## Out of scope
 
 - OpenCode V1 support: the catalog is V2-only and stays so.
+- Zeroshot's four clashing assumptions — borrowed from, never: the
+  workspace-restore/copy-checkout, keeping pipeline config outside the
+  repo, verifying the live worktree rather than the records, and the
+  single-writer world with no human TUI beside it.
