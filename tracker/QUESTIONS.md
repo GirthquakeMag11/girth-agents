@@ -6,6 +6,22 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## The testing system — harness and gate — 2026-10-25
+
+- **The question:** What shape does the project's real-case testing
+  system take — which testable seams each engine part exposes, where
+  real-case tests run, and how the gate sits before main in the release
+  chain — so a passing suite means the change can be trusted when it
+  matters?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  changes are test-driven in real cases before main; every engine part
+  is built testability-first; passing tests must be assertable trust.
+  Existing seeds: `scripts/validate.mjs`, `scripts/test-installer.sh`,
+  `scripts/test-wizard.sh`.
+- **Decided (provisional):** undecided — the harness's shape and the
+  gate's position are pinned in the spec; the existing harnesses seed
+  it; nothing is built on a guess.
+
 ## The inbox answering session — agent and recorded answer — 2026-10-25
 
 - **The question:** Which agent runs the per-item inbox session, and

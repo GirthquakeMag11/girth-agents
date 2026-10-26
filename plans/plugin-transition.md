@@ -36,6 +36,12 @@ after approval.
 
 ## Decisions so far
 
+- A testing system for this project: declared — changes and updates are
+  thoroughly test-driven in real cases before commit to main, so nothing
+  questionable pollutes the release chain; every part of the engine is
+  constructed with testability in mind; and the tests passing must be
+  assertable as trustworthy — test results that map to real confidence,
+  not green theater. (2026-10-25, narrated)
 - The inbox is its own TUI screen: declared — no longer a pseudo-mode
   activated and deactivated by a command; reached by a command or the
   Escape menu, visually an email inbox, items sorted in received order,
@@ -122,6 +128,12 @@ after approval.
 
 ## Not yet specified
 
+- The testing system — the harness's shape: where real-case tests run
+  (the existing validate.mjs / test-installer.sh / test-wizard.sh
+  harnesses are the seeds; the engine's parts — parser, review loop,
+  session spawning, inbox record, TUI slot — each need a testable seam),
+  and where the gate sits in the release chain before main. Tracked as
+  "The testing system — harness and gate".
 - The inbox screen — knock-ons: `curate-inbox`'s collection-and-process
   role and `/close-inbox` (whose wrap-up role no longer fits a screen)
   re-scope or retire; which agent runs the per-item seeded session; and
@@ -156,7 +168,10 @@ after approval.
   shelf means for the plugin".
 - The renames' open detail: whether `test-driving` purely renames `tdd`
   or carries a re-scope with it — the user's own "test driving" phrasing
-  hints the practice matters to this effort's shape.
+  hints the practice matters to this effort's shape. A later narration
+  declared a whole-project testing system — real-case test-driving —
+  which strengthens the reading that `test-driving` names that broader
+  practice, not TDD alone.
 - Eager bootstrapping — what remains human-asked, and where those asks
   travel: the interview's fate (derivation fills everything the project
   can state; the rest travels to the inbox per the re-active flow rather
