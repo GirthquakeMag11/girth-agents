@@ -27,9 +27,21 @@ after approval.
   tools via transforms; package plugins publish to npm and
   install/update/check through `opencode plugin`; the repo remains the
   dev workspace regardless of channel.
+- TUI facts: the right-hand panel is the sidebar, reached by CLI-plugin
+  slots (`sidebar.content`); a package ships a `./tui` export beside its
+  server export — one package, two entries; CLI-only plugins configure
+  separately in `cli.json`.
 
 ## Decisions so far
 
+- The TUI sidebar — the right-hand panel of the TUI, addressed by the
+  CLI plugin's `sidebar.content` slot — displays `Inbox: {n}`: the
+  number of items waiting in the user's inbox for the current project.
+  (2026-10-25, narrated)
+- Inbox items: declared — created as formal inbox items the engine
+  recognizes as such; informal, non-deterministic inbox items gleaned at
+  command time are gone. `/inbox` initiates the re-active workflow with
+  the user. (2026-10-25, narrated)
 - Handoff and pickup: shelved for the time being — neither cut nor
   carried into the new system's active surface. The new vision
   ultimately makes them obsolete: the engine, tracker, and entry points
@@ -102,12 +114,14 @@ after approval.
   stays human-asked and where it travels".
 - The two flows — open mechanics: what a session must produce to count as
   a pro-active flow (one entry point? at least one? how several queue);
-  how a system-to-user request lands in the inbox — the tracker question
-  kind, or a new inbox-owned kind — and how curate-inbox's "stray calls
-  for attention" changes; how the flows interleave (an inbox answer may
+  how a system-to-user request lands in the inbox — settled in
+  direction: engine-written formal inbox items, deterministically
+  countable — leaving the item's home and form, and curate-inbox's
+  former gleaning role; how the flows interleave (an inbox answer may
   itself produce the next entry-point document). Tracked as "Re-active
-  flow — how system requests land in the inbox" and "Pro-active flow —
-  what counts as an entry-point-producing session".
+  flow — how system requests land in the inbox", "The inbox item's home
+  and form", and "Pro-active flow — what counts as an
+  entry-point-producing session".
 - The engine and the entry-point tool — mechanics still fog: whether the
   engine is plugin runtime (server-side, event-driven, across sessions)
   or an agent-driven loop; which files count as valid entry points

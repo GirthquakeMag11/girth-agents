@@ -6,6 +6,22 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## The inbox item's home and form — 2026-10-25
+
+- **The question:** Where do formal inbox items live and what is their
+  deterministic form — the tracker's question kind, a new scaffold piece
+  (which would enter bootstrapping's inventory), or something beside the
+  tracker — such that the engine can write them, recognize them, and
+  count them for the sidebar's `Inbox: {n}`?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  inbox items are created as formal items the engine recognizes; no
+  informal gleaning survives; `/inbox` initiates the re-active workflow;
+  the sidebar counter needs a countable, project-scoped record.
+- **Decided (provisional):** undecided — the counter requires a
+  deterministically written, project-scoped record; whether that is the
+  tracker or a new piece is pinned in the spec; until then nothing is
+  built on a guess.
+
 ## Handoff and pickup — what the shelf means for the plugin — 2026-10-25
 
 - **The question:** What does "on the shelf" mean mechanically — parked
@@ -60,6 +76,11 @@ applied to the work later. See the tracker skill.
   questions automatically.
 - **Decided (provisional):** undecided — the inbox surface is settled,
   the item kind and the writer are not; nothing is built on a guess.
+- **Note — 2026-10-25:** the narration then settled the writer: inbox
+  items are created as formal items the engine recognizes — the
+  non-deterministic gleaning is gone. The home and form are now tracked
+  separately as "The inbox item's home and form"; this entry keeps the
+  `/inbox`-initiates question only.
 
 ## Entry points — how outputs and cleared products are marked — 2026-10-25
 
@@ -169,6 +190,10 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** undecided by choice — the map treats the
   repo as source of truth and the package layout as channel-agnostic
   until this is answered; nothing is built on a guess.
+- **Note — 2026-10-25:** the sidebar display adds a TUI wrinkle: the
+  plugin ships a `./tui` export beside its server export — one package,
+  two entries; a CLI-only plugin would instead configure separately in
+  `cli.json`.
 
 ## Installer and release machinery under the plugin — 2026-10-25
 
