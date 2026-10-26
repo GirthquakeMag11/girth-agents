@@ -73,6 +73,9 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — held by the user's "decide
   later"; the research notes carry the material.
+- **Answered — 2026-10-25:** the tool enforces — the cap and the time
+  limits live in code, and the agent obeys them (user).
+- **Follow-up:** map updated; the cap's exact number is spec detail.
 
 ## Session hand-off payload — typed state only? — 2026-10-25
 

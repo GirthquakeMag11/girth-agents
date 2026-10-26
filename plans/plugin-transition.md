@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- Discipline: settled — the cycle's rules are enforced by the tool in
+  code: a cap on fix-rounds and a time limit per step; the agent obeys
+  and cannot bend them. The exact numbers are spec detail. (2026-10-25,
+  user)
 - Reports' home: settled — the graded reports live in their own pile (a
   new scaffold piece in each project), and the verdict is also stamped
   on the checked work, so the engine and the sidebar read one place.
@@ -228,8 +232,7 @@ after approval.
   (plans, specs, tickets, work — every stage output?); what markers
   distinguish known outputs from cleared and undetermined user products;
   the interplay with "Review loop — the mechanism" (the engine likely
-  hosts the loop) and "Review loop — where graded reports live" (the
-  reports' home likely feeds the parser's input classes). Tracked as
+  hosts the loop). Tracked as
   "The engine and the entry-point tool — mechanics" and "Entry points —
   how outputs and cleared products are marked".
 - The review gate — the PASS/FAIL review-and-rectify loop, now applied at
@@ -239,15 +242,14 @@ after approval.
   entry (criteria from session content and project context); specifying
   reviews against the plan; slicing against the spec; implementing
   against the tickets. Open: the checker is a named reviewer agent type,
-  the cycle is a tool in the code, and the criteria are compiled by the
-  engine from the upstream document (all settled); the reports' home is
-  its own pile, a new scaffold piece, with the verdict stamped on the
-  work (settled); what remains — whether rectification is bounded; the
-  interplay with the existing checkpoints
+  the cycle is a tool in the code, the criteria are engine-compiled from
+  the upstream document, the reports live in their own pile with the
+  verdict stamped on the work, and the cap and time limits are enforced
+  by the tool (all settled). What remains: the interplay with the
+  existing checkpoints
   (slice's user approval, spec's approval options). Existing precedent:
   specifying's own fresh-context review, which this generalizes.
-  Tracked as "Review loop — the mechanism" and "Review loop — where
-  graded reports live".
+  Tracked as "Review loop — the mechanism".
 - Slicing's knock-ons — the skill's trigger description, and re-pointing
   `implementing`'s and `specifying`'s `/slice` references and the README
   rows. (The door's fate is settled.)
