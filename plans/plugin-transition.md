@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- The channel: settled — no package store. People point OpenCode
+  straight at the GitHub project to load the plugin; OpenCode's own
+  plugin-update keeps installs current from the repo. The repo is both
+  the workshop and the thing people install. (2026-10-25, user)
 - A testing system for this project: declared — changes and updates are
   thoroughly test-driven in real cases before commit to main, so nothing
   questionable pollutes the release chain; every part of the engine is
@@ -221,13 +225,16 @@ after approval.
 - The change cloud — the full set of changes to skills, commands, agents,
   tools, and code, narrated in chat and organized into the tree as it
   arrives. Tracked as "The change cloud".
-- The channel — npm package, git spec, or both; deferred by the user.
-  Tracked as "The channel".
-- The installer/release machinery's fate under the plugin. Tracked as
+- The installer/release machinery's fate under the plugin — settled in
+  part by the channel: the end-user transport retires (no more
+  clone-and-install); the release becomes a tag on the repo; whether the
+  GitHub Release notes step survives is its own open point. Tracked as
   "Installer and release machinery under the plugin".
 - Agent types and the plugin's tool/code surface — hang off the change
-  cloud and the channel.
-- The plugin package's layout inside the repo.
+  cloud and the just-settled channel.
+- The plugin package's layout inside the repo — where the plugin's
+  entrypoints sit (repo root, or a subdirectory named with the git
+  plugin's path selector), now that the repo itself is the distribution.
 
 ## Out of scope
 

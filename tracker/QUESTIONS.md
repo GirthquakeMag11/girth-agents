@@ -324,6 +324,11 @@ applied to the work later. See the tracker skill.
   plugin ships a `./tui` export beside its server export — one package,
   two entries; a CLI-only plugin would instead configure separately in
   `cli.json`.
+- **Answered — 2026-10-25:** point OpenCode at the GitHub project — no
+  package store (user).
+- **Follow-up:** map updated; the installer's end-user transport retires
+  with this; `opencode plugin update` on the git plugin keeps installs
+  current; the release becomes a tag on the repo.
 
 ## Installer and release machinery under the plugin — 2026-10-25
 
