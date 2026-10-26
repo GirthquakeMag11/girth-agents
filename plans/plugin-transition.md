@@ -30,6 +30,22 @@ after approval.
 
 ## Decisions so far
 
+- The engine: declared — a driver for the system's automated aspects,
+  whose working loop continuously seeks inputs prepared to become outputs
+  (a new plan is the input to a review-and-refinement loop whose output
+  is a reviewed plan). No human motion survives except where the
+  interaction is genuinely due. (2026-10-25, narrated)
+- The entry-point tool: declared — as generic a parser as possible:
+  pointed at a file, it determines whether the file is a valid entry
+  point into the system and incorporates its contents into the chain its
+  kind calls for; anything not a valid entry point, or malformed in a way
+  a parser can catch, is rejected loudly. It is the concrete boundary
+  between known system outputs (touched freely) and user-interaction
+  products (touched only after the user explicitly clears them).
+  (2026-10-25, narrated)
+- Wayfinding's ending: declared — no more "offer options on what to do
+  next"; on user-confirmed conclusion the agent runs the entry-point tool
+  on the map file. (2026-10-25, narrated)
 - Review gate: every stage's output passes a PASS/FAIL review against
   criteria derived from the upstream reviewed document before the next
   stage consumes it; wayfinding is the ungated entry; a FAIL returns the
@@ -45,6 +61,16 @@ after approval.
 
 ## Not yet specified
 
+- The engine and the entry-point tool — mechanics still fog: whether the
+  engine is plugin runtime (server-side, event-driven, across sessions)
+  or an agent-driven loop; which files count as valid entry points
+  (plans, specs, tickets, work — every stage output?); what markers
+  distinguish known outputs from cleared and undetermined user products;
+  the interplay with "Review loop — the mechanism" (the engine likely
+  hosts the loop) and "Review loop — where graded reports live" (the
+  reports' home likely feeds the parser's input classes). Tracked as
+  "The engine and the entry-point tool — mechanics" and "Entry points —
+  how outputs and cleared products are marked".
 - The review gate — the PASS/FAIL review-and-rectify loop, now applied at
   every stage: task → agent performs → a separate agent reviews against
   criteria and writes a report → PASS/FAIL → FAIL rectifies and

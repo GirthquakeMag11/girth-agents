@@ -6,6 +6,34 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Entry points — how outputs and cleared products are marked — 2026-10-25
+
+- **The question:** What marks a file as a valid entry point, and what
+  distinguishes a known system output from a user-interaction product
+  still in an undetermined state — so the tool touches the first freely
+  and the second only after explicit clearance?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the
+  entry-point tool is declared; candidates are format markers like the
+  map's `Status: done` and the tracker's closing lines; the review gate's
+  verdicts ("Reviewed — PASS") belong to the first class.
+- **Decided (provisional):** undecided — the marker grammar is pinned in
+  the spec once the parser's input kinds are set; until then the
+  boundary rule alone governs.
+
+## The engine and the entry-point tool — mechanics — 2026-10-25
+
+- **The question:** What is the engine mechanically — an OpenCode
+  plugin's runtime (server-side, hook/event-driven, running across
+  sessions) or an agent-driven loop per session — and what is its scope:
+  one project, or the whole system?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared in
+  the narration: the working loop continuously seeks inputs prepared to
+  become outputs; the review gate's loops are candidates to ride it;
+  FEATURES.md's orchestrator-agent feature touches adjacent ground.
+- **Decided (provisional):** undecided — the spine is declared but its
+  mechanical home waits for the agent-type and tool cloud items to land;
+  nothing is built on a guess.
+
 ## Review loop — where graded reports live — 2026-10-25
 
 - **The question:** Where do review reports and their PASS/FAIL verdicts
@@ -33,6 +61,10 @@ applied to the work later. See the tracker skill.
   piecemeal precedent.
 - **Decided (provisional):** undecided — the loop's home waits for the
   agent-type and tool cloud items to land; nothing is built on a guess.
+- **Note — 2026-10-25:** the narration then declared the engine — a
+  driver for the system's automated aspects — the loop's likeliest home;
+  this question and "The engine and the entry-point tool — mechanics"
+  resolve together.
 
 ## Slicing skill — the /slice door's fate — 2026-10-25
 
