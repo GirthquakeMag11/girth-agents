@@ -87,9 +87,8 @@ after approval.
      umbrella spec's approval is OUR effort's own process, while the
      checkpoints ruling (the plan as the chain's one human stop)
      governs the plugin being mapped. Two layers, no conflict.
-  3. The work stage — records-only review rules, yet the last stage
-     produces code: what does the reviewer grade there, and what gets
-     the verdict stamp?
+  3. The work stage — settled: reviewed ticket by ticket; the code and
+     the test-drive proof are evidence, the PASS stamps the ticket.
   4. The survivors — coverage found 11 skills and 6 commands the map
      never names (`grilling`, `codifying`, `domain-modeling`,
      `maintaining-docs`, `wizard`, `questionnaire`, `diagnosing-bugs`,
@@ -219,6 +218,10 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- The work check: settled — the work stage is reviewed ticket by
+  ticket: each ticket's recorded outcome graded against its own
+  criteria, with the code changes and the test-drive proof as evidence;
+  the PASS stamps the ticket itself. (2026-10-26, user)
 - Two layers: settled — the destination's approvals (the umbrella spec
   approved once, by the user) are THIS effort's working process, not
   the plugin's rules; the checkpoints ruling (the plan is the chain's
