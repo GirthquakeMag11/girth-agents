@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- Hand-offs: settled — only typed essentials travel between
+  stage-sessions: the brief compiled from the records, the checklist,
+  and the verdict with its report. Raw chat never carries over.
+  (2026-10-25, user)
 - Discipline: settled — the cycle's rules are enforced by the tool in
   code: a cap on fix-rounds and a time limit per step; the agent obeys
   and cannot bend them. The exact numbers are spec detail. (2026-10-25,
@@ -181,14 +185,12 @@ after approval.
   and recorded answer" and "The old inbox helpers — deferred until the
   shape is visible".
 - Zeroshot borrowing — research done (`docs/research/zeroshot-open-engine.md`);
-  the fog cleared into three borrowing decisions, each put to the user
-  and held ("decide later"): typed-state-only hand-offs, machinery-enforced
-  guarantees, and the session-scope model. Borrowing exclusions: the
-  workspace-restore/copy-checkout, config-outside-repo,
-  live-worktree-verification, and single-writer assumptions. Tracked as
-  "Session hand-off payload — typed state only?",
-  "Loop discipline — machinery or model?", and
-  "Session scope — fresh plus explicit continue?".
+  three borrowing decisions came out of it: typed-essentials hand-offs
+  and tool-enforced limits are settled; the session-scope model is the
+  one still held. Borrowing exclusions: the workspace-restore/copy-checkout,
+  config-outside-repo, live-worktree-verification, and single-writer
+  assumptions. Tracked as "Session scope — fresh plus explicit
+  continue?".
 - Tracked-question kinds — knock-ons: the `tracking` skill's questions
   reference and entry format gain the kind field (authority |
   information), and existing entries — this map's among them — retrofit

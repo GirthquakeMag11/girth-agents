@@ -89,6 +89,11 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — held by the user's "decide
   later"; the research notes carry the material.
+- **Answered — 2026-10-25:** typed essentials only — the brief, the
+  checklist, and the verdict with its report; raw chat never carries
+  over (user).
+- **Follow-up:** map updated; the typed shapes themselves are pinned in
+  the spec.
 
 ## Zeroshot inspiration — how to take it in practice — 2026-10-25
 
