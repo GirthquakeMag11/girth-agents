@@ -6,6 +6,20 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## The old inbox helpers — deferred until the shape is visible — 2026-10-25
+
+- **The question:** What becomes of `curate-inbox` and `/close-inbox`
+  once the inbox is a screen?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the inbox
+  is a TUI screen with per-item seeded sessions; the skill once
+  collected and walked items, the command closed the flow; the user
+  finds the skill's place hard to say until the new system's shape is
+  visible.
+- **Kind:** authority
+- **Decided (provisional):** undecided — held by the user;
+  `/close-inbox`'s wrap-up role is likely dead but not ruled; the
+  skill's fate joins the agent-type and tool cloud.
+
 ## The testing system — harness and gate — 2026-10-25
 
 - **The question:** What shape does the project's real-case testing
