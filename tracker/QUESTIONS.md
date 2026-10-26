@@ -467,6 +467,9 @@ applied to the work later. See the tracker skill.
 - **Follow-up:** map updated; the gh Release-notes step is the one
   remaining open point, to be settled when the tagged-release question
   comes up.
+- **Note — 2026-10-26:** the last point is settled — each tag also gets
+  a GitHub Release page with the changelog notes, minus the old
+  one-line install.
 
 ## Destination shape — 2026-10-25
 

@@ -73,6 +73,10 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- Release notes: settled — each release tag also gets a GitHub Release
+  page carrying the changelog section (minus the old one-line install).
+  The old install line's audience is gone; the notes stay as history.
+  (2026-10-26, user)
 - The old inbox helpers: settled — `curate-inbox` and `/close-inbox`
   retire; every old job has a new home (the screen, the answering
   helper, the engine picking up answers), and the helper's know-how
@@ -354,10 +358,8 @@ after approval.
   arrives. Tracked as "The change cloud".
 - The installer/release machinery — settled: the end-user script
   retires, the builder-side checker and test harnesses stay (candidates
-  to become plugin tools), the release is a tag on the repo. The one
-  open point: whether each tag also gets GitHub release notes (the gh
-  step). Tracked as "Installer and release machinery under the
-  plugin".
+  to become plugin tools), the release is a tag on the repo, and each
+  tag gets a GitHub Release page with the changelog notes.
 - Agent types and the plugin's tool/code surface — the engine's helper
   roster: the reviewer, the inbox answerer, the fact-finder, and one
   builder for all stages (which also repairs its own FAILs); anything
