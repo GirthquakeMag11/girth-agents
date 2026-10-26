@@ -289,6 +289,11 @@ applied to the work later. See the tracker skill.
   driver for the system's automated aspects — the loop's likeliest home;
   this question and "The engine and the entry-point tool — mechanics"
   resolve together.
+- **Note — 2026-10-25:** the checker is now settled as a named reviewer
+  agent type (its own job description; the engine points it at finished
+  work). What remains open here: the loop's driver — a tool in the code
+  or written instructions the agent follows — and who writes the
+  criteria each round.
 
 ## Slicing skill — the /slice door's fate — 2026-10-25
 

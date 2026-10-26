@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- The checker: settled — a named reviewer agent type with its own job
+  description; the engine points it at finished work to read and write
+  the PASS/FAIL report. The first agent type of the new system.
+  (2026-10-25, user)
 - Handoff's shelf: settled — the handoff and pickup pair stays out of
   the plugin for now, kept privately in the repo; retirement lands
   later, once the engine has proved out the replacement. (2026-10-25,
@@ -244,8 +248,9 @@ after approval.
   open point: whether each tag also gets GitHub release notes (the gh
   step). Tracked as "Installer and release machinery under the
   plugin".
-- Agent types and the plugin's tool/code surface — hang off the change
-  cloud and the just-settled channel.
+- Agent types and the plugin's tool/code surface — the reviewer agent
+  is the first named type; the rest hang off the change cloud and the
+  just-settled channel.
 - The plugin package's layout inside the repo — where the plugin's
   entrypoints sit (repo root, or a subdirectory named with the git
   plugin's path selector), now that the repo itself is the distribution.
