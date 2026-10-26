@@ -73,6 +73,10 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The builder: settled — one named helper does every stage's building,
+  pointed at each brief in turn; the stage differences live in the
+  briefs and the skills, not in separate agent descriptions. (2026-10-26,
+  user)
 - The fixer: settled — no separate type; the builder repairs its own
   FAILed piece from the report, keeping its session across fix-rounds —
   settled from the start, in the loop's first narration ("the first
@@ -338,11 +342,10 @@ after approval.
   open point: whether each tag also gets GitHub release notes (the gh
   step). Tracked as "Installer and release machinery under the
   plugin".
-- Agent types and the plugin's tool/code surface — the reviewer, the
-  inbox answerer, and the fact-finder are the named types; the builder
-  repairs its own FAILs (no separate fixer); whether the builder is one
-  helper or one per stage is still open; anything else hangs off the
-  change cloud.
+- Agent types and the plugin's tool/code surface — the engine's helper
+  roster: the reviewer, the inbox answerer, the fact-finder, and one
+  builder for all stages (which also repairs its own FAILs); anything
+  else hangs off the change cloud.
 - The plugin package's layout inside the repo — where the plugin's
   entrypoints sit (repo root, or a subdirectory named with the git
   plugin's path selector), now that the repo itself is the distribution.
