@@ -218,6 +218,10 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- `/implement`'s fate: settled — in [the system], the engine works the
+  ticket frontier itself, so the `/implement` door dies for its users;
+  the `implementing` skill stays as the builder's craft for the work
+  stage. (2026-10-26, user)
 - `/spec`'s fate: settled — in [the system], the plan is the only
   user-shaped document; specs are made inside the engine, so the
   interactive spec session's door dies for the system's users. The
