@@ -36,6 +36,9 @@ after approval.
 
 ## Decisions so far
 
+- The loop's driver: settled — the cycle itself (send in the reviewer,
+  read the verdict, return the work for fixes on FAIL, repeat until
+  PASS) is a hard tool in the plugin's code. (2026-10-25, user)
 - The checker: settled — a named reviewer agent type with its own job
   description; the engine points it at finished work to read and write
   the PASS/FAIL report. The first agent type of the new system.
@@ -227,10 +230,10 @@ after approval.
   resubmits, until PASS. The gates cascade: wayfinding is the ungated
   entry (criteria from session content and project context); specifying
   reviews against the plan; slicing against the spec; implementing
-  against the tickets. Open: the loop's mechanical home (plugin tool,
-  skill, reviewer agent type — the agent-type/tool cloud items); where
-  graded reports live (a new scaffold piece would enter bootstrapping's
-  inventory); how criteria documents are derived and passed; whether
+  against the tickets. Open: the checker is a named reviewer agent type
+  and the cycle is a tool in the code (both settled); what remains — who
+  writes the criteria each round, where graded reports live (a new
+  scaffold piece would enter bootstrapping's inventory), whether
   rectification is bounded; the interplay with the existing checkpoints
   (slice's user approval, spec's approval options). Existing precedent:
   specifying's own fresh-context review, which this generalizes.
