@@ -48,6 +48,12 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** undecided — the answering agent and the
   recorded-answer form wait for the agent-type cloud and the inbox
   item's home; nothing is built on a guess.
+- **Answered — 2026-10-26:** a defined helper runs the per-item session
+  — the next named agent type after the reviewer; the recorded reply
+  lands on the inbox message and closes the tracker question per the
+  two-jobs ruling (user).
+- **Follow-up:** map updated; the message and reply forms are spec
+  detail.
 
 ## Session scope — fresh plus explicit continue? — 2026-10-25
 

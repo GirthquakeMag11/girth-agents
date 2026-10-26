@@ -73,6 +73,10 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The inbox answerer: settled — a defined helper with its own job
+  description runs each opened inbox item's seeded session (pose the
+  question, discuss, record the answer), the same pattern as the
+  reviewer. The second named agent type. (2026-10-26, user)
 - Sidebar's ongoing work: settled — the breakdown lists the engine's
   pieces in motion — being built, under review, sent back for repair —
   read from the records, never hand-written; the inbox counter covers
