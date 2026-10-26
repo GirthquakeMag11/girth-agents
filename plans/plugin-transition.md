@@ -67,9 +67,10 @@ after approval.
      exactly when rectification requires the user's answer; a dead-end
      is an exception that fails loudly, stamped as the system's own,
      and self-reports to the plugin repo.
-  2. The human stops — "the plan is the one human stop" vs the
-     destination's "one umbrella spec, approved once": whose approval
-     is that second one — yours, or the gate's PASS?
+  2. The human stops — settled by clarification, not a ruling: the
+     umbrella spec's approval is OUR effort's own process, while the
+     checkpoints ruling (the plan as the chain's one human stop)
+     governs the plugin being mapped. Two layers, no conflict.
   3. The work stage — records-only review rules, yet the last stage
      produces code: what does the reviewer grade there, and what gets
      the verdict stamp?
@@ -191,6 +192,12 @@ after approval.
   which wayfinding was supposed to catch. It produces a loud,
   observable failure that makes it back to us for figuring out how to
   fix. (2026-10-26, user)
+- Two layers: settled — the destination's approvals (the umbrella spec
+  approved once, by the user) are THIS effort's working process, not
+  the plugin's rules; the checkpoints ruling (the plan is the chain's
+  one human stop) governs the plugin the map is designing. No conflict:
+  the mapmaker works one way, the machine it maps works another.
+  (2026-10-26, user)
 - The exception's transport: settled — the loud failure also
   self-reports to the plugin's own repo (a defect entry filed from the
   failing install), carrying typed records only; the project-side
