@@ -73,6 +73,10 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The old inbox helpers: settled — `curate-inbox` and `/close-inbox`
+  retire; every old job has a new home (the screen, the answering
+  helper, the engine picking up answers), and the helper's know-how
+  lives in its own definition. (2026-10-26, user)
 - Checkpoints: settled — after a stage PASSes, the work proceeds on its
   own; the old per-stage approvals (spec's Approve / Approve-and-Slice /
   Stop-and-Amend, slice's ticket-graph approval) fold into the gate.
@@ -280,13 +284,10 @@ after approval.
   session spawning, inbox record, TUI slot — each need a testable seam),
   and where the gate sits in the release chain before main. Tracked as
   "The testing system — harness and gate".
-- The inbox screen — knock-ons: `curate-inbox`'s and `/close-inbox`'s
-  fates are held until the new system's shape is visible (`/close-inbox`'s
-  wrap-up role is likely dead, but not ruled); which agent runs the
-  per-item seeded session; and the form the recorded answer takes so the
-  engine picks it up. Tracked as "The inbox answering session — agent
-  and recorded answer" and "The old inbox helpers — deferred until the
-  shape is visible".
+- The inbox screen — knock-ons settled: `curate-inbox` and `/close-inbox`
+  retire (the screen, the answering helper, and the engine cover every
+  old job); the message and reply forms are spec detail. (The agent and
+  the recorded answer are settled too.)
 - Tracked-question kinds — knock-ons: the `tracking` skill's questions
   reference and entry format gain the kind field (authority |
   information), and existing entries — this map's among them — retrofit

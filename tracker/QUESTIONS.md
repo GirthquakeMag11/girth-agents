@@ -19,6 +19,10 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** undecided — held by the user;
   `/close-inbox`'s wrap-up role is likely dead but not ruled; the
   skill's fate joins the agent-type and tool cloud.
+- **Answered — 2026-10-26:** retire both — every old job has a new home,
+  and the answering helper's know-how lives in its own definition
+  (user).
+- **Follow-up:** map updated; both join the removals sweep list.
 
 ## The testing system — harness and gate — 2026-10-25
 
