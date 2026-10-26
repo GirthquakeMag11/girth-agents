@@ -36,6 +36,9 @@ after approval.
 
 ## Decisions so far
 
+- Slicing's door: `/slice` survives as the thin shortcut that starts the
+  skill — its body shrinks to the starting instruction. (2026-10-25,
+  user)
 - The old install path retires: settled — users reach the plugin only by
   pointing OpenCode at the repo; the download-and-run-a-script method
   retires. The builder-side tools stay: the catalog checker and the test
@@ -222,10 +225,9 @@ after approval.
   specifying's own fresh-context review, which this generalizes.
   Tracked as "Review loop — the mechanism" and "Review loop — where
   graded reports live".
-- Slicing: the `/slice` door's fate — survive as the thin call that starts
-  the skill, or model-invoked only — plus the skill's trigger description
-  and the knock-ons: `implementing`'s and `specifying`'s `/slice` pointers
-  and the README rows. Tracked as "Slicing skill — the /slice door's fate".
+- Slicing's knock-ons — the skill's trigger description, and re-pointing
+  `implementing`'s and `specifying`'s `/slice` references and the README
+  rows. (The door's fate is settled.)
 - The change cloud — the full set of changes to skills, commands, agents,
   tools, and code, narrated in chat and organized into the tree as it
   arrives. Tracked as "The change cloud".

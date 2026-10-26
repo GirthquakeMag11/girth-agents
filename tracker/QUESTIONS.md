@@ -287,6 +287,10 @@ applied to the work later. See the tracker skill.
   catalog's shape is doors that call skills, and `/slice` is the one the
   README's chain and `/implement` point at; the procedure moves wholesale
   into the skill's body.
+- **Answered — 2026-10-25:** the door survives — `/slice` stays the thin
+  shortcut that starts the skill (user).
+- **Follow-up:** map updated; the skill's trigger description and the
+  reference re-pointing remain implementation.
 
 ## The change cloud — harvesting the item-level changes — 2026-10-25
 
