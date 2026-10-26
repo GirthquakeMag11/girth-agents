@@ -30,6 +30,11 @@ after approval.
 
 ## Decisions so far
 
+- Review gate: every stage's output passes a PASS/FAIL review against
+  criteria derived from the upstream reviewed document before the next
+  stage consumes it; wayfinding is the ungated entry; a FAIL returns the
+  work with the report for rectification and resubmission, until PASS.
+  (2026-10-25, narrated)
 - Slicing: becomes its own skill; the procedure moves out of the `/slice`
   command body into the skill. (2026-10-25, narrated)
 - Destination shape: one umbrella spec covering all five areas, approved
@@ -40,6 +45,21 @@ after approval.
 
 ## Not yet specified
 
+- The review gate — the PASS/FAIL review-and-rectify loop, now applied at
+  every stage: task → agent performs → a separate agent reviews against
+  criteria and writes a report → PASS/FAIL → FAIL rectifies and
+  resubmits, until PASS. The gates cascade: wayfinding is the ungated
+  entry (criteria from session content and project context); specifying
+  reviews against the plan; slicing against the spec; implementing
+  against the tickets. Open: the loop's mechanical home (plugin tool,
+  skill, reviewer agent type — the agent-type/tool cloud items); where
+  graded reports live (a new scaffold piece would enter bootstrapping's
+  inventory); how criteria documents are derived and passed; whether
+  rectification is bounded; the interplay with the existing checkpoints
+  (slice's user approval, spec's approval options). Existing precedent:
+  specifying's own fresh-context review, which this generalizes.
+  Tracked as "Review loop — the mechanism" and "Review loop — where
+  graded reports live".
 - Slicing: the `/slice` door's fate — survive as the thin call that starts
   the skill, or model-invoked only — plus the skill's trigger description
   and the knock-ons: `implementing`'s and `specifying`'s `/slice` pointers

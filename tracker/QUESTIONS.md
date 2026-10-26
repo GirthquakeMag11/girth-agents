@@ -6,6 +6,34 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Review loop — where graded reports live — 2026-10-25
+
+- **The question:** Where do review reports and their PASS/FAIL verdicts
+  live — a dedicated scaffold piece (which would enter bootstrapping's
+  inventory), or attached to each reviewed artifact?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the reports
+  must be findable from the artifacts they gate — plan → spec → tickets
+  → work — and a later agent must be able to see what was reviewed
+  against what.
+- **Decided (provisional):** undecided — whatever home is chosen, the
+  verdict is recorded on the artifact itself, the way tracker closing
+  lines are appended; a reports home that becomes a scaffold piece
+  follows the scaffold-family maintenance path.
+
+## Review loop — the mechanism — 2026-10-25
+
+- **The question:** What mechanically carries the PASS/FAIL review loop —
+  a plugin tool, a skill that spawns the reviewer subagent, a reviewer
+  agent type, or a combination — and who writes the criteria used each
+  round?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the loop's
+  shape is pinned on the map; the user's cloud includes "agent types and
+  tools that only make sense in the context of the skillset after the
+  work"; specifying's existing fresh-context review is the loop's
+  piecemeal precedent.
+- **Decided (provisional):** undecided — the loop's home waits for the
+  agent-type and tool cloud items to land; nothing is built on a guess.
+
 ## Slicing skill — the /slice door's fate — 2026-10-25
 
 - **The question:** Slicing becomes its own skill, outside the command.
