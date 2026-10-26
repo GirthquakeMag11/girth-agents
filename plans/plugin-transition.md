@@ -218,6 +218,9 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- `grilling`: settled — kept as-is, the standing machinery of
+  interactive sessions; only its wording is re-fit during the sweep.
+  (2026-10-26, user)
 - `/implement`'s fate: settled — in [the system], the engine works the
   ticket frontier itself, so the `/implement` door dies for its users;
   the `implementing` skill stays as the builder's craft for the work
