@@ -6,6 +6,22 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Eager bootstrapping — what stays human-asked and where it travels — 2026-10-25
+
+- **The question:** Under eager, programmatic bootstrapping, which
+  bootstrap questions remain human-only, and do they travel through the
+  inbox (per the re-active flow) instead of a blocking in-session
+  interview? Does `/bootstrap` survive as the human-triggered re-run
+  door?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  bootstrapping happens eagerly and programmatically to the extent
+  possible; today's run explores, interviews once for gaps, and creates;
+  the re-active flow routes action-needed asks to the user's inbox.
+- **Decided (provisional):** programmatic derivation fills everything
+  the project can state; what genuinely needs the user goes to the
+  inbox, never to a blocking in-session interview; the door's fate and
+  the exact whitelist of human-only asks are pinned in the spec.
+
 ## Pro-active flow — what counts as an entry-point-producing session — 2026-10-25
 
 - **The question:** When does a session formally count as a pro-active

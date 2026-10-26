@@ -30,6 +30,10 @@ after approval.
 
 ## Decisions so far
 
+- Bootstrapping: declared — done eagerly and programmatically to the
+  extent possible: the scaffold is created on the system's initiative,
+  not on invitation, with everything derivable from the project derived
+  rather than asked. (2026-10-25, narrated)
 - The two flows: declared — the user interfaces with the system through
   two formally accounted workflows. The pro-active flow: the user
   provokes the system into re-action — any session that produces a valid
@@ -68,6 +72,13 @@ after approval.
 
 ## Not yet specified
 
+- Eager bootstrapping — what remains human-asked, and where those asks
+  travel: the interview's fate (derivation fills everything the project
+  can state; the rest travels to the inbox per the re-active flow rather
+  than blocking in session), the gh CLI check and deviations under an
+  eager programmatic run, and whether `/bootstrap` survives as the
+  human-triggered re-run door. Tracked as "Eager bootstrapping — what
+  stays human-asked and where it travels".
 - The two flows — open mechanics: what a session must produce to count as
   a pro-active flow (one entry point? at least one? how several queue);
   how a system-to-user request lands in the inbox — the tracker question
