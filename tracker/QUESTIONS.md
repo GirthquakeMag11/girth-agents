@@ -140,6 +140,9 @@ applied to the work later. See the tracker skill.
   that acquires the information.
 - **Decided (provisional):** undecided — the capability is ruled, the
   dispatch policy is not; nothing is built on a guess.
+- **Answered — 2026-10-25:** the engine finds out on its own, and only
+  comes to the user if its help comes up empty (user).
+- **Follow-up:** map updated.
 
 ## Sidebar ongoing-work breakdown — what counts and what it reads — 2026-10-25
 

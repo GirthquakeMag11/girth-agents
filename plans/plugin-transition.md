@@ -36,6 +36,10 @@ after approval.
 
 ## Decisions so far
 
+- Information-kind dispatch: settled — the engine sends its own help to
+  find the answer to an information-kind question, and brings it to the
+  user only if that help comes up empty; authority-kind questions stay
+  the user's alone. (2026-10-25, user)
 - The engine is awake: settled — the engine lives in the plugin and
   watches on its own, advancing ready work even between messages, on a
   strict leash: it touches only work it made itself, and files an agent
