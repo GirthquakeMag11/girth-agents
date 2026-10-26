@@ -61,16 +61,12 @@ after approval.
 - Three-perspective review (2026-10-26; notes in `docs/research/`:
   `fog-audit.md`, `blind-read.md`, `coverage-matrix.md`) opened four
   genuine inquiry threads, not settled:
-  1. The plan gate — the plan is reviewed: settled — the review loop is
-     formally necessary before the wayfinding session's product is even
-     called a plan; "ungated" means no upstream document, not no
-     review. The checklist source is settled: the session's content
-     (the chat) and the project's context. The FAIL path is settled by
-     the failure-routing principle: normal repair, and the inbox enters
-     exactly when rectification requires the user's answer. The
-     dead-end corner is settled too: an exception that fails loudly,
-     indicting the system. What remains: where "back to us" lands — the
-     loud failure's transport.
+  1. The plan gate — fully settled: the review loop precedes the plan's
+     very name; the checklist comes from the session chat and the
+     project context; a FAIL repairs normally with the inbox entering
+     exactly when rectification requires the user's answer; a dead-end
+     is an exception that fails loudly, stamped as the system's own,
+     and self-reports to the plugin repo.
   2. The human stops — "the plan is the one human stop" vs the
      destination's "one umbrella spec, approved once": whose approval
      is that second one — yours, or the gate's PASS?
@@ -195,6 +191,11 @@ after approval.
   which wayfinding was supposed to catch. It produces a loud,
   observable failure that makes it back to us for figuring out how to
   fix. (2026-10-26, user)
+- The exception's transport: settled — the loud failure also
+  self-reports to the plugin's own repo (a defect entry filed from the
+  failing install), carrying typed records only; the project-side
+  system-defect record and attention signal stand too. (2026-10-26,
+  user)
 - Failure routing: settled — whether a failure reaches the user is
   decided by whether its rectification requires their answer. A failure
   caused by missing information is what questions are for; the
