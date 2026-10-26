@@ -188,6 +188,14 @@ applied to the work later. See the tracker skill.
   unjustified. The live crux: inbox as a view over the tracker's
   user-directed items, with pure action-requests (non-questions) still
   needing a home.
+- **Answered — 2026-10-26:** its own record — the inbox is the
+  asynchronous send/receive channel with the user and keeps its own
+  message log (sent requests and the replies), while the tracker keeps
+  the blocking states; a question sent to the user is referenced, never
+  copied, and its reply lands on the tracker question as the
+  resolution (user).
+- **Follow-up:** map updated; the message and reply forms are spec
+  detail.
 
 ## Handoff and pickup — what the shelf means for the plugin — 2026-10-25
 
