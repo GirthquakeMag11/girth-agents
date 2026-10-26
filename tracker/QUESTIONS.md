@@ -200,7 +200,7 @@ applied to the work later. See the tracker skill.
   tracker or a new piece is pinned in the spec; until then nothing is
   built on a guess.
 - **Note — 2026-10-25:** the inbox became its own TUI screen (opened via
-  command or Escape menu), items answered through a seeded chat session
+  command or the command palette), items answered through a seeded chat session
   whose recorded response the engine picks up — so this record also
   holds each item's answer once recorded; the answering session's agent
   and the answer's form are tracked separately.

@@ -52,6 +52,27 @@ after approval.
   one atomic change (the linter fires mid-rename); the channel's
   supersession of the installer's clone-only transport ruling is not
   yet recorded in `decisions/`.
+- Three-perspective review (2026-10-26; notes in `docs/research/`:
+  `fog-audit.md`, `blind-read.md`, `coverage-matrix.md`) opened four
+  genuine inquiry threads, not settled:
+  1. The plan gate — the cascade says the plan is the ungated stage,
+     yet "a new plan is input to a review-and-refinement loop": what
+     concretely supplies the plan's checklist (session content =
+     recorded rulings? the map itself?) and where does a FAILed
+     user-approved plan go for rectification?
+  2. The human stops — "the plan is the one human stop" vs the
+     destination's "one umbrella spec, approved once": whose approval
+     is that second one — yours, or the gate's PASS?
+  3. The work stage — records-only review rules, yet the last stage
+     produces code: what does the reviewer grade there, and what gets
+     the verdict stamp?
+  4. The survivors — coverage found 11 skills and 6 commands the map
+     never names (`grilling`, `codifying`, `domain-modeling`,
+     `maintaining-docs`, `wizard`, `questionnaire`, `diagnosing-bugs`,
+     `code-review`, `codebase-design`, `prototyping`, `research`;
+     `/implement`, `/spec`, `/wayfind`, `/cut-release`,
+     `/questionnaire`, `/wizard`), incl. whether `specifying` and
+     `implementing` keep any user-facing surface.
 
 ## Decisions so far
 
@@ -292,90 +313,24 @@ after approval.
 
 ## Not yet specified
 
-- The testing system — the harness's shape: where real-case tests run
-  (the existing validate.mjs / test-installer.sh / test-wizard.sh
-  harnesses are the seeds; the engine's parts — parser, review loop,
-  session spawning, inbox record, TUI slot — each need a testable seam),
-  and where the gate sits in the release chain before main. Tracked as
-  "The testing system — harness and gate".
-- The inbox screen — knock-ons settled: `curate-inbox` and `/close-inbox`
-  retire (the screen, the answering helper, and the engine cover every
-  old job); the message and reply forms are spec detail. (The agent and
-  the recorded answer are settled too.)
-- Tracked-question kinds — knock-ons: the `tracking` skill's questions
-  reference and entry format gain the kind field (authority |
-  information), and existing entries — this map's among them — retrofit
-  at implementation. Open lead: whether the engine itself dispatches an
-  information-kind question to a research agent when it can, so only
-  authority-kind questions surface to the user via the inbox. Tracked as
-  "Information-kind questions — who acquires the answer".
-- Sidebar ongoing-work breakdown — what counts as ongoing: the open
-  ticket frontier, review loops in flight, PASS-pending hand-offs, inbox
-  items awaiting the user? And what the display reads — a derived view
-  over the system's records, or a new state record that itself needs a
-  home. Tracked as "Sidebar ongoing-work breakdown — what counts and
-  what it reads".
-- Handoff's retirement — when the engine's replacement proves out, the
-  retirement lands on `decisions/0005` and `specs/handoff-pickup.md`;
-  date and form decided then. (The shelf is settled; `/retro` sits on it
-  too, with `handoff` and `pickup`.)
-- The renames' knock-ons — mechanical only now: the skill's body is
-  written for the broad practice; the names, README rows, and references
-  sweep in implementation. (`writing-for-agents` → `technical-writing`
-  is a plain rename.)
-- Eager bootstrapping — settled in shape: the run is command-initiated
-  and synchronous; the engine derives everything the project can state,
-  and the few remaining asks (name, purpose, license when undeclared;
-  starting version when nothing states one; the gh install as an
-  action) happen in that same session — no inbox exists yet. The exact
-  whitelist is spec detail.
-- The two flows — open mechanics: what a session must produce to count as
-  a pro-active flow (one entry point? at least one? how several queue);
-  how a system-to-user request lands in the inbox — settled in
-  direction: engine-written formal inbox items, deterministically
-  countable — leaving the item's home and form, and curate-inbox's
-  former gleaning role; how the flows interleave (an inbox answer may
-  itself produce the next entry-point document). Tracked as "Re-active
-  flow — how system requests land in the inbox", "The inbox item's home
-  and form", and "Pro-active flow — what counts as an
-  entry-point-producing session".
-- The engine and the entry-point tool — mechanics settled: the engine
-  is awake in the plugin on a strict leash, runs only in started
-  projects, running the tool on a file is the act that clears it,
-  downstream documents stay inside, and the plan alone enters from
-  outside.
-- The review gate — the PASS/FAIL review-and-rectify loop, now applied at
-  every stage: task → agent performs → a separate agent reviews against
-  criteria and writes a report → PASS/FAIL → FAIL rectifies and
-  resubmits, until PASS. The gates cascade: wayfinding is the ungated
-  entry (criteria from session content and project context); specifying
-  reviews against the plan; slicing against the spec; implementing
-  against the tickets. Open: the checker is a named reviewer agent type,
-  the cycle is a tool in the code, the criteria are engine-compiled from
-  the upstream document, the reports live in their own pile with the
-  verdict stamped on the work, and the cap and time limits are enforced
-  by the tool (all settled). The checkpoints are settled too: PASS
-  carries the work forward; the old per-stage approvals fold into the
-  gate, and the plan approval at wayfinding's end is the one human stop.
-  Existing precedent: specifying's own fresh-context review, which this
-  generalizes.
-  Tracked as "Review loop — the mechanism".
-- Slicing's knock-ons — the skill's trigger description, and re-pointing
-  `implementing`'s and `specifying`'s `/slice` references and the README
-  rows. (The door's fate is settled.)
-- The change cloud — the full set of changes to skills, commands, agents,
-  tools, and code, narrated in chat and organized into the tree as it
-  arrives. Tracked as "The change cloud".
-- The installer/release machinery — settled: the end-user script
-  retires, the builder-side checker and test harnesses stay (candidates
-  to become plugin tools), the release is a tag on the repo, and each
-  tag gets a GitHub Release page with the changelog notes.
-- Agent types and the plugin's tool/code surface — the engine's helper
-  roster: the reviewer, the inbox answerer, the fact-finder, and one
-  builder for all stages (which also repairs its own FAILs); anything
-  else hangs off the change cloud.
-- The plugin package's layout inside the repo — settled: at the repo
-  root, install points at the repo with no path selector.
+- The change cloud — awaiting the user's last pour: the surviving
+  skills' and commands' fates (the coverage review counts 11 skills and
+  6 commands with no decision on record), plus anything else the user
+  holds. Tracked as "The change cloud".
+- Spec-time keystones — verified before building, not open decisions:
+  whether the plugin can add brand-new agent IDs (the four helpers), the
+  git-spec plugin's `./tui` auto-load, sidebar-slot live-reactivity,
+  `ctx.storage` durability and location, the event catalog and
+  `session.idle` payload, `codemode` semantics.
+- Spec details deferred by design: the typed forms (brief, checklist,
+  verdict/report) and where each lives; the inbox message and reply
+  forms; the cap's numbers; the test harness's shape, seams, and gate
+  mechanics; the report pile's owning skill and format (scaffold-family
+  maintenance), and the inbox message record's home and form.
+- Deferred by design, not open now: handoff and `/retro` shelf
+  retirement; whether the engine is one instance across started
+  projects or per project (raised by the reviews, not yet put to the
+  user).
 
 ## Out of scope
 
