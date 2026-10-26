@@ -52,14 +52,20 @@ after approval.
   one atomic change (the linter fires mid-rename); the channel's
   supersession of the installer's clone-only transport ruling is not
   yet recorded in `decisions/`.
+- Questioning notes (2026-10-26, user): the design is charted through
+  unknown territory; the user may misspeak, make mistakes, hold ideas
+  that conflict, or change a mind that was never firmly made up. Doubling
+  back over settled ground is expected — when a thread resurfaces,
+  re-confirm against the user's live answer rather than assuming the
+  earlier one still holds.
 - Three-perspective review (2026-10-26; notes in `docs/research/`:
   `fog-audit.md`, `blind-read.md`, `coverage-matrix.md`) opened four
   genuine inquiry threads, not settled:
-  1. The plan gate — the cascade says the plan is the ungated stage,
-     yet "a new plan is input to a review-and-refinement loop": what
-     concretely supplies the plan's checklist (session content =
-     recorded rulings? the map itself?) and where does a FAILed
-     user-approved plan go for rectification?
+  1. The plan gate — the plan is reviewed: settled — the review loop is
+     formally necessary before the wayfinding session's product is even
+     called a plan; "ungated" means no upstream document, not no
+     review. What remains: what concretely supplies the plan's
+     checklist, and where a FAILed user-approved plan goes.
   2. The human stops — "the plan is the one human stop" vs the
      destination's "one umbrella spec, approved once": whose approval
      is that second one — yours, or the gate's PASS?
