@@ -291,8 +291,10 @@ applied to the work later. See the tracker skill.
   resolve together.
 - **Note — 2026-10-25:** the checker is now settled as a named reviewer
   agent type (its own job description; the engine points it at finished
-  work), and the cycle's driver as a hard tool in the plugin's code.
-  What remains open here: who writes the criteria each round.
+  work), the cycle's driver as a hard tool in the plugin's code, and the
+  criteria as engine-compiled from the upstream document. Nothing of the
+  mechanism remains open here; the reports' home and bounded
+  rectification are tracked where they belong.
 
 ## Slicing skill — the /slice door's fate — 2026-10-25
 
