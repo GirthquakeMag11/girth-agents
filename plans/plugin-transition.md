@@ -73,6 +73,9 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- `/retro`: shelved — joins handoff and pickup on the shelf for now,
+  kept privately out of the plugin; its fate re-judged when the engine
+  exists. (2026-10-26, user)
 - Release notes: settled — each release tag also gets a GitHub Release
   page carrying the changelog section (minus the old one-line install).
   The old install line's audience is gone; the notes stay as history.
@@ -307,7 +310,8 @@ after approval.
   what it reads".
 - Handoff's retirement — when the engine's replacement proves out, the
   retirement lands on `decisions/0005` and `specs/handoff-pickup.md`;
-  date and form decided then. (The shelf itself is settled.)
+  date and form decided then. (The shelf is settled; `/retro` sits on it
+  too, with `handoff` and `pickup`.)
 - The renames' knock-ons — mechanical only now: the skill's body is
   written for the broad practice; the names, README rows, and references
   sweep in implementation. (`writing-for-agents` → `technical-writing`
