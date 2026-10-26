@@ -161,6 +161,11 @@ applied to the work later. See the tracker skill.
 - **Decided (provisional):** derived from the system's own records —
   never a human-written or agent-private state; the exact derivation and
   list shape are pinned in the spec.
+- **Answered — 2026-10-26:** pieces in motion only — being built, under
+  review, sent back for repair — derived from the records, never
+  hand-written; queued pieces stay off (user).
+- **Follow-up:** map updated; the exact derivation from the report pile
+  and ticket states is spec detail.
 
 ## The inbox item's home and form — 2026-10-25
 

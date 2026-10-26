@@ -73,6 +73,11 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- Sidebar's ongoing work: settled — the breakdown lists the engine's
+  pieces in motion — being built, under review, sent back for repair —
+  read from the records, never hand-written; the inbox counter covers
+  the user's side, and idle or queued-but-unpicked pieces stay off the
+  list. (2026-10-26, user)
 - Inbox and tracker, two jobs: settled — the inbox is the system's
   asynchronous send/receive channel with the user, not a view over the
   tracker. The tracker is the engine's internal record of what blocks
