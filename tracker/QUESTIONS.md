@@ -270,6 +270,11 @@ applied to the work later. See the tracker skill.
 - **Note — 2026-10-25:** "produces a valid entry-point document" now
   means an agent ran the entry-point tool on it and it accepted — the
   clearance act is the flow's output, counted by the tool's acceptance.
+- **Answered — 2026-10-26:** the plan alone opens the door, so a
+  pro-active flow is a session that wayfinds to a plan and clears it;
+  when more than one plan is cleared, they queue in received order
+  (user's rulings, plan-only entry + the working loop).
+- **Follow-up:** map updated; the queue order is spec detail.
 
 ## Re-active flow — how system requests land in the inbox — 2026-10-25
 
@@ -288,6 +293,11 @@ applied to the work later. See the tracker skill.
   non-deterministic gleaning is gone. The home and form are now tracked
   separately as "The inbox item's home and form"; this entry keeps the
   `/inbox`-initiates question only.
+- **Answered — 2026-10-26:** requests land as inbox messages the engine
+  writes, referencing the tracker question by reference, never copied;
+  the inbox is the send/receive channel, the tracker keeps the state
+  (user's two-jobs ruling).
+- **Follow-up:** map updated; the message forms are spec detail.
 
 ## Entry points — how outputs and cleared products are marked — 2026-10-25
 
