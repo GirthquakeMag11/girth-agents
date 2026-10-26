@@ -73,6 +73,10 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The plugin's layout: settled — the plugin's package file and code
+  live at the repo root, beside the catalog and the records; the
+  install points at the repo itself, no extra path segment.
+  (2026-10-26, user)
 - The testing system: settled — a committed automated harness drives
   the real pieces (parser, review loop, session spawn, inbox record,
   TUI slot) with assertions that map to trust; it gates merges to main
@@ -351,9 +355,8 @@ after approval.
   roster: the reviewer, the inbox answerer, the fact-finder, and one
   builder for all stages (which also repairs its own FAILs); anything
   else hangs off the change cloud.
-- The plugin package's layout inside the repo — where the plugin's
-  entrypoints sit (repo root, or a subdirectory named with the git
-  plugin's path selector), now that the repo itself is the distribution.
+- The plugin package's layout inside the repo — settled: at the repo
+  root, install points at the repo with no path selector.
 
 ## Out of scope
 
