@@ -2,7 +2,7 @@
 
 **Status:** charting
 
-## Destination
+## Destination — [Ours: this effort's own working process]
 
 A formally recorded decision (`decisions/`) turning this catalog into an
 OpenCode plugin, then one umbrella spec — the skills, commands, agent
@@ -11,6 +11,17 @@ approved once. Building and slicing are the next effort and begin only
 after approval.
 
 ## Notes
+
+- **Two layers, and reviewers must honor them.** [Ours] = this effort's
+  own working process — how girth-agents itself is being built, its
+  approvals, its testing, its releases. [The system] = the machine the
+  plugin will be — the engine, the gate, the helpers, the chains it
+  runs on projects. Every decision below rules exactly one layer. An
+  apparent conflict BETWEEN the layers is a context artifact — the
+  designer's workflow and the designed machine doing different things —
+  and must never be reported as a design tension or become a question
+  to the user. (Incident of 2026-10-26: a phantom cross-layer conflict
+  nearly corrupted the plan; this warning exists so it cannot recur.)
 
 - The catalog's identity carries into the plugin: skills, commands, and
   agents stay plain Markdown, ship bundled with the plugin, and the
@@ -119,7 +130,7 @@ after approval.
   retire; every old job has a new home (the screen, the answering
   helper, the engine picking up answers), and the helper's know-how
   lives in its own definition. (2026-10-26, user)
-- Checkpoints: settled — after a stage PASSes, the work proceeds on its
+- Checkpoints: [The system] settled — after a stage PASSes, the work proceeds on its
   own; the old per-stage approvals (spec's Approve / Approve-and-Slice /
   Stop-and-Amend, slice's ticket-graph approval) fold into the gate.
   The user's one approval stays where direction is set — the plan at
@@ -192,6 +203,12 @@ after approval.
   which wayfinding was supposed to catch. It produces a loud,
   observable failure that makes it back to us for figuring out how to
   fix. (2026-10-26, user)
+- Reviewer context: settled, for both layers — reviewers must receive
+  labeled layer context with their inputs, and an apparent conflict
+  between the layers is a context artifact, never a design tension and
+  never a question to the user. The 2026-10-26 incident — a phantom
+  cross-layer conflict presented as a design question — is the worked
+  example. (2026-10-26, user)
 - Two layers: settled — the destination's approvals (the umbrella spec
   approved once, by the user) are THIS effort's working process, not
   the plugin's rules; the checkpoints ruling (the plan is the chain's
@@ -349,7 +366,7 @@ after approval.
   (2026-10-25, narrated)
 - Slicing: becomes its own skill; the procedure moves out of the `/slice`
   command body into the skill. (2026-10-25, narrated)
-- Destination shape: one umbrella spec covering all five areas, approved
+- Destination shape: [Ours] one umbrella spec covering all five areas, approved
   once; the `decisions/` record is written first and the spec references
   it. (2026-10-25, round 1 — see "Destination shape" in QUESTIONS.md)
 - Markdown's place: bundle + register at plugin setup. (2026-10-25,
@@ -357,6 +374,9 @@ after approval.
 
 ## Not yet specified
 
+- Test scenarios harvested from this effort's own incidents: a phantom
+  cross-layer conflict must be caught by the review chain and never
+  reach the user as a design question (incident of 2026-10-26).
 - The change cloud — awaiting the user's last pour: the surviving
   skills' and commands' fates (the coverage review counts 11 skills and
   6 commands with no decision on record), plus anything else the user
