@@ -30,6 +30,12 @@ after approval.
 
 ## Decisions so far
 
+- Handoff and pickup: shelved for the time being — neither cut nor
+  carried into the new system's active surface. The new vision
+  ultimately makes them obsolete: the engine, tracker, and entry points
+  carry the cross-session continuity the handoff did; decision 0005
+  stands until the replacement proves out and supersedes it.
+  (2026-10-25, narrated)
 - `find-skills` and `/wait-what`: dead — removed from the catalog; their
   surfaces (the README's off-the-spine find-skills line, `/wait-what`'s
   rows) go with them. (2026-10-25, narrated)
@@ -79,6 +85,11 @@ after approval.
 
 ## Not yet specified
 
+- Handoff on the shelf — what the shelf means for the plugin: parked out
+  of the published surface until the replacement proves out, or shipped
+  dormant; when and how retirement lands on decision 0005 and
+  `specs/handoff-pickup.md`. Tracked as "Handoff and pickup — what the
+  shelf means for the plugin".
 - The renames' open detail: whether `test-driving` purely renames `tdd`
   or carries a re-scope with it — the user's own "test driving" phrasing
   hints the practice matters to this effort's shape.

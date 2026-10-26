@@ -6,6 +6,20 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Handoff and pickup — what the shelf means for the plugin — 2026-10-25
+
+- **The question:** What does "on the shelf" mean mechanically — parked
+  out of the plugin's published surface until the replacement proves
+  out, or shipped dormant — and when does eventual retirement supersede
+  decision 0005 and `specs/handoff-pickup.md`?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  shelved for the time being, not cut; the new vision — engine, tracker,
+  entry points — carries the continuity the handoff did; decision 0005
+  rules the handoff/tracker junction until then.
+- **Decided (provisional):** parked out of the plugin's shipped surface;
+  the repo keeps the skill, commands, and spec until the replacement
+  proves out; 0005 stands unchanged until retirement is declared.
+
 ## Eager bootstrapping — what stays human-asked and where it travels — 2026-10-25
 
 - **The question:** Under eager, programmatic bootstrapping, which
