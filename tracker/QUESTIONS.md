@@ -19,6 +19,19 @@ applied to the work later. See the tracker skill.
 - **Kind:** information
 - **Decided (provisional):** undecided — the research runs before any
   mechanics are designed; nothing is built on a guess.
+- **Answered — 2026-10-25:** notes at `docs/research/zeroshot-open-engine.md`
+  (identified repo `the-open-engine/zeroshot`; claims pinned to commit
+  SHAs). Zeroshot shells out to `opencode run` (JSONL events,
+  `--session`/`--continue` for the worker across repair passes,
+  zero-context reformat sessions), passes only authored briefs and typed
+  bindings — never transcripts — and enforces its guarantees in the graph
+  (bounded loops, `attempts: 1`, timeouts, SQLite ledger, checkpoint
+  resumes). Its workspace-restore, config-outside-repo,
+  live-worktree-verification, and single-writer assumptions clash with a
+  records-first, user-in-parallel design. (agent research)
+- **Follow-up:** map updated — three borrowing decisions graduate to the
+  frontier: typed-state-only hand-offs, machinery-enforced guarantees,
+  and the session-scope model.
 
 ## Information-kind questions — who acquires the answer — 2026-10-25
 

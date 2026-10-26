@@ -113,11 +113,12 @@ after approval.
 
 ## Not yet specified
 
-- Zeroshot research — a thorough investigation into how to take the
-  zeroshot (the-open-engine) inspiration in practice: its
-  session-spawning and information-passing mechanics, what transfers,
-  what does not. This wayfinding's first research question. Tracked as
-  "Zeroshot inspiration — how to take it in practice".
+- Zeroshot borrowing — research done (`docs/research/zeroshot-open-engine.md`);
+  the fog cleared into three borrowing decisions now on the frontier:
+  typed-state-only hand-offs between sessions, machinery-enforced
+  guarantees, and the session-scope model. Borrowing exclusions: the
+  workspace-restore/copy-checkout, config-outside-repo,
+  live-worktree-verification, and single-writer assumptions.
 - Tracked-question kinds — knock-ons: the `tracking` skill's questions
   reference and entry format gain the kind field (authority |
   information), and existing entries — this map's among them — retrofit
