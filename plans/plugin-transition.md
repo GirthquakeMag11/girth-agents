@@ -67,9 +67,10 @@ after approval.
      review. The checklist source is settled: the session's content
      (the chat) and the project's context. The FAIL path is settled by
      the failure-routing principle: normal repair, and the inbox enters
-     exactly when rectification requires the user's answer. The one
-     remaining corner: a cap-exhausted failure that needs no user
-     answer — its terminal state.
+     exactly when rectification requires the user's answer. The
+     dead-end corner is settled too: an exception that fails loudly,
+     indicting the system. What remains: where "back to us" lands — the
+     loud failure's transport.
   2. The human stops — "the plan is the one human stop" vs the
      destination's "one umbrella spec, approved once": whose approval
      is that second one — yours, or the gate's PASS?
@@ -186,6 +187,14 @@ after approval.
 - Session scope: settled — every stage runs fresh; the fixing agent
   keeps its session across fix-rounds (the engine detects and recovers
   a lost session); the checker is always fresh. (2026-10-25, user)
+- The exception: settled — a piece that exhausts its fix-rounds
+  while still broken, with no answerable question to rectify it, is an
+  exception, not a parked state: it means either the fix-round cap was
+  too low for the task's scope, or an impossible task slipped through
+  wayfinding — the destination on the far side of an uncrossable gap,
+  which wayfinding was supposed to catch. It produces a loud,
+  observable failure that makes it back to us for figuring out how to
+  fix. (2026-10-26, user)
 - Failure routing: settled — whether a failure reaches the user is
   decided by whether its rectification requires their answer. A failure
   caused by missing information is what questions are for; the
