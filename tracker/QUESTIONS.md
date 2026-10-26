@@ -6,6 +6,19 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## The inbox answering session — agent and recorded answer — 2026-10-25
+
+- **The question:** Which agent runs the per-item inbox session, and
+  what form does the recorded response take such that the engine picks
+  it up and drives forward?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  opening an inbox item enters a new chat session with an agent seeded
+  with the question, discusses optionally, then records the user's
+  response for the engine; the agent-type cloud is still to come.
+- **Decided (provisional):** undecided — the answering agent and the
+  recorded-answer form wait for the agent-type cloud and the inbox
+  item's home; nothing is built on a guess.
+
 ## Session scope — fresh plus explicit continue? — 2026-10-25
 
 - **The question:** Is the engine's session-scope model zeroshot's —
@@ -117,6 +130,11 @@ applied to the work later. See the tracker skill.
   deterministically written, project-scoped record; whether that is the
   tracker or a new piece is pinned in the spec; until then nothing is
   built on a guess.
+- **Note — 2026-10-25:** the inbox became its own TUI screen (opened via
+  command or Escape menu), items answered through a seeded chat session
+  whose recorded response the engine picks up — so this record also
+  holds each item's answer once recorded; the answering session's agent
+  and the answer's form are tracked separately.
 
 ## Handoff and pickup — what the shelf means for the plugin — 2026-10-25
 

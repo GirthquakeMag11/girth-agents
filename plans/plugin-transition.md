@@ -30,10 +30,19 @@ after approval.
 - TUI facts: the right-hand panel is the sidebar, reached by CLI-plugin
   slots (`sidebar.content`); a package ships a `./tui` export beside its
   server export — one package, two entries; CLI-only plugins configure
-  separately in `cli.json`.
+  separately in `cli.json`; plugin routes register whole screens through
+  the TUI router, and the Escape-accessible menu (command palette)
+  carries entries.
 
 ## Decisions so far
 
+- The inbox is its own TUI screen: declared — no longer a pseudo-mode
+  activated and deactivated by a command; reached by a command or the
+  Escape menu, visually an email inbox, items sorted in received order,
+  scrollable and selectable. Opening an item enters a new chat session
+  with an agent seeded with the message asking the user the question —
+  prepared to discuss, then to record the user's response for the engine
+  to pick up and drive forward. (2026-10-25, narrated)
 - The engine spawns sessions: declared — the engine can spawn fresh
   OpenCode sessions and pass information between them; this is the
   substrate the build-verify-rectify loop runs on — each stage a fresh
@@ -113,6 +122,11 @@ after approval.
 
 ## Not yet specified
 
+- The inbox screen — knock-ons: `curate-inbox`'s collection-and-process
+  role and `/close-inbox` (whose wrap-up role no longer fits a screen)
+  re-scope or retire; which agent runs the per-item seeded session; and
+  the form the recorded answer takes so the engine picks it up. Tracked
+  as "The inbox answering session — agent and recorded answer".
 - Zeroshot borrowing — research done (`docs/research/zeroshot-open-engine.md`);
   the fog cleared into three borrowing decisions, each put to the user
   and held ("decide later"): typed-state-only hand-offs, machinery-enforced
