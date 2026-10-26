@@ -182,6 +182,12 @@ applied to the work later. See the tracker skill.
   whose recorded response the engine picks up — so this record also
   holds each item's answer once recorded; the answering session's agent
   and the answer's form are tracked separately.
+- **Note — 2026-10-26:** the user pushed back on a separate inbox pile —
+  authority-kind questions already live in the tracker and are exactly
+  the things waiting on the user, so a second redundant record is
+  unjustified. The live crux: inbox as a view over the tracker's
+  user-directed items, with pure action-requests (non-questions) still
+  needing a home.
 
 ## Handoff and pickup — what the shelf means for the plugin — 2026-10-25
 
