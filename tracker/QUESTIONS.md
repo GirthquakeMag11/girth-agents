@@ -140,9 +140,12 @@ applied to the work later. See the tracker skill.
   that acquires the information.
 - **Decided (provisional):** undecided — the capability is ruled, the
   dispatch policy is not; nothing is built on a guess.
-- **Answered — 2026-10-25:** the engine finds out on its own, and only
-  comes to the user if its help comes up empty (user).
-- **Follow-up:** map updated.
+- **Answered — 2026-10-25:** the engine dispatches help that cannot
+  fabricate and so can fail openly; on failure — where the failure is
+  not itself the answer — the question reaches the user; authority-kind
+  questions reach the user, period (user).
+- **Follow-up:** map updated; the no-lying principle is recorded as its
+  own ruling.
 
 ## Sidebar ongoing-work breakdown — what counts and what it reads — 2026-10-25
 
