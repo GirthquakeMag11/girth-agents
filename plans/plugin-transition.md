@@ -218,6 +218,11 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- `/spec`'s fate: settled — in [the system], the plan is the only
+  user-shaped document; specs are made inside the engine, so the
+  interactive spec session's door dies for the system's users. The
+  `specifying` skill stays — it is the builder's craft. [Ours]: our own
+  `/spec` for the umbrella spec is untouched. (2026-10-26, user)
 - The work check: settled — the work stage is reviewed ticket by
   ticket: each ticket's recorded outcome graded against its own
   criteria, with the code changes and the test-drive proof as evidence;
