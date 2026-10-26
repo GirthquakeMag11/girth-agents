@@ -288,6 +288,12 @@ applied to the work later. See the tracker skill.
 - **Note — 2026-10-25:** the always-awake engine (strict leash) and
   clearance-by-run are now settled; what remains is the parser's
   accepted kinds and the engine's scope.
+- **Note — 2026-10-26:** the parser question is re-posed as the
+  inside/outside boundary: downstream documents (reviewed plans, specs,
+  tickets, work, reports) stay inside and never cross the tool; only
+  outside products — user-interaction sessions' outputs — enter through
+  it, the plan being the confirmed entry. The remaining fog is whether
+  any outside product beyond the plan is a valid entry.
 
 ## Review loop — where graded reports live — 2026-10-25
 

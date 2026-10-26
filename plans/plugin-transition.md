@@ -66,6 +66,13 @@ after approval.
   it can fail openly; when it fails and the failure is not itself the
   answer, the question reaches the user after all. Authority-kind
   questions reach the user, period. (2026-10-25, user)
+- Inside vs outside: settled — the engine's embedded agents produce
+  everything downstream (reviewed plans, specs, tickets, work, and
+  their reports), and that stays inside, never passing the entry-point
+  tool. Only products of user-interaction sessions are outside, and
+  they cross the boundary through the tool — the plan from an
+  interactive wayfinding session being the entry that starts the chain.
+  (2026-10-26, user)
 - Engine agents cannot lie: settled — agents the engine dispatches must
   never fabricate an answer; each is built to fail openly, reporting
   "could not acquire" rather than inventing one. (2026-10-25, user)
@@ -270,9 +277,10 @@ after approval.
 - The engine and the entry-point tool — mechanics mostly settled: the
   engine is awake in the plugin on a strict leash, runs only in started
   projects, and running the tool on a file is the act that clears it.
-  What remains fog: which files the tool accepts as entry points (plans,
-  specs, tickets, work — every stage output?). Tracked as
-  "The engine and the entry-point tool — mechanics".
+  Downstream documents stay inside and never cross the tool. What
+  remains fog: the full set of valid outside entries — the plan is the
+  confirmed one; whether other user-session products can open the door.
+  Tracked as "The engine and the entry-point tool — mechanics".
 - The review gate — the PASS/FAIL review-and-rectify loop, now applied at
   every stage: task → agent performs → a separate agent reviews against
   criteria and writes a report → PASS/FAIL → FAIL rectifies and
