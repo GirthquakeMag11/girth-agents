@@ -73,6 +73,10 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The boundary's one door: settled — the plan from an interactive
+  wayfinding session is the only outside document the entry-point tool
+  accepts; everything else stays inside the engine or flows in through
+  its own channel (inbox answers, rulings). (2026-10-26, user)
 - Engine agents cannot lie: settled — agents the engine dispatches must
   never fabricate an answer; each is built to fail openly, reporting
   "could not acquire" rather than inventing one. (2026-10-25, user)
@@ -274,13 +278,11 @@ after approval.
   flow — how system requests land in the inbox", "The inbox item's home
   and form", and "Pro-active flow — what counts as an
   entry-point-producing session".
-- The engine and the entry-point tool — mechanics mostly settled: the
-  engine is awake in the plugin on a strict leash, runs only in started
-  projects, and running the tool on a file is the act that clears it.
-  Downstream documents stay inside and never cross the tool. What
-  remains fog: the full set of valid outside entries — the plan is the
-  confirmed one; whether other user-session products can open the door.
-  Tracked as "The engine and the entry-point tool — mechanics".
+- The engine and the entry-point tool — mechanics settled: the engine
+  is awake in the plugin on a strict leash, runs only in started
+  projects, running the tool on a file is the act that clears it,
+  downstream documents stay inside, and the plan alone enters from
+  outside.
 - The review gate — the PASS/FAIL review-and-rectify loop, now applied at
   every stage: task → agent performs → a separate agent reviews against
   criteria and writes a report → PASS/FAIL → FAIL rectifies and

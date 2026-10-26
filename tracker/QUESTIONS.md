@@ -294,6 +294,9 @@ applied to the work later. See the tracker skill.
   outside products — user-interaction sessions' outputs — enter through
   it, the plan being the confirmed entry. The remaining fog is whether
   any outside product beyond the plan is a valid entry.
+- **Answered — 2026-10-26:** the plan only — everything else stays
+  inside or flows through its own channel (user).
+- **Follow-up:** map updated; the boundary is fully specified.
 
 ## Review loop — where graded reports live — 2026-10-25
 
