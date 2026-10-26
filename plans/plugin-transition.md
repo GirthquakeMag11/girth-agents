@@ -64,8 +64,9 @@ after approval.
   1. The plan gate — the plan is reviewed: settled — the review loop is
      formally necessary before the wayfinding session's product is even
      called a plan; "ungated" means no upstream document, not no
-     review. What remains: what concretely supplies the plan's
-     checklist, and where a FAILed user-approved plan goes.
+     review. The checklist source is settled: the session's content
+     (the chat) and the project's context. What remains: where a
+     FAILed user-approved plan goes for rectification.
   2. The human stops — "the plan is the one human stop" vs the
      destination's "one umbrella spec, approved once": whose approval
      is that second one — yours, or the gate's PASS?
@@ -182,10 +183,17 @@ after approval.
 - Session scope: settled — every stage runs fresh; the fixing agent
   keeps its session across fix-rounds (the engine detects and recovers
   a lost session); the checker is always fresh. (2026-10-25, user)
+- The chat's boundary: settled — the plan's own review is done with the
+  chat that created it as a source; everything valuable in the chat
+  must be accounted for in the plan before the plan is finalized; once
+  finalized, the chat can provide no value, so raw chat never carries
+  over that boundary. (2026-10-26, user)
 - Hand-offs: settled — only typed essentials travel between
   stage-sessions: the brief compiled from the records, the checklist,
-  and the verdict with its report. Raw chat never carries over.
-  (2026-10-25, user)
+  and the verdict with its report. Raw chat never carries over past the
+  plan's finalization — its whole value must be folded into the
+  finalized plan first; the plan's own review is the one place the chat
+  is a source. (2026-10-25, user; refined 2026-10-26)
 - Discipline: settled — the cycle's rules are enforced by the tool in
   code: a cap on fix-rounds and a time limit per step; the agent obeys
   and cannot bend them. The exact numbers are spec detail. (2026-10-25,
@@ -197,7 +205,9 @@ after approval.
 - Criteria: settled — the engine compiles the reviewer's checklist
   straight from the earlier approved document (plan for the spec, spec
   for the tickets, tickets for the work); the checker only grades
-  against it. (2026-10-25, user)
+  against it. The plan stage is the exception: its checklist comes from
+  the session's content — the wayfinding chat — and the project's
+  context. (2026-10-25, user; refined 2026-10-26)
 - The loop's driver: settled — the cycle itself (send in the reviewer,
   read the verdict, return the work for fixes on FAIL, repeat until
   PASS) is a hard tool in the plugin's code. (2026-10-25, user)

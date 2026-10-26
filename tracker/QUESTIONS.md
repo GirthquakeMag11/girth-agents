@@ -400,6 +400,9 @@ applied to the work later. See the tracker skill.
   day's rounds).
 - **Follow-up:** map updated; the gate's only open thread left is the
   interplay with the existing checkpoints.
+- **Note — 2026-10-26:** the criteria rule gained its plan-stage
+  exception — the plan's checklist comes from the session chat and the
+  project context, which is the one place raw chat is a source.
 
 ## Slicing skill — the /slice door's fate — 2026-10-25
 
