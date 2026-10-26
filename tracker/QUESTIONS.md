@@ -152,6 +152,8 @@ applied to the work later. See the tracker skill.
   questions reach the user, period (user).
 - **Follow-up:** map updated; the no-lying principle is recorded as its
   own ruling.
+- **Note — 2026-10-26:** that help is now a named fact-finder agent
+  type — the third named helper.
 
 ## Sidebar ongoing-work breakdown — what counts and what it reads — 2026-10-25
 

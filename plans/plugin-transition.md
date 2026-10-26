@@ -73,6 +73,10 @@ after approval.
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
   (2026-10-26, user)
+- The fact-finder: settled — its own named agent type; it acquires
+  answers for information-kind questions and is one of the helpers
+  built to fail openly rather than fabricate. The third named agent
+  type. (2026-10-26, user)
 - The inbox answerer: settled — a defined helper with its own job
   description runs each opened inbox item's seeded session (pose the
   question, discuss, record the answer), the same pattern as the
@@ -329,9 +333,10 @@ after approval.
   open point: whether each tag also gets GitHub release notes (the gh
   step). Tracked as "Installer and release machinery under the
   plugin".
-- Agent types and the plugin's tool/code surface — the reviewer agent
-  is the first named type; the rest hang off the change cloud and the
-  just-settled channel.
+- Agent types and the plugin's tool/code surface — the reviewer, the
+  inbox answerer, and the fact-finder are the named types so far; the
+  fixer's fate (own type, or the builder repairing) is the open one;
+  the rest hangs off the change cloud.
 - The plugin package's layout inside the repo — where the plugin's
   entrypoints sit (repo root, or a subdirectory named with the git
   plugin's path selector), now that the repo itself is the distribution.
