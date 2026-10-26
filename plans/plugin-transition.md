@@ -16,12 +16,17 @@ after approval.
   own working process — how girth-agents itself is being built, its
   approvals, its testing, its releases. [The system] = the machine the
   plugin will be — the engine, the gate, the helpers, the chains it
-  runs on projects. Every decision below rules exactly one layer. An
-  apparent conflict BETWEEN the layers is a context artifact — the
-  designer's workflow and the designed machine doing different things —
-  and must never be reported as a design tension or become a question
-  to the user. (Incident of 2026-10-26: a phantom cross-layer conflict
-  nearly corrupted the plan; this warning exists so it cannot recur.)
+  runs on projects. Every decision below rules exactly one layer. A
+  reviewer flagging an apparent conflict BETWEEN the layers has done
+  its job: the representation FAILs, correctly. The interpreter then
+  classifies: a cross-layer artifact is a representation problem — the
+  map's conflation, fixed by the recorder, never a question to the
+  user; a same-layer conflict is a genuine design question; unclear
+  scope gets the scoping-clarification question, never a demand to
+  reconcile two separate contexts. (Incident of 2026-10-26: an
+  unlabeled map produced a legitimate FAIL, and the interpreter treated
+  the representation problem as a design problem — the inversion this
+  warning exists to prevent.)
 
 - The catalog's identity carries into the plugin: skills, commands, and
   agents stay plain Markdown, ship bundled with the plugin, and the
@@ -203,12 +208,17 @@ after approval.
   which wayfinding was supposed to catch. It produces a loud,
   observable failure that makes it back to us for figuring out how to
   fix. (2026-10-26, user)
-- Reviewer context: settled, for both layers — reviewers must receive
-  labeled layer context with their inputs, and an apparent conflict
-  between the layers is a context artifact, never a design tension and
-  never a question to the user. The 2026-10-26 incident — a phantom
-  cross-layer conflict presented as a design question — is the worked
-  example. (2026-10-26, user)
+- Reviewer context: settled, for both layers — a review FAILing a
+  broken representation is correct behavior, not noise. The
+  interpreter's triage decides what the failure means: a cross-layer
+  artifact is a representation problem, fixed by the recorder and never
+  a question to the user; a same-layer conflict is a genuine design
+  question; genuinely unclear scope gets the scoping-clarification
+  question ("does this apply here or there?", as asked with
+  test-driving), never a demand to reconcile two separate contexts.
+  The 2026-10-26 incident is the worked example: a legitimate FAIL on
+  an unlabeled map, mishandled as a design question — the inversion
+  this entry rules out. (2026-10-26, user)
 - Two layers: settled — the destination's approvals (the umbrella spec
   approved once, by the user) are THIS effort's working process, not
   the plugin's rules; the checkpoints ruling (the plan is the chain's
@@ -374,9 +384,13 @@ after approval.
 
 ## Not yet specified
 
-- Test scenarios harvested from this effort's own incidents: a phantom
-  cross-layer conflict must be caught by the review chain and never
-  reach the user as a design question (incident of 2026-10-26).
+- Test scenarios harvested from this effort's own incidents: (1) a
+  representation with a cross-layer conflict FAILs review — the flag is
+  correct behavior, not a bug; (2) the interpreter classifies the
+  finding: representation repair for cross-layer artifacts, the design
+  question for same-layer conflicts, the scoping clarification for
+  unclear scope — never the reconciliation question that presumes one
+  layer (incident of 2026-10-26).
 - The change cloud — awaiting the user's last pour: the surviving
   skills' and commands' fates (the coverage review counts 11 skills and
   6 commands with no decision on record), plus anything else the user
