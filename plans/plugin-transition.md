@@ -34,6 +34,10 @@ after approval.
 
 ## Decisions so far
 
+- The sidebar also breaks down currently ongoing work — analogous in form
+  to OpenCode's experimental todo lists (their list is an agent's
+  private per-session tasks via `todowrite`; ours is the system's
+  engine-driven work in flight). (2026-10-25, narrated)
 - The TUI sidebar — the right-hand panel of the TUI, addressed by the
   CLI plugin's `sidebar.content` slot — displays `Inbox: {n}`: the
   number of items waiting in the user's inbox for the current project.
@@ -97,6 +101,12 @@ after approval.
 
 ## Not yet specified
 
+- Sidebar ongoing-work breakdown — what counts as ongoing: the open
+  ticket frontier, review loops in flight, PASS-pending hand-offs, inbox
+  items awaiting the user? And what the display reads — a derived view
+  over the system's records, or a new state record that itself needs a
+  home. Tracked as "Sidebar ongoing-work breakdown — what counts and
+  what it reads".
 - Handoff on the shelf — what the shelf means for the plugin: parked out
   of the published surface until the replacement proves out, or shipped
   dormant; when and how retirement lands on decision 0005 and

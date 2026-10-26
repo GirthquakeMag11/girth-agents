@@ -6,6 +6,21 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Sidebar ongoing-work breakdown — what counts and what it reads — 2026-10-25
+
+- **The question:** What counts as "currently ongoing work" for the
+  sidebar breakdown — the open ticket frontier, review loops in flight,
+  PASS-pending hand-offs, inbox items awaiting the user — and does the
+  display derive the view from the system's existing records, or from a
+  new state record that itself needs a home?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  the sidebar shows the breakdown, analogous in form to OpenCode's
+  experimental todo lists (which are an agent's private tasks via
+  `todowrite`); ours is the system's engine-driven work.
+- **Decided (provisional):** derived from the system's own records —
+  never a human-written or agent-private state; the exact derivation and
+  list shape are pinned in the spec.
+
 ## The inbox item's home and form — 2026-10-25
 
 - **The question:** Where do formal inbox items live and what is their
