@@ -223,6 +223,11 @@ after approval.
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
   working practice, formalized for the engine. (2026-10-26, user)
+- Concurrency, plank one: settled — within a project, the engine does
+  one thing at a time: one chain's current step in flight, everything
+  else ready-but-waiting; parallelism exists only across separate
+  projects. Several chains in one project at once is the future
+  stance, named but not designed. (2026-10-27, user)
 - Non-code repositories: settled — the same system applies to every
   repository kind, but the substance's own kind sets the bar: every
   file representing a project's substance — code, writing, or a
