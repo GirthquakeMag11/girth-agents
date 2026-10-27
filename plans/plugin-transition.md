@@ -213,6 +213,10 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Stratification: settled — a verified lesson-claim stratifies into the
+  recall store only after it recurs across separate pieces of work; a
+  single occurrence stays a specific hazard, found again on collision.
+  Learn-once rides the second-time signal. (2026-10-26, user)
 - prove-it and fact-finder, mutual checks: settled — they keep each
   other in line: the fact-finder acquires facts that keep prove-it's
   reasoning grounded in evidence, and can correct it; prove-it verifies
