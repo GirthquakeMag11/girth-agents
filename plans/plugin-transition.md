@@ -253,6 +253,10 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- `wizard` and `/wizard`: shelved — join handoff, pickup, and `/retro`
+  on the shelf: useful in concept, but after test driving the wizard
+  needs a lot of work before it carries its own weight; re-judged
+  later. (2026-10-26, user)
 - `maintaining-docs`: settled — zero drift tolerance: if something
   documented changes, the documentation changes — never chance-based,
   never deferred to a session or a release. The docs' contracts (which
@@ -483,10 +487,10 @@ after approval.
   forms; the cap's numbers; the test harness's shape, seams, and gate
   mechanics; the report pile's owning skill and format (scaffold-family
   maintenance), and the inbox message record's home and form.
-- Deferred by design, not open now: handoff and `/retro` shelf
-  retirement; whether the engine is one instance across started
-  projects or per project (raised by the reviews, not yet put to the
-  user).
+- Deferred by design, not open now: handoff, `/retro`, and the wizard
+  pair's shelf retirement; whether the engine is one instance across
+  started projects or per project (raised by the reviews, not yet put
+  to the user).
 
 ## Out of scope
 
