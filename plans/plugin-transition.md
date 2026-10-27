@@ -223,6 +223,14 @@ after approval.
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
   working practice, formalized for the engine. (2026-10-26, user)
+- Engine-vs-user file discipline: settled — the engine checks each
+  user edit it meets in its working files against its known context
+  (the records, the glossary, the criteria): what it can account for
+  it absorbs silently and re-derives on top of; what it cannot account
+  for raises through the inbox — "intentional? then it needs a
+  ruling; a mistake? then revert it" — and the engine never builds on
+  or commits around the edit until the user answers. The system tests
+  accountability, never guesses intent. (2026-10-27, user)
 - Concurrency, plank three — branch placement: settled — the present
   stance: everything the engine does lands on the working branch
   (records, reports, tickets, code alike), pulling before pushing,
