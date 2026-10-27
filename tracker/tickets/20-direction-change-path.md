@@ -19,4 +19,4 @@ Direction changes are authority, recorded like any ruling.
 
 - [ ] Amending a plan produces a new reviewed revision, not an un-reviewed rewrite.
 - [ ] Aborting a workstream closes its records with the reason, and the engine stops touching it.
-- [ ] Re-answering a resolved question reopens it and the rules resumes from the new answer.
+- [ ] Re-answering a resolved question reopens it and the work resumes from the new answer.

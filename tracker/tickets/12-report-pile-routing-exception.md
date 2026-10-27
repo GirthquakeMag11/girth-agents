@@ -23,6 +23,7 @@ failure differs.
 ## Acceptance criteria
 
 - [ ] A report lands in the pile exactly once, and the artifact carries the stamped verdict.
+- [ ] The reviewer is the pile's sole practitioner.
 - [ ] The pile reads as the single source for the engine's live report and the sidebar.
 - [ ] Routing: the user is asked exactly when rectification requires their answer; nothing else reaches them.
 - [ ] A dead-end triggers the loud exception, the consent-gated self-report, and the coalescing rule.

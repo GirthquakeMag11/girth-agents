@@ -22,6 +22,7 @@ artifact, the scoped context, the task, and the boundary.
 ## Acceptance criteria
 
 - [ ] A spec-stage review receives a checklist whose every criterion cites its source in the upstream artifact.
+- [ ] Criteria always fit the substance's kind — writing graded as writing, code as code.
 - [ ] A plan-stage review receives a checklist built from the session's recorded rulings and the project records.
 - [ ] Every report carries the four typed fields, and its checklist is stored with it.
 - [ ] Every dispatch carries a compiled brief; no brief is ever stored as a separate record.

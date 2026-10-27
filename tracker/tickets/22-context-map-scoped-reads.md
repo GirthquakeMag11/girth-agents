@@ -4,7 +4,7 @@
 
 **Kind:** feature
 
-**Blocked by:** 11 (tracker kinds), 02 (catalog atomic sweep)
+**Blocked by:** 02 (catalog atomic sweep), 11 (tracker kinds)
 
 ## What it delivers
 

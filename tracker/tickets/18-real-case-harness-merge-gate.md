@@ -22,5 +22,6 @@ from records alone.
 ## Acceptance criteria
 
 - [ ] The harness drives each named seam with real components and trust-mapping assertions.
+- [ ] The existing harnesses seed the new suite, and the harvested scenarios are regression cases first.
 - [ ] A merge to main requires the harness green.
 - [ ] Each harvested scenario exists as a regression case and fails when its defect is reintroduced.

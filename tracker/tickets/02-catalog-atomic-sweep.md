@@ -26,6 +26,7 @@ sweep; the validator stays green throughout the result.
 ## Acceptance criteria
 
 - [ ] Every rename, removal, birth, re-fit, and shelf move lands, and the linter reports a clean catalog at the end of the change as a whole.
+- [ ] Nothing in the catalog converts to code unless a trigger needs it.
 - [ ] `codifying`, `domain-modeling`, `maintaining-docs`, and the tracking skill's references each carry their settled re-fits.
 - [ ] No reader of a renamed or removed item points at a name that no longer exists.
 - [ ] The `/slice` door's body is the thin call into the slicing skill, whose procedure moved wholesale.

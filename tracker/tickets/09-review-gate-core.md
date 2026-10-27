@@ -25,8 +25,10 @@ order, first in first out.
 
 ## Acceptance criteria
 
-- [ ] Cleaning a plan into the engine starts the gate: a fresh reviewer grades it, a FAIL returns it for repair, and the cycle ends at PASS or the cap.
+- [ ] Clearing a plan into the engine starts the gate: a fresh reviewer grades it, a FAIL returns it for repair, and the cycle ends at PASS or the cap.
 - [ ] The builder keeps its session across fix-rounds; the reviewer is always fresh.
 - [ ] The cap and the time limit are enforced by the tool and cannot be bent by the agent.
 - [ ] The plan's review checks authority-completeness; the work stage is reviewed ticket by ticket with code and test evidence; several plans queue in received order.
+- [ ] A cap too low for the work is the exception, not an override.
+- [ ] The inbox carries newness, never deferral — post-confirmation questions are only those a later context newly made visible.
 - [ ] A killed session is detected and rebuilt from the records alone.

@@ -14,8 +14,6 @@ recorded, dated confirmation marker inside the plan — no marker, loud
 rejection — and, on success, tells the engine the file is now
 touchable and queued. A tool run that dies loses nothing: the marker
 survives and the tool re-runs. Everything downstream of the plan stays
-inside the engine and never crosses this tool. A tool run that dies loses nothing: the marker
-survives and the tool re-runs. Everything downstream of the plan stays
 inside the engine and never crosses this tool.
 
 ## Acceptance criteria

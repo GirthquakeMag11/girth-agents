@@ -23,6 +23,7 @@ until answered.
 ## Acceptance criteria
 
 - [ ] The forbidden list is enforced — the engine cannot perform any listed move.
+- [ ] User sessions live outside the engine and never compete for its queue.
 - [ ] Each unit of engine work lands as its own conventional commit, pushed as it goes.
 - [ ] A non-fast-forward push holds and raises; nothing is merged or forced.
 - [ ] An offline push holds locally and retries on the next pass.
