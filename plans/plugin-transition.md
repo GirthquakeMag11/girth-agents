@@ -1,6 +1,8 @@
 # The skillset becomes an OpenCode plugin
 
-**Status:** done
+**Status:** charting — re-entered 2026-10-27; the premature
+spec-slice-implement pass was discarded and the lessons it taught are
+being woven back into this map's own mechanics.
 
 ## Destination — [Ours: this effort's own working process]
 
@@ -9,11 +11,6 @@ OpenCode plugin, then one umbrella spec — the skills, commands, agent
 types, tools, and code of that plugin — written as one coherent set and
 approved once. Building and slicing are the next effort and begin only
 after approval.
-
-Reached 2026-10-27: every thread is followed to an answer or parked by
-name, the plan passed its own three-reviewer gate unanimously on the
-second round, and `decisions/0007-plugin-transition.md` records the
-turn. The umbrella spec is the next effort.
 
 ## Notes
 
@@ -73,14 +70,6 @@ turn. The umbrella spec is the next effort.
   one atomic change (the linter fires mid-rename); the channel's
   supersession of the installer's clone-only transport ruling is not
   yet recorded in `decisions/`.
-- Working loop for the spec phase (2026-10-27, user): the plan is the
-  one human stop and has passed. The spec, the ticket graph, and each
-  ticket's outcome each get one fresh-context reviewer per pass,
-  rectified until PASS — no approval ask at the end. A ticket is not
-  marked done until its acceptance criteria demonstrably hold and a
-  fresh review returns PASS. The user is asked only when information is
-  genuinely required, or when the agent fears contradicting the very
-  skills being rebuilt.
 - Questioning notes (2026-10-26, user): the design is charted through
   unknown territory; the user may misspeak, make mistakes, hold ideas
   that conflict, or change a mind that was never firmly made up. Doubling

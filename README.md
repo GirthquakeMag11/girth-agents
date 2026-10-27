@@ -6,24 +6,60 @@ installed into `~/.config/opencode/` with one script.
 
 ## Install
 
-Point OpenCode at this repository and it loads the plugin — the engine,
-its helpers, and the management scaffold it maintains:
+One line, run inside the project you use:
 
-```jsonc
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugins": [{"package": "github:GirthquakeMag11/girth-agents", "options": {}}]
-}
+```sh
+git clone https://github.com/GirthquakeMag11/girth-agents.git && cd girth-agents && ./scripts/install.sh
 ```
 
-Updates reach installs through `opencode plugin update`. Releases are
-tags on this repository, each with a GitHub Release page carrying the
-changelog section.
+Running the script opens a small menu — the deeds and Configuration side by
+side. A fresh install asks two questions: how items land (links,
+recommended, or copies) and how updates behave (manual, notify, or auto).
+Your answers are recorded with the install, and re-shaped any time through
+Configuration — never by editing a file.
 
-The catalog also loads directly as working skills for its maintainers —
-a checkout on the `skills` path in `opencode.json(c)` or the builder
-script in `scripts/install.sh` (see CONTRIBUTING); that path is
-maintainer tooling, not the user's channel.
+| Verb      | What it does                                                                                                                        |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| install   | Verify the catalog, then link — or, with `--copy`, copy — it                                                                            |
+| update    | Bring it current per your policy: manual pulls as today, notify also tells you when a newer release is cut, auto moves you onto the latest cut release |
+| status    | Installed release, latest cut release, your policy, and the gap; `status --notes` shows what changed                                   |
+| uninstall | Remove exactly what an install put there (asks first)                                                                               |
+
+The verbs also run scripted: `./scripts/install.sh install --copy --policy
+auto`. A flagless run with no terminal fails naming the flag it needed,
+rather than guessing — safe inside scripts and CI.
+
+| Artifact | Source                    | Installed to                      |
+| -------- | ------------------------- | --------------------------------- |
+| Agents   | `.opencode/agents/*.md`   | `~/.config/opencode/agents/`      |
+| Skills   | `.opencode/skills/<id>/`  | `~/.config/opencode/skills/<id>/` |
+| Commands | `.opencode/commands/*.md` | `~/.config/opencode/commands/`    |
+
+Because the items are symlinks, update reconciles everything in place.
+Start a new OpenCode session and the catalog is live.
+
+<details>
+<summary>Alternatives and details</summary>
+
+- **No symlinks (Windows, unusual filesystems):** `./scripts/install.sh
+  install --copy` copies instead — update re-copies the items whose source
+  changed.
+- **Updating a dirty checkout:** update refuses to pull over uncommitted
+  changes in the checkout — commit or stash them first.
+- **Uninstall:** removes exactly what an install put there — links and
+  copies — and asks first; `--yes` skips. Files you added or changed
+  yourself are left alone.
+- **Preview first:** any verb takes `--dry-run` to print what it would do
+  and change nothing. `--help` shows everything.
+- **Skills only, via config:** skip the installer and point the `skills`
+  array at this checkout in your global `opencode.json(c)`:
+
+  ```jsonc
+  "skills": ["/path/to/girth-agents/.opencode/skills"]
+  ```
+
+  (The installer leaves this entry alone; you manage it yourself.)
+</details>
 
 ## Catalog
 
