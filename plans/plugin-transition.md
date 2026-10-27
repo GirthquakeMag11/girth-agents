@@ -213,6 +213,10 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- The engine's commit unit: settled — one commit per meaningful unit
+  of engine work (a record change, a ticket outcome, a verdict), with
+  a conventional message, pushed as it goes — the maintainer's own
+  working practice, formalized for the engine. (2026-10-26, user)
 - Non-code repositories: settled — the same system applies to every
   repository kind, but the substance's own kind sets the bar: every
   file representing a project's substance — code, writing, or a
