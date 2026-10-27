@@ -19,6 +19,12 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — the layer awaits the user's
   design; nothing is built on a guess.
+- **Note — 2026-10-26:** the user grounded the thread first — two
+  research agents dispatched on the established mechanisms (Claude
+  Code, Codex, Aider, Letta/MemGPT, zeroshot, frameworks) and the
+  scholarship (memory taxonomies, experience reuse, failure modes,
+  dedup, human-in-the-loop); notes land in `docs/research/` before any
+  design.
 
 ## Primary agents — what replaces build and plan — 2026-10-26
 
