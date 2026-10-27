@@ -121,6 +121,19 @@ applied to the work later. See the tracker skill.
   memory conventions, the tracker's pipeline pattern, dedicated-role
   precedents); notes land in `docs/research/`.
 - **Note — 2026-10-26:** research landed — the grill begins.
+- **Answered — 2026-10-26:** the discipline is the vocabulary
+  caregiver's designated job — a new helper whose only context is the
+  glossary; anyone meeting a term-that-matters jots a proposal, which
+  is a tracker kind of its own; proposals are filtered (not batched)
+  and each warranted one opens an inbox question carrying the context
+  and the caregiver's suggested definition; admission and change are
+  the user's authority, taken as seriously as conventions; the review
+  gate grades whether work uses terms as defined; the glossary stays
+  prose with form-only mechanical checks, meaning always judgment; and
+  the recall layer is separate — rules and shared meaning here, lessons
+  in the tracker's hazard/lesson kinds (user, across the grill).
+- **Follow-up:** map updated; the drift-detect-and-repair loop rides the
+  review gate and the caregiver.
 
 ## The old inbox helpers — deferred until the shape is visible — 2026-10-25
 
