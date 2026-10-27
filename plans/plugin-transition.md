@@ -253,6 +253,11 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- The five crafts: settled — `diagnosing-bugs`, `code-review`,
+  `codebase-design`, `prototyping`, and `research` all fall under the
+  role-shaped-context rule: their functions survive, their exact
+  carriers are assigned when the helper contexts are designed.
+  (2026-10-26, user)
 - Context is role-shaped: settled — a skill loaded into an agent implies
   that agent holds its responsibility. The new system must give each
   engine agent measured, precisely tailored context, never excessive
