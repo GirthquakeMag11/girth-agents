@@ -6,6 +6,20 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## The recall layer — its shape — 2026-10-26
+
+- **The question:** What IS the recall layer — when a lesson is
+  captured, by whom, in what form, where it lives, and how the agents
+  read it — so that lessons are learned only once and the hazard
+  tracker's overlap can be reconciled on real terms?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  in scope, separate from the canonical glossary, one principle
+  (lessons learned once); declared but undefined — the hazard
+  reconciliation waits for its shape.
+- **Kind:** authority
+- **Decided (provisional):** undecided — the layer awaits the user's
+  design; nothing is built on a guess.
+
 ## Primary agents — what replaces build and plan — 2026-10-26
 
 - **The question:** What primary agent or agents replace the built-in
