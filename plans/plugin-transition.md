@@ -213,6 +213,12 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- The vocabulary caregiver: settled — a new, small dedicated helper
+  whose only context is the glossary: it admits and deprecates terms,
+  checks definitions machine-style, runs drift-repair, and routes
+  authority needs to the user through the inbox. The fifth helper;
+  precisely tailored context per the role-shaped ruling. (2026-10-26,
+  user)
 - Primary agents: declared open — the built-in primary agents (`build`
   and `plan`) do not make sense in the new system's context; their
   replacement must get a precise answer on the record. The solution is
