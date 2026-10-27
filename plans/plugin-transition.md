@@ -253,6 +253,17 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- `ideation` + `/ideate`: declared — a new command-invoked skill for the
+  optional preliminary phase before wayfinding: interactively building
+  the idea cloud — as the harvest did — before transitioning to
+  questioning. Wayfinding can begin directly when the user can state
+  the destination specifically at the outset; ideation optionally
+  precedes it when the user's ideas need gathering first, providing
+  the context wayfinding then charts. (2026-10-26, user)
+- `/wayfind`: settled — the door stays; it is the pro-active flow's
+  entry: the interactive session that charts the plan, confirmed by the
+  user at its end, then cleared through the entry-point tool.
+  (2026-10-26, user)
 - `wizard` and `/wizard`: shelved — join handoff, pickup, and `/retro`
   on the shelf: useful in concept, but after test driving the wizard
   needs a lot of work before it carries its own weight; re-judged
