@@ -213,6 +213,11 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Glossary in reviews: settled — the project side of glossary
+  enforcement: glossary-consistency joins the criteria the engine
+  compiles from the records, and a stage's work that uses a term in a
+  drifted sense fails its check — the glossary is a record the criteria
+  can point at. (2026-10-26, user)
 - Glossary proposals' home: settled — term proposals are a tracker kind
   of their own, like questions and hazards: classified, recorded, and
   processed by the caregiver, with the inbox question referencing the
