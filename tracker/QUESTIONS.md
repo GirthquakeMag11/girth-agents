@@ -6,6 +6,19 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Primary agents — what replaces build and plan — 2026-10-26
+
+- **The question:** What primary agent or agents replace the built-in
+  `build` and `plan` in the new system, and which one fronts the
+  interactive sessions?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the
+  built-in primaries do not fit the engine, helpers, and inbox design;
+  the user expects the answer to fall out as the areas define
+  themselves; a precise answer must land on the record.
+- **Kind:** authority
+- **Decided (provisional):** undecided — deliberately deferred until
+  the surrounding areas settle; recorded so it cannot be forgotten.
+
 ## GitHub integration — the engine's commits and pushes — 2026-10-26
 
 - **The question:** What is the engine's commit discipline — the unit

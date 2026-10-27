@@ -213,6 +213,11 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Primary agents: declared open — the built-in primary agents (`build`
+  and `plan`) do not make sense in the new system's context; their
+  replacement must get a precise answer on the record. The solution is
+  expected to make itself obvious as other areas define themselves, so
+  the decision waits — but it must not be forgotten. (2026-10-26, user)
 - GitHub integration: declared — the system integrates with GitHub for
   the end user, beyond a script that checks gh is installed. The engine
   handles commits and pushes for its autonomous work: many granular
@@ -486,6 +491,10 @@ after approval.
 
 ## Not yet specified
 
+- Primary agents — the built-in `build` and `plan` primaries do not
+  fit; the replacement is expected to fall out of the helper roster,
+  the engine mechanics, and the interactive-session design as they
+  settle. Tracked as "Primary agents — what replaces build and plan".
 - GitHub integration — open mechanics: the commit's unit (per ticket?
   per record change? per verdict?), the push cadence, offline behavior,
   auth (gh as the vehicle), and the branch discipline that keeps engine
@@ -496,8 +505,16 @@ after approval.
   counts as a project (monorepo packages, non-code projects), where the
   scaffold and the per-project records live in each configuration, how
   bootstrapping and the engine scope them, and how the inbox, the
-  report pile, and the glossary follow. Tracked as "Project kinds —
-  monorepos and non-code repositories".
+  report pile, and the glossary follow. Research landed
+  (`docs/research/project-locations-mechanics.md`,
+  `project-kinds-practice.md`): a location is a directory plus exactly
+  one project; config merges to the root, nested packages being
+  override layers, not projects; sessions bind to one directory and one
+  projectID; the domains disagree on resolution semantics; "project" is
+  a durable cross-checkout identity. The crux is undocumented and ours
+  to decide: OpenCode never defines a monorepo boundary, and no tool
+  anywhere places trackers, glossaries, or decisions per package.
+  Tracked as "Project kinds — monorepos and non-code repositories".
 - Knowledge management — to be mapped as its own area: the theoretical
   and practical deep dive into domain-modeling; who owns the discipline
   now that the stretched-thin interactive agent does not; the glossary's
