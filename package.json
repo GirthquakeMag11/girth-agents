@@ -1,0 +1,18 @@
+{
+  "name": "girth-agents",
+  "version": "0.4.0",
+  "description": "The girth-agents catalog as an OpenCode plugin: an engine, its helpers, and a project's management scaffold.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tui": "./src/tui.ts"
+  },
+  "dependencies": {
+    "@opencode/plugin": "latest"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.6.6",
+    "@opentui/solid": ">=0.6.6",
+    "solid-js": ">=1.9.0"
+  }
+}
