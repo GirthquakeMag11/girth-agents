@@ -253,6 +253,10 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The helpers' permissions: settled — each helper carries its own
+  tailored permission ruleset, exactly as its configuration, toolset,
+  and skills are tailored; the forbidden list is the engine's floor
+  and each helper's set builds inside it. (2026-10-27, user)
 - The off-switch: settled — bootstrap states plainly what always-awake
   processing means before it starts (the consent moment), and a park
   command stops the engine on that project, leaving the records in
@@ -776,7 +780,9 @@ after approval.
   mechanics; the report pile's owning skill and format (scaffold-family
   maintenance); the inbox message record's home and form; the
   system-defect record kind's format (the exception's project-side
-  loud failure).
+  loud failure); the unmet-permission default in headless helper
+  sessions (fail-closed — no invisible prompts; the need routes to a
+  question or an inbox request).
 - Deferred by design, not open now: handoff, `/retro`, and the wizard
   pair's shelf retirement; the scaffold-migration rules' details; the
   future concurrency stance; multi-machine arbitration.
