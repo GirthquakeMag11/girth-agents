@@ -253,6 +253,14 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- Context is role-shaped: settled — a skill loaded into an agent implies
+  that agent holds its responsibility. The new system must give each
+  engine agent measured, precisely tailored context, never excessive
+  and diverse context. The work-loop crafts' exact places are therefore
+  in flux: `diagnosing-bugs`, `code-review`, `codebase-design`,
+  `prototyping`, and `research` are assigned to the roles that hold the
+  responsibility (candidates: the builder and the reviewer), not
+  ambiently available to all. (2026-10-26, user)
 - `questionnaire`: settled — its function (decisions blocked on outside
   people → a written questionnaire aimed at what is needed back)
   survives as-is for now; wording re-fits with the sweep.
