@@ -223,6 +223,12 @@ after approval.
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
   working practice, formalized for the engine. (2026-10-26, user)
+- Crash and push contract: settled — the records are the ledger:
+  local commits are the safety; a restarted engine rebuilds where
+  things stood from the committed records and their states alone;
+  unpushed commits retry on the next pass with a pull first; nothing
+  is ever force-pushed. There is no separate engine state store.
+  (2026-10-27, user)
 - Engine-vs-user file discipline: settled — the engine checks each
   user edit it meets in its working files against its known context
   (the records, the glossary, the criteria): what it can account for
