@@ -808,11 +808,22 @@ after approval.
   question for same-layer conflicts, the scoping clarification for
   unclear scope — never the reconciliation question that presumes one
   layer (incident of 2026-10-26).
-- Spec-time keystones — verified before building, not open decisions:
-  whether the plugin can add brand-new agent IDs (the six helpers), the
-  git-spec plugin's `./tui` auto-load, sidebar-slot live-reactivity,
-  `ctx.storage` durability and location, the event catalog and
-  `session.idle` payload, `codemode` semantics.
+- The helpers are skills, not agents: settled — the six helpers are
+  roles inside the engine, each a skill carrying its role-shaped
+  context and its permission ruleset, loaded by the engine into the
+  sessions it spawns. They are never OpenCode-registered agent types;
+  the only true agent is the orchestrator, the config-declared
+  interactive primary. (2026-10-27, user — the first discarded pass
+  mis-mapped "roles" onto "registered agents" and was corrected.)
+- Platform facts, verified in live probes (2026-10-27; the discarded
+  pass paid for these): a plugin cannot register brand-new agent IDs —
+  `AgentEditor` has no `add`; `ctx.storage` survives service restarts;
+  tools registered with `codemode: true` surface in the code-mode tool
+  namespace and execute; a local-directory plugin loads only from an
+  `index.ts` or `server.ts` at the package root, the package exports
+  serving package channels. Still unverified, live-TUI-only: the git
+  `./tui` auto-load, sidebar-slot live-reactivity, and the
+  `session.idle` payload.
 - Spec details deferred by design: the typed forms (brief, checklist,
   verdict/report) and where each lives; the inbox message and reply
   forms; the cap's numbers; the test harness's shape, seams, and gate
