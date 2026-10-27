@@ -129,7 +129,7 @@ after approval.
   retire; every old job has a new home (the screen, the answering
   helper, the engine picking up answers), and the helper's know-how
   lives in its own definition. (2026-10-26, user)
-- Checkpoints: [The system] settled — after a stage PASSes, the work proceeds on its
+- Checkpoints: settled — [The system]. After a stage PASSes, the work proceeds on its
   own; the old per-stage approvals (spec's Approve / Approve-and-Slice /
   Stop-and-Amend, slice's ticket-graph approval) fold into the gate.
   The user's one approval stays where direction is set — the plan at
@@ -278,10 +278,10 @@ after approval.
   cannot be verified does not stratify. (2026-10-26, user)
 - Recall layer: settled — in scope: the engine's agents remember
   lessons across work, separate from the canonical glossary, governed
-  by one principle — lessons should only need to be learned once. The
-  layer is declared but undefined; its reconciliation with the hazard
-  tracker (whose purpose it overlaps significantly) waits until the
-  layer itself has a shape. (2026-10-26, user)
+  by one principle — lessons should only need to be learned once. Its
+  shape is settled in the sibling entries: reviewer jots, prove-it
+  verifies, recurrence stratifies, first occurrences are hazards, and
+  the store is a committed tracker kind. (2026-10-26, user)
 - Glossary's own hygiene: settled — the glossary stays prose (a term
   and its definition); the mechanical gate checks only form (duplicate
   spellings, malformed entries, empty definitions). Meaning — one
@@ -485,9 +485,10 @@ after approval.
   the PASS/FAIL report. The first agent type of the new system.
   (2026-10-25, user)
 - Handoff's shelf: settled — the handoff and pickup pair stays out of
-  the plugin for now, kept privately in the repo; retirement lands
-  later, once the engine has proved out the replacement. (2026-10-25,
-  user)
+  the plugin for now, kept privately in the repo; the engine, tracker,
+  and entry points carry the cross-session continuity the handoff did,
+  `decisions/0005` stands until the replacement proves out and
+  supersedes it, and retirement is judged later. (2026-10-25, user)
 - `test-driving`: re-scoped — the renamed skill becomes the broad
   practice of testing changes in real cases before trusting them; the
   plugin's own testing system is part of what it teaches and drives.
@@ -542,12 +543,6 @@ after approval.
   recognizes as such; informal, non-deterministic inbox items gleaned at
   command time are gone. `/inbox` initiates the re-active workflow with
   the user. (2026-10-25, narrated)
-- Handoff and pickup: shelved for the time being — neither cut nor
-  carried into the new system's active surface. The new vision
-  ultimately makes them obsolete: the engine, tracker, and entry points
-  carry the cross-session continuity the handoff did; decision 0005
-  stands until the replacement proves out and supersedes it.
-  (2026-10-25, narrated)
 - `find-skills` and `/wait-what`: dead — removed from the catalog; their
   surfaces (the README's off-the-spine find-skills line, `/wait-what`'s
   rows) go with them. (2026-10-25, narrated)
@@ -598,6 +593,11 @@ after approval.
 
 ## Not yet specified
 
+- Concurrency — open, being prepared now: the stance is not one answer
+  but a frontier — fourteen questions in
+  `docs/research/concurrency-blindspots.md` plus the 35-question
+  backlog in `remaining-blindspots.md`. Tracked as "Concurrency — the
+  engine's stance".
 - Primary agents — the built-in `build` and `plan` primaries do not
   fit; the replacement is expected to fall out of the helper roster,
   the engine mechanics, and the interactive-session design as they
@@ -608,34 +608,16 @@ after approval.
   commits from clobbering the user's own — the excluded zeroshot
   single-writer world is exactly what these commits must not assume.
   Tracked as "GitHub integration — the engine's commits and pushes".
-- Project kinds — to be investigated thoroughly (very foggy): what
-  counts as a project (monorepo packages, non-code projects), where the
-  scaffold and the per-project records live in each configuration, how
-  bootstrapping and the engine scope them, and how the inbox, the
-  report pile, and the glossary follow. Research landed
-  (`docs/research/project-locations-mechanics.md`,
-  `project-kinds-practice.md`): a location is a directory plus exactly
-  one project; config merges to the root, nested packages being
-  override layers, not projects; sessions bind to one directory and one
-  projectID; the domains disagree on resolution semantics; "project" is
-  a durable cross-checkout identity. The crux is undocumented and ours
-  to decide: OpenCode never defines a monorepo boundary, and no tool
-  anywhere places trackers, glossaries, or decisions per package.
-  Tracked as "Project kinds — monorepos and non-code repositories".
-- Knowledge management — to be mapped as its own area: the theoretical
-  and practical deep dive into domain-modeling; who owns the discipline
-  now that the stretched-thin interactive agent does not; the glossary's
-  relationship with the tracker; and the `learned term → new glossary
-  entry` pipeline's designated point in the workflow. Research complete
-  (`docs/research/knowledge-management-theory.md`,
-  `knowledge-management-practice.md`): maintenance must be someone's
-  designated job, not a busy generalist's side duty; capture must be
-  cheap, local, and non-interruptive; admissions happen on warrant, at
-  the moment the term matters; the vocabulary is a governed commons
-  with proposal, acceptance, deprecation, and drift-repair — and
-  surface alignment (agents aligning on wording, not meaning) needs a
-  detect-and-repair loop. Tracked as "Knowledge management — the
-  domain-modeling deep dive".
+- Project kinds — settled: one root store per repository, a root
+  context-map record, an optional `context:` field for domain-qualified
+  senses, scoped reads, per-package placement only on warrant; non-code
+  repositories run the same system with criteria fitting the
+  substance's kind (see Decisions so far).
+- Knowledge management — settled: the caregiver owns the discipline
+  and labors while the user rules admissions; proposals are a tracker
+  kind, filtered not batched, with suggested definitions; the review
+  gate grades term use; the glossary stays prose with form-only
+  mechanical checks (see Decisions so far).
 - Test scenarios harvested from this effort's own incidents: (1) a
   representation with a cross-layer conflict FAILs review — the flag is
   correct behavior, not a bug; (2) the interpreter classifies the
@@ -646,7 +628,8 @@ after approval.
 - The change cloud — awaiting the user's last pour: the surviving
   skills' and commands' fates (the coverage review counts 11 skills and
   6 commands with no decision on record), plus anything else the user
-  holds. Tracked as "The change cloud".
+  holds. Tracked as "The change cloud — harvesting the item-level
+  changes".
 - Spec-time keystones — verified before building, not open decisions:
   whether the plugin can add brand-new agent IDs (the four helpers), the
   git-spec plugin's `./tui` auto-load, sidebar-slot live-reactivity,

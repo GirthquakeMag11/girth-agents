@@ -34,7 +34,7 @@ tracked. The spec is not done until this passes.
   instructions), did every launch wait for an explicit yes, did the
   mask and re-ask behave. A failure is fixed or tracked, and the spec
   is not done until this passes.
-- **Closed — 2026-10-26:** superseded, not run — the plugin transition
+- **Done — 2026-10-26:** superseded, not run — the plugin transition
   shelves the wizard ("useful in concept, but after test driving it
   needs a lot of work before it carries its own weight"). The harness
   stays as regression for the day it returns; the scenario gate no
