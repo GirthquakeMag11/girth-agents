@@ -223,6 +223,11 @@ after approval.
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
   working practice, formalized for the engine. (2026-10-26, user)
+- Concurrency, plank three — branch placement: settled — the present
+  stance: everything the engine does lands on the working branch
+  (records, reports, tickets, code alike), pulling before pushing,
+  never force-pushing, never merging on its own; scope-based branching
+  is deferred to the future stance. (2026-10-27, user)
 - Bootstrap in a live project: settled — a re-bootstrap is a step of
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
