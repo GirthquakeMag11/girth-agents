@@ -252,6 +252,12 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- Dogfooding: settled — the engine develops girth-agents fully, plugin
+  code included — the point of dogfooding — made safe by the
+  two-checkout separation: it runs from a separate installed copy while
+  developing this repo's checkout, and its own commits reach the
+  install only at the next deliberate plugin update. (2026-10-27,
+  user)
 - The direction-change path: settled — the user rules direction
   changes in a session, and the ordinary machinery carries them:
   amending the plan becomes a new plan revision through the same
