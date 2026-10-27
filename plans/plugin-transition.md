@@ -223,6 +223,12 @@ after approval.
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
   working practice, formalized for the engine. (2026-10-26, user)
+- Concurrency, plank four — machines: settled — one engine per
+  machine, per checkout, for now: each machine's engine works its own
+  checkout as its own serial lane, reconciled through the shared git
+  history and the records (pull-first, absorb-or-alarm). A single
+  global engine across machines is the future stance, needing
+  arbitration not yet designed. (2026-10-27, user)
 - Crash and push contract: settled — the records are the ledger:
   local commits are the safety; a restarted engine rebuilds where
   things stood from the committed records and their states alone;
