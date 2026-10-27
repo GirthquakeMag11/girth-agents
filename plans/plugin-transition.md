@@ -213,6 +213,11 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Unverifiable claims: settled — a lesson-claim prove-it can neither
+  verify nor falsify vanishes from the recall path; if the uncertainty
+  behind it blocks work, the ordinary question machinery handles it
+  (information-kind to the fact-finder, authority-kind to the inbox).
+  The recall layer never harasses. (2026-10-26, user)
 - Stratification: settled — a verified lesson-claim stratifies into the
   recall store only after it recurs across separate pieces of work; a
   single occurrence stays a specific hazard, found again on collision.
