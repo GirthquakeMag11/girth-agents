@@ -1,4 +1,4 @@
-# 05: Bootstrap — activation, consent, and the off-switch
+# 05: Bootstrap — activation, consent, and the schema gate
 
 **Parent:** specs/plugin.md
 
