@@ -252,6 +252,12 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The forbidden list: settled — beyond the leash's one "never touch
+  un-cleared files": never force-push, rebase, or reset history; never
+  delete branches or merge on its own; never touch files outside the
+  records and the files its tickets name; never copy secrets it was
+  not handed for the task; never run network commands beyond its own
+  pushes and self-reports. (2026-10-27, user)
 - User sessions and the engine: settled — the user's sessions live
   outside the engine and never compete for its queue; their outputs
   cross the boundary at the already-designed doors (the entry-point
