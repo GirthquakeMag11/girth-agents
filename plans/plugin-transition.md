@@ -213,6 +213,12 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Glossary's own hygiene: settled — the glossary stays prose (a term
+  and its definition); the mechanical gate checks only form (duplicate
+  spellings, malformed entries, empty definitions). Meaning — one
+  concept per entry, drift — is never a linter's job, always the
+  caregiver's and the user's, through the proposal pipeline.
+  (2026-10-26, user)
 - Glossary in reviews: settled — the project side of glossary
   enforcement: glossary-consistency joins the criteria the engine
   compiles from the records, and a stage's work that uses a term in a
