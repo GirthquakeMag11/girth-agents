@@ -252,6 +252,11 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The pour is complete: settled — every item the user's test-driving
+  surfaced is on the map and followed to an answer; the only open
+  threads are the deliberate deferrals (primary agents, scaffold
+  migration details, the future concurrency stance, and the spec
+  details). (2026-10-27, user)
 - GitHub credentials: settled — bootstrapping includes an optional gh
   setup: the user who takes it provides credentials through gh, which
   the engine never stores separately; a declination lets the engine

@@ -636,6 +636,10 @@ applied to the work later. See the tracker skill.
   messages as it takes, and the agent organizes it into the map's tree as
   it comes — the map and the tracker questions are the only durable home
   between sessions; nothing is designed until it is organized.
+- **Answered — 2026-10-27:** the pour is complete — every surfaced item
+  is on the map and followed to an answer; only the deliberate
+  deferrals remain (user).
+- **Follow-up:** map updated.
 
 ## The channel — 2026-10-25
 
