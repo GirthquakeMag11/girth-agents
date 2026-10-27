@@ -21,6 +21,11 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — the area is charted but not
   worked; nothing is built on a guess.
+- **Note — 2026-10-26:** the dive runs research-first, then grilling —
+  two background agents dispatched on theory (terminology, ontology,
+  incremental capture) and practice (this repo's ground truth, agent
+  memory conventions, the tracker's pipeline pattern, dedicated-role
+  precedents); notes land in `docs/research/`.
 
 ## The old inbox helpers — deferred until the shape is visible — 2026-10-25
 
