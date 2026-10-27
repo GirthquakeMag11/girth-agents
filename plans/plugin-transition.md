@@ -252,6 +252,12 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The confirmation artifact: settled — the wayfinding session records
+  the user's confirmation inside the plan file itself (a dated marker
+  line) before the entry-point tool runs; the tool validates the
+  marker as part of accepting the file — no marker, loud rejection. A
+  dead tool run loses nothing: the marker survives and the tool
+  re-runs. (2026-10-27, user)
 - The forbidden list: settled — beyond the leash's one "never touch
   un-cleared files": never force-push, rebase, or reset history; never
   delete branches or merge on its own; never touch files outside the
