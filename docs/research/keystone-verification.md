@@ -19,10 +19,14 @@ Verified 2026-10-27, ticket 01's probes (scratch project
 
 ## Plugin-added brand-new agent IDs
 
-- The catalog currently has no agent files, so the add path could not be
-  exercised honestly. The attempt logic stores its outcome in plugin
-  storage as "NO AGENTS YET — verification deferred to ticket 07". NOT
-  VERIFIED YET.
+- **NOT SUPPORTED — verified negative.** A transient probe agent
+  exercised the channel; the service log recorded
+  `disabled plugin after transform failure … cause="AgentEditor has no
+  add"`. The `AgentEditor` transform has no `add` method, so a plugin
+  cannot register a brand-new agent ID. The registration code now
+  detects this without throwing (a throw inside a transform disables the
+  whole plugin). This is a design-affecting keystone failure, taken to
+  the user per the spec.
 
 ## git-spec `./tui` auto-load
 

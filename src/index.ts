@@ -72,8 +72,8 @@ export default Plugin.define({
     for (const id of listDirs(skillsRoot)) {
       const skillPath = join(skillsRoot, id, "SKILL.md")
       if (!existsSync(skillPath)) continue
-      const { data, body: _content } = frontmatter(readFileSync(skillPath, "utf8"))
       const content = readFileSync(skillPath, "utf8")
+      const { data } = frontmatter(content)
       const registration: any = {
         id,
         name: data.name ?? id,
@@ -88,7 +88,7 @@ export default Plugin.define({
         })
         registered.skills += 1
       } catch {
-        // counted only on success; failures surface in the keystone probe below
+        // counted only on success
       }
     }
 
@@ -119,36 +119,33 @@ export default Plugin.define({
       }
     }
 
-    // Agents: attempt registration and record the keystone outcome honestly.
+    // Agents: detect the channel honestly — never throw inside a transform,
+    // which disables the whole plugin.
     const agentsRoot = join(catalog, "agents")
     const agentFiles = listFiles(agentsRoot)
-    if (agentFiles.length > 0) {
-      for (const file of agentFiles) {
-        const { data } = frontmatter(readFileSync(join(agentsRoot, file), "utf8"))
-        const agentID = file.replace(/\.md$/, "")
-        try {
-          await ctx.agent.transform((editor: any) => {
-            if (typeof editor.add !== "function") throw new Error("AgentEditor has no add")
-            editor.add({
-              id: agentID,
-              description: data.description ?? agentID,
-            })
-          })
+    let agentAddSupported: boolean | null = null
+    for (const file of agentFiles) {
+      const { data } = frontmatter(readFileSync(join(agentsRoot, file), "utf8"))
+      const agentID = file.replace(/\.md$/, "")
+      await ctx.agent.transform((editor: any) => {
+        if (typeof editor.add === "function") {
+          editor.add({ id: agentID, description: data.description ?? agentID })
+          agentAddSupported = true
           registered.agents += 1
-        } catch (error: any) {
-          await ctx.storage.set("girth.keystone.agent-add", {
-            outcome: "NOT VERIFIED — add attempt failed",
-            detail: error?.message ?? String(error),
-            at: new Date().toISOString(),
-          })
+        } else {
+          agentAddSupported = false
         }
-      }
-    } else {
-      await ctx.storage.set("girth.keystone.agent-add", {
-        outcome: "NO AGENTS YET — the catalog has no agent files; verification deferred to ticket 07",
-        at: new Date().toISOString(),
       })
     }
+    await ctx.storage.set("girth.keystone.agent-add", {
+      outcome:
+        agentAddSupported === false
+          ? "NOT SUPPORTED — AgentEditor has no add"
+          : agentFiles.length > 0
+            ? "SUPPORTED"
+            : "NO AGENTS YET — the catalog has no agent files",
+      at: new Date().toISOString(),
+    })
 
     // Durability probe: a fixed marker, written once, read back after a restart.
     await ctx.tool.transform((editor: any) => {
