@@ -252,6 +252,11 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- Offline pushes: settled — a failed push holds its commits locally —
+  the ledger loses nothing — and retries on the next pass; there is
+  no extra queue beyond the local unpushed commits themselves, and the
+  pull-first discipline applies on the network's return. (2026-10-27,
+  user)
 - The unassigned sums: settled — the typed forms' exact shapes, the
   reports' owning skill, the context-map's format, the inbox message
   forms, the cap and budget numbers, and criterion-compilation
