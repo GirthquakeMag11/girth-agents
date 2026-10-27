@@ -1,10 +1,10 @@
-# 08: Dispatch-time permission matching, mismatches fail loudly
+# 13: Dispatch-time permission matching, mismatches fail loudly
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 07 (six helpers defined)
+**Blocked by:** 07 (six helpers defined), 11 (tracker kinds)
 
 ## What it delivers
 

@@ -4,7 +4,7 @@
 
 **Kind:** feature
 
-**Blocked by:** 04 (engine skeleton), 13 (report pile, routing, exception)
+**Blocked by:** 04 (engine skeleton), 12 (report pile, routing, exception)
 
 ## What it delivers
 
@@ -22,4 +22,4 @@ deduplication that governs repeated failures.
 - [ ] The running plugin executes from an installed copy distinct from the checkout it develops.
 - [ ] A self-committed change reaches the install only on a deliberate plugin update.
 - [ ] A consent-gated self-report lands in this repo's tracker as a defect with its sanitized payload.
-- [ ] Repeated identical reports coalesce; a closure path exists for them.
+- [ ] Repeated identical reports coalesce with a count; a closure path exists for them.

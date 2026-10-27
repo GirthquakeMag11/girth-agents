@@ -15,9 +15,9 @@ registers at setup through the skill, command, and agent transforms,
 and the end-user install script retires. The build-time keystones that
 gate this ticket are verified first, honestly reported either way:
 plugin-added brand-new agent IDs, the git-spec `./tui` auto-load,
-`ctx.storage` durability and location, the event catalog and
-`session.idle` payload, `codemode` semantics, and sidebar-slot
-live-reactivity.
+`ctx.storage` durability and location, the activation registry's
+storage, the event catalog and `session.idle` payload, `codemode`
+semantics, and sidebar-slot live-reactivity.
 
 ## Acceptance criteria
 

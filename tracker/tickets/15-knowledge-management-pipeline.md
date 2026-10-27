@@ -4,7 +4,7 @@
 
 **Kind:** feature
 
-**Blocked by:** 07 (six helpers defined), 12 (tracker kinds and context map), 14 (inbox machinery)
+**Blocked by:** 07 (six helpers defined), 11 (tracker kinds), 14 (inbox machinery)
 
 ## What it delivers
 

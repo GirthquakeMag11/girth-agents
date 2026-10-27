@@ -4,7 +4,7 @@
 
 **Kind:** feature
 
-**Blocked by:** 02 (catalog atomic sweep), 10 (review gate core), 12 (tracker kinds and context map)
+**Blocked by:** 02 (catalog atomic sweep), 09 (review gate core), 11 (tracker kinds)
 
 ## What it delivers
 

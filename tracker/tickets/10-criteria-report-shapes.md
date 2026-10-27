@@ -1,10 +1,10 @@
-# 11: Criteria compilation and the typed report shapes
+# 10: Criteria compilation and the typed report shapes
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 10 (review gate core)
+**Blocked by:** 09 (review gate core)
 
 ## What it delivers
 

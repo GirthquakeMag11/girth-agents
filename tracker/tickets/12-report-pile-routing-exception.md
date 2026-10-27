@@ -1,10 +1,10 @@
-# 13: The report pile, failure routing, and the exception
+# 12: The report pile, failure routing, and the exception
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 10 (review gate core), 11 (criteria and report shapes), 12 (tracker kinds and context map)
+**Blocked by:** 09 (review gate core), 10 (criteria and report shapes), 11 (tracker kinds)
 
 ## What it delivers
 
@@ -17,7 +17,8 @@ capped-out, un-askable failure is the exception: a loud, stamped,
 project-side system-defect record that also self-reports to the
 plugin's repo — consent asked at every send, payload limited to the
 failing piece's brief and report — with identical failures coalescing
-into one report and a new consent ask only when the failure differs.
+into one report with a count and a new consent ask only when the
+failure differs.
 
 ## Acceptance criteria
 

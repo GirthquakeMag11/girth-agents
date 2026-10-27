@@ -4,7 +4,7 @@
 
 **Kind:** feature
 
-**Blocked by:** 10 (review gate core), 13 (report pile, routing, exception), 12 (tracker kinds and context map)
+**Blocked by:** 09 (review gate core), 11 (tracker kinds), 12 (report pile, routing, exception)
 
 ## What it delivers
 

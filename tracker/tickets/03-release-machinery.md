@@ -17,5 +17,6 @@ Release page with the changelog notes — and no further.
 ## Acceptance criteria
 
 - [ ] Cutting a release produces the tag and the GitHub Release page carrying the changelog section.
+- [ ] Releases tag only from a green main.
 - [ ] The old install line is gone from the Release body.
 - [ ] `/cut-release` performs this and nothing broader.

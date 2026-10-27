@@ -4,7 +4,7 @@
 
 **Kind:** feature
 
-**Blocked by:** 01 (plugin skeleton and channel), 10 (review gate core)
+**Blocked by:** 01 (plugin skeleton and channel), 09 (review gate core), 14 (inbox machinery), 16 (inbox screen and sidebar)
 
 ## What it delivers
 
