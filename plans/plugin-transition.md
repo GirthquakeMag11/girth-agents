@@ -218,6 +218,18 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Knowledge management: declared — a new major area on the map. The
+  test driving showed domain-modeling and the glossary to be thoroughly
+  undercooked: their function — keeping the user and the agents in sync
+  on what terms and phrases mean, continuously and incrementally, one
+  piece at a time as each matters — is essential, but the discipline
+  was given to interactive agents whose attention was stretched too
+  thin to follow it interwoven with everything else they do. And the
+  tracker models `ask question → new conventions` and `encounter
+  problem → new hazards` as first-class pipelines, while `learned term
+  → new glossary entry` was treated as its own separate thing with no
+  point in the workflow designated for it. The area needs a deep dive
+  into domain-modeling, theoretical and practical. (2026-10-26, user)
 - The function is the necessity: settled — skills exist to facilitate a
   function, and the function is the unit of judgment. When the user
   affirms a skill "unchanged," it means they see no way the skill needs
@@ -422,6 +434,12 @@ after approval.
 
 ## Not yet specified
 
+- Knowledge management — to be mapped as its own area: the theoretical
+  and practical deep dive into domain-modeling; who owns the discipline
+  now that the stretched-thin interactive agent does not; the glossary's
+  relationship with the tracker; and the `learned term → new glossary
+  entry` pipeline's designated point in the workflow. Tracked as
+  "Knowledge management — the domain-modeling deep dive".
 - Test scenarios harvested from this effort's own incidents: (1) a
   representation with a cross-layer conflict FAILs review — the flag is
   correct behavior, not a bug; (2) the interpreter classifies the

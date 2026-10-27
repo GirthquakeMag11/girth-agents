@@ -6,6 +6,22 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Knowledge management — the domain-modeling deep dive — 2026-10-26
+
+- **The question:** How is the glossary's function properly served in
+  the new system — who owns the domain-modeling discipline now that the
+  stretched-thin interactive agent demonstrably cannot, and where does
+  the `learned term → new glossary entry` pipeline live, given the
+  tracker already models `ask question → new conventions` and
+  `encounter problem → new hazards`?
+- **Context:** map `The skillset becomes an OpenCode plugin`; the user's
+  test driving judged domain-modeling and the glossary thoroughly
+  undercooked; this opens the map's "knowledge management" area, to be
+  deep-dived theoretical and practical.
+- **Kind:** authority
+- **Decided (provisional):** undecided — the area is charted but not
+  worked; nothing is built on a guess.
+
 ## The old inbox helpers — deferred until the shape is visible — 2026-10-25
 
 - **The question:** What becomes of `curate-inbox` and `/close-inbox`
