@@ -1,10 +1,10 @@
-# 11: The report pile, failure routing, and the exception
+# 13: The report pile, failure routing, and the exception
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 09 (review gate core), 10 (criteria and report shapes), 12 (tracker extensions)
+**Blocked by:** 10 (review gate core), 11 (criteria and report shapes), 12 (tracker kinds and context map)
 
 ## What it delivers
 

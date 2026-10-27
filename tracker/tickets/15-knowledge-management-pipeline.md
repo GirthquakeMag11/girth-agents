@@ -1,10 +1,10 @@
-# 14: Knowledge management — the caregiver, proposals, admissions
+# 15: Knowledge management — the caregiver, proposals, admissions
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 06 (six helpers defined), 12 (tracker kinds and context map), 13 (inbox machinery)
+**Blocked by:** 07 (six helpers defined), 12 (tracker kinds and context map), 14 (inbox machinery)
 
 ## What it delivers
 

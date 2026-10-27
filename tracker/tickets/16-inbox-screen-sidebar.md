@@ -1,10 +1,10 @@
-# 15: The inbox screen and the sidebar
+# 16: The inbox screen and the sidebar
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 13 (inbox machinery)
+**Blocked by:** 14 (inbox machinery)
 
 ## What it delivers
 

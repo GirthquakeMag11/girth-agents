@@ -1,10 +1,10 @@
-# 08: The entry-point tool — the plan's one door
+# 09: The entry-point tool — the plan's one door
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 03 (engine skeleton)
+**Blocked by:** 04 (engine skeleton)
 
 ## What it delivers
 

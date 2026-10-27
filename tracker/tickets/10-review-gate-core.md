@@ -1,10 +1,10 @@
-# 09: The review gate's core — send, grade, repair, repeat
+# 10: The review gate's core — send, grade, repair, repeat
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 06 (six helpers defined), 08 (entry-point tool)
+**Blocked by:** 07 (six helpers defined), 09 (entry-point tool)
 
 ## What it delivers
 

@@ -1,10 +1,10 @@
-# 05: The leash — forbidden moves, safe commits, absorb-or-alarm
+# 06: The leash — forbidden moves, safe commits, absorb-or-alarm
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 03 (engine skeleton)
+**Blocked by:** 04 (engine skeleton)
 
 ## What it delivers
 

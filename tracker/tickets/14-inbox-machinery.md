@@ -1,10 +1,10 @@
-# 13: The inbox's machinery — messages, seeded sessions, replies
+# 14: The inbox's machinery — messages, seeded sessions, replies
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 03 (engine skeleton), 12 (tracker kinds and context map)
+**Blocked by:** 04 (engine skeleton), 12 (tracker kinds and context map)
 
 ## What it delivers
 

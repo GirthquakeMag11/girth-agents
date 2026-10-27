@@ -1,10 +1,10 @@
-# 18: Dogfooding — the two-checkout separation and the self-report's home
+# 19: Dogfooding — the two-checkout separation and the self-report's home
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 03 (engine skeleton), 11 (report pile, routing, exception)
+**Blocked by:** 04 (engine skeleton), 13 (report pile, routing, exception)
 
 ## What it delivers
 

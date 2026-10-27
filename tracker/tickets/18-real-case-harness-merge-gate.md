@@ -1,10 +1,10 @@
-# 17: The real-case harness and the merge gate
+# 18: The real-case harness and the merge gate
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 01 (plugin skeleton and channel), 09 (review gate core)
+**Blocked by:** 01 (plugin skeleton and channel), 10 (review gate core)
 
 ## What it delivers
 

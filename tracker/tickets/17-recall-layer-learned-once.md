@@ -1,10 +1,10 @@
-# 16: The recall layer — learned once, verified, stratified
+# 17: The recall layer — learned once, verified, stratified
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 09 (review gate core), 11 (report pile, routing, exception), 12 (tracker kinds and context map)
+**Blocked by:** 10 (review gate core), 13 (report pile, routing, exception), 12 (tracker kinds and context map)
 
 ## What it delivers
 

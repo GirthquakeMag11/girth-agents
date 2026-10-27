@@ -1,4 +1,4 @@
-# 03: The engine's skeleton — watching, never sleeping, one step at a time
+# 04: The engine's skeleton — watching, never sleeping, one step at a time
 
 **Parent:** specs/plugin.md
 

@@ -1,10 +1,10 @@
-# 04: Bootstrap — activation, consent, and the off-switch
+# 05: Bootstrap — activation, consent, and the off-switch
 
 **Parent:** specs/plugin.md
 
 **Kind:** feature
 
-**Blocked by:** 01 (plugin skeleton and channel), 03 (engine skeleton)
+**Blocked by:** 01 (plugin skeleton and channel), 04 (engine skeleton)
 
 ## What it delivers
 
