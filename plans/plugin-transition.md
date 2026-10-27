@@ -218,6 +218,16 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Convention crashes: declared — conventions must be shapeable over
+  time, since the need for change is often not visible before it is
+  forced. The in-flight agent that collides with them is the first-hand
+  witness that the conventions as written are blocking the engine's
+  operation in that context; the collision spawns an authority-kind
+  question that reaches the user through the inbox, and the user's
+  answer may be folded into the conventions as the resolution going
+  forward. In contrast, `codifying`'s discretionary path records what
+  the user rules at their own initiative in an interactive session.
+  (2026-10-26, user)
 - `grilling`: settled — kept as-is, the standing machinery of
   interactive sessions; only its wording is re-fit during the sweep.
   (2026-10-26, user)
