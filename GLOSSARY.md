@@ -9,6 +9,12 @@ glossary skill for the entry format.
 
 ## Terms
 
+**Inbox**: the user-facing screen and the system's asynchronous
+send/receive channel to the user — requests the engine writes, answered
+in seeded sessions whose recorded replies the engine picks up. In this
+project "inbox" means this, unless OpenCode's own inbox — a session's
+pending-prompt queue — is expressly named.
+
 **Release**: the act of cutting CHANGELOG.md's `## [Unreleased]` queue into
 its dated section under a Semantic Versioning number — and tagging it — per
 the versioning ruling in `conventions/On_Versioning.md`. A release always
