@@ -252,6 +252,13 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The direction-change path: settled — the user rules direction
+  changes in a session, and the ordinary machinery carries them:
+  amending the plan becomes a new plan revision through the same
+  review; aborting closes the workstream's records with the reason;
+  re-answering reopens the resolved question with the new answer.
+  Direction changes are authority, recorded like conventions.
+  (2026-10-27, user)
 - The confirmation artifact: settled — the wayfinding session records
   the user's confirmation inside the plan file itself (a dated marker
   line) before the entry-point tool runs; the tool validates the
