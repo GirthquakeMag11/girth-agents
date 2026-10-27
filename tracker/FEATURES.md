@@ -12,6 +12,10 @@ with the user's approval; see the tracker skill for the format.
   by coordinating swarms of subagents.
 - **References:** —
 - **Related:** (none confirmed)
+- **Realized — 2026-10-27:** the plugin transition names the one
+  interactive primary the orchestrator — the face that runs the user's
+  sessions and coordinates the helpers behind it. This entry's want is
+  met; the design lives in `plans/plugin-transition.md`.
 
 ## Curl bootstrap for one-command install — 2026-10-21
 

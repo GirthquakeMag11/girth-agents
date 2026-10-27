@@ -252,11 +252,15 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The orchestrator: settled — the one interactive primary is the
+  orchestrator agent from the feature tracker: the face that runs the
+  user's sessions and coordinates the swarm of helpers behind it.
+  (2026-10-27, user)
 - Primary agents: settled — one interactive primary: the agent that
   runs the user's sessions (ideation, wayfinding, rulings); the six
   helpers are the machinery behind it, dispatched by the engine, never
   chosen as faces. The built-in `build` and `plan` primaries are
-  replaced by it. (2026-10-27, user)
+  replaced by it. (2026-10-27, user; named 2026-10-27, user)
 - The pour is complete: settled — every item the user's test-driving
   surfaced is on the map and followed to an answer; the only open
   threads are the deliberate deferrals (primary agents, scaffold
