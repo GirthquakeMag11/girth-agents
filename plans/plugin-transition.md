@@ -252,6 +252,12 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- Abandoned sessions: settled — an abandoned interactive session is
+  inert: an opened inbox item stays waiting in the inbox (nothing
+  expires, nothing re-asks), and a half-built wayfinding session holds
+  no entry point until confirmed, so it touches nothing. Timeouts
+  apply only to the engine's own steps, which are already capped.
+  (2026-10-27, user)
 - Self-report consent: settled — each self-report asks the user's
   permission at the moment of sending, and declining is always
   available; the payload stays the failing piece's brief and report —
