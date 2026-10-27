@@ -252,11 +252,21 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- Startedness: settled — the bootstrap command activates the engine
+  locally, per machine, per directory. A repo bootstrapped elsewhere
+  is just a directory of files until `/bootstrap` runs there; the
+  engine treats nothing as records before local activation. Two
+  reasons: it must not clobber files inappropriately, and it must not
+  pick up a project on an old schema without a bootstrap update first.
+  State travels through the records; activation is local.
+  (2026-10-27, user)
 - Scaffold migration: declared to revisit — when the plugin's
   schematics change, bootstrap must bring a repository into the current
   paradigm from its previous state, whether that state is a previous
-  plugin version or none at all. The update/migration thread is
-  deferred but named. (2026-10-27, user)
+  plugin version or none at all. The mechanism is now found: local
+  bootstrap is the activation AND the migration gate — running it
+  brings the repo into the current paradigm; the migration rules'
+  details remain the circle-back. (2026-10-27, user)
 - Concurrency, plank two: settled — a chain's step is exclusive:
   every writing helper (checker, fact-finder, prove-it, caregiver,
   the consolidation pass) waits for the step in flight; only the
