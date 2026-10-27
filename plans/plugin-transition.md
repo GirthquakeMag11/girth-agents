@@ -253,6 +253,11 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- `maintaining-docs`: settled — zero drift tolerance: if something
+  documented changes, the documentation changes — never chance-based,
+  never deferred to a session or a release. The docs' contracts (which
+  document describes which record) are `maintaining-docs`' to own.
+  (2026-10-26, user)
 - The five crafts: settled — `diagnosing-bugs`, `code-review`,
   `codebase-design`, `prototyping`, and `research` all fall under the
   role-shaped-context rule: their functions survive, their exact
