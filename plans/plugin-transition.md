@@ -253,6 +253,11 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- Push-conflict terminal: settled — on non-fast-forward divergence the
+  engine never merges: it holds its commits, leaves the working tree
+  alone, and raises through the inbox (the reconciliation is the user's
+  authority); everything waits intact until answered. (2026-10-27,
+  user)
 - The plan's repair chair: settled — the interactive session itself:
   the agent repairs the FAILed plan with the user, continuing the very
   conversation the plan came from. This is why the plan's review runs
