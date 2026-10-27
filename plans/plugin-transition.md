@@ -89,13 +89,8 @@ after approval.
      governs the plugin being mapped. Two layers, no conflict.
   3. The work stage — settled: reviewed ticket by ticket; the code and
      the test-drive proof are evidence, the PASS stamps the ticket.
-  4. The survivors — coverage found 11 skills and 6 commands the map
-     never names (`grilling`, `codifying`, `domain-modeling`,
-     `maintaining-docs`, `wizard`, `questionnaire`, `diagnosing-bugs`,
-     `code-review`, `codebase-design`, `prototyping`, `research`;
-     `/implement`, `/spec`, `/wayfind`, `/cut-release`,
-     `/questionnaire`, `/wizard`), incl. whether `specifying` and
-     `implementing` keep any user-facing surface.
+  4. The survivors — settled: every skill and command now has a fate;
+      the sweep complete.
 
 ## Decisions so far
 
@@ -253,6 +248,10 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- `/cut-release`: settled — re-scoped by the machinery ruling: it cuts
+  the tag and publishes the GitHub Release page with the changelog
+  notes, minus the old one-line install. (2026-10-26, by the machinery
+  ruling)
 - `/questionnaire`: settled — the door stays; turning a decision blocked
   on an outside person into a written questionnaire is untouched by the
   new system. (2026-10-26, user)
