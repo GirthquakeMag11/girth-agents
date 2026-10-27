@@ -252,6 +252,12 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- Self-report consent: settled — each self-report asks the user's
+  permission at the moment of sending, and declining is always
+  available; the payload stays the failing piece's brief and report —
+  typed records only, no inbox prose, no secrets. (Identical repeated
+  failures coalesce into one report — the flood control is spec
+  detail.) (2026-10-27, user)
 - Dogfooding: settled — the engine develops girth-agents fully, plugin
   code included — the point of dogfooding — made safe by the
   two-checkout separation: it runs from a separate installed copy while
