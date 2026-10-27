@@ -253,6 +253,10 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- `domain-modeling`'s fate: settled — the skill survives, re-fit: the
+  engine-side discipline lives in the caregiver; the interactive side
+  keeps its function, guiding the user through term-work when judging
+  proposals and ruling meanings. (2026-10-27, user)
 - Push-conflict terminal: settled — on non-fast-forward divergence the
   engine never merges: it holds its commits, leaves the working tree
   alone, and raises through the inbox (the reconciliation is the user's
