@@ -191,9 +191,10 @@ after approval.
   running the tool on a file is the act that makes it an entry point.
   A file the tool has never been pointed at stays out of the engine's
   hands. (2026-10-25, user)
-- Session scope: settled — every stage runs fresh; the fixing agent
-  keeps its session across fix-rounds (the engine detects and recovers
-  a lost session); the checker is always fresh. (2026-10-25, user)
+- Session scope: settled — every stage runs fresh; the builder fixing
+  its own piece keeps its session across fix-rounds (the engine detects
+  and recovers a lost session); the checker is always fresh.
+  (2026-10-25, user)
 - The exception: settled — a piece that exhausts its fix-rounds
   while still broken, with no answerable question to rectify it, is an
   exception, not a parked state: it means either the fix-round cap was
@@ -263,9 +264,8 @@ after approval.
   replaced by it. (2026-10-27, user; named 2026-10-27, user)
 - The pour is complete: settled — every item the user's test-driving
   surfaced is on the map and followed to an answer; the only open
-  threads are the deliberate deferrals (primary agents, scaffold
-  migration details, the future concurrency stance, and the spec
-  details). (2026-10-27, user)
+  threads are the deliberate deferrals (the scaffold-migration
+  details, the future concurrency stance, and the spec details). (2026-10-27, user)
 - GitHub credentials: settled — bootstrapping includes an optional gh
   setup: the user who takes it provides credentials through gh, which
   the engine never stores separately; a declination lets the engine
@@ -454,11 +454,11 @@ after approval.
   changes to a convention, with the human in the loop. The fifth
   helper; precisely tailored context per the role-shaped ruling.
   (2026-10-26, user)
-- Primary agents: declared open — the built-in primary agents (`build`
-  and `plan`) do not make sense in the new system's context; their
-  replacement must get a precise answer on the record. The solution is
-  expected to make itself obvious as other areas define themselves, so
-  the decision waits — but it must not be forgotten. (2026-10-26, user)
+- Primary agents: declared open, then settled — the built-in `build`
+  and `plan` primaries do not make sense in the new system's context;
+  the replacement landed once the surroundings settled: one
+  interactive primary, named the orchestrator. (2026-10-26, user;
+  settled 2026-10-27 — see "The orchestrator")
 - GitHub integration: declared — the system integrates with GitHub for
   the end user, beyond a script that checks gh is installed. The engine
   handles commits and pushes for its autonomous work: many granular
@@ -727,31 +727,32 @@ after approval.
 
 ## Not yet specified
 
-- Concurrency — open, being prepared now: the stance is not one answer
-  but a frontier — fourteen questions in
-  `docs/research/concurrency-blindspots.md` plus the 35-question
-  backlog in `remaining-blindspots.md`. Tracked as "Concurrency — the
-  engine's stance".
-- Primary agents — the built-in `build` and `plan` primaries do not
-  fit; the replacement is expected to fall out of the helper roster,
-  the engine mechanics, and the interactive-session design as they
-  settle. Tracked as "Primary agents — what replaces build and plan".
-- GitHub integration — open mechanics: the commit's unit (per ticket?
-  per record change? per verdict?), the push cadence, offline behavior,
-  auth (gh as the vehicle), and the branch discipline that keeps engine
-  commits from clobbering the user's own — the excluded zeroshot
-  single-writer world is exactly what these commits must not assume.
-  Tracked as "GitHub integration — the engine's commits and pushes".
-- Project kinds — settled: one root store per repository, a root
-  context-map record, an optional `context:` field for domain-qualified
-  senses, scoped reads, per-package placement only on warrant; non-code
-  repositories run the same system with criteria fitting the
-  substance's kind (see Decisions so far).
+- The plan's own review — three reviewers ran the gate on this map
+  (2026-10-27, `docs/research/plan-review-A/B/C.md`): all FAILed, and
+  six findings re-open the frontier, in rectification with the user:
+  the engine's off-switch and consent moment; the engine sessions'
+  permission ruleset; who repairs a FAILed plan; the push-conflict
+  terminal state; the `domain-modeling` skill's own fate; the "inbox"
+  name collision. (Nothing here is settled until that round closes.)
+- Concurrency — settled: serial within a project, steps exclusive,
+  writers wait, watching never sleeps, pull-first working-branch
+  commits, absorb-or-alarm on user edits, records as the crash ledger,
+  one engine per machine, local bootstrap activation (see Decisions
+  so far; future stance named, not designed).
+- Primary agents — settled: one interactive primary, named the
+  orchestrator (see Decisions so far).
+- GitHub integration — settled: per-unit commits pushed as they go,
+  optional gh setup, held-locally retries (see Decisions so far).
+- Project kinds — settled: one root store, a root context-map record,
+  an optional `context:` field, scoped reads, per-package placement
+  only on warrant; non-code repositories run the same system with
+  criteria fitting the substance's kind (see Decisions so far).
 - Knowledge management — settled: the caregiver owns the discipline
   and labors while the user rules admissions; proposals are a tracker
-  kind, filtered not batched, with suggested definitions; the review
-  gate grades term use; the glossary stays prose with form-only
-  mechanical checks (see Decisions so far).
+  kind; the review gate grades term use; the glossary stays prose with
+  form-only mechanical checks (see Decisions so far).
+- The change cloud — closed: the pour is complete (see Decisions so
+  far).
 - Test scenarios harvested from this effort's own incidents: (1) a
   representation with a cross-layer conflict FAILs review — the flag is
   correct behavior, not a bug; (2) the interpreter classifies the
@@ -759,13 +760,8 @@ after approval.
   question for same-layer conflicts, the scoping clarification for
   unclear scope — never the reconciliation question that presumes one
   layer (incident of 2026-10-26).
-- The change cloud — awaiting the user's last pour: the surviving
-  skills' and commands' fates (the coverage review counts 11 skills and
-  6 commands with no decision on record), plus anything else the user
-  holds. Tracked as "The change cloud — harvesting the item-level
-  changes".
 - Spec-time keystones — verified before building, not open decisions:
-  whether the plugin can add brand-new agent IDs (the four helpers), the
+  whether the plugin can add brand-new agent IDs (the six helpers), the
   git-spec plugin's `./tui` auto-load, sidebar-slot live-reactivity,
   `ctx.storage` durability and location, the event catalog and
   `session.idle` payload, `codemode` semantics.
@@ -773,11 +769,12 @@ after approval.
   verdict/report) and where each lives; the inbox message and reply
   forms; the cap's numbers; the test harness's shape, seams, and gate
   mechanics; the report pile's owning skill and format (scaffold-family
-  maintenance), and the inbox message record's home and form.
+  maintenance); the inbox message record's home and form; the
+  system-defect record kind's format (the exception's project-side
+  loud failure).
 - Deferred by design, not open now: handoff, `/retro`, and the wizard
-  pair's shelf retirement; whether the engine is one instance across
-  started projects or per project (raised by the reviews, not yet put
-  to the user).
+  pair's shelf retirement; the scaffold-migration rules' details; the
+  future concurrency stance; multi-machine arbitration.
 
 ## Out of scope
 
