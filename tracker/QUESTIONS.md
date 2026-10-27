@@ -45,6 +45,18 @@ applied to the work later. See the tracker skill.
   knowledge, marshalling the fact-finder for new base facts; capture
   stays the separate pass's job, and admission rules remain to be
   settled.
+- **Answered — 2026-10-26:** the layer's whole shape, in order: the
+  reviewer jots candidate claims in its report; the engine's idle pass
+  consolidates and hands them to prove-it; prove-it verifies against
+  confirmed knowledge, marshalling the fact-finder for base facts (and
+  the two keep each other in line); verified claims recur across
+  separate work before stratifying — a first occurrence stays a hazard,
+  and an unverifiable claim vanishes unless its uncertainty blocks
+  work, which takes the ordinary question route; the store itself is a
+  committed tracker kind, evidence referenced and held out of context,
+  with recall as the reading (user).
+- **Follow-up:** map updated; budget, eviction, and retrieval-injection
+  mechanics are spec detail.
 
 ## Primary agents — what replaces build and plan — 2026-10-26
 

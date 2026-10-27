@@ -213,6 +213,10 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Lesson capture: settled — the reviewer jots candidate claims while
+  writing its report (the separate pair of eyes mid-evidence); the
+  engine's idle consolidation pass collects them, checks them against
+  what is already known, and hands them to prove-it. (2026-10-26, user)
 - The lesson store: settled — a committed tracker kind of its own:
   generalized, verified, recurring lessons, with their evidence
   referenced and held out of context; recall is how the agents read the
