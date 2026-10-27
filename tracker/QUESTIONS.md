@@ -105,6 +105,14 @@ applied to the work later. See the tracker skill.
   adaptation's inspiration), an advocate for multi-context support, and
   a skeptic for one-repo/one-project — to be mediated before the design
   is put to the user.
+- **Answered — 2026-10-26:** one root store per repository, a root
+  context-map record, an optional `context:` field for domain-qualified
+  senses, scoped reads (never the union blob), per-package placement
+  only on warrant; the same system for non-code repositories, with
+  criteria always fitting the substance's kind (user, after the
+  three-way mediation).
+- **Follow-up:** map updated; the context map's format and the
+  changelog-tooling tension are spec detail, handled case-by-case.
 
 ## Knowledge management — the domain-modeling deep dive — 2026-10-26
 

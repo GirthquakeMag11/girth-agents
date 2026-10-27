@@ -213,6 +213,14 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Non-code repositories: settled — the same system applies to every
+  repository kind, but the substance's own kind sets the bar: every
+  file representing a project's substance — code, writing, or a
+  combination — is accounted for and judged by criteria appropriate to
+  its kind. The work stage of a docs or research repository produces
+  documents, graded on writing's merits; mixed repositories grade each
+  part on its own. Fish are not judged on tree-climbing.
+  (2026-10-26, user)
 - Project kinds' shape: settled — one root store per repository (the
   tracker, glossary, inbox, reports); a root context-map record
   declaring the repository's contexts and their inter-context
