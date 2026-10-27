@@ -253,6 +253,9 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- `/questionnaire`: settled — the door stays; turning a decision blocked
+  on an outside person into a written questionnaire is untouched by the
+  new system. (2026-10-26, user)
 - `ideation` + `/ideate`: declared — a new command-invoked skill for the
   optional preliminary phase before wayfinding: interactively building
   the idea cloud — as the harvest did — before transitioning to
