@@ -253,6 +253,10 @@ after approval.
   forward. In contrast, `codifying`'s discretionary path records what
   the user rules at their own initiative in an interactive session.
   (2026-10-26, user)
+- `questionnaire`: settled — its function (decisions blocked on outside
+  people → a written questionnaire aimed at what is needed back)
+  survives as-is for now; wording re-fits with the sweep.
+  (2026-10-26, user)
 - `grilling`: settled — kept as-is, the standing machinery of
   interactive sessions; only its wording is re-fit during the sweep.
   (2026-10-26, user)
