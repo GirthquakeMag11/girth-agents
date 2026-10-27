@@ -6,6 +6,20 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Concurrency — the engine's stance — 2026-10-26
+
+- **The question:** What is the engine's stance on asynchronous,
+  concurrent, and parallel work — across projects, within a project,
+  and beside the user's own live work — now, and what should it
+  become?
+- **Context:** map `The skillset becomes an OpenCode plugin`; raised at
+  the branch-discipline question — where engine commits land "varies
+  with the scope of the work"; the full puzzle is deliberately for
+  later, but the stance must be spoken.
+- **Kind:** authority
+- **Decided (provisional):** undecided — the area is raised; the stance
+  is to be recorded, the puzzle deferred.
+
 ## The recall layer — its shape — 2026-10-26
 
 - **The question:** What IS the recall layer — when a lesson is

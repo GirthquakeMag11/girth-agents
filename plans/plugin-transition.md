@@ -213,6 +213,12 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Concurrency: declared — the map has not yet addressed asynchronous,
+  concurrent, and parallel work across codebases and operations of
+  different sizes. The present and future stance must be on the record:
+  what runs at once, what waits, and how engine work and the user's own
+  live work coexist. The full puzzle is for later; the stance is now.
+  (2026-10-26, user)
 - The engine's commit unit: settled — one commit per meaningful unit
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
