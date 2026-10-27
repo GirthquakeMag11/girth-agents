@@ -73,6 +73,14 @@ turn. The umbrella spec is the next effort.
   one atomic change (the linter fires mid-rename); the channel's
   supersession of the installer's clone-only transport ruling is not
   yet recorded in `decisions/`.
+- Working loop for the spec phase (2026-10-27, user): the plan is the
+  one human stop and has passed. The spec, the ticket graph, and each
+  ticket's outcome each get one fresh-context reviewer per pass,
+  rectified until PASS — no approval ask at the end. A ticket is not
+  marked done until its acceptance criteria demonstrably hold and a
+  fresh review returns PASS. The user is asked only when information is
+  genuinely required, or when the agent fears contradicting the very
+  skills being rebuilt.
 - Questioning notes (2026-10-26, user): the design is charted through
   unknown territory; the user may misspeak, make mistakes, hold ideas
   that conflict, or change a mind that was never firmly made up. Doubling
