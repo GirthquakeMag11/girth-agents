@@ -213,6 +213,13 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Project kinds' shape: settled — one root store per repository (the
+  tracker, glossary, inbox, reports); a root context-map record
+  declaring the repository's contexts and their inter-context
+  relationships; an optional `context:` field for domain-qualified
+  senses; agents read the store filtered to their context, never the
+  union blob; per-package physical placement only on warrant, recorded
+  as a deviation like any other. (2026-10-26, user)
 - Lesson capture: settled — the reviewer jots candidate claims while
   writing its report (the separate pair of eyes mid-evidence); the
   engine's idle consolidation pass collects them, checks them against
