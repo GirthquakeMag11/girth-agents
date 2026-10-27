@@ -213,6 +213,17 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Glossary proposals: settled — filtered, never batched: filtered means
+  "this isn't worth attending to," and the caregiver never acts on its
+  own — filtered items never change the glossary. Each warranted
+  proposal opens its own inbox question, carrying the term's context
+  and the caregiver's suggested new or updated definition whenever it
+  can form one. The user then spends seconds confirming the suggestion,
+  or crafts and corrects in the same breath — one interface, two depths
+  of investment: precise crafting or leaning on suggestions. Domain
+  modeling is a largely front-loaded task, and a reliable domain model
+  is worth the user's attention at a project's outset. (2026-10-26,
+  user)
 - The vocabulary caregiver: settled — a new, small dedicated helper
   whose only context is the glossary. Its job is the labor — curating
   proposals, checking definitions machine-style, spotting conflicts,
