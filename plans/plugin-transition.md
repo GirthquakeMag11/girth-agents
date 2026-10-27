@@ -252,6 +252,11 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The unassigned sums: settled — the typed forms' exact shapes, the
+  reports' owning skill, the context-map's format, the inbox message
+  forms, the cap and budget numbers, and criterion-compilation
+  mechanics are spec details: every direction is decided, and the spec
+  pins the shapes. (2026-10-27, user)
 - Abandoned sessions: settled — an abandoned interactive session is
   inert: an opened inbox item stays waiting in the inbox (nothing
   expires, nothing re-asks), and a half-built wayfinding session holds
