@@ -223,6 +223,10 @@ after approval.
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
   working practice, formalized for the engine. (2026-10-26, user)
+- Concurrency, plank two: settled — a chain's step is exclusive:
+  every writing helper (checker, fact-finder, prove-it, caregiver,
+  the consolidation pass) waits for the step in flight; only the
+  engine's passive watching runs always. (2026-10-27, user)
 - Concurrency, plank one: settled — within a project, the engine does
   one thing at a time: one chain's current step in flight, everything
   else ready-but-waiting; parallelism exists only across separate
