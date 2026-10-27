@@ -218,6 +218,19 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- The function is the necessity: settled — skills exist to facilitate a
+  function, and the function is the unit of judgment. When the user
+  affirms a skill "unchanged," it means they see no way the skill needs
+  to change to serve its function at the time they were asked; the exact
+  content of every surviving skill will almost certainly be re-fit to
+  its role in the new system, and whether a function lives as one skill
+  or several is decided by what serves the functional effect.
+  (2026-10-26, user)
+- Codifying's shape: settled — the convention-crash path folds into
+  `codifying`: one skill, two arrival paths — discretionary rulings in
+  interactive sessions, and resolving inbox questions spawned by
+  convention crashes, folding the answers into conventions as the
+  resolutions. (2026-10-26, user)
 - Convention crashes: declared — conventions must be shapeable over
   time, since the need for change is often not visible before it is
   forced. The in-flight agent that collides with them is the first-hand
