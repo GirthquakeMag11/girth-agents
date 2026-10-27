@@ -213,6 +213,13 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Project kinds: declared — the system's design has been shaped for
+  single-project, code-based repositories; monorepos and projects
+  outside purely code work were deferred at the original domain-modeling
+  adaptation. How the system accounts for different kinds of projects
+  and repositories — touching bootstrapping, the engine's scope,
+  scaffold placement, and every per-project record — is very foggy and
+  must be investigated thoroughly. (2026-10-26, user)
 - Knowledge management: declared — a new major area on the map. The
   test driving showed domain-modeling and the glossary to be thoroughly
   undercooked: their function — keeping the user and the agents in sync
@@ -473,6 +480,12 @@ after approval.
 
 ## Not yet specified
 
+- Project kinds — to be investigated thoroughly (very foggy): what
+  counts as a project (monorepo packages, non-code projects), where the
+  scaffold and the per-project records live in each configuration, how
+  bootstrapping and the engine scope them, and how the inbox, the
+  report pile, and the glossary follow. Tracked as "Project kinds —
+  monorepos and non-code repositories".
 - Knowledge management — to be mapped as its own area: the theoretical
   and practical deep dive into domain-modeling; who owns the discipline
   now that the stretched-thin interactive agent does not; the glossary's

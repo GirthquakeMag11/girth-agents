@@ -6,6 +6,21 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Project kinds — monorepos and non-code repositories — 2026-10-26
+
+- **The question:** How does the system account for different kinds of
+  projects and repositories — monorepos, non-code projects — when the
+  whole design has been shaped for single-project code repositories?
+  What is "a project" to the engine, and where do its scaffold and
+  records live in each configuration?
+- **Context:** map `The skillset becomes an OpenCode plugin`; deferred
+  at the original domain-modeling adaptation; touches bootstrapping and
+  every per-project mechanism (engine scope, tracker, inbox, report
+  pile, glossary).
+- **Kind:** authority
+- **Decided (provisional):** undecided — investigation first; nothing
+  is built on a guess.
+
 ## Knowledge management — the domain-modeling deep dive — 2026-10-26
 
 - **The question:** How is the glossary's function properly served in
