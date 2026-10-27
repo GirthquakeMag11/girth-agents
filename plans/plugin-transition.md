@@ -252,6 +252,12 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- Sidebar truth: settled — the sidebar shows the work currently
+  happening, as reported by the engine itself: a live, engine-maintained
+  current-work report, not a reading of half-written records. The
+  report updates atomically per state transition; the committed ledger
+  remains the recovery truth, the live report the display truth.
+  (2026-10-27, user)
 - Startedness: settled — the bootstrap command activates the engine
   locally, per machine, per directory. A repo bootstrapped elsewhere
   is just a directory of files until `/bootstrap` runs there; the
