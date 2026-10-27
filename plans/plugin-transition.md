@@ -271,6 +271,15 @@ turn. The umbrella spec is the next effort.
   alone, and raises through the inbox (the reconciliation is the user's
   authority); everything waits intact until answered. (2026-10-27,
   user)
+- Plan-gate completeness: settled — the plan's PASS means the
+  interactive grilling exhausted every user-answerable question
+  visible in the wayfinding context, and the session never
+  intentionally defers a visible question to a headless stage. The
+  delineation between the two kinds of question: what the session can
+  see must be asked before PASS; what only the specifying context can
+  surface arrives afterward through the inbox, honestly new and one at
+  a time. The inbox carries newness, never deferral — grilling's
+  battery belongs to the interactive session. (2026-10-27, user)
 - The plan's repair chair: settled — the interactive session itself:
   the agent repairs the FAILed plan with the user, continuing the very
   conversation the plan came from. This is why the plan's review runs
