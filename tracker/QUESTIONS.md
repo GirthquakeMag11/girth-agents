@@ -111,6 +111,10 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — deliberately deferred until
   the surrounding areas settle; recorded so it cannot be forgotten.
+- **Answered — 2026-10-27:** one interactive primary runs the user's
+  sessions; the six helpers are the machinery behind it, never chosen
+  as faces; `build` and `plan` are replaced (user).
+- **Follow-up:** map updated.
 
 ## GitHub integration — the engine's commits and pushes — 2026-10-26
 
