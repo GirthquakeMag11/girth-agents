@@ -256,7 +256,12 @@ after approval.
 - The helpers' permissions: settled — each helper carries its own
   tailored permission ruleset, exactly as its configuration, toolset,
   and skills are tailored; the forbidden list is the engine's floor
-  and each helper's set builds inside it. (2026-10-27, user)
+  and each helper's set builds inside it. A helper is never dispatched
+  without the permissions its job needs: the orchestrator matches the
+  job's requirements against the helper's set before dispatch, and a
+  mismatch fails loudly there — a system defect to fix, never a
+  mid-operation permission request reaching the user. The janitor
+  never emails the CFO. (2026-10-27, user)
 - The off-switch: settled — bootstrap states plainly what always-awake
   processing means before it starts (the consent moment), and a park
   command stops the engine on that project, leaving the records in
@@ -780,9 +785,9 @@ after approval.
   mechanics; the report pile's owning skill and format (scaffold-family
   maintenance); the inbox message record's home and form; the
   system-defect record kind's format (the exception's project-side
-  loud failure); the unmet-permission default in headless helper
-  sessions (fail-closed — no invisible prompts; the need routes to a
-  question or an inbox request).
+  loud failure); the dispatch-time permission check's mechanics
+  (requirements matched against the helper's set before dispatch — a
+  mismatch is the loud failure, never a user-facing request).
 - Deferred by design, not open now: handoff, `/retro`, and the wizard
   pair's shelf retirement; the scaffold-migration rules' details; the
   future concurrency stance; multi-machine arbitration.
