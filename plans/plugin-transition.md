@@ -213,6 +213,12 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- GitHub integration: declared — the system integrates with GitHub for
+  the end user, beyond a script that checks gh is installed. The engine
+  handles commits and pushes for its autonomous work: many granular
+  commits — hard for a human to parse, but assurance that no engine
+  work is lost to bad circumstances — and anything the engine does can
+  be rolled back in the worst case. (2026-10-26, user)
 - Project kinds: declared — the system's design has been shaped for
   single-project, code-based repositories; monorepos and projects
   outside purely code work were deferred at the original domain-modeling
@@ -480,6 +486,12 @@ after approval.
 
 ## Not yet specified
 
+- GitHub integration — open mechanics: the commit's unit (per ticket?
+  per record change? per verdict?), the push cadence, offline behavior,
+  auth (gh as the vehicle), and the branch discipline that keeps engine
+  commits from clobbering the user's own — the excluded zeroshot
+  single-writer world is exactly what these commits must not assume.
+  Tracked as "GitHub integration — the engine's commits and pushes".
 - Project kinds — to be investigated thoroughly (very foggy): what
   counts as a project (monorepo packages, non-code projects), where the
   scaffold and the per-project records live in each configuration, how

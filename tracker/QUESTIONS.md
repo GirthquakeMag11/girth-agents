@@ -6,6 +6,20 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## GitHub integration — the engine's commits and pushes — 2026-10-26
+
+- **The question:** What is the engine's commit discipline — the unit
+  of a commit (per ticket, per record change, per verdict?), the push
+  cadence, offline behavior, auth (gh as the vehicle), and the branch
+  discipline that keeps engine commits from clobbering the user's own?
+- **Context:** map `The skillset becomes an OpenCode plugin`; declared:
+  GitHub integration for the end user, beyond the gh-installed check —
+  granular commits as the assurance nothing the engine does is lost,
+  and rollback in the worst case.
+- **Kind:** authority
+- **Decided (provisional):** undecided — the requirement is declared;
+  the mechanics are open.
+
 ## Project kinds — monorepos and non-code repositories — 2026-10-26
 
 - **The question:** How does the system account for different kinds of
