@@ -253,6 +253,11 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- The off-switch: settled — bootstrap states plainly what always-awake
+  processing means before it starts (the consent moment), and a park
+  command stops the engine on that project, leaving the records in
+  place and resumable by re-running bootstrap; the engine then stops
+  reading that repository until restarted. (2026-10-27, user)
 - The orchestrator: settled — the one interactive primary is the
   orchestrator agent from the feature tracker: the face that runs the
   user's sessions and coordinates the swarm of helpers behind it.
