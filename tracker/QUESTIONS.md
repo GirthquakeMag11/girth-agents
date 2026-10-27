@@ -40,6 +40,11 @@ applied to the work later. See the tracker skill.
   stratify into greater context — so the layer has capture,
   verification, and admission, and "who writes" was only the first of
   the three.
+- **Note — 2026-10-26:** verification is now owned by a new sixth
+  helper, `prove-it` — checks claims (not bare facts) against confirmed
+  knowledge, marshalling the fact-finder for new base facts; capture
+  stays the separate pass's job, and admission rules remain to be
+  settled.
 
 ## Primary agents — what replaces build and plan — 2026-10-26
 

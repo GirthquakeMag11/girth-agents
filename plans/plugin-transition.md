@@ -213,6 +213,19 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- `prove-it`: settled — a new named helper whose job is verifying the
+  truth of claims that are not observable fact, held against what the
+  system confirms it knows to be true; it works alone or in concert
+  with the fact-finder. The two hold different relationships to the
+  knowledge base: the fact-finder acquires base facts from authentic
+  sources (assumed true — beyond proof and denial in context, like "the
+  sky is blue"), and prove-it checks other claims against that
+  confirmed knowledge. The sixth helper; both fail openly rather than
+  assert. (2026-10-26, user)
+- Lesson-claim verification: settled — prove-it verifies a
+  lesson-claim before it stratifies into the recall store, marshalling
+  the fact-finder where the check needs new base facts; a claim that
+  cannot be verified does not stratify. (2026-10-26, user)
 - Recall layer: settled — in scope: the engine's agents remember
   lessons across work, separate from the canonical glossary, governed
   by one principle — lessons should only need to be learned once. The
