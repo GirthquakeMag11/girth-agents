@@ -223,6 +223,15 @@ after approval.
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
   working practice, formalized for the engine. (2026-10-26, user)
+- Bootstrap in a live project: settled — a re-bootstrap is a step of
+  its own: it waits for the step in flight, runs exclusively and
+  synchronously with the user, and the engine resumes after.
+  (2026-10-27, user)
+- Scaffold migration: declared to revisit — when the plugin's
+  schematics change, bootstrap must bring a repository into the current
+  paradigm from its previous state, whether that state is a previous
+  plugin version or none at all. The update/migration thread is
+  deferred but named. (2026-10-27, user)
 - Concurrency, plank two: settled — a chain's step is exclusive:
   every writing helper (checker, fact-finder, prove-it, caregiver,
   the consolidation pass) waits for the step in flight; only the

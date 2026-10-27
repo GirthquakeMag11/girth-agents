@@ -6,6 +6,19 @@ applied to the work later. See the tracker skill.
 
 <!-- entries below, newest first, one `##` section each -->
 
+## Scaffold migration — bringing a repo into the current paradigm — 2026-10-27
+
+- **The question:** When the plugin's schematics change between
+  versions, how does bootstrap migrate a repository from its previous
+  state — a previous plugin version, or no scaffold at all — into the
+  current paradigm?
+- **Context:** map `The skillset becomes an OpenCode plugin`; raised at
+  the bootstrap-exclusivity question; the user wants to circle back
+  to it; deferred but named.
+- **Kind:** authority
+- **Decided (provisional):** undecided — deferred until the user
+  circles back; nothing is built on a guess.
+
 ## Concurrency — the engine's stance — 2026-10-26
 
 - **The question:** What is the engine's stance on asynchronous,
