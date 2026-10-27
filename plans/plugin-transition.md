@@ -1,6 +1,6 @@
 # The skillset becomes an OpenCode plugin
 
-**Status:** charting
+**Status:** done
 
 ## Destination — [Ours: this effort's own working process]
 
@@ -9,6 +9,11 @@ OpenCode plugin, then one umbrella spec — the skills, commands, agent
 types, tools, and code of that plugin — written as one coherent set and
 approved once. Building and slicing are the next effort and begin only
 after approval.
+
+Reached 2026-10-27: every thread is followed to an answer or parked by
+name, the plan passed its own three-reviewer gate unanimously on the
+second round, and `decisions/0007-plugin-transition.md` records the
+turn. The umbrella spec is the next effort.
 
 ## Notes
 
@@ -76,13 +81,13 @@ after approval.
   earlier one still holds.
 - Three-perspective review (2026-10-26; notes in `docs/research/`:
   `fog-audit.md`, `blind-read.md`, `coverage-matrix.md`) opened four
-  genuine inquiry threads, not settled:
-  1. The plan gate — fully settled: the review loop precedes the plan's
-     very name; the checklist comes from the session chat and the
-     project context; a FAIL repairs normally with the inbox entering
-     exactly when rectification requires the user's answer; a dead-end
-     is an exception that fails loudly, stamped as the system's own,
-     and self-reports to the plugin repo.
+  genuine inquiry threads; each is since settled in the Decisions and
+  thread notes below.
+  1. The plan gate — settled: the review loop precedes the plan's very
+     name; the checklist comes from the session chat and the project
+     context; a FAIL returns to the live interactive session that made
+     the plan (the repair chair — review before confirmation); a
+     dead-end is the loud exception, stamped and self-reported.
   2. The human stops — settled by clarification, not a ruling: the
      umbrella spec's approval is OUR effort's own process, while the
      checkpoints ruling (the plan as the chain's one human stop)
@@ -760,13 +765,10 @@ after approval.
 
 ## Not yet specified
 
-- The plan's own review — three reviewers ran the gate on this map
-  (2026-10-27, `docs/research/plan-review-A/B/C.md`): all FAILed, and
-  six findings re-open the frontier, in rectification with the user:
-  the engine's off-switch and consent moment; the engine sessions'
-  permission ruleset; who repairs a FAILed plan; the push-conflict
-  terminal state; the `domain-modeling` skill's own fate; the "inbox"
-  name collision. (Nothing here is settled until that round closes.)
+- The plan's own review — closed: the three reviewers' first round
+  FAILed with six findings; the rectification settled all six, and
+  the second round was unanimous PASS (2026-10-27;
+  `docs/research/plan-review-A/B/C.md` and the round-2 reports).
 - Concurrency — settled: serial within a project, steps exclusive,
   writers wait, watching never sleeps, pull-first working-branch
   commits, absorb-or-alarm on user edits, records as the crash ledger,
