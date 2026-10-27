@@ -519,8 +519,16 @@ after approval.
   and practical deep dive into domain-modeling; who owns the discipline
   now that the stretched-thin interactive agent does not; the glossary's
   relationship with the tracker; and the `learned term → new glossary
-  entry` pipeline's designated point in the workflow. Tracked as
-  "Knowledge management — the domain-modeling deep dive".
+  entry` pipeline's designated point in the workflow. Research complete
+  (`docs/research/knowledge-management-theory.md`,
+  `knowledge-management-practice.md`): maintenance must be someone's
+  designated job, not a busy generalist's side duty; capture must be
+  cheap, local, and non-interruptive; admissions happen on warrant, at
+  the moment the term matters; the vocabulary is a governed commons
+  with proposal, acceptance, deprecation, and drift-repair — and
+  surface alignment (agents aligning on wording, not meaning) needs a
+  detect-and-repair loop. Tracked as "Knowledge management — the
+  domain-modeling deep dive".
 - Test scenarios harvested from this effort's own incidents: (1) a
   representation with a cross-layer conflict FAILs review — the flag is
   correct behavior, not a bug; (2) the interpreter classifies the

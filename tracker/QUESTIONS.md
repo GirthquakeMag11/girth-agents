@@ -68,6 +68,7 @@ applied to the work later. See the tracker skill.
   incremental capture) and practice (this repo's ground truth, agent
   memory conventions, the tracker's pipeline pattern, dedicated-role
   precedents); notes land in `docs/research/`.
+- **Note — 2026-10-26:** research landed — the grill begins.
 
 ## The old inbox helpers — deferred until the shape is visible — 2026-10-25
 
