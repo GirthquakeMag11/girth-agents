@@ -99,6 +99,12 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — investigation first; nothing
   is built on a guess.
+- **Note — 2026-10-26:** the user asked for multiple-context repos to
+  get a fair shot: three researchers dispatched — neutral ground truth
+  on the mattpocock/skills domain-modeling skill (the original
+  adaptation's inspiration), an advocate for multi-context support, and
+  a skeptic for one-repo/one-project — to be mediated before the design
+  is put to the user.
 
 ## Knowledge management — the domain-modeling deep dive — 2026-10-26
 
