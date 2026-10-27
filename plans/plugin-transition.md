@@ -213,6 +213,12 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Recall layer: settled — in scope: the engine's agents remember
+  lessons across work, separate from the canonical glossary, governed
+  by one principle — lessons should only need to be learned once. It
+  overlaps the hazard tracker's designed purpose significantly, and the
+  two must be reconciled into one home per meaning, never competing
+  stores. (2026-10-26, user)
 - Glossary's own hygiene: settled — the glossary stays prose (a term
   and its definition); the mechanical gate checks only form (duplicate
   spellings, malformed entries, empty definitions). Meaning — one
