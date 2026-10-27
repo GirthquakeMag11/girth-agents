@@ -271,6 +271,13 @@ turn. The umbrella spec is the next effort.
   alone, and raises through the inbox (the reconciliation is the user's
   authority); everything waits intact until answered. (2026-10-27,
   user)
+- The shelved era's terms: settled — they stay. Each definition stands
+  alone — none requires the handoff paradigm to be comprehensible —
+  and they describe the lifecycle of context itself, which the new
+  system uses too (the chat's exhaustion, the ledger's rebuild, the
+  inbox item's consumption). The shelf retired the paradigm, not the
+  words; a term retires only by warrant, through the caregiver, with
+  the user's authority. (2026-10-27, user)
 - Plan-gate completeness: settled — the plan's PASS means the
   interactive grilling exhausted every user-answerable question
   visible in the wayfinding context, and the session never
