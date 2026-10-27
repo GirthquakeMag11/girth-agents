@@ -25,6 +25,16 @@ applied to the work later. See the tracker skill.
   scholarship (memory taxonomies, experience reuse, failure modes,
   dedup, human-in-the-loop); notes land in `docs/research/` before any
   design.
+- **Note — 2026-10-26:** research landed — the common shape: capture in
+  a separate pass, never the worker mid-task; terse always-carry lines
+  with evidence held out of context; repo-scoped storage; retrieval
+  rules (relevance beats write-quality, 20-point spread); learn-once as
+  check-before-write (ADD/NOOP/merge); hard budgets; and the recall
+  layer forbidden from overriding the canonical committed records.
+  Strongest warnings: self-rewritten memory degrades and can fall below
+  the no-memory baseline, and the store is a trust boundary against
+  poisoning — favoring append-only, deduped, authoritative-subordinate
+  design.
 
 ## Primary agents — what replaces build and plan — 2026-10-26
 
