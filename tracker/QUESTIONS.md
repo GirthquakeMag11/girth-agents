@@ -32,6 +32,20 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — the area is raised; the stance
   is to be recorded, the puzzle deferred.
+- **Answered — 2026-10-27:** the stance, plank by plank: serial within
+  a project, parallelism only across projects; a step is exclusive —
+  writers wait, watching never sleeps; bootstrap re-runs are a step of
+  their own; everything lands on the working branch (pull-first, never
+  force, no self-merging); user edits are checked and absorb-or-alarmed;
+  the records are the crash ledger with pull-first retries; one engine
+  per machine, per checkout; startedness is local activation by
+  bootstrap (which doubles as the schema gate); the sidebar shows the
+  engine's own live report; inbox replies join the serial order; and
+  the user's sessions live outside the engine entirely (user, across
+  the day's rounds).
+- **Follow-up:** map updated; the future stance — parallel chains in
+  one project, scope-based branching, cross-machine arbitration — is
+  named, not designed.
 
 ## The recall layer — its shape — 2026-10-26
 

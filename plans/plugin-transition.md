@@ -252,6 +252,10 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- User sessions and the engine: settled — the user's sessions live
+  outside the engine and never compete for its queue; their outputs
+  cross the boundary at the already-designed doors (the entry-point
+  clearance, inbox replies, absorb-or-alarm). (2026-10-27, user)
 - Inbox writes in the serial order: settled — the user's
   answering-session record-writes join the serial order like any other
   step: they land at the next slot, imperceptibly after the engine's
