@@ -213,6 +213,11 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (2026-10-26, user)
+- Glossary proposals' home: settled — term proposals are a tracker kind
+  of their own, like questions and hazards: classified, recorded, and
+  processed by the caregiver, with the inbox question referencing the
+  proposal entry. The tracking skill's kind set and the bootstrapping
+  inventory gain the new kind at implementation. (2026-10-26, user)
 - Glossary proposals: settled — filtered, never batched: filtered means
   "this isn't worth attending to," and the caregiver never acts on its
   own — filtered items never change the glossary. Each warranted
