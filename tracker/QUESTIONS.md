@@ -35,6 +35,11 @@ applied to the work later. See the tracker skill.
   the no-memory baseline, and the store is a trust boundary against
   poisoning — favoring append-only, deduped, authoritative-subordinate
   design.
+- **Note — 2026-10-26:** the user reframed the thread: lessons are
+  claims and conclusions needing verification in themselves before they
+  stratify into greater context — so the layer has capture,
+  verification, and admission, and "who writes" was only the first of
+  the three.
 
 ## Primary agents — what replaces build and plan — 2026-10-26
 
