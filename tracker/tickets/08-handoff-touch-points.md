@@ -21,6 +21,10 @@ changelog's Unreleased section.
 - [ ] CHANGELOG: the Unreleased section gains the Added entries (the skill, `/pickup`) and the Changed entry (`/handoff`).
 - [ ] Validator green.
 
+- **Note — 2026-10-27:** this ticket's `teaching` mentions are
+  historical — `decisions/0006` retired the skill; nothing here needs
+  doing.
+
 - **Done — 2026-10-21:** questionnaire's line no longer claims a
   temp-dir home for `/handoff` and keeps its own home; teaching's pointer
   names both doors; README gains the `handoff` skill row, the reworded

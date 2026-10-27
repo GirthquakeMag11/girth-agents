@@ -6,7 +6,10 @@ call — fold into the activities that work those pieces, so every surviving
 skill stands alone as one thing the agent does. The catalog drops from 30
 skills to 21.
 
-Status: accepted
+Status: accepted; superseded in part — `decisions/0006` retired the
+`teaching` (education) skill, so the owner count here is stale: six
+skills own scaffold pieces, not seven. This decision otherwise stands
+as the record of the one-skill-class split.
 
 ## Considered options
 

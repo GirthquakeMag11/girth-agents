@@ -275,8 +275,9 @@ harness.
   at approval time and points to this spec.
 - Touch points when implemented: the README's skill and command tables and
   the chains map (which gains a session-boundary pair), the questionnaire
-  skill's line about the handoff's home, the teaching skill's `/handoff`
-  pointer, and the CHANGELOG through the normal release flow.
+  skill's line about the handoff's home, and the CHANGELOG through the
+  normal release flow. (The `teaching` skill's `/handoff` pointer died
+  with the skill itself — `decisions/0006`.)
 - Under the standing versioning rules this lands as Added and Changed —
   minor-natured; the release and its number are the user's, at the usual
   time.
