@@ -252,6 +252,12 @@ after approval.
   its own: it waits for the step in flight, runs exclusively and
   synchronously with the user, and the engine resumes after.
   (2026-10-27, user)
+- GitHub credentials: settled — bootstrapping includes an optional gh
+  setup: the user who takes it provides credentials through gh, which
+  the engine never stores separately; a declination lets the engine
+  proceed without the GitHub integration (commits stay local, pushes
+  and self-reports unavailable), recorded as a ruling like any
+  declination. (2026-10-27, user)
 - Offline pushes: settled — a failed push holds its commits locally —
   the ledger loses nothing — and retries on the next pass; there is
   no extra queue beyond the local unpushed commits themselves, and the

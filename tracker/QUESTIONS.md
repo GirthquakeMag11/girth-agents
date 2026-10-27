@@ -125,6 +125,15 @@ applied to the work later. See the tracker skill.
 - **Kind:** authority
 - **Decided (provisional):** undecided — the requirement is declared;
   the mechanics are open.
+- **Answered — 2026-10-27:** the commit unit is one meaningful unit
+  with a conventional message, pushed as it goes; engine and user
+  commits share the working branch (pull-first, never force, never
+  self-merge); user edits are checked and absorb-or-alarmed; failed
+  pushes hold locally and retry; gh is the vehicle via an optional
+  bootstrap setup, and declining means the engine proceeds without the
+  integration (user).
+- **Follow-up:** map updated; the monorepo changelog-tooling tension is
+  handled by the deviations rule, case by case.
 
 ## Project kinds — monorepos and non-code repositories — 2026-10-26
 
