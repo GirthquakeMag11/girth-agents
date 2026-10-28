@@ -16,7 +16,11 @@ divergence the engine holds its commits, leaves the working tree alone,
 and raises a typed stop through the exit path — reconciliation is the
 user's authority.
 
-## Acceptance criteria
+## Work so far
+
+- 2026-10-28: built test-first against real git and file remotes — no mocking. The delivery module commits its units with conventional messages, syncs pull-first (an absent remote branch is nothing-to-pull, never an error), holds commits locally through an unreachable remote and retries next pass, and on genuine divergence holds everything — working tree, local history, remote — with no merge, no rewrite, no force-push. The raise-through-the-exit-path half rides with ticket 29's entry/exit wiring; the module's held-diverged state is the signal that feeds it.
+
+- **Done — 2026-10-28:** delivery lands at `engine/delivery.mjs`; four tests, real git, 35 green across the suite.
 
 - [ ] Each unit of work lands as its own conventional commit, pushed after a pull
 - [ ] A failed push holds the commits locally and retries them on the next pass
