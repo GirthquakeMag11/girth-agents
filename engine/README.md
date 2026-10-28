@@ -1,9 +1,10 @@
 # The engine
 
-The always-awake harness that runs a claimed plan through a configured
-node graph of headless agent sessions, graded and repaired until it
-passes. Specced in `specs/engine.md`; the mechanics live as plain
-Node ESM modules beside this file, tested with `node --test engine/`.
+The always-awake harness that runs a claimed input — today, a tracker
+ticket stamped ready — through a configured node graph of headless
+agent sessions, implemented, reviewed, and repaired until it passes.
+Specced in `specs/engine.md`; the mechanics live as plain Node ESM
+modules beside this file, tested with `node --test engine/`.
 
 ## The current workflow graph
 
@@ -16,21 +17,21 @@ flowchart LR
     classDef bounce fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
     classDef defect fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px,stroke-dasharray: 5 2
 
-    IN(["in — entry · marker: CONFIRMED"]):::entry
-    BUILD["build — task · builder · work/out.json"]:::task
-    GRADE{"grade — task · checker · work/verdict.json"}:::decide
-    REPAIR["repair — task · builder · resumes build's session · maxVisits: 3"]:::task
-    OUTDONE(["out-done — exit"]):::done
+    TICKETIN(["ticket-in — entry · marker: **Ready:**"]):::entry
+    IMPLEMENT["implement — task · builder · work/implementation.json"]:::task
+    REVIEW{"review — task · reviewer · work/review.json"}:::decide
+    REPAIR["repair — task · builder · resumes implement's session · maxVisits: 3"]:::task
+    IMPLEMENTED(["implemented — exit"]):::done
     BOUNCE(["bounce — exit · question · awaiting-answer"]):::bounce
-    DEAD_GRADE(["loud defect — chain halts, nothing routes"]):::defect
+    DEAD_REVIEW(["loud defect — chain halts, nothing routes"]):::defect
 
-    IN --> BUILD
-    BUILD --> GRADE
-    GRADE -- "verdict = pass" --> OUTDONE
-    GRADE -- "verdict = fail" --> REPAIR
-    REPAIR --> GRADE
+    TICKETIN --> IMPLEMENT
+    IMPLEMENT --> REVIEW
+    REVIEW -- "verdict = pass" --> IMPLEMENTED
+    REVIEW -- "verdict = fail" --> REPAIR
+    REPAIR --> REVIEW
     REPAIR -- "after 3 repairs" --> BOUNCE
-    GRADE -. "any other stamp" .-> DEAD_GRADE
+    REVIEW -. "any other stamp" .-> DEAD_REVIEW
 ```
 
 This diagram is generated from the live graph config and tested for
@@ -43,9 +44,11 @@ anywhere. Out-links are conditional or unconditional, never a mixture,
 never a catch-all.
 
 Legend: gray = entry, blue = task, yellow = decision, green/red = the
-two exits. The refinement loop is the circle through `grade` and
-`repair`; `maxVisits: 3` is the structure's bound — the number is the
-config's.
+two exits. The entry admits a claimed ticket only when it is stamped
+`**Ready:**`, and the brief names the claimed ticket's file for every
+helper to read — the ticket is the contract both sides work from. The
+refinement loop is the circle through `review` and `repair`;
+`maxVisits: 3` is the structure's bound — the number is the config's.
 
 ## The config tree
 

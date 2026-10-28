@@ -160,8 +160,10 @@ graph; the config knows the work.
    dispatch, never a prompt mid-run. Then a headless session is
    spawned through the engine's own OpenCode server client: the
    helper's model and pre-granted permissions are set at creation; the
-   brief — the agent's skills, the node's objective and body, the
-   artifact to produce, and, on repair, the failed step's report — is
+   brief — the agent's skills, the claimed input's file (named so the
+   helper reads it; the input is the work's contract), the node's
+   objective and body, the artifact to produce, and, on repair, the
+   failed step's report — is
    the prompt. The engine awaits completion through the client's session
    wait and outcome state, holding its own time cap and interrupting on
    breach. When the session ends, the engine reads only the configured
@@ -253,9 +255,12 @@ The executor's hardcoded skeleton gains one more structural
     exhausted link is the route taken on the visit after the last —
     the structure enforces loop limits, the config sets the number.
     The first shipped workflow config (`config.json` beside the engine)
-    composes the refinement loop from it: build, grade, repair resuming
-    the builder's session with three retries, a bounce exit writing the
-    awaiting question when the limit trips.
+    is implement-from-ticket: a ticket stamped ready enters, the builder
+    implements it and reports, the reviewer verifies and stamps
+    pass-fail, a fail routes to repair resuming the builder's session
+    with three retries, a bounce exit writes the awaiting question when
+    the limit trips, and a pass terminates at the implemented exit —
+    which writes nothing; the work itself is the outcome.
 14. **Scheduling, the leash, and user edits.** Within a project the
     engine does one thing at a time: one current step in flight,
     everything else ready-but-waiting; a step is exclusive — every
@@ -354,11 +359,11 @@ Settled in the refinement pass: the poke vocabulary (claim-input
 replaces entry-point validity in the engine; validity is the entry
 node's config), the notice stream (with periodic heartbeat and
 on-demand introspection — no black boxes), and cadence and budgets are
-config with shipped defaults. Deferred at the user's direction: the
-workflow graph's actual content — "worry about how we configure the
-thing after we have made the thing" — the engine ships with a minimal
-fixture graph for its own tests and no production workflow claims.
-Still open: the cross-process client attachment (fact-checked first at
-build), live session-wait and outcome semantics, and the shipped
-default numbers, which the config writer sets when the config is
-written.
+config with shipped defaults. The workflow graph's actual content —
+deferred at the user's direction until the engine existed — is now
+shipped: the implement-from-ticket workflow of Decision 13, its entry
+marker the ticket's ready stamp (`**Ready:**`, dated). Still open: the
+cross-process client attachment (fact-checked first at build), live
+session-wait and outcome semantics, the chain's forward extension
+(ticket-from-spec), and the shipped default numbers, which the config
+writer sets when the config is written.

@@ -1,14 +1,14 @@
 {
   "version": "1",
-  "agents": ["agents/builder.md", "agents/checker.md"],
-  "skills": ["skills/building.md", "skills/grading.md"],
+  "agents": ["agents/builder.md", "agents/reviewer.md"],
+  "skills": ["skills/implementing.md", "skills/reviewing.md"],
   "graph": {
     "nodes": [
-      "nodes/in.md",
-      "nodes/build.md",
-      "nodes/grade.md",
+      "nodes/ticket-in.md",
+      "nodes/implement.md",
+      "nodes/review.md",
       "nodes/repair.md",
-      "nodes/out-done.md",
+      "nodes/implemented.md",
       "nodes/bounce.md"
     ]
   }

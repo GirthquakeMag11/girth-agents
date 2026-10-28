@@ -16,9 +16,20 @@ const ENGINE = new URL("./engine.mjs", import.meta.url).pathname;
 const CONFIG_PATH = new URL("./config.json", import.meta.url).pathname;
 const NODE = process.execPath;
 
+const TICKET = "tracker/tickets/12-frob.md";
+const TICKET_TEXT = `# 12: Frob the widget
+
+**Kind:** feature
+**Ready:** 2026-10-28
+
+## What it delivers
+
+The widget gets frobbed, with tests pinning the frob.
+`;
+
 // A fake OpenCode server whose prompts act as the helpers: the builder
-// session writes the output artifact, the checker session writes the
-// verdict — a scripted sequence of fails, then a pass.
+// session writes the implementation report, each fresh reviewer session
+// writes the verdict — a scripted sequence of fails, then a pass.
 function fakeOpenCode({ verdictScript }) {
   const records = [];
   const locations = new Map(); // sessionId -> location
@@ -52,14 +63,14 @@ function fakeOpenCode({ verdictScript }) {
         const work = join(location, "work");
         await mkdir(work, { recursive: true });
         if (id === "sess-1") {
-          // the builder's session — build and every repair resume it
-          await writeFile(join(work, "out.json"), JSON.stringify({ done: true, pass: count + 1 }));
+          // the builder's session — the implement step and every repair resume it
+          await writeFile(join(work, "implementation.json"), JSON.stringify({ changed: ["lib/widget.mjs"], tests: "pass" }));
         } else {
-          // the checker is always fresh: each grade is a new session,
+          // the reviewer is always fresh: each review is a new session,
           // so the verdict sequence is global, not per session
           const verdict = verdictScript[Math.min(gradeCount, verdictScript.length - 1)];
           gradeCount += 1;
-          await writeFile(join(work, "verdict.json"), JSON.stringify({ verdict }));
+          await writeFile(join(work, "review.json"), JSON.stringify({ verdict }));
         }
         reply = { status: 200, body: {} };
       } else if (req.method === "POST" && /\/wait$/.test(req.url)) {
@@ -84,7 +95,9 @@ async function project() {
   for (const [k, v] of [["user.email", "engine@test"], ["user.name", "Engine"], ["commit.gpgsign", "false"]]) {
     await run("git", ["config", k, v], { cwd: dir });
   }
-  await writeFile(join(dir, "plan.md"), "# plan\n\nCONFIRMED 2026-10-28\n");
+  const ticketPath = join(dir, TICKET);
+  await mkdir(join(dir, "tracker", "tickets"), { recursive: true });
+  await writeFile(ticketPath, TICKET_TEXT);
   return dir;
 }
 
@@ -126,42 +139,59 @@ test("the shipped config verifies sound through the gate", async () => {
   assert.equal(result.valid, true, JSON.stringify(result.configFaults));
 });
 
+test("a claimed file without the ready stamp is a loud defect, and no session runs", async () => {
+  const fake = await fakeOpenCode({ verdictScript: ["pass"] });
+  const dir = await project();
+  await writeFile(join(dir, "notes.md"), "# loose note\n\nno stamp here.\n");
+  const { child, out } = await bootEngine(dir, fake.url);
+  child.stdin.write(encode("claim-input", { directory: dir, file: "notes.md" }) + "\n");
+  const rejected = await waitFor(() => out.lines.some((l) => l.includes('"defect"') && l.includes("marker")));
+  assert.ok(rejected, `the unstamped claim must be rejected loudly; got ${out.lines.join("\n")}`);
+  assert.equal(fake.promptsBySession.size, 0, "no helper session may run for a rejected claim");
+  assert.ok(!out.lines.some((l) => l.includes('"exit-committed"')), "a rejected claim must not reach an exit");
+  child.kill("SIGTERM");
+  await fake.server.close();
+});
+
 test("the refinement loop: fail, fail, pass — the builder's session is resumed, never respawned", async () => {
   const fake = await fakeOpenCode({ verdictScript: ["fail", "fail", "pass"] });
   const dir = await project();
   const { child, out } = await bootEngine(dir, fake.url);
-  child.stdin.write(encode("claim-input", { directory: dir, file: "plan.md" }) + "\n");
-  const reachedOutDone = await waitFor(async () => {
+  child.stdin.write(encode("claim-input", { directory: dir, file: TICKET }) + "\n");
+  const reachedImplemented = await waitFor(async () => {
     child.stdin.write(encode("introspect", {}) + "\n");
     await new Promise((r) => setTimeout(r, 25));
     const reply = out.lines.filter((l) => l.includes('"introspection"')).map(parse).at(-1);
-    return reply?.runs?.some((r) => r.state === "finished" && r.terminal === "out-done");
+    return reply?.runs?.some((r) => r.state === "finished" && r.terminal === "implemented");
   });
-  assert.ok(reachedOutDone, `never reached out-done; lines: ${JSON.stringify(out.lines)} err: ${out.err}`);
+  assert.ok(reachedImplemented, `never reached implemented; lines: ${JSON.stringify(out.lines)} err: ${out.err}`);
 
   const reply = out.lines.filter((l) => l.includes('"introspection"')).map(parse).at(-1);
-  const done = reply.runs.find((r) => r.terminal === "out-done");
-  const gradeSucceeds = done.events.filter((e) => e.nodeId === "grade" && e.outcome === "succeeded");
-  assert.equal(gradeSucceeds.length, 3, "grade must run three times before passing");
-  assert.equal(gradeSucceeds.at(-1).stamps.verdict, "pass");
+  const done = reply.runs.find((r) => r.terminal === "implemented");
+  const reviewSucceeds = done.events.filter((e) => e.nodeId === "review" && e.outcome === "succeeded");
+  assert.equal(reviewSucceeds.length, 3, "review must run three times before passing");
+  assert.equal(reviewSucceeds.at(-1).stamps.verdict, "pass");
 
   // the resume contract, observed end to end: the builder's session
-  // carries the build and both repairs; the checker is always fresh —
-  // three grades, three fresh checker sessions
-  assert.equal(fake.promptsBySession.size, 4, "builder session + three fresh checker sessions");
-  assert.equal(fake.promptsBySession.get("sess-1"), 3, "builder session: build + two repairs");
-  const checkerPrompts = [...fake.promptsBySession.entries()]
+  // carries the implement step and both repairs; the reviewer is always
+  // fresh — three reviews, three fresh reviewer sessions
+  assert.equal(fake.promptsBySession.size, 4, "builder session + three fresh reviewer sessions");
+  assert.equal(fake.promptsBySession.get("sess-1"), 3, "builder session: implement + two repairs");
+  const reviewerPrompts = [...fake.promptsBySession.entries()]
     .filter(([id]) => id !== "sess-1")
     .reduce((sum, [, n]) => sum + n, 0);
-  assert.equal(checkerPrompts, 3, "three grades across three fresh checker sessions");
+  assert.equal(reviewerPrompts, 3, "three reviews across three fresh reviewer sessions");
 
-  // the prompts carry the agents' crafts, the objective, and the report
+  // the prompts carry the agents' crafts, the objective, the claimed
+  // ticket, and the report
   const builderPrompts = fake.records.filter((r) => /sess-1\/prompt$/.test(r.url)).map((r) => r.body?.text ?? "");
   assert.ok(builderPrompts[0].includes("# The builder's craft"), builderPrompts[0]);
-  assert.ok(builderPrompts[0].includes("Build the piece the claimed plan names"), builderPrompts[0]);
+  assert.ok(builderPrompts[0].includes("Implement the claimed ticket"), builderPrompts[0]);
+  assert.ok(builderPrompts[0].includes(TICKET), "the brief must tell the builder which file was claimed");
   assert.ok(builderPrompts.some((p) => p.includes('"verdict": "fail"')), "the reviewer's report must ride into the repair brief");
-  const checkerPrompt = fake.records.find((r) => /sess-2\/prompt$/.test(r.url))?.body?.text ?? "";
-  assert.ok(checkerPrompt.includes("# The checker's craft"), checkerPrompt);
+  const reviewerPrompt = fake.records.find((r) => /sess-2\/prompt$/.test(r.url))?.body?.text ?? "";
+  assert.ok(reviewerPrompt.includes("# The reviewer's craft"), reviewerPrompt);
+  assert.ok(reviewerPrompt.includes(TICKET), "the reviewer's brief must name the claimed ticket too");
   child.kill("SIGTERM");
   await fake.server.close();
 });
@@ -170,21 +200,21 @@ test("strict stamps: an unmodeled verdict defects loudly — never routed into t
   const fake = await fakeOpenCode({ verdictScript: ["fail", "maybe"] });
   const dir = await project();
   const { child, out } = await bootEngine(dir, fake.url);
-  child.stdin.write(encode("claim-input", { directory: dir, file: "plan.md" }) + "\n");
+  child.stdin.write(encode("claim-input", { directory: dir, file: TICKET }) + "\n");
   const defect = await waitFor(() => out.lines.some((l) => l.includes('"defect"') && l.includes("maybe")));
   assert.ok(defect, `the stray stamp must be named in a defect notice; got ${out.lines.join("\n")}`);
   assert.ok(!out.lines.some((l) => l.includes('"exit-committed"')), "no exit may be reached on a stray stamp");
   // fail legitimately reaches repair once; the stray verdict is where the chain halts
-  assert.equal(fake.promptsBySession.get("sess-1"), 2, "build + one repair, then the stray verdict halts the chain");
+  assert.equal(fake.promptsBySession.get("sess-1"), 2, "implement + one repair, then the stray verdict halts the chain");
   child.kill("SIGTERM");
   await fake.server.close();
 });
 
-test("the retry limit: an always-failing grade bounces after three repairs", async () => {
+test("the retry limit: an always-failing review bounces after three repairs", async () => {
   const fake = await fakeOpenCode({ verdictScript: ["fail", "fail", "fail"] });
   const dir = await project();
   const { child, out } = await bootEngine(dir, fake.url);
-  child.stdin.write(encode("claim-input", { directory: dir, file: "plan.md" }) + "\n");
+  child.stdin.write(encode("claim-input", { directory: dir, file: TICKET }) + "\n");
   const committed = await waitFor(() => out.lines.some((l) => l.includes('"exit-committed"')));
   assert.ok(committed, `exit-committed missing in ${out.lines}; err: ${out.err}`);
   assert.ok(out.lines.some((l) => l.includes('"exit-committed"') && l.includes('"bounce"')), out.lines.join("\n"));
@@ -194,13 +224,13 @@ test("the retry limit: an always-failing grade bounces after three repairs", asy
   assert.equal(record.state, "awaiting-answer");
 
   // the cap was honored: three repairs, then the exhausted link — never a fourth
-  assert.equal(fake.promptsBySession.get("sess-1"), 4, "build + three repairs, exactly");
-  const checkerPrompts = [...fake.promptsBySession.entries()]
+  assert.equal(fake.promptsBySession.get("sess-1"), 4, "implement + three repairs, exactly");
+  const reviewerPrompts = [...fake.promptsBySession.entries()]
     .filter(([id]) => id !== "sess-1")
     .reduce((sum, [, n]) => sum + n, 0);
-  // check-then-retry: the fourth grade's fail verdict is what trips the exhausted link
-  assert.equal(checkerPrompts, 4, "four grades: one per attempt, the last tripping the limit");
-  await access(join(dir, "work", "verdict.json")); // the graded work stays in the tree
+  // check-then-retry: the fourth review's fail verdict is what trips the exhausted link
+  assert.equal(reviewerPrompts, 4, "four reviews: one per attempt, the last tripping the limit");
+  await access(join(dir, "work", "review.json")); // the reviewed work stays in the tree
 
   const committedLog = await waitFor(async () => {
     try {

@@ -1,11 +1,11 @@
 ---
 id: builder
-job: Build the piece the brief names, exactly to its criteria, writing the staged output artifact.
+job: Implement the claimed ticket's criteria — test-first at the seams it names — and write the report artifact.
 model: openrouter/~deepseek/deepseek-flash-latest
 capabilities: [fs, bash]
 permissions:
   allow: [fs, bash]
   denyRest: true
-skills: [skills/building.md]
+skills: [skills/implementing.md]
 ---
-The builder produces the piece the objective names, and nothing else.
+The builder implements the claimed ticket, and nothing else.

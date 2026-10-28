@@ -2,13 +2,13 @@
 id: repair
 type: task
 helper: builder
-artifact: work/out.json
+artifact: work/implementation.json
 budgetMs: 600000
-resume: build
+resume: implement
 maxVisits: 3
-objective: Repair the output artifact per the reviewer's report and update it in place.
+objective: Repair the implementation per the reviewer's report and update the report artifact in place.
 out:
-  - to: grade
+  - to: review
   - to: bounce
     exhausted: true
 ---
