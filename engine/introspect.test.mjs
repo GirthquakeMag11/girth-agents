@@ -37,9 +37,9 @@ function fakeOpenCode({ hang = false } = {}) {
       records.push({ method: req.method, url: req.url });
       let reply = { status: 200, body: {} };
       if (req.url === "/api/info") reply = { status: 200, body: { pid: 1, version: "2.1.4" } };
-      else if (req.method === "POST" && req.url === "/api/session") reply = { status: 200, body: { id: "sess-1" } };
-      else if (req.url.endsWith("/wait")) reply = hang ? { status: 404, body: {} } : { status: 200, body: { outcome: "succeeded" } };
-      else if (req.method === "GET" && req.url.endsWith("/sess-1")) reply = { status: 200, body: { outcome: "pending" } };
+      else if (req.method === "POST" && req.url === "/api/session") reply = { status: 200, body: { data: { id: "sess-1" } } };
+      else if (req.url.endsWith("/wait")) reply = hang ? { status: 404, body: {} } : { status: 200, body: { data: { outcome: "succeeded" } } };
+      else if (req.method === "GET" && req.url.endsWith("/sess-1")) reply = { status: 200, body: { data: { outcome: "pending" } } };
       else if (req.url.includes("/prompt")) reply = { status: 200, body: {} };
       res.statusCode = reply.status;
       res.setHeader("content-type", "application/json");

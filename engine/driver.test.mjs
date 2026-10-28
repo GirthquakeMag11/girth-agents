@@ -70,20 +70,38 @@ test("discovery: a missing registration file and a failing health check are type
   await fake.server.close();
 });
 
-test("driver spawn: creates the session with the fitting's model, location, and rule set", async () => {
+test("driver spawn: creates the session with the live-verified wire — model ref, location ref, permission triples, data envelope", async () => {
   const fake = await fakeServer({
     ...INFO_ROUTE,
-    "POST /api/session": () => ({ status: 200, body: { id: "sess-1" } }),
+    "POST /api/session": () => ({ status: 200, body: { data: { id: "sess-1" } } }),
   });
   const driver = await driverOn(fake);
   const idx = await driver.spawn({ nodeId: "build", helper: "builder", directory: "/proj", node: {} });
   const create = fake.records.find((r) => r.url === "/api/session");
   assert.ok(create, "session create must be sent");
   assert.equal(create.auth, basicAuth("sekrit"));
-  assert.equal(create.body.model, "weight/heavy");
-  assert.equal(create.body.location, "/proj");
-  assert.deepEqual(create.body.permissions, { allow: ["bash", "fs"], denyRest: true });
+  assert.deepEqual(create.body.model, { id: "heavy", providerID: "weight" });
+  assert.deepEqual(create.body.location, { directory: "/proj" });
+  assert.deepEqual(create.body.permissions, [
+    { action: "bash", resource: "*", effect: "allow" },
+    { action: "fs", resource: "*", effect: "allow" },
+    { action: "*", resource: "*", effect: "deny" },
+  ]);
   assert.equal(typeof idx, "number");
+  await fake.server.close();
+});
+
+test("driver spawn: a model not in provider/model form is a loud dispatch defect", async () => {
+  const fake = await fakeServer({
+    ...INFO_ROUTE,
+    "POST /api/session": () => ({ status: 200, body: { data: { id: "sess-1" } } }),
+  });
+  const driver = await driverOn(fake, { reviewer: { model: "no-slash-here", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } } });
+  await assert.rejects(
+    driver.spawn({ nodeId: "review", helper: "reviewer", directory: "/proj", node: {} }),
+    (e) => /provider\/model/.test(e.message),
+  );
+  assert.ok(!fake.records.some((r) => r.url === "/api/session"), "no session may be created for a malformed model ref");
   await fake.server.close();
 });
 
@@ -114,9 +132,9 @@ test("driver spawn: a helper without pre-granted capabilities is a dispatch defe
 test("driver prompt: sends the brief, waits, and returns the outcome", async () => {
   const fake = await fakeServer({
     ...INFO_ROUTE,
-    "POST /api/session": () => ({ status: 200, body: { id: "sess-1" } }),
+    "POST /api/session": () => ({ status: 200, body: { data: { id: "sess-1" } } }),
     "POST /api/session/sess-1/prompt": () => ({ status: 200, body: {} }),
-    "POST /api/experimental/session/sess-1/wait": () => ({ status: 200, body: { outcome: "succeeded" } }),
+    "POST /api/experimental/session/sess-1/wait": () => ({ status: 200, body: { data: { outcome: "succeeded" } } }),
   });
   const driver = await driverOn(fake);
   const idx = await driver.spawn({ nodeId: "build", helper: "builder", directory: "/proj", node: {} });
@@ -131,12 +149,12 @@ test("driver prompt: when the experimental wait fails, outcome polling is the ba
   let polls = 0;
   const fake = await fakeServer({
     ...INFO_ROUTE,
-    "POST /api/session": () => ({ status: 200, body: { id: "sess-1" } }),
+    "POST /api/session": () => ({ status: 200, body: { data: { id: "sess-1" } } }),
     "POST /api/session/sess-1/prompt": () => ({ status: 200, body: {} }),
     "POST /api/experimental/session/sess-1/wait": () => ({ status: 404, body: {} }),
     "GET /api/session/sess-1": () => {
       polls += 1;
-      return { status: 200, body: polls < 3 ? { outcome: "pending" } : { outcome: "failed" } };
+      return { status: 200, body: { data: { outcome: polls < 3 ? "pending" : "failed" } } };
     },
   });
   const driver = await driverOn(fake);
@@ -150,10 +168,10 @@ test("driver prompt: when the experimental wait fails, outcome polling is the ba
 test("driver interrupt: stops the wait loop and posts the interrupt", async () => {
   const fake = await fakeServer({
     ...INFO_ROUTE,
-    "POST /api/session": () => ({ status: 200, body: { id: "sess-1" } }),
+    "POST /api/session": () => ({ status: 200, body: { data: { id: "sess-1" } } }),
     "POST /api/session/sess-1/prompt": () => ({ status: 200, body: {} }),
     "POST /api/experimental/session/sess-1/wait": () => ({ status: 404, body: {} }),
-    "GET /api/session/sess-1": () => ({ status: 200, body: { outcome: "pending" } }),
+    "GET /api/session/sess-1": () => ({ status: 200, body: { data: { outcome: "pending" } } }),
     "POST /api/session/sess-1/interrupt": () => ({ status: 200, body: {} }),
   });
   const driver = await driverOn(fake);

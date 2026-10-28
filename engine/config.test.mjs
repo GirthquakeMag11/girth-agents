@@ -51,10 +51,21 @@ function fakeOpenCode({ verdictScript }) {
       if (req.url === "/api/info") {
         reply = { status: 200, body: { pid: 1, version: "2.1.4" } };
       } else if (req.method === "POST" && req.url === "/api/session") {
-        const id = `sess-${++nextId}`;
-        locations.set(id, body.location);
-        promptsBySession.set(id, 0);
-        reply = { status: 200, body: { id } };
+        // the fake is schema-faithful to the live wire: a drift in the
+        // model ref, location ref, or permission triples is a 400 here,
+        // exactly as the real server answers
+        const wire =
+          body?.model?.id && body?.model?.providerID &&
+          typeof body?.location?.directory === "string" &&
+          Array.isArray(body?.permissions) && body.permissions.every((r) => r.action && r.resource && ["allow", "deny", "ask"].includes(r.effect));
+        if (!wire) {
+          reply = { status: 400, body: { error: `session create: bad wire ${JSON.stringify(body).slice(0, 120)}` } };
+        } else {
+          const id = `sess-${++nextId}`;
+          locations.set(id, body.location.directory);
+          promptsBySession.set(id, 0);
+          reply = { status: 200, body: { data: { id } } };
+        }
       } else if (req.method === "POST" && /\/api\/session\/sess-\d+\/prompt$/.test(req.url)) {
         const id = req.url.split("/").at(-2);
         const count = promptsBySession.get(id) ?? 0;
@@ -74,7 +85,7 @@ function fakeOpenCode({ verdictScript }) {
         }
         reply = { status: 200, body: {} };
       } else if (req.method === "POST" && /\/wait$/.test(req.url)) {
-        reply = { status: 200, body: { outcome: "succeeded" } };
+        reply = { status: 200, body: { data: { outcome: "succeeded" } } };
       }
       res.statusCode = reply.status;
       res.setHeader("content-type", "application/json");

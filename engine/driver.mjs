@@ -9,6 +9,31 @@ import { basicAuth, discover } from "./service.mjs";
 const OTHER = ["succeeded", "failed", "interrupted"];
 const POLL_EVERY_MS = 200;
 
+// The live-verified wire contract (OpenCode 2.1.4, probed against the
+// running service on 2026-10-28): session creation takes a Model.Ref
+// { id, providerID }, a Location.PublicRef { directory }, and a
+// Permission.Ruleset array of { action, resource, effect } triples;
+// every response is wrapped in { data: … }. The fakes mirror exactly
+// this envelope so a wire drift can never hide behind a stand-in again.
+export function modelRef(fittingModel) {
+  const slash = fittingModel.indexOf("/");
+  if (slash <= 0) {
+    const err = new Error(`helper model '${fittingModel}' is not a 'provider/model' reference`);
+    err.kind = "model-ref";
+    throw err;
+  }
+  return { id: fittingModel.slice(slash + 1), providerID: fittingModel.slice(0, slash) };
+}
+
+function rules(fitting) {
+  const rules = [];
+  for (const entry of fitting.allow ?? []) {
+    rules.push({ action: entry, resource: "*", effect: "allow" });
+  }
+  if (fitting.denyRest) rules.push({ action: "*", resource: "*", effect: "deny" });
+  return rules;
+}
+
 export class DispatchDefect extends Error {
   constructor(message) {
     super(message);
@@ -58,17 +83,23 @@ export async function createServerDriver({ serviceFile, fittings = {}, fetchImpl
       const res = await req("/api/session", {
         method: "POST",
         body: {
-          model: fitting.model,
-          location: directory,
-          permissions: fitting.permissions,
+          model: modelRef(fitting.model),
+          location: { directory },
+          permissions: rules(fitting.permissions),
         },
       });
       if (!res.ok) {
-        const err = new Error(`session create returned ${res.status}`);
+        const detail = await res.text().catch(() => "");
+        const err = new Error(`session create returned ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`);
         err.kind = "session-create";
         throw err;
       }
-      const session = await res.json();
+      const session = (await res.json()).data;
+      if (!session?.id) {
+        const err = new Error("session create answered without a session id");
+        err.kind = "session-create";
+        throw err;
+      }
       const idx = sessions.size;
       sessions.set(idx, { id: session.id, stopped: false });
       return idx;
@@ -95,7 +126,7 @@ export async function createServerDriver({ serviceFile, fittings = {}, fetchImpl
         waited = null;
       }
       if (waited?.ok) {
-        const body = await waited.json().catch(() => ({}));
+        const body = (await waited.json().catch(() => ({}))).data ?? {};
         return { outcome: body.outcome ?? "succeeded" };
       }
       for (;;) {
@@ -106,7 +137,7 @@ export async function createServerDriver({ serviceFile, fittings = {}, fetchImpl
           err.kind = "session-poll";
           throw err;
         }
-        const info = await res.json();
+        const info = (await res.json()).data ?? {};
         if (info.outcome && OTHER.includes(info.outcome)) return { outcome: info.outcome };
         if (info.outcome && info.outcome !== "pending") {
           // unknown outcome — never a silent pass
