@@ -8,6 +8,7 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 
 ### Added
 - `engine`: the plugin's always-awake harness now exists as a working process — it boots only on schema-valid config, watches activated projects' records and reconciles their stamps, walks its configured node graph through headless sessions (pre-granted deny-rest permissions, dispatch-time checks, time budgets with interrupts), runs a claimed plan through to an exit that commits its typed awaiting record, delivers its own git per-unit commits with offline retries and a non-fast-forward hold, and answers introspection for any of its task sessions at any time. Specced in `specs/engine.md` and sliced into tickets 23-30.
+- `engine` config verification: workflow configs are verified before they are trusted — deep schema constraints each named, structural faults (dangling links, unknown helpers, unreachable nodes, dead exits), and a dry-run matrix that probes every branch and the value nothing routes. What the verifier names is a config problem; a failure on a verified-sound config is an engine problem.
 - `/wizard`: a command that generates a wizard for a secret or a hands-on procedure and takes the same offer-to-launch path, so manual use matches triggered use.
 
 ### Changed

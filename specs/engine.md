@@ -219,7 +219,20 @@ graph; the config knows the work.
     conceded impossibility, until an exit node terminates the chain.
     All of it — conditions, loop limits, context — is config; marks
     move in the records, bytes are preserved.
-13. **Scheduling, the leash, and user edits.** Within a project the
+13. **Config verification — the config problem gate.** Before a
+    workflow graph ships, it passes a verifier that answers "is this a
+    config problem?" in three layers: the deep schema (every constraint
+    named), the graph's structure (dangling references, unknown
+    helpers, requirements beyond a fitting, unreachable nodes, exits
+    that route, entries without a path), and a dry-run matrix that
+    drives the config through the real executor against a fake driver —
+    probing every condition's branch and the value nothing routes.
+    Sound means the verifier names nothing. The division of labor that
+    follows: anything the verifier names is the config's fault; a
+    failure on a config the verifier proved sound is the engine's. The
+    same gate runs on every shipped workflow config before it is
+    trusted.
+14. **Scheduling, the leash, and user edits.** Within a project the
     engine does one thing at a time: one current step in flight,
     everything else ready-but-waiting; a step is exclusive — every
     writing helper waits for the step in flight — while the watching
@@ -254,6 +267,12 @@ non-fast-forward hold); the stdio framing (versioned JSON-lines,
 unknown-kind tolerance); and the supervisor (respawn with backoff, no
 respawn on shutdown).
 
+The config verifier is itself a seam: it drives the real executor with
+a fake driver over a branch matrix, so a config fault is named without
+any live platform, and a sound verdict is what the workflow-graph work
+gates on — engine problems and config problems never masquerade as each
+other.
+
 Two structural rules: everything the engine does against OpenCode goes
 through the session driver interface, so the executor — the engine's
 heart — is testable with no live platform; only the driver itself
@@ -281,6 +300,12 @@ own testing harness, which is this effort's working process, not the
 engine's.
 
 ## Further Notes
+
+The verification seam (Implementation Decision 13) was ordered after
+the engine was built, before any workflow graph ships: configs are
+verified sound before they are trusted, so a later failure on a sound
+config means the engine — that is the divider between the two kinds of
+problem.
 
 Settled in the plan's engine objectives — including the engine-gap
 grilling of 2026-10-27 — and recorded in the glossary where terms are
