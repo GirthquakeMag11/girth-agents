@@ -7,6 +7,7 @@ Versioning is ruled in `conventions/On_Versioning.md`.
 ## [Unreleased]
 
 ### Added
+- `engine`: the plugin's always-awake harness now exists as a working process — it boots only on schema-valid config, watches activated projects' records and reconciles their stamps, walks its configured node graph through headless sessions (pre-granted deny-rest permissions, dispatch-time checks, time budgets with interrupts), runs a claimed plan through to an exit that commits its typed awaiting record, delivers its own git per-unit commits with offline retries and a non-fast-forward hold, and answers introspection for any of its task sessions at any time. Specced in `specs/engine.md` and sliced into tickets 23-30.
 - `/wizard`: a command that generates a wizard for a secret or a hands-on procedure and takes the same offer-to-launch path, so manual use matches triggered use.
 
 ### Changed
