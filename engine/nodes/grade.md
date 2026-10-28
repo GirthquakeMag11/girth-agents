@@ -14,5 +14,4 @@ out:
     condition:
       field: verdict
       equals: fail
-  - to: repair
 ---

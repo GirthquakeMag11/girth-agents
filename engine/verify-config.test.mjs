@@ -22,14 +22,13 @@ const SOUND_NODES = [
   { id: "out-pass", type: "exit" },
   { id: "out-fail", type: "exit", record: { kind: "question" } },
 ];
-// every verdict routes: pass and fail conditionally, anything else by
-// the unconditional fallback — the verifier's no-match probe demands it
+// strict routing: pass and fail are the declared branch space; anything
+// else is the engine's loud defect, not a route
 const SOUND_LINKS = [
   { from: "in", to: "build" },
   { from: "build", to: "grade" },
   { from: "grade", to: "out-pass", condition: { field: "verdict", equals: "pass" } },
   { from: "grade", to: "out-fail", condition: { field: "verdict", equals: "fail" } },
-  { from: "grade", to: "out-fail" },
 ];
 
 test("verifier: a sound config verifies clean", async () => {
@@ -101,9 +100,10 @@ test("verifier: structural faults — dangling links, unknown helpers, dead stru
   assert.ok(noEntry.configFaults.some((f) => f.code === "graph.no-entry"));
 });
 
-test("verifier: a trapped matrix path is named — the fail verdict has no route", async () => {
-  // only 'pass' is modeled; any other verdict (fail included) dead-ends
-  const trapped = await verifyConfig(config({
+test("verifier: an unmodeled verdict is a runtime defect, not a config fault — only-pass still verifies sound", async () => {
+  // only 'pass' is modeled; that is a legal config: everything else
+  // defects loudly at runtime, and the no-match probe expects exactly that
+  const onlyPass = await verifyConfig(config({
     nodes: SOUND_NODES.filter((n) => n.id !== "out-fail"),
     links: [
       { from: "in", to: "build" },
@@ -111,11 +111,27 @@ test("verifier: a trapped matrix path is named — the fail verdict has no route
       { from: "grade", to: "out-pass", condition: { field: "verdict", equals: "pass" } },
     ],
   }));
-  assert.equal(trapped.valid, false);
-  assert.ok(
-    trapped.configFaults.some((f) => f.code === "graph.matrix.no-link" && /no routable/.test(f.message)),
-    JSON.stringify(trapped.configFaults),
-  );
+  assert.equal(onlyPass.valid, true, JSON.stringify(onlyPass.configFaults));
+});
+
+test("verifier: mixed routing — conditions plus a catch-all — is named, never allowed", async () => {
+  const mixed = await verifyConfig(config({
+    nodes: SOUND_NODES,
+    links: [...SOUND_LINKS, { from: "grade", to: "out-fail" }],
+  }));
+  assert.equal(mixed.valid, false);
+  assert.ok(mixed.configFaults.some((f) => f.code === "graph.mixed-routing"), JSON.stringify(mixed.configFaults));
+
+  const multi = await verifyConfig(config({
+    nodes: SOUND_NODES,
+    links: [
+      { from: "in", to: "build" },
+      { from: "build", to: "grade" },
+      { from: "build", to: "out-pass" },
+      { from: "grade", to: "out-pass", condition: { field: "verdict", equals: "pass" } },
+    ],
+  }));
+  assert.ok(multi.configFaults.some((f) => f.code === "graph.multi-unconditional"), JSON.stringify(multi.configFaults));
 });
 
 test("verifier: retry bounds are schema- and structure-checked", async () => {

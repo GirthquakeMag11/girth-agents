@@ -166,6 +166,20 @@ test("the refinement loop: fail, fail, pass — the builder's session is resumed
   await fake.server.close();
 });
 
+test("strict stamps: an unmodeled verdict defects loudly — never routed into the builder as instructions", async () => {
+  const fake = await fakeOpenCode({ verdictScript: ["fail", "maybe"] });
+  const dir = await project();
+  const { child, out } = await bootEngine(dir, fake.url);
+  child.stdin.write(encode("claim-input", { directory: dir, file: "plan.md" }) + "\n");
+  const defect = await waitFor(() => out.lines.some((l) => l.includes('"defect"') && l.includes("maybe")));
+  assert.ok(defect, `the stray stamp must be named in a defect notice; got ${out.lines.join("\n")}`);
+  assert.ok(!out.lines.some((l) => l.includes('"exit-committed"')), "no exit may be reached on a stray stamp");
+  // fail legitimately reaches repair once; the stray verdict is where the chain halts
+  assert.equal(fake.promptsBySession.get("sess-1"), 2, "build + one repair, then the stray verdict halts the chain");
+  child.kill("SIGTERM");
+  await fake.server.close();
+});
+
 test("the retry limit: an always-failing grade bounces after three repairs", async () => {
   const fake = await fakeOpenCode({ verdictScript: ["fail", "fail", "fail"] });
   const dir = await project();

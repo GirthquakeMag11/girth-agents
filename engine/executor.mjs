@@ -36,13 +36,23 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
     linksFrom.set(link.from, list);
   }
 
+  // Strict routing: a node's out-links are either one unconditional link
+// or a set of conditional links — never a mixture, never a catch-all.
+// A stamp that matches no declared condition is a loud defect, not a
+// route. The exhausted link is the retry bound's own route, outside
+// both sets.
   function route(nodeId, stamps) {
-    const links = linksFrom.get(nodeId) ?? [];
-    if (links.length === 0) return null;
-    for (const link of links) {
-      if (link.condition && stamps[link.condition.field] === link.condition.equals) return link.to;
+    const links = (linksFrom.get(nodeId) ?? []).filter((l) => !l.exhausted);
+    if (links.length === 0) return { empty: true, nodeId };
+    const conditional = links.filter((l) => l.condition);
+    if (conditional.length > 0) {
+      for (const link of conditional) {
+        if (stamps[link.condition.field] === link.condition.equals) return { to: link.to };
+      }
+      return { noRoute: true, nodeId };
     }
-    return links.find((l) => !l.condition)?.to ?? null;
+    if (links.length > 1) return { ambiguous: true, nodeId };
+    return { to: links[0].to };
   }
 
   async function run({ projectId, entryNode, directory }) {
@@ -77,10 +87,13 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       if (node.type === "entry") {
         pushStep({ nodeId: node.id, projectId, outcome: "entered" });
         const next = route(node.id, {});
-        if (next === null) {
-          return { projectId, steps, failure: { kind: "no-link", message: `entry ${node.id} has no outbound link` } };
+        if (next.empty) {
+          return { projectId, steps, failure: { kind: "no-route", message: `entry ${node.id}: no outbound link` } };
         }
-        current = next;
+        if (!next.to) {
+          return { projectId, steps, failure: { kind: "no-route", message: `entry ${node.id}: no routable outbound link` } };
+        }
+        current = next.to;
         continue;
       }
 
@@ -182,14 +195,31 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       lastStamps = stamps;
 
       const next = route(node.id, stamps);
-      if (next === null) {
+      if (next.empty) {
         return {
           projectId,
           steps,
-          failure: { kind: "no-link", message: `step ${node.id}: no routable outbound link` },
+          failure: { kind: "no-route", message: `step ${node.id}: no outbound link` },
         };
       }
-      current = next;
+      if (next.noRoute) {
+        return {
+          projectId,
+          steps,
+          failure: {
+            kind: "no-route",
+            message: `step ${node.id}: the stamp ${JSON.stringify(stamps)} matched no declared condition`,
+          },
+        };
+      }
+      if (next.ambiguous) {
+        return {
+          projectId,
+          steps,
+          failure: { kind: "ambiguous-route", message: `step ${node.id}: more than one unconditional outbound link` },
+        };
+      }
+      current = next.to;
     }
 
     return { projectId, steps, failure: { kind: "step-overflow", message: `more than ${MAX_STEPS} steps` } };

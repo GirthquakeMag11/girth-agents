@@ -150,6 +150,18 @@ function structureFaults(doc) {
     if (node.type === "exit" && (outbound.get(node.id) ?? []).length > 0) {
       faults.push(fault("graph.exit-routed", `exit ${node.id}: an exit terminates — links out of it are dead structure`));
     }
+    const normalLinks = (outbound.get(node.id) ?? []).filter((l) => !l.exhausted);
+    const conditionalCount = normalLinks.filter((l) => l.condition).length;
+    const unconditionalCount = normalLinks.length - conditionalCount;
+    if (conditionalCount > 0 && unconditionalCount > 0) {
+      faults.push(fault("graph.mixed-routing", `node ${node.id}: out-links must be conditional or unconditional, never a mixture — no catch-alls`));
+    }
+    if (conditionalCount === 0 && unconditionalCount > 1) {
+      faults.push(fault("graph.multi-unconditional", `node ${node.id}: at most one unconditional outbound link`));
+    }
+    if (node.type === "entry" && conditionalCount > 0) {
+      faults.push(fault("graph.entry-conditional", `entry ${node.id}: an entry routes unconditionally`));
+    }
     if (node.type === "task" && node.maxVisits !== undefined) {
       const exhaustedLinks = (outbound.get(node.id) ?? []).filter((l) => l.exhausted);
       if (exhaustedLinks.length !== 1) {
@@ -216,6 +228,7 @@ async function matrixFaults(doc) {
   }
 
   for (const probe of cases) {
+    const isNoMatch = probe.name === "no-match probe";
     for (const node of tasks) {
       contentByNode.set(`${node.id}->${node.artifact}`, JSON.stringify(probe.stamps));
     }
@@ -227,7 +240,14 @@ async function matrixFaults(doc) {
     });
     for (const entry of entries) {
       const result = await executor.run({ projectId: `verify:${probe.name}`, entryNode: entry.id });
-      if (result.failure) {
+      if (isNoMatch) {
+        // the no-match probe must defect loudly at the first conditional
+        // node — the engine enforcing the stamps. A route out is the fault.
+        const outcome = result.failure ? result.failure.kind : "completed";
+        if (outcome !== "no-route") {
+          faults.push(fault("graph.matrix.unexpected-route", `${probe.name} at entry ${entry.id}: expected a loud no-route defect, got '${outcome}'`));
+        }
+      } else if (result.failure) {
         faults.push(fault(`graph.matrix.${result.failure.kind}`, `${probe.name}: ${result.failure.message}`));
       }
     }

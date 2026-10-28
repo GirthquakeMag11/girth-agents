@@ -337,6 +337,63 @@ test("executor: a repair brief carries the failed step's report as added context
   assert.ok(repairBrief.brief.includes("criteria say X is unmet"), "the reviewer's report must ride into the repair brief");
 });
 
+test("executor: a stamp matching no declared condition is a loud defect, never a route", async () => {
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
+      { id: "repair", type: "entry" },
+      { id: "question", type: "exit" },
+    ],
+    links: [
+      { from: "in", to: "grade" },
+      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
+      { from: "grade", to: "question", condition: { field: "verdict", equals: "pass" } },
+    ],
+  };
+  const ex = createExecutor({
+    graph,
+    driver: fakeDriver(),
+    readFile: async () => JSON.stringify({ verdict: "maybe" }),
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-l", entryNode: "in" });
+  assert.equal(result.failure.kind, "no-route");
+  assert.ok(/maybe/.test(result.failure.message), `the defect must name the actual stamp: ${result.failure.message}`);
+  assert.ok(/grade/.test(result.failure.message), `the defect must name the node: ${result.failure.message}`);
+  assert.ok(!result.steps.some((s) => s.nodeId === "repair"), "an unmodeled stamp must never flow onward");
+});
+
+test("executor: an unmodeled fail on the configured loop halts loudly at grade, not silently into repair", async () => {
+  // the precise regression the fallback caused: strict routing must not
+  // let stray output ride into a downstream agent as instructions
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
+      { id: "repair", type: "task", helper: "builder", artifact: "verdict.json", budgetMs: 5000, resume: "grade" },
+    ],
+    links: [
+      { from: "in", to: "grade" },
+      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
+      { from: "repair", to: "grade" },
+    ],
+  };
+  let reads = 0;
+  const ex = createExecutor({
+    graph,
+    driver: fakeDriver(),
+    readFile: async () => {
+      reads += 1;
+      return JSON.stringify({ verdict: reads === 1 ? "fail" : "garbage" });
+    },
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-m", entryNode: "in" });
+  assert.equal(result.failure.kind, "no-route");
+  assert.equal(result.steps.filter((s) => s.nodeId === "repair").length, 1, "fail routes to repair once; the stray stamp never does");
+});
+
 test("executor: two projects interleave without either losing its serial lane", async () => {
   const mk = (projectId, verdict) =>
     executor({ driver: fakeDriver(), entries: artifacts(projectId, verdict), projectId });

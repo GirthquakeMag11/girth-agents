@@ -20,10 +20,14 @@ flowchart LR
     GRADE{"grade — task · checker · work/verdict.json"}:::decide
     GRADE -- "verdict = pass" --> DONE(["out-done — exit"]):::done
     GRADE -- "verdict = fail" --> REPAIR
-    GRADE -- "any other verdict" --> REPAIR
     REPAIR["repair — task · builder · resumes build's session · maxVisits: 3"]:::task -- "re-grade" --> GRADE
     REPAIR -- "after 3 repairs" --> BOUNCE(["bounce — exit · question · awaiting-answer"]):::bounce
 ```
+
+A stamp that matches no declared condition — `verdict: "maybe"` or a
+missing field — is a loud defect naming the stamp; it is never routed
+anywhere. Out-links are conditional or unconditional, never a mixture,
+never a catch-all.
 
 Legend: gray = entry, blue = task, yellow = decision, green/red = the
 two exits. The refinement loop is the circle through `grade` and

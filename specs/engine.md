@@ -145,9 +145,15 @@ graph; the config knows the work.
 4. **The graph executor core.** Hardcoded structure, config-driven
    graph: the executor owns dispatch, artifact reading, condition
    evaluation, routing, entry/exit semantics, and step caps — and knows
-   nothing about any particular workflow. Refinement loops and the
-   bounce-back ladder are compositions in config, cleanup tasks
-   included; the core carries no special machinery for them.
+   nothing about any particular workflow. Routing is strict: a node's
+   out-links are either exactly one unconditional link or a set of
+   conditional links — never a mixture, never a catch-all — and a
+   stamp that matches no declared condition is a loud defect naming
+   the node and the stamp, never a route; an agent's
+   contract-breaking output never becomes another agent's
+   instructions. Refinement loops and the bounce-back ladder are
+   compositions in config, cleanup tasks included; the core carries no
+   special machinery for them.
 5. **The node's execution lifecycle.** On entering a node: the
    dispatch-time check compares the objective's requirements against
    the helper's fitting, and a mismatch is a structured defect at
