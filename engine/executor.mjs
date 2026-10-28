@@ -29,8 +29,9 @@ export function createExecutor({ graph, driver, readFile, artifactPath }) {
     return links.find((l) => !l.condition)?.to ?? null;
   }
 
-  async function run({ projectId, entryNode }) {
+  async function run({ projectId, entryNode, directory }) {
     const steps = [];
+    const sessionByNode = new Map();
     let current = entryNode;
     const start = nodes.get(entryNode);
     if (!start) {
@@ -61,7 +62,26 @@ export function createExecutor({ graph, driver, readFile, artifactPath }) {
         return { projectId, steps, failure: { kind: "bad-node", message: `node ${node.id} has unknown type ${node.type}` } };
       }
 
-      const sessionIdx = driver.spawn({ nodeId: node.id, helper: node.helper, projectId });
+      let sessionIdx;
+      if (node.resume) {
+        sessionIdx = sessionByNode.get(node.resume);
+        if (sessionIdx === undefined) {
+          steps.push({ nodeId: node.id, projectId, outcome: "resume-missing" });
+          return {
+            projectId,
+            steps,
+            failure: { kind: "resume-missing", message: `node ${node.id} resumes ${node.resume}, whose session is not in this run` },
+          };
+        }
+      } else {
+        try {
+          sessionIdx = await driver.spawn({ nodeId: node.id, helper: node.helper, projectId, directory, node });
+        } catch (e) {
+          steps.push({ nodeId: node.id, projectId, outcome: "dispatch-defect" });
+          return { projectId, steps, failure: { kind: "dispatch-defect", message: e.message } };
+        }
+        sessionByNode.set(node.id, sessionIdx);
+      }
       const promptPromise = driver.prompt(sessionIdx);
       const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
       let timer;

@@ -113,6 +113,74 @@ test("executor: a missing or malformed artifact is a defect, never a silent pass
   }
 });
 
+test("executor: a repair node resumes the graded session, not a fresh one", async () => {
+  // in → build → grade; grade/fail → repair (resumes build's session) → grade again → accepted
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "build", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 5000 },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
+      { id: "repair", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 5000, resume: "build" },
+      { id: "out-accepted", type: "exit" },
+    ],
+    links: [
+      { from: "in", to: "build" },
+      { from: "build", to: "grade" },
+      { from: "grade", to: "out-accepted", condition: { field: "verdict", equals: "pass" } },
+      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
+      { from: "repair", to: "grade" },
+    ],
+  };
+  const driver = fakeDriver();
+  driver.promptCalls = new Map();
+  const track = (fn) => (idx) => {
+    driver.promptCalls.set(idx, (driver.promptCalls.get(idx) ?? 0) + 1);
+    return fn(idx);
+  };
+  const basePrompt = driver.prompt.bind(driver);
+  driver.prompt = track(basePrompt);
+
+  let verdictReads = 0;
+  const ex = createExecutor({
+    graph,
+    driver,
+    readFile: async (path) => {
+      if (path.endsWith("verdict.json")) {
+        verdictReads += 1;
+        return JSON.stringify({ verdict: verdictReads === 1 ? "fail" : "pass" });
+      }
+      return JSON.stringify({ done: true });
+    },
+    artifactPath: (projectId, node) => `${projectId}/${node.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-f", entryNode: "in" });
+  assert.equal(result.terminal, "out-accepted", JSON.stringify(result.failure));
+  assert.equal(verdictReads, 2);
+  // build's session was prompted twice; the repair ran in it, not a new session
+  const buildSession = driver.sessions.find((s) => s.nodeId === "build");
+  assert.equal(driver.promptCalls.get(driver.sessions.indexOf(buildSession)), 2);
+  assert.equal(driver.sessions.filter((s) => s.nodeId === "repair").length, 0, "repair must not spawn");
+});
+
+test("executor: a dispatch-time requirements failure is a named defect before any session", async () => {
+  const driver = {
+    prompted: 0,
+    spawn() {
+      throw new Error("checker lacks bash");
+    },
+    prompt() {
+      this.prompted += 1;
+      return Promise.resolve({ outcome: "succeeded" });
+    },
+    interrupt() {},
+  };
+  const ex = createExecutor({ graph: GRAPH, driver, readFile: async () => "{}", artifactPath });
+  const result = await ex.run({ projectId: "repo-g", entryNode: "in" });
+  assert.equal(result.failure.kind, "dispatch-defect");
+  assert.ok(result.failure.message.includes("bash"));
+  assert.equal(driver.prompted, 0, "no session may be prompted after a dispatch defect");
+});
+
 test("executor: two projects interleave without either losing its serial lane", async () => {
   const mk = (projectId, verdict) =>
     executor({ driver: fakeDriver(), entries: artifacts(projectId, verdict), projectId });
