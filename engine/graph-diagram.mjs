@@ -74,7 +74,7 @@ export function generateDiagram(doc) {
   L.push(place(`[${note(bounce)}]`, failX));
   L.push("");
   L.push(center(`${decide.id} · any other verdict → loud defect: the chain halts, nothing routes`, W + 12));
-  return L.join("\n") + "\n";
+  return L.map((line) => line.replace(/\s+$/, "")).join("\n") + "\n";
 }
 
 export function extractDiagram(readmeText) {
