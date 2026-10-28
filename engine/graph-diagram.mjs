@@ -1,88 +1,83 @@
-// The graph illustration, generated from the live config — one source of
-// truth. The README's diagram block is this output, verbatim; the drift
-// test fails when the two diverge, enforcing the sync convention
-// (conventions/On_Docs.md).
+// The graph illustration, drawn as plain text from the live config — one
+// source of truth. The README's illustration block is this output, verbatim;
+// the drift test fails when the two diverge, enforcing the sync convention
+// (conventions/On_Docs.md). Plain text renders everywhere: no renderer to
+// satisfy, no platform to fail.
 
-const CLASS_DEFS = [
-  "    classDef entry fill:#e8e8e8,stroke:#555,stroke-width:2px",
-  "    classDef task fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px",
-  "    classDef decide fill:#fef9c3,stroke:#a16207,stroke-width:2px",
-  "    classDef done fill:#dcfce7,stroke:#15803d,stroke-width:2px",
-  "    classDef bounce fill:#fee2e2,stroke:#b91c1c,stroke-width:2px",
-  "    classDef defect fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px",
-];
-
-function mid(id) {
-  return id.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-}
-
-function isDecide(links) {
-  return links.some((l) => l.condition && !l.exhausted);
-}
-
-function nodeLabel(node) {
-  if (node.type === "entry") {
-    return `${node.id} — entry${node.marker ? ` · marker: ${node.marker.replace(/\*/g, "")}` : ""}`;
-  }
-  if (node.type === "exit") {
-    if (node.record?.kind === "question") return `${node.id} — exit · question · awaiting-answer`;
-    if (node.record?.kind === "defect") return `${node.id} — exit · defect · awaiting-attention`;
-    return `${node.id} — exit`;
-  }
-  const parts = [`${node.id} — task · ${node.helper}`];
-  if (node.resume) parts.push(`resumes ${node.resume}'s session`);
-  else if (node.artifact) parts.push(node.artifact);
-  if (node.maxVisits) parts.push(`maxVisits: ${node.maxVisits}`);
-  return parts.join(" · ");
+function center(s, w) {
+  const pad = w - s.length;
+  const l = Math.floor(pad / 2);
+  return " ".repeat(Math.max(0, l)) + s + " ".repeat(Math.max(0, pad - l));
 }
 
 export function generateDiagram(doc) {
-  const byId = new Map(doc.graph.nodes.map((n) => [n.id, n]));
-  const out = new Map(doc.graph.nodes.map((n) => [n.id, []]));
+  const nodes = doc.graph.nodes;
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const out = new Map(nodes.map((n) => [n.id, []]));
   for (const link of doc.graph.links) out.get(link.from)?.push(link);
 
-  const lines = ["flowchart LR", ...CLASS_DEFS, ""];
+  const entry = nodes.find((n) => n.type === "entry");
+  const first = byId.get(out.get(entry.id)[0].to);
+  const decide = byId.get(out.get(first.id)[0].to);
+  const branches = (out.get(decide.id) ?? []).filter((l) => l.condition && !l.exhausted);
+  const passLink = branches.find((l) => byId.get(l.to)?.type === "exit");
+  const failLink = branches.find((l) => byId.get(l.to)?.type !== "exit");
+  const passExit = byId.get(passLink?.to);
+  const repair = byId.get(failLink?.to);
+  const bounce = byId.get((out.get(repair?.id) ?? []).find((l) => l.exhausted)?.to);
 
-  for (const node of doc.graph.nodes) {
-    const decide = isDecide(out.get(node.id) ?? []);
-    const cls =
-      node.type === "entry" ? "entry"
-      : node.type === "exit" ? (node.record ? "bounce" : "done")
-      : decide ? "decide"
-      : "task";
-    const open = node.type === "exit" || node.type === "entry" ? "([" : decide ? "{" : "[";
-    const close = node.type === "exit" || node.type === "entry" ? "])" : decide ? "}" : "]";
-    lines.push(`    ${mid(node.id)}${open}"${nodeLabel(node)}"${close}:::${cls}`);
-  }
-  for (const node of doc.graph.nodes) {
-    if (isDecide(out.get(node.id) ?? [])) {
-      lines.push(`    DEAD_${mid(node.id)}(["loud defect — chain halts, nothing routes"]):::defect`);
-    }
-  }
+  const note = (n) => {
+    if (!n) return "";
+    if (n.type === "entry") return `entry · ${n.marker ?? "claimed"}`;
+    if (n.type === "task") return `${n.helper} · ${n.artifact ?? ""}`;
+    if (n.type === "exit") return n.record?.kind === "question" ? "exit · question · awaiting-answer" : "exit";
+    return "";
+  };
 
-  lines.push("");
-  for (const node of doc.graph.nodes) {
-    for (const link of out.get(node.id) ?? []) {
-      const from = mid(node.id);
-      const to = mid(link.to);
-      if (link.exhausted) {
-        lines.push(`    ${from} -- "after ${node.maxVisits ?? "the limit"} repairs" --> ${to}`);
-      } else if (link.condition) {
-        lines.push(`    ${from} -- "${link.condition.field} = ${link.condition.equals}" --> ${to}`);
-      } else {
-        lines.push(`    ${from} --> ${to}`);
-      }
-    }
-  }
-  for (const node of doc.graph.nodes) {
-    if (isDecide(out.get(node.id) ?? [])) {
-      lines.push(`    ${mid(node.id)} -. "any other stamp" .-> DEAD_${mid(node.id)}`);
-    }
-  }
-  return lines.join("\n") + "\n";
+  const passLabel = `${passLink?.condition?.field}=${passLink?.condition?.equals}`;
+  const failLabel = `${failLink?.condition?.field}=${failLink?.condition?.equals}`;
+  const maxVisits = repair?.maxVisits;
+
+  const W = 44;
+  const L = [];
+  L.push(center(entry.id, W));
+  L.push(center(`[${note(entry)}]`, W));
+  L.push(center("│", W), center("▼", W));
+  L.push(center(first.id, W));
+  L.push(center(`[${note(first)}]`, W));
+  L.push(center("│", W), center("▼", W));
+  L.push(center(decide.id, W));
+  L.push(center(`[${note(decide)}]`, W));
+  L.push("");
+  // the two branch columns, each anchored under its verdict label
+  const gap = 8;
+  const offset = Math.floor((W - (passLabel.length + gap + failLabel.length)) / 2);
+  const passX = offset + Math.floor(passLabel.length / 2);
+  const failX = offset + passLabel.length + gap + Math.floor(failLabel.length / 2);
+  const place = (s, x) => " ".repeat(Math.max(0, x - Math.floor(s.length / 2))) + s;
+  L.push(" ".repeat(offset) + passLabel + " ".repeat(gap) + failLabel);
+  const sticks = " ".repeat(W).split("");
+  sticks[passX] = "│";
+  sticks[failX] = "│";
+  L.push(sticks.join(""));
+  L.push(place(passExit.id, passX));
+  L.push(place(`[${note(passExit)}]`, passX));
+  L.push(place(repair.id, failX));
+  L.push(place(repair?.resume ? `[resumes ${repair.resume}'s session]` : `[${note(repair)}]`, failX));
+  L.push(place("re-grade — back up to review", failX));
+  L.push(place(maxVisits ? `after ${maxVisits} repairs` : "", failX));
+  const rightStick = " ".repeat(W).split("");
+  rightStick[failX] = "│";
+  L.push(rightStick.join(""));
+  L.push(place("▼", failX));
+  L.push(place(bounce.id, failX));
+  L.push(place(`[${note(bounce)}]`, failX));
+  L.push("");
+  L.push(center(`${decide.id} · any other verdict → loud defect: the chain halts, nothing routes`, W + 12));
+  return L.join("\n") + "\n";
 }
 
 export function extractDiagram(readmeText) {
-  const match = readmeText.match(/```mermaid\n([\s\S]*?)```/);
+  const match = readmeText.match(/```(?:[a-zA-Z]*)\n([\s\S]*?)```/);
   return match ? match[1] : null;
 }

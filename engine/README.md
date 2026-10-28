@@ -8,30 +8,32 @@ modules beside this file, tested with `node --test engine/`.
 
 ## The current workflow graph
 
-```mermaid
-flowchart LR
-    classDef entry fill:#e8e8e8,stroke:#555,stroke-width:2px
-    classDef task fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px
-    classDef decide fill:#fef9c3,stroke:#a16207,stroke-width:2px
-    classDef done fill:#dcfce7,stroke:#15803d,stroke-width:2px
-    classDef bounce fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
-    classDef defect fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px
+```
+                 ticket-in
+            [entry · **Ready:**]
+                     │
+                     ▼
+                 implement
+    [builder · work/implementation.json]
+                     │
+                     ▼
+                   review
+       [reviewer · work/review.json]
 
-    TICKETIN(["ticket-in — entry · marker: Ready:"]):::entry
-    IMPLEMENT["implement — task · builder · work/implementation.json"]:::task
-    REVIEW{"review — task · reviewer · work/review.json"}:::decide
-    REPAIR["repair — task · builder · resumes implement's session · maxVisits: 3"]:::task
-    IMPLEMENTED(["implemented — exit"]):::done
-    BOUNCE(["bounce — exit · question · awaiting-answer"]):::bounce
-    DEAD_REVIEW(["loud defect — chain halts, nothing routes"]):::defect
+      verdict=pass        verdict=fail
+            │                   │
+       implemented
+         [exit]
+                             repair
+                  [resumes implement's session]
+                  re-grade — back up to review
+                         after 3 repairs
+                                │
+                                ▼
+                             bounce
+               [exit · question · awaiting-answer]
 
-    TICKETIN --> IMPLEMENT
-    IMPLEMENT --> REVIEW
-    REVIEW -- "verdict = pass" --> IMPLEMENTED
-    REVIEW -- "verdict = fail" --> REPAIR
-    REPAIR --> REVIEW
-    REPAIR -- "after 3 repairs" --> BOUNCE
-    REVIEW -. "any other stamp" .-> DEAD_REVIEW
+review · any other verdict → loud defect: the chain halts, nothing routes
 ```
 
 This diagram is generated from the live graph config and tested for
@@ -43,12 +45,12 @@ missing field — is a loud defect naming the stamp; it is never routed
 anywhere. Out-links are conditional or unconditional, never a mixture,
 never a catch-all.
 
-Legend: gray = entry, blue = task, yellow = decision, green/red = the
-two exits. The entry admits a claimed ticket only when it is stamped
+The entry admits a claimed ticket only when it is stamped
 `**Ready:**`, and the brief names the claimed ticket's file for every
 helper to read — the ticket is the contract both sides work from. The
-refinement loop is the circle through `review` and `repair`;
-`maxVisits: 3` is the structure's bound — the number is the config's.
+refinement loop is the circle through `review` and `repair` — the
+`re-grade` arc — and `maxVisits: 3` is the structure's bound; the
+number is the config's.
 
 ## The config tree
 
