@@ -14,6 +14,17 @@ after approval.
 
 ## Notes
 
+- Plan review — the three focuses (chat M1262): of the three plan
+  reviewers, one verifies claims about the user's intent against the
+  chatlog, one verifies claims about technical matters against reality,
+  and one verifies that the fog is cleared and no unanswered questions
+  remain. This sets each reviewer's intended focus for the grading, and
+  constrains nothing else they may grade on.
+- Plan review — citation access (chat M1262): the plugin itself gives
+  plan reviewers direct access to the session's chatlog — no manual
+  export, no manual sifting — and a reviewer requests the message a
+  plan item cites, by that citation. The citation is the query; the
+  access is the plugin's, not a maintainer's chore.
 - Plan review — mandatory rules (chat M1200; reaffirmed M1220 with the
   rule that this entry itself must be cited): plan reviewers receive the
   raw chat log as it exists at review time — never a substitute; every
