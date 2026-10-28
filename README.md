@@ -88,7 +88,6 @@ description.
 | `domain-modeling`    | A term is doing two jobs or drifting, or project language needs settling — the agent challenges it and has it recorded; owns GLOSSARY.md, its terms and format                                        |
 | `codifying`          | You say what a thing means, how something is done, or why the project takes a shape — the agent records it in conventions/ or decisions/ (or the glossary, via domain-modeling)                       |
 | `curate-inbox`       | Open the inbox — collect tracker items and stray calls for attention, process each with the user, record answers, route the work they reveal                                                          |
-| `find-skills`        | "How do I do X" where an installable skill might already exist — search skills.sh and the Skills CLI, verify quality, present options, install                                                        |
 | `maintaining-docs`   | The project's structure, protocols, or state change; after any user-visible change; or for a release via `/cut-release` — keeps AGENTS.md, CONTRIBUTING.md, README.md, CHANGELOG.md true              |
 | `specifying`         | A settled design needs writing down as a spec — the agent writes it, grills its gaps, submits it to an independent fresh-context check, and puts the approval options to you: commit, commit and slice, or stop and amend |
 | `implementing`       | You ask to build something planned — a spec, bug, or defect — and the agent slices it into tickets and works them one at a time; a feature implements through its spec                                |
@@ -120,7 +119,6 @@ description.
 | `/retro`         | Reviews a session and proposes environment improvements, most severe first                                                                                                              |
 | `/handoff`      | Writes this conversation into the project's handoff and commits it — updating an existing one, never a sibling, stale context swept first                                              |
 | `/pickup`       | Resumes this project's handoff — works and consumes it as it goes stale, deletes it when nothing remains                                                                          |
-| `/wait-what`     | Re-pitches the last message that didn't land, in plain English using the glossary's terms                                                                                               |
 | `/questionnaire` | Writes a questionnaire for the person who holds the knowledge a decision is blocked on                                                                                                  |
 | `/wizard`        | Generates a wizard for a secret or a hands-on procedure, then offers to run it in a new terminal, waiting for my yes                                                                        |
 
@@ -200,9 +198,6 @@ later step consumes.
   implementing.
 - **Truth** — `maintaining-docs` after every user-visible change;
   `/cut-release` when the queue should ship.
-
-**Off the spine** — `find-skills` when a capability is missing (search the
-open ecosystem, verify quality, install).
 
 **The working loop — idea to project to product:** `/bootstrap` once to
 build the skeleton (glossary, conventions, decisions, plans, specs,
