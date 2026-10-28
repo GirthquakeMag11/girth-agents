@@ -194,7 +194,6 @@ async function matrixFaults(doc) {
   const nodes = doc.graph.nodes;
   const links = doc.graph.links;
   const entries = nodes.filter((n) => n.type === "entry");
-  const tasks = nodes.filter((n) => n.type === "task");
   const conditions = links.filter((l) => l.condition);
 
   const defaults = new Map();
@@ -216,6 +215,15 @@ async function matrixFaults(doc) {
   }
   cases.push({ name: "no-match probe", stamps: assign(Object.fromEntries(fields.map((f) => [f, NO_MATCH]))) });
 
+  // a loop is legal when it can escape: on a later lap through the same
+  // artifact, serve the stamps that route to the exit branch, so a
+  // retry cycle terminates if — and only if — it has a way out. No exit
+  // branch, no escape: the lap keeps the probe's stamps and the matrix
+  // names the step-overflow loop fault.
+  const exitIds = new Set(nodes.filter((n) => n.type === "exit").map((n) => n.id));
+  const escapeLink = conditions.find((l) => exitIds.has(l.to));
+  const escapeStamps = escapeLink ? assign({ [escapeLink.condition.field]: escapeLink.condition.equals }) : null;
+
   let sessionCount = 0;
   const driver = {
     spawn: async () => sessionCount++,
@@ -223,19 +231,28 @@ async function matrixFaults(doc) {
     interrupt() {},
   };
   const contentByNode = new Map();
-  for (const node of tasks) {
+  // every node that produces an artifact takes part in the matrix — a
+  // dispatch-capable entry included
+  const artifactNodes = nodes.filter((n) => n.artifact && (n.type === "task" || (n.type === "entry" && n.helper)));
+  for (const node of artifactNodes) {
     contentByNode.set(`${node.id}->${node.artifact}`, null); // filled per case below
   }
 
   for (const probe of cases) {
     const isNoMatch = probe.name === "no-match probe";
-    for (const node of tasks) {
+    for (const node of artifactNodes) {
       contentByNode.set(`${node.id}->${node.artifact}`, JSON.stringify(probe.stamps));
     }
+    const reads = new Map();
     const executor = createExecutor({
       graph: doc.graph,
       driver,
-      readFile: async (path) => contentByNode.get(path) ?? null,
+      readFile: async (path) => {
+        const lap = reads.get(path) ?? 0;
+        reads.set(path, lap + 1);
+        if (lap > 0 && escapeStamps) return JSON.stringify(escapeStamps);
+        return contentByNode.get(path) ?? null;
+      },
       artifactPath: (_projectId, node) => `${node.id}->${node.artifact}`,
     });
     for (const entry of entries) {

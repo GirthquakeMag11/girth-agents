@@ -357,13 +357,15 @@ content below is subdivided into objectives.
   engine-core. (2026-10-27, the engine-gap grilling; the "drives what
   it is configured to drive" at the user's dictation)
 - Workflow content shipped — 2026-10-28: the first real workflow is
-  in the config: implement-from-ticket. A ticket stamped `**Ready:**`
-  (dated) is claimed, the builder implements and reports, the reviewer
-  verifies by running and stamps pass-fail strictly, repair resumes
-  the builder's session with three retries, then a bounce question.
-  Proven end-to-end by the config test suite through the real engine;
-  the forward extension (ticket-from-spec) comes only after this one
-  is proven.
+  the implement-verify loop the user dictated, nothing more:
+  implement-from-ticket → review-implementation unconditionally; the
+  review→ verdict pass to the exit (writes nothing), fail back to
+  implement-from-ticket — the loop, drawn as an arc in the README's
+  flow chart. Implement-from-ticket is the entry: it gates the claim
+  (the ready stamp, `**Ready:**` dated) and dispatches the first work
+  step. Proven end-to-end by the config test suite through the real
+  engine against fakes; the forward extension (ticket-from-spec) comes
+  only after this one is proven.
 - The node's output: settled — a node's config names exactly one
   output artifact path, with stamp fields inside it; the session's
   objective directs the helper to produce the artifact there; when

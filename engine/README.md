@@ -9,31 +9,11 @@ modules beside this file, tested with `node --test engine/`.
 ## The current workflow graph
 
 ```
-                 ticket-in
-            [entry · **Ready:**]
-                     │
-                     ▼
-                 implement
-    [builder · work/implementation.json]
-                     │
-                     ▼
-                   review
-       [reviewer · work/review.json]
+implement-from-ticket ──▶ review-implementation ── verdict=pass ──▶ exit
+          ▲                         │
+          └──────verdict=fail───────┘
 
-      verdict=pass        verdict=fail
-            │                   │
-       implemented
-         [exit]
-                             repair
-                  [resumes implement's session]
-                  re-grade — back up to review
-                         after 3 repairs
-                                │
-                                ▼
-                             bounce
-               [exit · question · awaiting-answer]
-
-review · any other verdict → loud defect: the chain halts, nothing routes
+review-implementation · any other verdict → loud defect: the chain halts, nothing routes
 ```
 
 This diagram is generated from the live graph config and tested for
@@ -45,12 +25,15 @@ missing field — is a loud defect naming the stamp; it is never routed
 anywhere. Out-links are conditional or unconditional, never a mixture,
 never a catch-all.
 
-The entry admits a claimed ticket only when it is stamped
-`**Ready:**`, and the brief names the claimed ticket's file for every
-helper to read — the ticket is the contract both sides work from. The
-refinement loop is the circle through `review` and `repair` — the
-`re-grade` arc — and `maxVisits: 3` is the structure's bound; the
-number is the config's.
+`implement-from-ticket` is both the gate — a claimed ticket must carry
+the ready stamp (`**Ready:**`) — and the first work step: it dispatches
+the builder, then routes to `review-implementation` unconditionally.
+The review routes on its verdict: pass to the exit (which writes
+nothing — the work itself is the outcome), fail back to
+implement-from-ticket — the arc drawn below the line — where the
+claimed ticket rides the brief again. The brief names the claimed
+ticket's file for both helpers; the ticket is the contract they work
+from.
 
 ## The config tree
 

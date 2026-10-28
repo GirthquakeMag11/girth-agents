@@ -255,12 +255,16 @@ The executor's hardcoded skeleton gains one more structural
     exhausted link is the route taken on the visit after the last —
     the structure enforces loop limits, the config sets the number.
     The first shipped workflow config (`config.json` beside the engine)
-    is implement-from-ticket: a ticket stamped ready enters, the builder
-    implements it and reports, the reviewer verifies and stamps
-    pass-fail, a fail routes to repair resuming the builder's session
-    with three retries, a bounce exit writes the awaiting question when
-    the limit trips, and a pass terminates at the implemented exit —
-    which writes nothing; the work itself is the outcome.
+    is the implement-verify loop the user dictated — nothing invented on
+    top: implement-from-ticket routes to review-implementation
+    unconditionally; the review routes on its verdict — fail back to
+    implement-from-ticket, pass to the exit, which writes nothing (the
+    work itself is the outcome). The implementer node is the entry: it
+    gates the claim (the ready stamp) and dispatches the first work
+    step, the executor supporting an entry that also wears a helper.
+    The verifier's matrix follows the loop lap by lap — a cycle that
+    can escape terminates its probes, and one that cannot is named a
+    matrix loop fault.
 14. **Scheduling, the leash, and user edits.** Within a project the
     engine does one thing at a time: one current step in flight,
     everything else ready-but-waiting; a step is exclusive — every

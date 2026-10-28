@@ -87,8 +87,89 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
         return { projectId, terminal: node.id, steps, failure: undefined, exit };
       }
 
+      // Dispatch one node's session and read its artifact; returns { stamps }
+      // or { failure }. Shared by tasks and dispatch-capable entries.
+      async function dispatchStep(node) {
+        let sessionIdx;
+        if (node.resume) {
+          sessionIdx = sessionByNode.get(node.resume);
+          if (sessionIdx === undefined) {
+            pushStep({ nodeId: node.id, projectId, outcome: "resume-missing" });
+            return {
+              failure: { kind: "resume-missing", message: `node ${node.id} resumes ${node.resume}, whose session is not in this run` },
+            };
+          }
+        } else {
+          try {
+            sessionIdx = await driver.spawn({ nodeId: node.id, helper: node.helper, projectId, directory, node });
+          } catch (e) {
+            pushStep({ nodeId: node.id, projectId, outcome: "dispatch-defect" });
+            return { failure: { kind: "dispatch-defect", message: e.message } };
+          }
+          sessionByNode.set(node.id, sessionIdx);
+        }
+        if (onStep) onStep({ projectId, nodeId: node.id, outcome: "dispatched", sessionIdx, at: new Date().toISOString() });
+        const brief = composeBrief(node, node.resume ? lastStamps : undefined, claim);
+        const promptPromise = driver.prompt(sessionIdx, brief);
+        const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
+        let timer;
+        const budget = new Promise((resolve) => {
+          timer = setTimeout(() => resolve("TIME"), budgetMs);
+        });
+
+        const raced = await Promise.race([promptPromise, budget]);
+        clearTimeout(timer);
+        if (raced === "TIME") {
+          driver.interrupt(sessionIdx);
+          await promptPromise;
+          pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
+          return {
+            failure: { kind: "time-budget", message: `step ${node.id} breached its ${budgetMs}ms budget` },
+          };
+        }
+
+        if (raced.outcome === "failed") {
+          pushStep({ nodeId: node.id, projectId, outcome: "failed" });
+          return { failure: { kind: "session-failed", message: `step ${node.id}'s session failed` } };
+        }
+
+        if (raced.outcome === "interrupted") {
+          pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
+          return { failure: { kind: "session-interrupted", message: `step ${node.id} was interrupted` } };
+        }
+
+        // Succeeded: read exactly the configured artifact — nothing else is output.
+        const path = artifactPath(projectId, node);
+        let stamps;
+        try {
+          const content = await readFile(path);
+          if (content === null) {
+            pushStep({ nodeId: node.id, projectId, outcome: "artifact-missing" });
+            return { failure: { kind: "artifact-missing", message: `step ${node.id}: no artifact at ${path}` } };
+          }
+          stamps = JSON.parse(content);
+          if (stamps === null || typeof stamps !== "object") {
+            throw new Error("artifact is not a JSON object");
+          }
+        } catch (e) {
+          pushStep({ nodeId: node.id, projectId, outcome: "artifact-malformed" });
+          return {
+            failure: { kind: "artifact-malformed", message: `step ${node.id}: artifact at ${path} is malformed (${e.message})` },
+          };
+        }
+
+        pushStep({ nodeId: node.id, projectId, outcome: "succeeded", stamps });
+        lastStamps = stamps;
+        return { stamps };
+      }
+
       if (node.type === "entry") {
         pushStep({ nodeId: node.id, projectId, outcome: "entered" });
+        if (node.helper) {
+          // the entry is also the first work step: dispatch it, then route
+          const step = await dispatchStep(node);
+          if (step.failure) return { projectId, steps, failure: step.failure };
+        }
         const next = route(node.id, {});
         if (next.empty) {
           return { projectId, steps, failure: { kind: "no-route", message: `entry ${node.id}: no outbound link` } };
@@ -120,83 +201,10 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       }
       visitCount.set(node.id, visits);
 
-      let sessionIdx;
-      if (node.resume) {
-        sessionIdx = sessionByNode.get(node.resume);
-        if (sessionIdx === undefined) {
-          pushStep({ nodeId: node.id, projectId, outcome: "resume-missing" });
-          return {
-            projectId,
-            steps,
-            failure: { kind: "resume-missing", message: `node ${node.id} resumes ${node.resume}, whose session is not in this run` },
-          };
-        }
-      } else {
-        try {
-          sessionIdx = await driver.spawn({ nodeId: node.id, helper: node.helper, projectId, directory, node });
-        } catch (e) {
-          pushStep({ nodeId: node.id, projectId, outcome: "dispatch-defect" });
-          return { projectId, steps, failure: { kind: "dispatch-defect", message: e.message } };
-        }
-        sessionByNode.set(node.id, sessionIdx);
-      }
-      if (onStep) onStep({ projectId, nodeId: node.id, outcome: "dispatched", sessionIdx, at: new Date().toISOString() });
-      const brief = composeBrief(node, node.resume ? lastStamps : undefined, claim);
-      const promptPromise = driver.prompt(sessionIdx, brief);
-      const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
-      let timer;
-      const budget = new Promise((resolve) => {
-        timer = setTimeout(() => resolve("TIME"), budgetMs);
-      });
+      const step = await dispatchStep(node);
+      if (step.failure) return { projectId, steps, failure: step.failure };
 
-      const raced = await Promise.race([promptPromise, budget]);
-      clearTimeout(timer);
-      if (raced === "TIME") {
-        driver.interrupt(sessionIdx);
-        await promptPromise;
-        pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
-        return {
-          projectId,
-          steps,
-          failure: { kind: "time-budget", message: `step ${node.id} breached its ${budgetMs}ms budget` },
-        };
-      }
-
-      if (raced.outcome === "failed") {
-        pushStep({ nodeId: node.id, projectId, outcome: "failed" });
-        return { projectId, steps, failure: { kind: "session-failed", message: `step ${node.id}'s session failed` } };
-      }
-
-      if (raced.outcome === "interrupted") {
-        pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
-        return { projectId, steps, failure: { kind: "session-interrupted", message: `step ${node.id} was interrupted` } };
-      }
-
-      // Succeeded: read exactly the configured artifact — nothing else is output.
-      const path = artifactPath(projectId, node);
-      let stamps;
-      try {
-        const content = await readFile(path);
-        if (content === null) {
-          pushStep({ nodeId: node.id, projectId, outcome: "artifact-missing" });
-          return { projectId, steps, failure: { kind: "artifact-missing", message: `step ${node.id}: no artifact at ${path}` } };
-        }
-        stamps = JSON.parse(content);
-        if (stamps === null || typeof stamps !== "object") {
-          throw new Error("artifact is not a JSON object");
-        }
-      } catch (e) {
-        pushStep({ nodeId: node.id, projectId, outcome: "artifact-malformed" });
-        return {
-          projectId,
-          steps,
-          failure: { kind: "artifact-malformed", message: `step ${node.id}: artifact at ${path} is malformed (${e.message})` },
-        };
-      }
-
-      pushStep({ nodeId: node.id, projectId, outcome: "succeeded", stamps });
-      lastStamps = stamps;
-
+      const { stamps } = step;
       const next = route(node.id, stamps);
       if (next.empty) {
         return {

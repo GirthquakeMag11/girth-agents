@@ -4,12 +4,9 @@
   "skills": ["skills/implementing.md", "skills/reviewing.md"],
   "graph": {
     "nodes": [
-      "nodes/ticket-in.md",
-      "nodes/implement.md",
-      "nodes/review.md",
-      "nodes/repair.md",
-      "nodes/implemented.md",
-      "nodes/bounce.md"
+      "nodes/implement-from-ticket.md",
+      "nodes/review-implementation.md",
+      "nodes/exit.md"
     ]
   }
 }

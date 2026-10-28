@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn, execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdir, mkdtemp, writeFile, readFile, access } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -28,8 +28,8 @@ The widget gets frobbed, with tests pinning the frob.
 `;
 
 // A fake OpenCode server whose prompts act as the helpers: the builder
-// session writes the implementation report, each fresh reviewer session
-// writes the verdict — a scripted sequence of fails, then a pass.
+// sessions write the implementation artifact, each fresh reviewer
+// session writes the verdict — a scripted sequence of fails, then a pass.
 function fakeOpenCode({ verdictScript }) {
   const records = [];
   const locations = new Map(); // sessionId -> location
@@ -62,12 +62,12 @@ function fakeOpenCode({ verdictScript }) {
         const location = locations.get(id);
         const work = join(location, "work");
         await mkdir(work, { recursive: true });
-        if (id === "sess-1") {
-          // the builder's session — the implement step and every repair resume it
+        const n = Number(id.split("-")[1]);
+        if (n % 2 === 1) {
+          // the builder's sessions — odd-numbered: each loop lap's implementer
           await writeFile(join(work, "implementation.json"), JSON.stringify({ changed: ["lib/widget.mjs"], tests: "pass" }));
         } else {
-          // the reviewer is always fresh: each review is a new session,
-          // so the verdict sequence is global, not per session
+          // the reviewer is always fresh: even-numbered sessions, one verdict per lap
           const verdict = verdictScript[Math.min(gradeCount, verdictScript.length - 1)];
           gradeCount += 1;
           await writeFile(join(work, "review.json"), JSON.stringify({ verdict }));
@@ -153,50 +153,44 @@ test("a claimed file without the ready stamp is a loud defect, and no session ru
   await fake.server.close();
 });
 
-test("the refinement loop: fail, fail, pass — the builder's session is resumed, never respawned", async () => {
+test("the loop: fail, fail, pass — review-implementation routes back to implement-from-ticket until it passes, then the exit", async () => {
   const fake = await fakeOpenCode({ verdictScript: ["fail", "fail", "pass"] });
   const dir = await project();
   const { child, out } = await bootEngine(dir, fake.url);
   child.stdin.write(encode("claim-input", { directory: dir, file: TICKET }) + "\n");
-  const reachedImplemented = await waitFor(async () => {
+  const reachedExit = await waitFor(async () => {
     child.stdin.write(encode("introspect", {}) + "\n");
     await new Promise((r) => setTimeout(r, 25));
     const reply = out.lines.filter((l) => l.includes('"introspection"')).map(parse).at(-1);
-    return reply?.runs?.some((r) => r.state === "finished" && r.terminal === "implemented");
+    return reply?.runs?.some((r) => r.state === "finished" && r.terminal === "exit");
   });
-  assert.ok(reachedImplemented, `never reached implemented; lines: ${JSON.stringify(out.lines)} err: ${out.err}`);
+  assert.ok(reachedExit, `never reached exit; lines: ${JSON.stringify(out.lines)} err: ${out.err}`);
 
   const reply = out.lines.filter((l) => l.includes('"introspection"')).map(parse).at(-1);
-  const done = reply.runs.find((r) => r.terminal === "implemented");
-  const reviewSucceeds = done.events.filter((e) => e.nodeId === "review" && e.outcome === "succeeded");
-  assert.equal(reviewSucceeds.length, 3, "review must run three times before passing");
-  assert.equal(reviewSucceeds.at(-1).stamps.verdict, "pass");
+  const done = reply.runs.find((r) => r.terminal === "exit");
+  const reviews = done.events.filter((e) => e.nodeId === "review-implementation" && e.outcome === "succeeded");
+  assert.equal(reviews.length, 3, "review-implementation must run three times before passing");
+  assert.equal(reviews.at(-1).stamps.verdict, "pass");
+  assert.equal(done.events.filter((e) => e.nodeId === "implement-from-ticket" && e.outcome === "succeeded").length, 3, "the implementer runs on every lap, including the two the review failed");
 
-  // the resume contract, observed end to end: the builder's session
-  // carries the implement step and both repairs; the reviewer is always
-  // fresh — three reviews, three fresh reviewer sessions
-  assert.equal(fake.promptsBySession.size, 4, "builder session + three fresh reviewer sessions");
-  assert.equal(fake.promptsBySession.get("sess-1"), 3, "builder session: implement + two repairs");
-  const reviewerPrompts = [...fake.promptsBySession.entries()]
-    .filter(([id]) => id !== "sess-1")
-    .reduce((sum, [, n]) => sum + n, 0);
-  assert.equal(reviewerPrompts, 3, "three reviews across three fresh reviewer sessions");
+  // one fresh session per step: three implementer laps, three reviews
+  assert.equal(fake.promptsBySession.size, 6, "3 implementer sessions + 3 fresh reviewer sessions");
+  assert.ok(!out.lines.some((l) => l.includes('"exit-committed"')), "the exit writes nothing — the work itself is the outcome");
 
-  // the prompts carry the agents' crafts, the objective, the claimed
-  // ticket, and the report
-  const builderPrompts = fake.records.filter((r) => /sess-1\/prompt$/.test(r.url)).map((r) => r.body?.text ?? "");
-  assert.ok(builderPrompts[0].includes("# The builder's craft"), builderPrompts[0]);
-  assert.ok(builderPrompts[0].includes("Implement the claimed ticket"), builderPrompts[0]);
-  assert.ok(builderPrompts[0].includes(TICKET), "the brief must tell the builder which file was claimed");
-  assert.ok(builderPrompts.some((p) => p.includes('"verdict": "fail"')), "the reviewer's report must ride into the repair brief");
-  const reviewerPrompt = fake.records.find((r) => /sess-2\/prompt$/.test(r.url))?.body?.text ?? "";
-  assert.ok(reviewerPrompt.includes("# The reviewer's craft"), reviewerPrompt);
-  assert.ok(reviewerPrompt.includes(TICKET), "the reviewer's brief must name the claimed ticket too");
+  // the prompts carry the agents' crafts, the objective, and the claimed ticket
+  const builderPrompts = fake.records.filter((r) => /sess-\d+\/prompt$/.test(r.url)).map((r) => r.body?.text ?? "");
+  const implementBrief = builderPrompts[0];
+  assert.ok(implementBrief.includes("# The builder's craft"), implementBrief);
+  assert.ok(implementBrief.includes("Implement the claimed ticket"), implementBrief);
+  assert.ok(implementBrief.includes(TICKET), "the brief must tell the builder which file was claimed");
+  const reviewerBrief = builderPrompts[1];
+  assert.ok(reviewerBrief.includes("# The reviewer's craft"), reviewerBrief);
+  assert.ok(reviewerBrief.includes(TICKET), "the reviewer's brief must name the claimed ticket too");
   child.kill("SIGTERM");
   await fake.server.close();
 });
 
-test("strict stamps: an unmodeled verdict defects loudly — never routed into the builder as instructions", async () => {
+test("strict stamps: an unmodeled verdict defects loudly — never routed back into the builder as instructions", async () => {
   const fake = await fakeOpenCode({ verdictScript: ["fail", "maybe"] });
   const dir = await project();
   const { child, out } = await bootEngine(dir, fake.url);
@@ -204,42 +198,8 @@ test("strict stamps: an unmodeled verdict defects loudly — never routed into t
   const defect = await waitFor(() => out.lines.some((l) => l.includes('"defect"') && l.includes("maybe")));
   assert.ok(defect, `the stray stamp must be named in a defect notice; got ${out.lines.join("\n")}`);
   assert.ok(!out.lines.some((l) => l.includes('"exit-committed"')), "no exit may be reached on a stray stamp");
-  // fail legitimately reaches repair once; the stray verdict is where the chain halts
-  assert.equal(fake.promptsBySession.get("sess-1"), 2, "implement + one repair, then the stray verdict halts the chain");
-  child.kill("SIGTERM");
-  await fake.server.close();
-});
-
-test("the retry limit: an always-failing review bounces after three repairs", async () => {
-  const fake = await fakeOpenCode({ verdictScript: ["fail", "fail", "fail"] });
-  const dir = await project();
-  const { child, out } = await bootEngine(dir, fake.url);
-  child.stdin.write(encode("claim-input", { directory: dir, file: TICKET }) + "\n");
-  const committed = await waitFor(() => out.lines.some((l) => l.includes('"exit-committed"')));
-  assert.ok(committed, `exit-committed missing in ${out.lines}; err: ${out.err}`);
-  assert.ok(out.lines.some((l) => l.includes('"exit-committed"') && l.includes('"bounce"')), out.lines.join("\n"));
-
-  const record = JSON.parse(await readFile(join(dir, "records", "bounce.json"), "utf8"));
-  assert.equal(record.kind, "question");
-  assert.equal(record.state, "awaiting-answer");
-
-  // the cap was honored: three repairs, then the exhausted link — never a fourth
-  assert.equal(fake.promptsBySession.get("sess-1"), 4, "implement + three repairs, exactly");
-  const reviewerPrompts = [...fake.promptsBySession.entries()]
-    .filter(([id]) => id !== "sess-1")
-    .reduce((sum, [, n]) => sum + n, 0);
-  // check-then-retry: the fourth review's fail verdict is what trips the exhausted link
-  assert.equal(reviewerPrompts, 4, "four reviews: one per attempt, the last tripping the limit");
-  await access(join(dir, "work", "review.json")); // the reviewed work stays in the tree
-
-  const committedLog = await waitFor(async () => {
-    try {
-      return (await run("git", ["log", "--format=%s"], { cwd: dir })).stdout.includes("bounce recorded");
-    } catch {
-      return false;
-    }
-  });
-  assert.ok(committedLog, "the bounce record must be committed");
+  // fail legitimately loops back to the implementer once; the stray verdict is where the chain halts
+  assert.equal(fake.promptsBySession.size, 4, "two implementer sessions, two reviews — then halt");
   child.kill("SIGTERM");
   await fake.server.close();
 });

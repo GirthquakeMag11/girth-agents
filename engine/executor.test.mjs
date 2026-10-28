@@ -113,6 +113,71 @@ test("executor: a missing or malformed artifact is a defect, never a silent pass
   }
 });
 
+test("executor: a dispatch-capable entry runs its step before routing unconditionally onward", async () => {
+  // the implement-from-ticket shape: the entry is the claimed input's
+  // gate AND the first work step — it dispatches, produces its
+  // artifact, and routes onward unconditionally
+  const graph = {
+    nodes: [
+      { id: "implement-from-ticket", type: "entry", helper: "builder", artifact: "work/implementation.json", budgetMs: 5000, objective: "Implement it" },
+      { id: "review-implementation", type: "task", helper: "reviewer", artifact: "work/review.json", budgetMs: 5000, objective: "Review it" },
+      { id: "exit", type: "exit" },
+    ],
+    links: [
+      { from: "implement-from-ticket", to: "review-implementation" },
+      { from: "review-implementation", to: "exit", condition: { field: "verdict", equals: "pass" } },
+      { from: "review-implementation", to: "implement-from-ticket", condition: { field: "verdict", equals: "fail" } },
+    ],
+  };
+  const briefs = [];
+  const driver = fakeDriver();
+  driver.briefs = briefs;
+  const base = driver.prompt.bind(driver);
+  driver.prompt = (idx, brief) => {
+    briefs.push({ nodeId: driver.sessions[idx]?.nodeId, brief });
+    return base(idx);
+  };
+  const ex = createExecutor({
+    graph,
+    driver,
+    readFile: async (path) => JSON.stringify(path.includes("review.json") ? { verdict: "pass" } : { changed: ["lib/x.mjs"] }),
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-n", entryNode: "implement-from-ticket" });
+  assert.equal(result.failure, undefined, JSON.stringify(result.failure));
+  assert.equal(result.terminal, "exit");
+  assert.deepEqual(
+    result.steps.filter((s) => s.outcome === "succeeded").map((s) => s.nodeId),
+    ["implement-from-ticket", "review-implementation"],
+    "the entry dispatches its own step, then the task runs",
+  );
+  assert.equal(briefs[0].nodeId, "implement-from-ticket", "the entry's own session gets the implement brief");
+  assert.equal(briefs[1].nodeId, "review-implementation");
+  // the fail branch loops: a second lap proves the cycle, not silence
+  let reviews = 0;
+  const ex2 = createExecutor({
+    graph,
+    driver: (() => {
+      const d = fakeDriver();
+      const p = d.prompt.bind(d);
+      d.prompt = (idx, brief) => p(idx, brief);
+      return d;
+    })(),
+    readFile: async (path) => {
+      if (path.includes("review.json")) {
+        reviews += 1;
+        return JSON.stringify({ verdict: reviews === 1 ? "fail" : "pass" });
+      }
+      return JSON.stringify({ changed: ["lib/x.mjs"] });
+    },
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const looped = await ex2.run({ projectId: "repo-o", entryNode: "implement-from-ticket" });
+  assert.equal(looped.failure, undefined, JSON.stringify(looped.failure));
+  assert.equal(looped.terminal, "exit");
+  assert.equal(looped.steps.filter((s) => s.nodeId === "implement-from-ticket" && s.outcome === "succeeded").length, 2, "fail loops back to the implementer; its second lap passes");
+});
+
 test("executor: a repair node resumes the graded session, not a fresh one", async () => {
   // in → build → grade; grade/fail → repair (resumes build's session) → grade again → accepted
   const graph = {

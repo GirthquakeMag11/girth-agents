@@ -159,18 +159,18 @@ test("verifier: retry bounds are schema- and structure-checked", async () => {
 });
 
 test("verifier: a cycle with no escape is named a matrix loop, not a crash or silence", async () => {
+  // a truly escapeless cycle: no exit node, no condition — every lap
+  // returns to the cycle, so the matrix must name the runaway loop
   const looped = await verifyConfig(config({
     nodes: [
       { id: "in", type: "entry", marker: "CONFIRMED" },
-      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000, objective: "Grade" },
-      { id: "repair", type: "task", helper: "builder", artifact: "verdict.json", budgetMs: 5000, objective: "Repair" },
-      { id: "out-pass", type: "exit" },
+      { id: "a", type: "task", helper: "checker", artifact: "a.json", budgetMs: 5000, objective: "A" },
+      { id: "b", type: "task", helper: "builder", artifact: "b.json", budgetMs: 5000, objective: "B" },
     ],
     links: [
-      { from: "in", to: "grade" },
-      { from: "grade", to: "out-pass", condition: { field: "verdict", equals: "pass" } },
-      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
-      { from: "repair", to: "grade" },
+      { from: "in", to: "a" },
+      { from: "a", to: "b" },
+      { from: "b", to: "a" },
     ],
   }));
   assert.equal(looped.valid, false);
