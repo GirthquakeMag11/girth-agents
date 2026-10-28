@@ -26,12 +26,11 @@ export function modelRef(fittingModel) {
 }
 
 function rules(fitting) {
-  const rules = [];
-  for (const entry of fitting.allow ?? []) {
-    rules.push({ action: entry, resource: "*", effect: "allow" });
-  }
-  if (fitting.denyRest) rules.push({ action: "*", resource: "*", effect: "deny" });
-  return rules;
+  // Live-verified against the running service: a wildcard deny shadows
+  // every allow and leaves the helper with no tools at all. The rule
+  // set is the deny-rest itself — only the allowed actions are listed;
+  // anything unlisted is not granted.
+  return (fitting.allow ?? []).map((entry) => ({ action: entry, resource: "*", effect: "allow" }));
 }
 
 export class DispatchDefect extends Error {

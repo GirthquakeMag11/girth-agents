@@ -83,10 +83,11 @@ test("driver spawn: creates the session with the live-verified wire — model re
   assert.deepEqual(create.body.model, { id: "heavy", providerID: "weight" });
   assert.equal(create.body.agent, "build", "the session needs the coding agent — without it the helper has no tools");
   assert.deepEqual(create.body.location, { directory: "/proj" });
+  // live-verified: the rule set is the deny-rest; a wildcard deny would
+  // shadow these allows and hand the helper a tool-less session
   assert.deepEqual(create.body.permissions, [
     { action: "bash", resource: "*", effect: "allow" },
     { action: "fs", resource: "*", effect: "allow" },
-    { action: "*", resource: "*", effect: "deny" },
   ]);
   assert.equal(typeof idx, "number");
   await fake.server.close();
