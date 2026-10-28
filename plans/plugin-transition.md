@@ -98,10 +98,10 @@ after approval.
   survives restarts, code-mode tools execute — recorded under
   Platform facts below (2026-10-27 live probes; chat M1126).
 - Survey findings to fold in before the spec: the `tdd`/
-  `writing-for-agents` renames must be one atomic change (the linter
-  fires mid-rename). (The other two earlier findings — 0003's marker
-  and the channel's supersession record — were since folded; chat
-  M497 ordered the survey.)
+  `writing-for-agents` renames should land as one change, not a
+  half-renamed catalog. (The other two earlier findings — 0003's
+  marker and the channel's supersession record — were since folded;
+  chat M497 ordered the survey.)
 - Questioning notes (2026-10-26, user): the design is charted through
   unknown territory; the user may misspeak, make mistakes, hold ideas
   that conflict, or change a mind that was never firmly made up. Doubling
