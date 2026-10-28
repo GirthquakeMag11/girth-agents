@@ -14,12 +14,15 @@ function timeout(ms) {
 export function createExecutor({ graph, driver, readFile, artifactPath, writeExitRecord, onStep, agents = {} }) {
   const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
 
-  const composeBrief = (node, previousStamps) => {
+  const composeBrief = (node, previousStamps, claim) => {
     const fitting = agents[node.helper];
     const parts = [];
     if (fitting?.body) parts.push(fitting.body);
     for (const skill of fitting?.skills ?? []) {
       parts.push(`# Skill: ${skill.id}\n\n${skill.instructions}`);
+    }
+    if (claim?.file) {
+      parts.push(`# The claimed input\n\nThe engine claimed '${claim.file}' as this run's input. Read it first: it is the work's contract.`);
     }
     if (node.objective) parts.push(`# Objective\n\n${node.objective}`);
     if (node.body) parts.push(node.body);
@@ -55,7 +58,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
     return { to: links[0].to };
   }
 
-  async function run({ projectId, entryNode, directory }) {
+  async function run({ projectId, entryNode, directory, claim }) {
     const steps = [];
     const pushStep = (step) => {
       steps.push(step);
@@ -138,7 +141,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
         sessionByNode.set(node.id, sessionIdx);
       }
       if (onStep) onStep({ projectId, nodeId: node.id, outcome: "dispatched", sessionIdx, at: new Date().toISOString() });
-      const brief = composeBrief(node, node.resume ? lastStamps : undefined);
+      const brief = composeBrief(node, node.resume ? lastStamps : undefined, claim);
       const promptPromise = driver.prompt(sessionIdx, brief);
       const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
       let timer;

@@ -287,6 +287,52 @@ test("executor: the dispatched brief carries the fitting's craft and the node's 
   assert.ok(briefs[0].brief.includes("out.json"), "the brief must name the artifact to produce");
 });
 
+test("executor: every dispatched brief names the claimed input for the helper to read — repair included", async () => {
+  const briefs = [];
+  const driver = fakeDriver();
+  driver.briefs = briefs;
+  const base = driver.prompt.bind(driver);
+  driver.prompt = (idx, brief) => {
+    briefs.push({ idx, brief });
+    return base(idx);
+  };
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "build", type: "task", helper: "builder", artifact: "out.json", budgetMs: 5000, objective: "Build it" },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000, objective: "Grade it" },
+      { id: "repair", type: "task", helper: "builder", artifact: "out.json", budgetMs: 5000, resume: "build", objective: "Fix it" },
+      { id: "out", type: "exit" },
+    ],
+    links: [
+      { from: "in", to: "build" },
+      { from: "build", to: "grade" },
+      { from: "grade", to: "out", condition: { field: "verdict", equals: "pass" } },
+      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
+      { from: "repair", to: "grade" },
+    ],
+  };
+  let verdicts = 0;
+  const ex = createExecutor({
+    graph,
+    driver,
+    readFile: async (path) => {
+      if (path.endsWith("verdict.json")) {
+        verdicts += 1;
+        return JSON.stringify({ verdict: verdicts === 1 ? "fail" : "pass" });
+      }
+      return JSON.stringify({ done: true });
+    },
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-l", entryNode: "in", claim: { file: "tracker/tickets/12-frob.md" } });
+  assert.equal(result.terminal, "out", JSON.stringify(result.failure));
+  for (const b of briefs) {
+    assert.ok(b.brief.includes("tracker/tickets/12-frob.md"), `the claimed file must ride every brief, got: ${b.brief}`);
+  }
+  assert.equal(briefs.length, 4, "build, grade, repair, re-grade");
+});
+
 test("executor: a repair brief carries the failed step's report as added context", async () => {
   const briefs = [];
   const driver = fakeDriver();

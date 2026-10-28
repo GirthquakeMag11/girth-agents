@@ -153,7 +153,7 @@ async function claim(input) {
         return { file: join(recordsDir, `${node.id}.json`) };
       },
     });
-    const result = await ex.run({ projectId: directory, entryNode: entry.id, directory });
+    const result = await ex.run({ projectId: directory, entryNode: entry.id, directory, claim: { file: input.file } });
     runState.state = "finished";
     runState.terminal = result.terminal;
     runState.failure = result.failure?.kind ? { kind: result.failure.kind, message: result.failure.message } : undefined;
