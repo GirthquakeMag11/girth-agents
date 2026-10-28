@@ -30,3 +30,4 @@ and the check skips silently from then on.
   skipped silently thereafter. The wizard is a walked reference, not a
   shell script, because authentication is a human-in-the-browser step.
   Validator green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

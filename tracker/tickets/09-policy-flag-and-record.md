@@ -27,3 +27,4 @@ truth, written last and removed last as today.
   both install and reconcile, and a re-install without the flag carries
   the recorded policy forward. Harness: 85 green (three new tests —
   recorded, carried, rejected). Validator green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

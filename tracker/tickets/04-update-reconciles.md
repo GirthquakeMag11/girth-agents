@@ -26,3 +26,5 @@ match the new state.
 - [ ] The before-and-after release is reported; the record is rewritten to
   the new state; `--dry-run` changes nothing.
 - **Done — 2026-10-21:** update pulls the checkout forward (refusing a dirty checkout) and reconciles — retired copies and links are removed, new items linked or copied, and copies re-written only when their source changed (against the record's fingerprints), then reports before→after from the release name and rewrites girth.yaml. Copy mode is carried over from the record when --copy is not repeated. --dry-run previews without pulling. Harness now 77 assertions across four new git-repo scenarios.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

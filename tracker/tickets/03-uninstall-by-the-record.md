@@ -25,3 +25,5 @@ the user's own files untouched.
 - [ ] Uninstall asks one confirmation; `--yes` skips it; `--dry-run` lists
   what would be removed and removes nothing.
 - **Done — 2026-10-21:** uninstall removes exactly what girth.yaml lists — links and copies — leaves anything the user changed or added (detected against the recorded fingerprint/symlink target), asks one confirmation unless --yes, previews with --dry-run, and deletes the record last. Harness grew to 57 assertions; the missing-exit fall-through was caught by the tests.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

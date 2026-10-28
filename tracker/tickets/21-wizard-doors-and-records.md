@@ -31,3 +31,5 @@ rework as user-visible changes, beside the /wizard entry already queued.
   every-time yes, and its /wizard row names the same path; the
   changelog's Unreleased section now leads with the redesign as the
   wizard's Changed entry beside the /wizard Add. Validator green.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

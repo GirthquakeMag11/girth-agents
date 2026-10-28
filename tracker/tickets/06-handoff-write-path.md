@@ -36,3 +36,4 @@ home of the repo-root document and the prescribed commit message.
   obeyed. Fresh-context reviewer passed all seven criteria; its two polish
   flags (the slug defined, the no-commit escape hatch restated) are fixed.
   Validator green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

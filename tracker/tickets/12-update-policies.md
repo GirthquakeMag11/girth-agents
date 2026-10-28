@@ -32,3 +32,4 @@ and reconciles. A dirty checkout refuses under every policy.
   dirty-checkout refusal runs before any of the three. Harness: 109
   green (auto and notify driven against fixture remotes with tags).
   Validator green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

@@ -36,3 +36,5 @@ template and on every generated wizard.
   exit-code truth on a failing step — plus `bash -n` on the template.
   CONTRIBUTING's Tooling section names the harness. Both harnesses
   green (30/30 wizard, 127/127 installer).
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

@@ -42,3 +42,5 @@ summary, never a duplicate step.
   wizard inside the chat session. Red→green through the linter's
   dead-path rule: referencing the launch file before creating it failed
   validation, and landing it turned the run green.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

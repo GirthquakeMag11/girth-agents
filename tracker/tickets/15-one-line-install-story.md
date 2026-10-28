@@ -27,3 +27,4 @@ Unreleased holds the entries for the whole feature.
   the publishing step; and CHANGELOG Unreleased carries the Added and
   Changed entries for the whole effort. Validator and the 117-assertion
   harness are green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

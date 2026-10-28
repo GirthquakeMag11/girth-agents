@@ -32,3 +32,4 @@ deleted. A bare freshness check runs the same playbook.
   in-place edit, and the document is deleted in the final commit.
   Fresh-context reviewer accepted all five criteria; its one wording gap
   (still-fresh claims at deletion) is closed in the skill. Validator green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

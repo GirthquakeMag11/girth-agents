@@ -30,3 +30,4 @@ quietly.
   the cut with and without gh from the command's text alone; its two
   cosmetic gaps (the exact line's home, the gh invocation) are now named
   in the prose. Validator green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

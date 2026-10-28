@@ -33,3 +33,5 @@ length as filled mask characters.
   and captures whole, `ab⌫c` captures `ac`, and a re-run keeps `xyz`
   without leaking a character. `ask` untouched. The harness ticket (20)
   formalizes these probes.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

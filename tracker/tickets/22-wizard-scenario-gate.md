@@ -39,3 +39,5 @@ tracked. The spec is not done until this passes.
   needs a lot of work before it carries its own weight"). The harness
   stays as regression for the day it returns; the scenario gate no
   longer gates anything in flight.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

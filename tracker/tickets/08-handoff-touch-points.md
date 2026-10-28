@@ -33,3 +33,4 @@ changelog's Unreleased section.
   entries. A fresh-context sweep found no other stale reference; its two
   cosmetic flags (table padding, changelog spacing) are fixed. Validator
   green.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

@@ -34,3 +34,5 @@ needed. The wording is the trigger; the scenario gate validates it.
   the catch-yourself rule. Code-review: Spec axis clean; the Standards
   axis's one borderline note is the spec's own deliberate framing
   (generate-a-wizard last). Validator green.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

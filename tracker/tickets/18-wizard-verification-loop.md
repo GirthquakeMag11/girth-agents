@@ -45,3 +45,5 @@ persisted, and steps that can fail carry checks too.
   during probing: the color block had no RED, and set -e aborted runs
   on skips and corrected failures before the summary could report.
   Validator green.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

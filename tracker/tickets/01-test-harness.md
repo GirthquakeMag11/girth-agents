@@ -26,3 +26,5 @@ ticket hangs its new assertions on the same harness.
 - [ ] The harness is one command, exit-code-truthful, with no external
   framework beyond shell.
 - **Done — 2026-10-21:** `scripts/test-installer.sh` — 15 assertions, green: symlink install (exact set), copy install, user-file preservation, retired-item pruning.
+
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

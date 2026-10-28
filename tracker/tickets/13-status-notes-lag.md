@@ -35,3 +35,4 @@ cheaply and stays silent when the network is unreachable.
   offered no notes and the notes printed only one section; fixed — the
   menu gains an `n. notes` deed, and notes print every section between the
   installed and latest release.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.

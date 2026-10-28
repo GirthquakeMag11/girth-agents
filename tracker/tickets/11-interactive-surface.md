@@ -40,3 +40,4 @@ the flag that would answer it.
   could not actually re-shape mode; fixed — a chosen mode is honored (the
   carry only applies when nothing was chosen) and reconcile re-lays every
   item into the new mode, tested in both directions.
+- **Done — 2026-10-27:** retired without work — the parent spec was retired by the plugin transition.
