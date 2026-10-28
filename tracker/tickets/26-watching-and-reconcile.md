@@ -17,7 +17,11 @@ on, or read. Reconciliation derives ready work from the committed
 stamps and nothing else: in-flight is never committed, and a vanished
 in-flight piece falls back to its last durable stamp and is re-picked.
 
-## Acceptance criteria
+## Work so far
+
+- 2026-10-27: built test-first — the reconciler (stamps from committed records; the durable vocabulary; unknown states collected), the watcher (fs-watch per project plus periodic pass; pause/resume; watch errors yield to the next pass, never the event stream), and the engine wiring (boot reconcile finds records written while down; a kill leaves only what was seeded — no in-flight marks, same re-pick on restart; all five pokes surface; claim-input retained as pending claims until the runner exists).
+
+- **Done — 2026-10-27:** watching and reconciliation land at `engine/reconciler.mjs`, `engine/watcher.mjs`, wired in `engine/engine.mjs`; 21 tests green across the suite.
 
 - [ ] A record change on disk to produce a ready stamp surfaces as ready work after the engine's own watch or its next pass
 - [ ] Changes made while the engine is down are found by the reconcile pass at start — missed events are not lost work

@@ -1,11 +1,14 @@
 // The engine's boot-to-ready. argv[2] is the config path. stdout
 // carries notices only (versioned JSON-lines); everything human-facing
 // goes to stderr. Invalid config is a loud refusal: exit 2, the broken
-// constraint named.
+// constraint named. Once booted, the engine watches its activated
+// projects' records and reconciles from their stamps.
 
 import { readFileSync } from "node:fs";
 import { validateConfig } from "./validate-config.mjs";
 import { encode } from "./stdio.mjs";
+import { createReconciler } from "./reconciler.mjs";
+import { createWatcher } from "./watcher.mjs";
 
 const say = (kind, payload) => process.stdout.write(encode(kind, payload) + "\n");
 const log = (...a) => process.stderr.write(a.join(" ") + "\n");
@@ -30,14 +33,43 @@ if (!verdict.valid) {
 
 say("version", { version: 1 });
 
-const directories = new Set();
+const reconciler = createReconciler();
+const watcher = createWatcher({
+  onPass: async (id) => {
+    const project = watcher.list().find((p) => p.id === id);
+    if (!project) return;
+    const result = await reconciler.reconcile(project.directory, project.recordsRoot);
+    if (result.ready.length > 0) {
+      log(`engine: ready work in ${id}: ${result.ready.length} ready`);
+    }
+  },
+  intervalMs: Math.max(1, Number(process.env.PASS_MS || 0)) || 5000,
+});
+watcher.start();
+
+const pendingClaims = [];
 let readySent = false;
-const maybeReady = () => {
-  if (!readySent) {
-    readySent = true;
-    say("ready");
+
+async function boot() {
+  if (readySent) return;
+  readySent = true;
+  let total = 0;
+  for (const project of watcher.list()) {
+    const result = await reconciler.reconcile(project.directory, project.recordsRoot);
+    total += result.ready.length;
   }
-};
+  log(`engine: ready work: ${total} ready`);
+  say("ready");
+}
+
+function addProject(entry) {
+  const directory = typeof entry === "string" ? entry : entry.directory;
+  if (!directory) return;
+  const id = directory;
+  const recordsRoot = typeof entry === "string" ? "records" : entry.recordsRoot ?? "records";
+  watcher.add({ id, directory, recordsRoot });
+  return id;
+}
 
 let pending = "";
 process.stdin.setEncoding("utf8");
@@ -57,31 +89,44 @@ process.stdin.on("data", (chunk) => {
     }
     switch (msg.kind) {
       case "watch-list":
-        for (const dir of msg.directories ?? []) directories.add(dir);
-        log(`engine: watch-list applied (${directories.size})`);
-        maybeReady();
+        for (const entry of msg.directories ?? []) addProject(entry);
+        log(`engine: watch-list applied (${watcher.list().length})`);
+        boot();
         break;
       case "activation-added":
-        directories.add(msg.directory);
+        addProject({ directory: msg.directory });
         log(`engine: watching ${msg.directory}`);
+        boot();
         break;
       case "activation-removed":
-        directories.delete(msg.directory);
+        watcher.remove(msg.directory);
         log(`engine: unwatching ${msg.directory}`);
         break;
-      case "claim-input":
       case "project-paused":
+        watcher.pause(msg.directory);
+        log(`engine: paused ${msg.directory}`);
+        break;
       case "project-resumed":
-        log(`engine: poke ${msg.kind} accepted (not yet wired)`);
+        watcher.resume(msg.directory);
+        log(`engine: resumed ${msg.directory}`);
+        break;
+      case "claim-input":
+        pendingClaims.push(msg);
+        log(`engine: claimed input ${msg.file} (${pendingClaims.length} pending)`);
         break;
       default:
         log(`engine: unknown poke ${msg.kind} ignored`);
     }
   }
 });
-process.stdin.on("end", () => process.exit(0));
-process.on("SIGTERM", () => process.exit(0));
-process.on("SIGINT", () => process.exit(0));
+
+async function shutdown() {
+  await watcher.stop();
+  process.exit(0);
+}
+process.stdin.on("end", shutdown);
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 const heartbeatMs = Math.max(1, Number(process.env.HEARTBEAT_MS || 0)) || 5000;
 setInterval(() => say("heartbeat", { at: new Date().toISOString() }), heartbeatMs);
