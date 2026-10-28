@@ -808,13 +808,6 @@ after approval.
   question for same-layer conflicts, the scoping clarification for
   unclear scope — never the reconciliation question that presumes one
   layer (incident of 2026-10-26).
-- The helpers are skills, not agents: settled — the six helpers are
-  roles inside the engine, each a skill carrying its role-shaped
-  context and its permission ruleset, loaded by the engine into the
-  sessions it spawns. They are never OpenCode-registered agent types;
-  the only true agent is the orchestrator, the config-declared
-  interactive primary. (2026-10-27, user — the first discarded pass
-  mis-mapped "roles" onto "registered agents" and was corrected.)
 - Platform facts, verified in live probes (2026-10-27; the discarded
   pass paid for these): a plugin cannot register brand-new agent IDs —
   `AgentEditor` has no `add`; `ctx.storage` survives service restarts;
