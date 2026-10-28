@@ -743,7 +743,7 @@ after approval.
   M371
 - `find-skills` and `/wait-what`: dead — removed from the catalog; their
   surfaces (the README's off-the-spine find-skills line, `/wait-what`'s
-  rows) go with them. (2026-10-25, narrated)
+  rows) go with them. (chat M361) (2026-10-25, narrated)
 - Renames: `writing-for-agents` becomes `technical-writing`; `tdd`
   becomes `test-driving`. Knock-ons: CONTRIBUTING's craft pointer, the
   M361
