@@ -18,10 +18,8 @@ Cut a release for this project, per the versioning ruling in
    of empty sections. Update comparison links if the project keeps them. If
    a tool owns the changelog, run the tool's release workflow instead.
 4. Commit with a conventional message, tag `v<version>`, and push.
-5. Publish the release on GitHub: the changelog's new section as the notes,
-   and the one-line install — clone, change in, run the script, the exact
-   line as the README's Install section leads with it — in the body via
-   `gh release create`. Check first whether a declination is already
+5. Publish the release on GitHub: the changelog's new section as the notes
+   via `gh release create`. Check first whether a declination is already
    recorded in the project's conventions; a recorded "no gh" means skip
    publication silently. Otherwise, if the `gh` CLI is present, create the
    GitHub Release with it. If it is missing, call the skill tool with
