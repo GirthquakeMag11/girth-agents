@@ -1,0 +1,134 @@
+// The graph executor core: hardcoded flow structure, config-driven
+// everything else. It walks a schema-valid graph — dispatch through the
+// session driver, read only the node's configured artifact, route by
+// the stamp fields its conditions parse — and halts on any defect.
+// It knows no particular workflow.
+
+const DEFAULT_BUDGET_MS = 30000;
+const MAX_STEPS = 1000;
+
+function timeout(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function createExecutor({ graph, driver, readFile, artifactPath }) {
+  const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
+  const linksFrom = new Map();
+  for (const link of graph.links) {
+    const list = linksFrom.get(link.from) ?? [];
+    list.push(link);
+    linksFrom.set(link.from, list);
+  }
+
+  function route(nodeId, stamps) {
+    const links = linksFrom.get(nodeId) ?? [];
+    if (links.length === 0) return null;
+    for (const link of links) {
+      if (link.condition && stamps[link.condition.field] === link.condition.equals) return link.to;
+    }
+    return links.find((l) => !l.condition)?.to ?? null;
+  }
+
+  async function run({ projectId, entryNode }) {
+    const steps = [];
+    let current = entryNode;
+    const start = nodes.get(entryNode);
+    if (!start) {
+      return { projectId, steps, failure: { kind: "unknown-entry", message: `no node named ${entryNode}` } };
+    }
+
+    for (let guard = 0; guard < MAX_STEPS; guard++) {
+      const node = nodes.get(current);
+      if (!node) {
+        return { projectId, steps, failure: { kind: "no-node", message: `graph names no node ${current}` } };
+      }
+
+      if (node.type === "exit") {
+        return { projectId, terminal: node.id, steps, failure: undefined };
+      }
+
+      if (node.type === "entry") {
+        steps.push({ nodeId: node.id, projectId, outcome: "entered" });
+        const next = route(node.id, {});
+        if (next === null) {
+          return { projectId, steps, failure: { kind: "no-link", message: `entry ${node.id} has no outbound link` } };
+        }
+        current = next;
+        continue;
+      }
+
+      if (node.type !== "task") {
+        return { projectId, steps, failure: { kind: "bad-node", message: `node ${node.id} has unknown type ${node.type}` } };
+      }
+
+      const sessionIdx = driver.spawn({ nodeId: node.id, helper: node.helper, projectId });
+      const promptPromise = driver.prompt(sessionIdx);
+      const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
+      let timer;
+      const budget = new Promise((resolve) => {
+        timer = setTimeout(() => resolve("TIME"), budgetMs);
+      });
+
+      const raced = await Promise.race([promptPromise, budget]);
+      clearTimeout(timer);
+      if (raced === "TIME") {
+        driver.interrupt(sessionIdx);
+        await promptPromise;
+        steps.push({ nodeId: node.id, projectId, outcome: "interrupted" });
+        return {
+          projectId,
+          steps,
+          failure: { kind: "time-budget", message: `step ${node.id} breached its ${budgetMs}ms budget` },
+        };
+      }
+
+      if (raced.outcome === "failed") {
+        steps.push({ nodeId: node.id, projectId, outcome: "failed" });
+        return { projectId, steps, failure: { kind: "session-failed", message: `step ${node.id}'s session failed` } };
+      }
+
+      if (raced.outcome === "interrupted") {
+        steps.push({ nodeId: node.id, projectId, outcome: "interrupted" });
+        return { projectId, steps, failure: { kind: "session-interrupted", message: `step ${node.id} was interrupted` } };
+      }
+
+      // Succeeded: read exactly the configured artifact — nothing else is output.
+      const path = artifactPath(projectId, node);
+      let stamps;
+      try {
+        const content = await readFile(path);
+        if (content === null) {
+          steps.push({ nodeId: node.id, projectId, outcome: "artifact-missing" });
+          return { projectId, steps, failure: { kind: "artifact-missing", message: `step ${node.id}: no artifact at ${path}` } };
+        }
+        stamps = JSON.parse(content);
+        if (stamps === null || typeof stamps !== "object") {
+          throw new Error("artifact is not a JSON object");
+        }
+      } catch (e) {
+        steps.push({ nodeId: node.id, projectId, outcome: "artifact-malformed" });
+        return {
+          projectId,
+          steps,
+          failure: { kind: "artifact-malformed", message: `step ${node.id}: artifact at ${path} is malformed (${e.message})` },
+        };
+      }
+
+      steps.push({ nodeId: node.id, projectId, outcome: "succeeded", stamps });
+
+      const next = route(node.id, stamps);
+      if (next === null) {
+        return {
+          projectId,
+          steps,
+          failure: { kind: "no-link", message: `step ${node.id}: no routable outbound link` },
+        };
+      }
+      current = next;
+    }
+
+    return { projectId, steps, failure: { kind: "step-overflow", message: `more than ${MAX_STEPS} steps` } };
+  }
+
+  return { run };
+}
