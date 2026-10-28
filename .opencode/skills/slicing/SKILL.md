@@ -1,4 +1,5 @@
 ---
+name: Slicing
 description: Slice an approved spec — or an oversized bug or defect — into a numbered ticket graph with one approval checkpoint; tickets are the only output and /implement works them
 ---
 
