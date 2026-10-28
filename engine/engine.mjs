@@ -5,10 +5,15 @@
 // projects' records and reconciles from their stamps.
 
 import { readFileSync } from "node:fs";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import { validateConfig } from "./validate-config.mjs";
 import { encode } from "./stdio.mjs";
 import { createReconciler } from "./reconciler.mjs";
 import { createWatcher } from "./watcher.mjs";
+import { createExecutor } from "./executor.mjs";
+import { createServerDriver } from "./driver.mjs";
+import { createDelivery } from "./delivery.mjs";
 
 const say = (kind, payload) => process.stdout.write(encode(kind, payload) + "\n");
 const log = (...a) => process.stderr.write(a.join(" ") + "\n");
@@ -30,6 +35,7 @@ if (!verdict.valid) {
   for (const reason of verdict.reasons) log(`engine: invalid config: ${reason}`);
   process.exit(2);
 }
+const configDoc = JSON.parse(text);
 
 say("version", { version: 1 });
 
@@ -49,6 +55,92 @@ watcher.start();
 
 const pendingClaims = [];
 let readySent = false;
+let driver = null;
+
+async function getDriver() {
+  if (driver) return driver;
+  const fittings = {};
+  for (const [id, fitting] of Object.entries(configDoc.helpers ?? {})) {
+    fittings[id] = {
+      model: fitting.model,
+      capabilities: fitting.capabilities ?? [],
+      permissions: fitting.permissions,
+    };
+  }
+  driver = await createServerDriver({ serviceFile: process.env.OPENCODE_SERVICE_FILE, fittings, fetchImpl: fetch });
+  return driver;
+}
+
+async function claim(input) {
+  const directory = input.directory;
+  if (!directory || !input.file) {
+    say("defect", { message: "claim-input without directory or file" });
+    return;
+  }
+  const entries = (configDoc.graph?.nodes ?? []).filter((n) => n.type === "entry");
+  const entry = entries[0];
+  if (!entry) {
+    say("defect", { message: "no entry node configured" });
+    return;
+  }
+  let text;
+  try {
+    text = await readFile(join(directory, input.file), "utf8");
+  } catch (e) {
+    say("defect", { message: `claim unreadable: ${e.message}` });
+    return;
+  }
+  if (entry.marker && !text.includes(entry.marker)) {
+    say("defect", { message: `claim rejected: the entry node's marker '${entry.marker}' is absent` });
+    log(`engine: claim ${input.file} rejected — marker absent`);
+    return;
+  }
+
+  try {
+    const ex = createExecutor({
+      graph: configDoc.graph,
+      driver: await getDriver(),
+      readFile: (path) => readFile(path, "utf8").catch(() => null),
+      artifactPath: (projectId, node) => join(projectId, node.artifact),
+      writeExitRecord: async ({ projectId, node }) => {
+        const kind = node.record?.kind === "defect" ? "defect" : "question";
+        const state = kind === "defect" ? "awaiting-attention" : "awaiting-answer";
+        const record = {
+          kind,
+          state,
+          chain: projectId,
+          node: node.id,
+          at: new Date().toISOString(),
+        };
+        const recordsDir = join(projectId, "records");
+        await mkdir(recordsDir, { recursive: true });
+        await writeFile(join(recordsDir, `${node.id}.json`), JSON.stringify(record, null, 2));
+        say("exit-committed", { node: node.id, recordKind: kind, state });
+        return { file: join(recordsDir, `${node.id}.json`) };
+      },
+    });
+    const result = await ex.run({ projectId: directory, entryNode: entry.id, directory });
+    if (result.failure) {
+      say("defect", { message: result.failure.message });
+      log(`engine: chain failed: ${result.failure.kind}: ${result.failure.message}`);
+      return;
+    }
+    if (result.exit) {
+      const delivery = createDelivery({ repoPath: directory });
+      const record = result.exit.file ? { file: result.exit.file } : undefined;
+      if (record) {
+        const rel = record.file.slice(directory.length + 1);
+        const commit = await delivery.commitUnit({ files: [rel], message: `feat(engine): ${result.terminal} recorded` });
+        log(`engine: exit committed: ${commit.state}`);
+        const syncState = await delivery.sync();
+        log(`engine: sync: ${syncState.state}${syncState.detail ? ` (${syncState.detail})` : ""}`);
+      }
+    }
+  } catch (e) {
+    say("defect", { message: e.message });
+    log(`engine: claim failed: ${e.kind ?? e.name}: ${e.message}`);
+  }
+}
 
 async function boot() {
   if (readySent) return;
@@ -113,6 +205,7 @@ process.stdin.on("data", (chunk) => {
       case "claim-input":
         pendingClaims.push(msg);
         log(`engine: claimed input ${msg.file} (${pendingClaims.length} pending)`);
+        claim(msg);
         break;
       default:
         log(`engine: unknown poke ${msg.kind} ignored`);

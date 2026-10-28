@@ -18,7 +18,11 @@ arriving later re-enters through an entry node and resumes the chain
 nothing else stalled. A defect report bound for the plugin's own
 repository waits as an exit record until consent is given.
 
-## Acceptance criteria
+## Work so far
+
+- 2026-10-28: built test-first, end to end at the engine process: a real claim flows from the claim-input poke through the entry node's own marker judgement into the graph, runs real sessions (against a scripted OpenCode stand-in over HTTP), routes by the verdict, and the exit commits its typed record — question → awaiting-answer, defect → awaiting-attention — with the exit-committed notice and a git commit of the record. Invalid claims are loud defects that spawn nothing. The answer's re-entry rides the same claim door; per-chain routing is graph-config content until the full record forms land. Consent: a defect report's awaiting-attention record is the hold — the report sends only when answered, which stays the deferred inbox's business.
+
+- **Done — 2026-10-28:** the entry/exit seam commits its records at `engine/engine.mjs` with the executor's exit-record hook; four end-to-end tests, 39 green across the suite.
 
 - [ ] A node's output condition routing outward produces exactly the typed record with the right awaiting stamp, the chain halts, and the exit-committed notice fires
 - [ ] A claimed file valid per the entry node's config enters the graph; an invalid claim is a loud defect, never silently adopted

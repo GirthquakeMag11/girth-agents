@@ -11,7 +11,7 @@ function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function createExecutor({ graph, driver, readFile, artifactPath }) {
+export function createExecutor({ graph, driver, readFile, artifactPath, writeExitRecord }) {
   const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
   const linksFrom = new Map();
   for (const link of graph.links) {
@@ -45,7 +45,11 @@ export function createExecutor({ graph, driver, readFile, artifactPath }) {
       }
 
       if (node.type === "exit") {
-        return { projectId, terminal: node.id, steps, failure: undefined };
+        let exit;
+        if (node.record && writeExitRecord) {
+          exit = await writeExitRecord({ projectId, node, steps });
+        }
+        return { projectId, terminal: node.id, steps, failure: undefined, exit };
       }
 
       if (node.type === "entry") {
