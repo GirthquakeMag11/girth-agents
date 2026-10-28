@@ -122,17 +122,19 @@ graph; the config knows the work.
    request the full state of any engine task session — in flight or
    finished — at any time, and the engine answers in typed state.
    The engine is never a black box.
-3. **The config.** One canonical JSON document the package ships at
-   its root, validated against an engine-shipped schema at startup —
-   invalid config is a loud refusal to boot. It defines, in prose
-   terms: the helper fittings (each helper's job, toolset,
-   permissions, model, and precisely tailored context); the nodes (identity,
-   objective, the helper dispatched, the one output artifact, the step
-   limits); the links (unconditional, or conditional on an expression
-   over the artifact's stamp fields); and the entry and exit markings.
-   Projects feed the graph data from their records and never ship
-   graph structure; a per-project graph would be an explicit, reviewed
-   extension if it ever earns a need.
+3. **The config.** A thin JSON manifest at the package root points at
+   one Markdown file per agent and one per node: an agent's frontmatter
+   carries its job, toolset, permissions, and model, and its body is
+   the craft — the instructions the brief carries into the session; a
+   node's frontmatter carries its identity, objective, dispatched
+   agent, the one output artifact, the step limits, and its out-links —
+   unconditional, conditional on the artifact's stamp fields, or
+   exhausted. A missing or malformed piece is a named load fault, and
+   the boot is a loud refusal on any invalid config. The frontmatter
+   is a strict, constrained subset — anything outside it is a typed
+   rejection, never a half-parse. Projects feed the graph data from
+   their records and never ship graph structure; a per-project graph
+   would be an explicit, reviewed extension if it ever earns a need.
 4. **The graph executor core.** Hardcoded structure, config-driven
    graph: the executor owns dispatch, artifact reading, condition
    evaluation, routing, entry/exit semantics, and step caps — and knows
@@ -145,8 +147,9 @@ graph; the config knows the work.
    dispatch, never a prompt mid-run. Then a headless session is
    spawned through the engine's own OpenCode server client: the
    helper's model and pre-granted permissions are set at creation; the
-   brief — objective, typed context, the artifact to produce — is the
-   prompt. The engine awaits completion through the client's session
+   brief — the agent's craft, the node's objective and body, the
+   artifact to produce, and, on repair, the failed step's report — is
+   the prompt. The engine awaits completion through the client's session
    wait and outcome state, holding its own time cap and interrupting on
    breach. When the session ends, the engine reads only the configured
    output artifact; session completion state is read for control, and

@@ -7,7 +7,6 @@
 // routes. Anything the verifier faults on is the config's; anything
 // that fails later on a config it verified sound is the engine's.
 
-import { validateConfig } from "./validate-config.mjs";
 import { createExecutor } from "./executor.mjs";
 
 const NODE_TYPES = new Set(["entry", "task", "exit"]);
@@ -51,6 +50,9 @@ function deepSchemaFaults(doc) {
       if (node.maxVisits !== undefined && (!Number.isInteger(node.maxVisits) || node.maxVisits < 1)) {
         faults.push(fault("schema", `node ${at}: maxVisits must be a positive integer`));
       }
+      if (typeof node.objective !== "string" || node.objective.trim() === "") {
+        faults.push(fault("schema", `node ${at}: objective must be a non-empty string`));
+      }
     }
     if (node.type === "entry" && node.marker !== undefined && typeof node.marker !== "string") {
       faults.push(fault("schema", `node ${at}: marker must be a string`));
@@ -80,7 +82,7 @@ function deepSchemaFaults(doc) {
     }
   }
 
-  for (const [id, fitting] of Object.entries(doc.helpers ?? {})) {
+  for (const [id, fitting] of Object.entries(doc.agents ?? {})) {
     if (typeof fitting.job !== "string" || fitting.job.trim() === "") {
       faults.push(fault("schema", `helper ${id}: job must be a non-empty string`));
     }
@@ -92,6 +94,9 @@ function deepSchemaFaults(doc) {
     }
     if (typeof fitting.model !== "string" || fitting.model.trim() === "") {
       faults.push(fault("schema", `helper ${id}: model must be a non-empty string`));
+    }
+    if (typeof fitting.instructions !== "string" || fitting.instructions.trim() === "") {
+      faults.push(fault("schema", `helper ${id}: instructions must not be empty — a helper is more than a name`));
     }
   }
 
@@ -120,10 +125,10 @@ function structureFaults(doc) {
 
   for (const node of nodes) {
     if (node.type === "task") {
-      if (!(node.helper in (doc.helpers ?? {}))) {
+      if (!(node.helper in (doc.agents ?? {}))) {
         faults.push(fault("graph.unknown-helper", `node ${node.id}: helper '${node.helper}' has no fitting`));
       } else if (node.requires) {
-        const capabilities = doc.helpers[node.helper].capabilities ?? [];
+        const capabilities = doc.agents[node.helper].capabilities ?? [];
         const missing = node.requires.filter((r) => !capabilities.includes(r));
         if (missing.length > 0) {
           faults.push(fault("graph.requires-beyond-fitting", `node ${node.id}: '${node.helper}' lacks ${missing.join(", ")}`));
@@ -225,12 +230,7 @@ async function matrixFaults(doc) {
   return faults;
 }
 
-export async function verifyConfig(text) {
-  const shallow = validateConfig(text);
-  if (!shallow.valid) {
-    return { valid: false, configFaults: shallow.reasons.map((r) => fault("schema", r)) };
-  }
-  const doc = JSON.parse(text);
+export async function verifyConfig(doc) {
   let faults = [...deepSchemaFaults(doc), ...structureFaults(doc)];
   if (faults.length === 0) {
     faults = faults.concat(await matrixFaults(doc));

@@ -249,6 +249,91 @@ test("executor: maxVisits without an exhausted link is a named retry-limit failu
   assert.ok(/maxVisits/.test(result.failure.message));
 });
 
+test("executor: the dispatched brief carries the fitting's craft and the node's objective", async () => {
+  const briefs = [];
+  const driver = fakeDriver();
+  driver.briefs = briefs;
+  const base = driver.prompt.bind(driver);
+  driver.prompt = (idx, brief) => {
+    briefs.push({ idx, brief });
+    return base(idx);
+  };
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "build", type: "task", helper: "builder", artifact: "out.json", budgetMs: 5000, objective: "Build the spec for the claimed plan" },
+      { id: "out", type: "exit" },
+    ],
+    links: [
+      { from: "in", to: "build" },
+      { from: "build", to: "out" },
+    ],
+  };
+  const agents = {
+    builder: { instructions: "# Builder craft\n\nFollow the criteria; produce the artifact." },
+  };
+  const ex = createExecutor({
+    graph,
+    driver,
+    agents,
+    readFile: async () => JSON.stringify({ done: true }),
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-j", entryNode: "in" });
+  assert.equal(result.failure, undefined, JSON.stringify(result.failure));
+  assert.equal(briefs.length, 1);
+  assert.ok(briefs[0].brief.includes("# Builder craft"), briefs[0].brief);
+  assert.ok(briefs[0].brief.includes("Build the spec for the claimed plan"), briefs[0].brief);
+  assert.ok(briefs[0].brief.includes("out.json"), "the brief must name the artifact to produce");
+});
+
+test("executor: a repair brief carries the failed step's report as added context", async () => {
+  const briefs = [];
+  const driver = fakeDriver();
+  driver.briefs = briefs;
+  const base = driver.prompt.bind(driver);
+  driver.prompt = (idx, brief) => {
+    briefs.push({ idx, brief });
+    return base(idx);
+  };
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "build", type: "task", helper: "builder", artifact: "out.json", budgetMs: 5000, objective: "Build it" },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000, objective: "Grade it" },
+      { id: "repair", type: "task", helper: "builder", artifact: "out.json", budgetMs: 5000, resume: "build", objective: "Fix it" },
+      { id: "out", type: "exit" },
+    ],
+    links: [
+      { from: "in", to: "build" },
+      { from: "build", to: "grade" },
+      { from: "grade", to: "out", condition: { field: "verdict", equals: "pass" } },
+      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
+      { from: "repair", to: "grade" },
+    ],
+  };
+  const agents = { builder: { instructions: "builder craft" }, checker: { instructions: "checker craft" } };
+  let verdicts = 0;
+  const ex = createExecutor({
+    graph,
+    driver,
+    agents,
+    readFile: async (path) => {
+      if (path.endsWith("verdict.json")) {
+        verdicts += 1;
+        return JSON.stringify({ verdict: verdicts === 1 ? "fail" : "pass", note: "the criteria say X is unmet" });
+      }
+      return JSON.stringify({ done: true });
+    },
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-k", entryNode: "in" });
+  assert.equal(result.terminal, "out", JSON.stringify(result.failure));
+  const repairBrief = briefs.find((b) => b.brief.includes("Fix it"));
+  assert.ok(repairBrief, `no repair brief in ${JSON.stringify(briefs)}`);
+  assert.ok(repairBrief.brief.includes("criteria say X is unmet"), "the reviewer's report must ride into the repair brief");
+});
+
 test("executor: two projects interleave without either losing its serial lane", async () => {
   const mk = (projectId, verdict) =>
     executor({ driver: fakeDriver(), entries: artifacts(projectId, verdict), projectId });

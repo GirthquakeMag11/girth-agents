@@ -14,8 +14,8 @@ const NODE = process.execPath;
 
 const CONFIG = JSON.stringify({
   version: "1",
-  helpers: { checker: { job: "grade finished work" } },
-  graph: { nodes: [], links: [] },
+  agents: [],
+  graph: { nodes: [] },
 }, null, 2);
 
 function project() {

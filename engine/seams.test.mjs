@@ -9,35 +9,27 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { encode } from "./stdio.mjs";
+import { writeConfigTree } from "./fixture-config.mjs";
 
 const run = promisify(execFile);
 const ENGINE = new URL("./engine.mjs", import.meta.url).pathname;
 const NODE = process.execPath;
 
-const GRAPH = {
-  nodes: [
-    { id: "in", type: "entry", marker: "CONFIRMED" },
-    { id: "build", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 5000 },
-    { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
-    { id: "ask-user", type: "exit", record: { kind: "question" } },
-    { id: "report-defect", type: "exit", record: { kind: "defect" } },
-  ],
-  links: [
-    { from: "in", to: "build" },
-    { from: "build", to: "grade" },
-    { from: "grade", to: "ask-user", condition: { field: "verdict", equals: "pass" } },
-    { from: "grade", to: "report-defect", condition: { field: "verdict", equals: "fail" } },
-  ],
+const SEAM_AGENTS = {
+  builder: { job: "build the piece", model: "m/b", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
+  checker: { job: "grade the piece", model: "m/c", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
 };
 
-const CONFIG = JSON.stringify({
-  version: "1",
-  helpers: {
-    builder: { job: "build the piece", model: "m/b", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
-    checker: { job: "grade the piece", model: "m/c", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
-  },
-  graph: GRAPH,
-});
+const SEAM_NODES = [
+  { id: "in", type: "entry", marker: "CONFIRMED", out: [{ to: "build" }] },
+  { id: "build", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 5000, out: [{ to: "grade" }] },
+  { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000, out: [
+    { to: "ask-user", condition: { field: "verdict", equals: "pass" } },
+    { to: "report-defect", condition: { field: "verdict", equals: "fail" } },
+  ]},
+  { id: "ask-user", type: "exit", record: { kind: "question" } },
+  { id: "report-defect", type: "exit", record: { kind: "defect" } },
+];
 
 function fakeOpenCode() {
   const records = [];
@@ -84,7 +76,7 @@ async function projectRepo(verdict) {
 
 async function bootClaimEngine({ dir, serviceUrl, pokes }) {
   const cfgDir = mkdtempSync(join(tmpdir(), "cfg-"));
-  writeFileSync(join(cfgDir, "config.json"), CONFIG);
+  await writeConfigTree(cfgDir, { agents: SEAM_AGENTS, nodes: SEAM_NODES });
   const svcDir = mkdtempSync(join(tmpdir(), "svc-"));
   const svcFile = join(svcDir, "service.json");
   writeFileSync(svcFile, JSON.stringify({ url: serviceUrl ?? "http://127.0.0.1:1", password: "pw" }));

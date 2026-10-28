@@ -7,7 +7,7 @@
 import { readFileSync } from "node:fs";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { validateConfig } from "./validate-config.mjs";
+import { loadConfig } from "./config-loader.mjs";
 import { encode } from "./stdio.mjs";
 import { createReconciler } from "./reconciler.mjs";
 import { createWatcher } from "./watcher.mjs";
@@ -30,12 +30,12 @@ try {
   log(`engine: cannot read config: ${e.message}`);
   process.exit(2);
 }
-const verdict = validateConfig(text);
-if (!verdict.valid) {
-  for (const reason of verdict.reasons) log(`engine: invalid config: ${reason}`);
+const loaded = await loadConfig(configPath);
+if (loaded.faults.length > 0) {
+  for (const f of loaded.faults) log(`engine: invalid config: [${f.code}] ${f.message}`);
   process.exit(2);
 }
-const configDoc = JSON.parse(text);
+const configDoc = loaded.doc;
 
 say("version", { version: 1 });
 
@@ -80,7 +80,7 @@ function describeRun(run) {
 async function getDriver() {
   if (driver) return driver;
   const fittings = {};
-  for (const [id, fitting] of Object.entries(configDoc.helpers ?? {})) {
+  for (const [id, fitting] of Object.entries(configDoc.agents ?? {})) {
     fittings[id] = {
       model: fitting.model,
       capabilities: fitting.capabilities ?? [],
@@ -128,6 +128,7 @@ async function claim(input) {
     runs.set(runId, runState);
     const ex = createExecutor({
       graph: configDoc.graph,
+      agents: configDoc.agents,
       onStep: (event) => {
         runState.events.push(event);
         runState.currentStep = event;

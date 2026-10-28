@@ -7,6 +7,7 @@ import { mkdir, mkdtemp, writeFile, readFile, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { loadConfig } from "./config-loader.mjs";
 import { verifyConfig } from "./verify-config.mjs";
 import { encode } from "./stdio.mjs";
 
@@ -119,7 +120,9 @@ function parse(line) {
 }
 
 test("the shipped config verifies sound through the gate", async () => {
-  const result = await verifyConfig(await readFile(CONFIG_PATH, "utf8"));
+  const loaded = await loadConfig(CONFIG_PATH);
+  assert.deepEqual(loaded.faults, [], JSON.stringify(loaded.faults));
+  const result = await verifyConfig(loaded.doc);
   assert.equal(result.valid, true, JSON.stringify(result.configFaults));
 });
 
@@ -151,6 +154,14 @@ test("the refinement loop: fail, fail, pass — the builder's session is resumed
     .filter(([id]) => id !== "sess-1")
     .reduce((sum, [, n]) => sum + n, 0);
   assert.equal(checkerPrompts, 3, "three grades across three fresh checker sessions");
+
+  // the prompts carry the agents' crafts, the objective, and the report
+  const builderPrompts = fake.records.filter((r) => /sess-1\/prompt$/.test(r.url)).map((r) => r.body?.text ?? "");
+  assert.ok(builderPrompts[0].includes("# The builder's craft"), builderPrompts[0]);
+  assert.ok(builderPrompts[0].includes("Build the piece the claimed plan names"), builderPrompts[0]);
+  assert.ok(builderPrompts.some((p) => p.includes('"verdict": "fail"')), "the reviewer's report must ride into the repair brief");
+  const checkerPrompt = fake.records.find((r) => /sess-2\/prompt$/.test(r.url))?.body?.text ?? "";
+  assert.ok(checkerPrompt.includes("# The checker's craft"), checkerPrompt);
   child.kill("SIGTERM");
   await fake.server.close();
 });

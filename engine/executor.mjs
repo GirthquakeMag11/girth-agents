@@ -11,8 +11,21 @@ function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function createExecutor({ graph, driver, readFile, artifactPath, writeExitRecord, onStep }) {
+export function createExecutor({ graph, driver, readFile, artifactPath, writeExitRecord, onStep, agents = {} }) {
   const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
+
+  const composeBrief = (node, previousStamps) => {
+    const fitting = agents[node.helper];
+    const parts = [];
+    if (fitting?.instructions) parts.push(fitting.instructions);
+    if (node.objective) parts.push(`# Objective\n\n${node.objective}`);
+    if (node.body) parts.push(node.body);
+    if (node.artifact) parts.push(`Produce your output artifact at: ${node.artifact}`);
+    if (previousStamps) {
+      parts.push(`# The reviewer's report\n\n${JSON.stringify(previousStamps, null, 2)}`);
+    }
+    return parts.join("\n\n");
+  };
   const linksFrom = new Map();
   for (const link of graph.links) {
     const list = linksFrom.get(link.from) ?? [];
@@ -37,6 +50,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
     };
     const sessionByNode = new Map();
     const visitCount = new Map();
+    let lastStamps = undefined;
     let current = entryNode;
     const start = nodes.get(entryNode);
     if (!start) {
@@ -108,7 +122,8 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
         sessionByNode.set(node.id, sessionIdx);
       }
       if (onStep) onStep({ projectId, nodeId: node.id, outcome: "dispatched", sessionIdx, at: new Date().toISOString() });
-      const promptPromise = driver.prompt(sessionIdx);
+      const brief = composeBrief(node, node.resume ? lastStamps : undefined);
+      const promptPromise = driver.prompt(sessionIdx, brief);
       const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
       let timer;
       const budget = new Promise((resolve) => {
@@ -161,6 +176,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       }
 
       pushStep({ nodeId: node.id, projectId, outcome: "succeeded", stamps });
+      lastStamps = stamps;
 
       const next = route(node.id, stamps);
       if (next === null) {

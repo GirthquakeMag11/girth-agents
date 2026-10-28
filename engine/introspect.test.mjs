@@ -8,31 +8,25 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { encode } from "./stdio.mjs";
+import { writeConfigTree } from "./fixture-config.mjs";
 
 const run = promisify(execFile);
 const ENGINE = new URL("./engine.mjs", import.meta.url).pathname;
 const NODE = process.execPath;
 
-const CONFIG_TEXT = JSON.stringify({
-  version: "1",
-  helpers: {
-    builder: { job: "build the piece", model: "m/b", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
-    checker: { job: "grade the piece", model: "m/c", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
-  },
-  graph: {
-    nodes: [
-      { id: "in", type: "entry", marker: "CONFIRMED" },
-      { id: "build", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 30000 },
-      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 30000 },
-      { id: "ask-user", type: "exit", record: { kind: "question" } },
-    ],
-    links: [
-      { from: "in", to: "build" },
-      { from: "build", to: "grade" },
-      { from: "grade", to: "ask-user", condition: { field: "verdict", equals: "pass" } },
-    ],
-  },
-});
+const INTROSPECT_AGENTS = {
+  builder: { job: "build the piece", model: "m/b", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
+  checker: { job: "grade the piece", model: "m/c", capabilities: ["fs"], permissions: { allow: ["fs"], denyRest: true } },
+};
+
+const INTROSPECT_NODES = [
+  { id: "in", type: "entry", marker: "CONFIRMED", out: [{ to: "build" }] },
+  { id: "build", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 30000, out: [{ to: "grade" }] },
+  { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 30000, out: [
+    { to: "ask-user", condition: { field: "verdict", equals: "pass" } },
+  ]},
+  { id: "ask-user", type: "exit", record: { kind: "question" } },
+];
 
 function fakeOpenCode({ hang = false } = {}) {
   const records = [];
@@ -74,7 +68,7 @@ async function project() {
 
 async function boot(dir, url) {
   const cfgDir = mkdtempSync(join(tmpdir(), "cfg-"));
-  writeFileSync(join(cfgDir, "config.json"), CONFIG_TEXT);
+  await writeConfigTree(cfgDir, { agents: INTROSPECT_AGENTS, nodes: INTROSPECT_NODES });
   const svcDir = mkdtempSync(join(tmpdir(), "svc-"));
   writeFileSync(join(svcDir, "service.json"), JSON.stringify({ url, password: "pw" }));
   const child = spawn(NODE, [ENGINE, join(cfgDir, "config.json")], {

@@ -7,17 +7,18 @@ const fitting = (extra = {}) => ({
   model: "m/x",
   capabilities: ["fs"],
   permissions: { allow: ["fs"], denyRest: true },
+  instructions: "# The craft\n\nDo the work to its criteria.",
   ...extra,
 });
 
-function config({ nodes, links, helpers = { builder: fitting(), checker: fitting() } }) {
-  return JSON.stringify({ version: "1", helpers, graph: { nodes, links } });
+function config({ nodes, links, agents = { builder: fitting(), checker: fitting() } }) {
+  return { version: "1", agents, graph: { nodes, links } };
 }
 
 const SOUND_NODES = [
   { id: "in", type: "entry", marker: "CONFIRMED" },
-  { id: "build", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 5000 },
-  { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
+  { id: "build", type: "task", helper: "builder", artifact: "stamped.json", budgetMs: 5000, objective: "Build it" },
+  { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000, objective: "Grade it" },
   { id: "out-pass", type: "exit" },
   { id: "out-fail", type: "exit", record: { kind: "question" } },
 ];
@@ -39,7 +40,7 @@ test("verifier: a sound config verifies clean", async () => {
 
 test("verifier: schema faults are named with their constraint", async () => {
   const missingArtifact = await verifyConfig(config({
-    nodes: [{ id: "in", type: "entry" }, { id: "t", type: "task", helper: "builder" }],
+    nodes: [{ id: "in", type: "entry" }, { id: "t", type: "task", helper: "builder", objective: "do" }],
     links: [],
   }));
   assert.equal(missingArtifact.valid, false);
@@ -48,18 +49,18 @@ test("verifier: schema faults are named with their constraint", async () => {
   const badBudget = await verifyConfig(config({
     nodes: [
       { id: "in", type: "entry" },
-      { id: "t", type: "task", helper: "builder", artifact: "a.json", budgetMs: -3 },
+      { id: "t", type: "task", helper: "builder", artifact: "a.json", budgetMs: -3, objective: "do" },
     ],
     links: [],
   }));
   assert.ok(badBudget.configFaults.some((f) => f.code === "schema" && /budgetMs/.test(f.message)));
 
-  const incompleteFitting = await verifyConfig(JSON.stringify({
+  const incompleteFitting = await verifyConfig({
     version: "1",
-    helpers: { builder: { job: "worker" } }, // no capabilities, permissions, or model
+    agents: { builder: { job: "worker" } }, // no capabilities, permissions, model, or instructions
     graph: { nodes: [], links: [] },
-  }));
-  assert.ok(incompleteFitting.configFaults.some((f) => f.code === "schema" && /capabilities|permissions|model/.test(f.message)), JSON.stringify(incompleteFitting.configFaults));
+  });
+  assert.ok(incompleteFitting.configFaults.some((f) => f.code === "schema" && /capabilities|permissions|model|instructions/.test(f.message)), JSON.stringify(incompleteFitting.configFaults));
 });
 
 test("verifier: structural faults — dangling links, unknown helpers, dead structure", async () => {
@@ -82,7 +83,7 @@ test("verifier: structural faults — dangling links, unknown helpers, dead stru
   assert.ok(overreach.configFaults.some((f) => f.code === "graph.requires-beyond-fitting" && /network/.test(f.message)));
 
   const unreachable = await verifyConfig(config({
-    nodes: [...SOUND_NODES, { id: "orphan", type: "task", helper: "builder", artifact: "x.json" }],
+    nodes: [...SOUND_NODES, { id: "orphan", type: "task", helper: "builder", artifact: "x.json", objective: "do" }],
     links: SOUND_LINKS,
   }));
   assert.ok(unreachable.configFaults.some((f) => f.code === "graph.unreachable" && /orphan/.test(f.message)));
@@ -121,7 +122,7 @@ test("verifier: retry bounds are schema- and structure-checked", async () => {
   const badBound = await verifyConfig(config({
     nodes: [
       { id: "in", type: "entry" },
-      { id: "t", type: "task", helper: "builder", artifact: "a.json", maxVisits: 0 },
+      { id: "t", type: "task", helper: "builder", artifact: "a.json", maxVisits: 0, objective: "do" },
     ],
     links: [{ from: "in", to: "t" }],
   }));
@@ -130,7 +131,7 @@ test("verifier: retry bounds are schema- and structure-checked", async () => {
   const noExhaust = await verifyConfig(config({
     nodes: [
       { id: "in", type: "entry" },
-      { id: "t", type: "task", helper: "builder", artifact: "a.json", maxVisits: 3 },
+      { id: "t", type: "task", helper: "builder", artifact: "a.json", maxVisits: 3, objective: "do" },
       { id: "out", type: "exit" },
     ],
     links: [
@@ -142,12 +143,11 @@ test("verifier: retry bounds are schema- and structure-checked", async () => {
 });
 
 test("verifier: a cycle with no escape is named a matrix loop, not a crash or silence", async () => {
-  // grade → repair(grade's own session is never, resume not used) → grade, with no exit for fail
   const looped = await verifyConfig(config({
     nodes: [
       { id: "in", type: "entry", marker: "CONFIRMED" },
-      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
-      { id: "repair", type: "task", helper: "builder", artifact: "verdict.json", budgetMs: 5000 },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000, objective: "Grade" },
+      { id: "repair", type: "task", helper: "builder", artifact: "verdict.json", budgetMs: 5000, objective: "Repair" },
       { id: "out-pass", type: "exit" },
     ],
     links: [
