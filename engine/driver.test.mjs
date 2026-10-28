@@ -81,6 +81,7 @@ test("driver spawn: creates the session with the live-verified wire — model re
   assert.ok(create, "session create must be sent");
   assert.equal(create.auth, basicAuth("sekrit"));
   assert.deepEqual(create.body.model, { id: "heavy", providerID: "weight" });
+  assert.equal(create.body.agent, "build", "the session needs the coding agent — without it the helper has no tools");
   assert.deepEqual(create.body.location, { directory: "/proj" });
   assert.deepEqual(create.body.permissions, [
     { action: "bash", resource: "*", effect: "allow" },
@@ -142,6 +143,23 @@ test("driver prompt: sends the brief, waits, and returns the outcome", async () 
   assert.deepEqual(outcome, { outcome: "succeeded" });
   const prompt = fake.records.find((r) => r.url === "/api/session/sess-1/prompt");
   assert.equal(prompt.body.text, "grade this piece");
+  await fake.server.close();
+});
+
+test("driver prompt: an empty wait — the live 204 — is never a silent success; polling decides", async () => {
+  const fake = await fakeServer({
+    ...INFO_ROUTE,
+    "POST /api/session": () => ({ status: 200, body: { data: { id: "sess-1" } } }),
+    "POST /api/session/sess-1/prompt": () => ({ status: 200, body: {} }),
+    "POST /api/experimental/session/sess-1/wait": () => ({ status: 204, body: {} }),
+    "GET /api/session/sess-1": () => ({ status: 200, body: { data: { outcome: "succeeded" } } }),
+  });
+  const driver = await driverOn(fake);
+  const idx = await driver.spawn({ nodeId: "build", helper: "builder", directory: "/proj", node: {} });
+  const outcome = await driver.prompt(idx, "implement this");
+  assert.deepEqual(outcome, { outcome: "succeeded" });
+  const get = fake.records.filter((r) => r.method === "GET" && r.url === "/api/session/sess-1");
+  assert.equal(get.length, 1, "the empty wait must fall through to the session-state poll");
   await fake.server.close();
 });
 

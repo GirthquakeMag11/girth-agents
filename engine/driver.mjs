@@ -83,6 +83,9 @@ export async function createServerDriver({ serviceFile, fittings = {}, fetchImpl
       const res = await req("/api/session", {
         method: "POST",
         body: {
+          // the OpenCode coding agent: without an agent the session has
+          // no tools, and a helper without hands can only narrate
+          agent: fitting.agent ?? "build",
           model: modelRef(fitting.model),
           location: { directory },
           permissions: rules(fitting.permissions),
@@ -126,8 +129,11 @@ export async function createServerDriver({ serviceFile, fittings = {}, fetchImpl
         waited = null;
       }
       if (waited?.ok) {
-        const body = (await waited.json().catch(() => ({}))).data ?? {};
-        return { outcome: body.outcome ?? "succeeded" };
+        // the wait resolves to idle — 204 No Content on the live wire.
+        // An idle signal without a typed outcome is never a verdict:
+        // fall through to polling the session's own state.
+        const body = (await waited.json().catch(() => null))?.data ?? null;
+        if (body?.outcome && OTHER.includes(body.outcome)) return { outcome: body.outcome };
       }
       for (;;) {
         if (session.stopped) return { outcome: "interrupted" };
