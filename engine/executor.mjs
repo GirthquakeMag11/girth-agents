@@ -11,7 +11,7 @@ function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function createExecutor({ graph, driver, readFile, artifactPath, writeExitRecord }) {
+export function createExecutor({ graph, driver, readFile, artifactPath, writeExitRecord, onStep }) {
   const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
   const linksFrom = new Map();
   for (const link of graph.links) {
@@ -31,6 +31,10 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
 
   async function run({ projectId, entryNode, directory }) {
     const steps = [];
+    const pushStep = (step) => {
+      steps.push(step);
+      if (onStep) onStep({ projectId, ...step });
+    };
     const sessionByNode = new Map();
     let current = entryNode;
     const start = nodes.get(entryNode);
@@ -53,7 +57,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       }
 
       if (node.type === "entry") {
-        steps.push({ nodeId: node.id, projectId, outcome: "entered" });
+        pushStep({ nodeId: node.id, projectId, outcome: "entered" });
         const next = route(node.id, {});
         if (next === null) {
           return { projectId, steps, failure: { kind: "no-link", message: `entry ${node.id} has no outbound link` } };
@@ -70,7 +74,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       if (node.resume) {
         sessionIdx = sessionByNode.get(node.resume);
         if (sessionIdx === undefined) {
-          steps.push({ nodeId: node.id, projectId, outcome: "resume-missing" });
+          pushStep({ nodeId: node.id, projectId, outcome: "resume-missing" });
           return {
             projectId,
             steps,
@@ -81,11 +85,12 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
         try {
           sessionIdx = await driver.spawn({ nodeId: node.id, helper: node.helper, projectId, directory, node });
         } catch (e) {
-          steps.push({ nodeId: node.id, projectId, outcome: "dispatch-defect" });
+          pushStep({ nodeId: node.id, projectId, outcome: "dispatch-defect" });
           return { projectId, steps, failure: { kind: "dispatch-defect", message: e.message } };
         }
         sessionByNode.set(node.id, sessionIdx);
       }
+      if (onStep) onStep({ projectId, nodeId: node.id, outcome: "dispatched", sessionIdx, at: new Date().toISOString() });
       const promptPromise = driver.prompt(sessionIdx);
       const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
       let timer;
@@ -98,7 +103,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       if (raced === "TIME") {
         driver.interrupt(sessionIdx);
         await promptPromise;
-        steps.push({ nodeId: node.id, projectId, outcome: "interrupted" });
+        pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
         return {
           projectId,
           steps,
@@ -107,12 +112,12 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       }
 
       if (raced.outcome === "failed") {
-        steps.push({ nodeId: node.id, projectId, outcome: "failed" });
+        pushStep({ nodeId: node.id, projectId, outcome: "failed" });
         return { projectId, steps, failure: { kind: "session-failed", message: `step ${node.id}'s session failed` } };
       }
 
       if (raced.outcome === "interrupted") {
-        steps.push({ nodeId: node.id, projectId, outcome: "interrupted" });
+        pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
         return { projectId, steps, failure: { kind: "session-interrupted", message: `step ${node.id} was interrupted` } };
       }
 
@@ -122,7 +127,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       try {
         const content = await readFile(path);
         if (content === null) {
-          steps.push({ nodeId: node.id, projectId, outcome: "artifact-missing" });
+          pushStep({ nodeId: node.id, projectId, outcome: "artifact-missing" });
           return { projectId, steps, failure: { kind: "artifact-missing", message: `step ${node.id}: no artifact at ${path}` } };
         }
         stamps = JSON.parse(content);
@@ -130,7 +135,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
           throw new Error("artifact is not a JSON object");
         }
       } catch (e) {
-        steps.push({ nodeId: node.id, projectId, outcome: "artifact-malformed" });
+        pushStep({ nodeId: node.id, projectId, outcome: "artifact-malformed" });
         return {
           projectId,
           steps,
@@ -138,7 +143,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
         };
       }
 
-      steps.push({ nodeId: node.id, projectId, outcome: "succeeded", stamps });
+      pushStep({ nodeId: node.id, projectId, outcome: "succeeded", stamps });
 
       const next = route(node.id, stamps);
       if (next === null) {

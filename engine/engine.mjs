@@ -54,8 +54,28 @@ const watcher = createWatcher({
 watcher.start();
 
 const pendingClaims = [];
+const runs = new Map();
+let runCount = 0;
 let readySent = false;
 let driver = null;
+
+function describeRun(run) {
+  const described = {
+    runId: run.runId,
+    projectId: run.projectId,
+    state: run.state,
+    startedAt: run.startedAt,
+    events: run.events,
+    terminal: run.terminal,
+    failure: run.failure,
+    exitRecord: run.exitRecord,
+    currentSession: null,
+  };
+  if (run.state === "in-flight" && run.currentStep?.sessionIdx !== undefined && driver) {
+    described.currentSession = driver.describeSession(run.currentStep.sessionIdx);
+  }
+  return described;
+}
 
 async function getDriver() {
   if (driver) return driver;
@@ -97,8 +117,21 @@ async function claim(input) {
   }
 
   try {
+    const runId = `run-${++runCount}`;
+    const runState = {
+      runId,
+      projectId: directory,
+      state: "in-flight",
+      startedAt: new Date().toISOString(),
+      events: [],
+    };
+    runs.set(runId, runState);
     const ex = createExecutor({
       graph: configDoc.graph,
+      onStep: (event) => {
+        runState.events.push(event);
+        runState.currentStep = event;
+      },
       driver: await getDriver(),
       readFile: (path) => readFile(path, "utf8").catch(() => null),
       artifactPath: (projectId, node) => join(projectId, node.artifact),
@@ -120,6 +153,12 @@ async function claim(input) {
       },
     });
     const result = await ex.run({ projectId: directory, entryNode: entry.id, directory });
+    runState.state = "finished";
+    runState.terminal = result.terminal;
+    runState.failure = result.failure?.kind ? { kind: result.failure.kind, message: result.failure.message } : undefined;
+    if (result.exit) {
+      runState.exitRecord = result.exit.file;
+    }
     if (result.failure) {
       say("defect", { message: result.failure.message });
       log(`engine: chain failed: ${result.failure.kind}: ${result.failure.message}`);
@@ -207,6 +246,17 @@ process.stdin.on("data", (chunk) => {
         log(`engine: claimed input ${msg.file} (${pendingClaims.length} pending)`);
         claim(msg);
         break;
+      case "introspect": {
+        if (msg.runId) {
+          const run = runs.get(msg.runId);
+          say("introspection", run
+            ? { found: true, run: describeRun(run) }
+            : { found: false, runId: msg.runId });
+        } else {
+          say("introspection", { found: true, runs: [...runs.values()].map(describeRun) });
+        }
+        break;
+      }
       default:
         log(`engine: unknown poke ${msg.kind} ignored`);
     }

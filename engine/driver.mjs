@@ -127,5 +127,9 @@ export async function createServerDriver({ serviceFile, fittings = {}, fetchImpl
         // a dying session is already a stopped session
       }
     },
+    describeSession(idx) {
+      const session = sessions.get(idx);
+      return session ? { id: session.id, stopped: session.stopped } : null;
+    },
   };
 }

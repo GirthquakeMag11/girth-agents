@@ -15,7 +15,11 @@ live progress, the stamps parsed so far, the caps it is under, and the
 session it drove. Combined with the heartbeat, the engine is never a
 black box.
 
-## Acceptance criteria
+## Work so far
+
+- 2026-10-28: built test-first. The engine keeps a typed registry of its runs; an introspect poke with no id returns every run, with an id returns that one, and an unknown id is a typed not-found. An in-flight run reports its state, events, and the live session driving it; a finished run reports its terminal, stamps, failure, and the record it touched. The executor's onStep hook feeds the registry without polluting step history; the driver describes its sessions on demand.
+
+- **Done — 2026-10-28:** introspection lands in `engine/engine.mjs` with the executor's onStep hook and the driver's describeSession; three tests, 42 green across the suite.
 
 - [ ] A request for any in-flight session returns its full typed state without disturbing the step
 - [ ] A request for any finished session returns its stamps, outcome, and the records it touched
