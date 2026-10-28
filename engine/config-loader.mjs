@@ -23,6 +23,9 @@ function manifestFaults(manifest) {
   if (!Array.isArray(manifest.graph?.nodes) || manifest.graph.nodes.some((n) => typeof n !== "string" || n.trim() === "")) {
     faults.push(fault("schema", "manifest.graph.nodes: must be an array of file paths"));
   }
+  if (manifest.skills !== undefined && (!Array.isArray(manifest.skills) || manifest.skills.some((s) => typeof s !== "string" || s.trim() === ""))) {
+    faults.push(fault("schema", "manifest.skills: must be an array of file paths"));
+  }
   return faults;
 }
 
@@ -38,6 +41,29 @@ export async function loadConfig(manifestPath) {
   faults.push(...manifestFaults(manifest));
   if (faults.length > 0) return { faults };
 
+  const skills = {};
+  for (const rel of manifest.skills ?? []) {
+    try {
+      const text = await readFile(join(dir, rel), "utf8");
+      const { data, body } = parseFrontmatter(text);
+      if (typeof data.id !== "string" || data.id.trim() === "") {
+        faults.push(fault("skill.missing-id", `${rel}: frontmatter needs an id`));
+        continue;
+      }
+      if (skills[data.id]) {
+        faults.push(fault("skill.duplicate-id", `${rel}: duplicate skill id '${data.id}'`));
+        continue;
+      }
+      skills[data.id] = { ...data, instructions: body.trim(), path: rel };
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        faults.push(fault("skill.frontmatter", `${rel}: ${e.message}`));
+      } else {
+        faults.push(fault("skill.unreadable", `${rel}: ${e.message}`));
+      }
+    }
+  }
+
   const agents = {};
   for (const rel of manifest.agents) {
     try {
@@ -51,7 +77,20 @@ export async function loadConfig(manifestPath) {
         faults.push(fault("agent.duplicate-id", `${rel}: duplicate agent id '${data.id}'`));
         continue;
       }
-      agents[data.id] = { ...data, instructions: body.trim() };
+      const resolvedSkills = [];
+      for (const skillRef of data.skills ?? []) {
+        const byPath = Object.values(skills).find((s) => s.path === skillRef);
+        if (!byPath) {
+          faults.push(fault("agent.unknown-skill", `${rel}: '${skillRef}' names no loaded skill`));
+          continue;
+        }
+        resolvedSkills.push(byPath);
+      }
+      agents[data.id] = {
+        ...data,
+        skills: resolvedSkills.length > 0 ? resolvedSkills : undefined,
+        body: body.trim(),
+      };
     } catch (e) {
       if (e instanceof SyntaxError) {
         faults.push(fault("agent.frontmatter", `${rel}: ${e.message}`));
@@ -102,6 +141,7 @@ export async function loadConfig(manifestPath) {
     doc: {
       version: manifest.version,
       agents,
+      skills,
       graph: { nodes, links },
     },
   };

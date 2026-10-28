@@ -1,6 +1,7 @@
 {
   "version": "1",
   "agents": ["agents/builder.md", "agents/checker.md"],
+  "skills": ["skills/building.md", "skills/grading.md"],
   "graph": {
     "nodes": [
       "nodes/in.md",

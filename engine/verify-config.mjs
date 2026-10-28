@@ -95,8 +95,14 @@ function deepSchemaFaults(doc) {
     if (typeof fitting.model !== "string" || fitting.model.trim() === "") {
       faults.push(fault("schema", `helper ${id}: model must be a non-empty string`));
     }
-    if (typeof fitting.instructions !== "string" || fitting.instructions.trim() === "") {
-      faults.push(fault("schema", `helper ${id}: instructions must not be empty — a helper is more than a name`));
+    if (!Array.isArray(fitting.skills) || fitting.skills.length === 0) {
+      faults.push(fault("schema", `agent ${id}: skills must not be empty — an agent is more than a name`));
+    } else {
+      for (const skill of fitting.skills) {
+        if (!skill || typeof skill.instructions !== "string" || skill.instructions.trim() === "") {
+          faults.push(fault("schema", `agent ${id}: skill '${skill?.id ?? "?"}' has no instructions`));
+        }
+      }
     }
   }
 

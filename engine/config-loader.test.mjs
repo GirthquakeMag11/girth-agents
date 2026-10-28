@@ -16,19 +16,28 @@ async function tree(files) {
   return join(dir, "config.json");
 }
 
-const MANIFEST = (agents, nodes) => JSON.stringify({ version: "1", agents, graph: { nodes } });
+const MANIFEST = (agents, nodes, skills = []) => JSON.stringify({ version: "1", agents, skills, graph: { nodes } });
 
-test("loader: resolves the manifest into agents with their craft, nodes with their bodies and out-links", async () => {
+test("loader: resolves the manifest into agents bearing their skills, nodes with their bodies and out-links", async () => {
   const path = await tree({
-    "config.json": MANIFEST(["agents/builder.md", "agents/checker.md"], ["nodes/build.md", "nodes/out.md"]),
-    "agents/builder.md": `---\nid: builder\njob: Build it\nmodel: m/b\ncapabilities: [fs]\npermissions:\n  allow: [fs]\n---\n# Builder craft\n\nBuild to the criteria.`,
-    "agents/checker.md": `---\nid: checker\njob: Grade it\nmodel: m/c\ncapabilities: [fs]\npermissions:\n  allow: [fs]\n---\n# Checker craft\n\nGrade against reality.`,
+    "config.json": MANIFEST(
+      ["agents/builder.md", "agents/checker.md"],
+      ["nodes/build.md", "nodes/out.md"],
+      ["skills/building.md"],
+    ),
+    "agents/builder.md": `---\nid: builder\njob: Build it\nmodel: m/b\ncapabilities: [fs]\npermissions:\n  allow: [fs]\nskills: [skills/building.md]\n---\nThe builder produces the piece the objective names.`,
+    "agents/checker.md": `---\nid: checker\njob: Grade it\nmodel: m/c\ncapabilities: [fs]\npermissions:\n  allow: [fs]\n---\n`,
+    "skills/building.md": `---\nid: building\ndescription: Build to the criteria and fail openly.\n---\n# The builder's craft\n\nBuild to the criteria.`,
     "nodes/build.md": `---\nid: build\ntype: task\nhelper: builder\nartifact: out.json\nobjective: Build the piece\nout:\n  - to: out\n    condition:\n      field: verdict\n      equals: pass\n  - to: out\n---\nOnly the objective's scope.`,
     "nodes/out.md": `---\nid: out\ntype: exit\n---\n`,
   });
   const { faults, doc } = await loadConfig(path);
   assert.deepEqual(faults, []);
-  assert.equal(doc.agents.builder.instructions.includes("# Builder craft"), true);
+  assert.equal(doc.skills.building.instructions.includes("# The builder's craft"), true);
+  assert.equal(doc.agents.builder.skills.length, 1);
+  assert.equal(doc.agents.builder.skills[0].id, "building");
+  assert.equal(doc.agents.builder.skills[0].instructions.includes("Build to the criteria"), true);
+  assert.equal(doc.agents.checker.skills, undefined, "an agent with no skills carries none");
   assert.equal(doc.agents.builder.model, "m/b");
   assert.deepEqual(doc.agents.builder.permissions, { allow: ["fs"] });
   assert.equal(doc.graph.nodes.find((n) => n.id === "build").objective, "Build the piece");
@@ -42,11 +51,14 @@ test("loader: resolves the manifest into agents with their craft, nodes with the
 test("loader: the fixture writer and the parser agree — a full tree round-trips", async () => {
   const dir = await mkdtemp(join(tmpdir(), "tree-"));
   await writeConfigTree(dir, {
+    skills: {
+      building: { description: "Build to the criteria.", instructions: "# craft" },
+    },
     agents: {
       builder: {
         job: "Build", model: "m", capabilities: ["fs"],
         permissions: { allow: ["fs"], denyRest: true },
-        instructions: "# craft",
+        skills: ["skills/building.md"],
       },
     },
     nodes: [
@@ -89,6 +101,22 @@ test("loader: a missing piece, bad frontmatter, and duplicate ids are named faul
   const missing = await tree({ "config.json": MANIFEST(["agents/absent.md"], []) });
   const { faults: missingFaults } = await loadConfig(missing);
   assert.ok(missingFaults.some((f) => f.code === "agent.unreadable"), JSON.stringify(missingFaults));
+});
+
+test("loader: skills are first-class — missing files and unknown references are named faults", async () => {
+  const missingSkill = await tree({
+    "config.json": MANIFEST([], [], ["skills/absent.md"]),
+  });
+  const { faults: absentFaults } = await loadConfig(missingSkill);
+  assert.ok(absentFaults.some((f) => f.code === "skill.unreadable"), JSON.stringify(absentFaults));
+
+  const unknownRef = await tree({
+    "config.json": MANIFEST(["agents/loner.md"], [], ["skills/known.md"]),
+    "agents/loner.md": `---\nid: loner\njob: x\nmodel: m\ncapabilities: [fs]\npermissions: [fs]\nskills: [skills/ghost.md]\n---\n`,
+    "skills/known.md": `---\nid: known\n---\nbody`,
+  });
+  const { faults: refFaults } = await loadConfig(unknownRef);
+  assert.ok(refFaults.some((f) => f.code === "agent.unknown-skill" && /skills\/ghost\.md/.test(f.message)), JSON.stringify(refFaults));
 });
 
 test("loader: a malformed manifest is named, not guessed", async () => {

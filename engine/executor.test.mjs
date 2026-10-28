@@ -270,7 +270,7 @@ test("executor: the dispatched brief carries the fitting's craft and the node's 
     ],
   };
   const agents = {
-    builder: { instructions: "# Builder craft\n\nFollow the criteria; produce the artifact." },
+    builder: { skills: [{ id: "building", instructions: "# The builder's craft\n\nFollow the criteria; produce the artifact." }] },
   };
   const ex = createExecutor({
     graph,
@@ -282,7 +282,7 @@ test("executor: the dispatched brief carries the fitting's craft and the node's 
   const result = await ex.run({ projectId: "repo-j", entryNode: "in" });
   assert.equal(result.failure, undefined, JSON.stringify(result.failure));
   assert.equal(briefs.length, 1);
-  assert.ok(briefs[0].brief.includes("# Builder craft"), briefs[0].brief);
+  assert.ok(briefs[0].brief.includes("# The builder's craft"), briefs[0].brief);
   assert.ok(briefs[0].brief.includes("Build the spec for the claimed plan"), briefs[0].brief);
   assert.ok(briefs[0].brief.includes("out.json"), "the brief must name the artifact to produce");
 });
@@ -312,7 +312,10 @@ test("executor: a repair brief carries the failed step's report as added context
       { from: "repair", to: "grade" },
     ],
   };
-  const agents = { builder: { instructions: "builder craft" }, checker: { instructions: "checker craft" } };
+  const agents = {
+    builder: { skills: [{ id: "building", instructions: "builder craft" }] },
+    checker: { skills: [{ id: "grading", instructions: "checker craft" }] },
+  };
   let verdicts = 0;
   const ex = createExecutor({
     graph,

@@ -7,7 +7,7 @@ const fitting = (extra = {}) => ({
   model: "m/x",
   capabilities: ["fs"],
   permissions: { allow: ["fs"], denyRest: true },
-  instructions: "# The craft\n\nDo the work to its criteria.",
+  skills: [{ id: "craft", instructions: "# The craft\n\nDo the work to its criteria." }],
   ...extra,
 });
 
@@ -60,7 +60,7 @@ test("verifier: schema faults are named with their constraint", async () => {
     agents: { builder: { job: "worker" } }, // no capabilities, permissions, model, or instructions
     graph: { nodes: [], links: [] },
   });
-  assert.ok(incompleteFitting.configFaults.some((f) => f.code === "schema" && /capabilities|permissions|model|instructions/.test(f.message)), JSON.stringify(incompleteFitting.configFaults));
+  assert.ok(incompleteFitting.configFaults.some((f) => f.code === "schema" && /capabilities|permissions|model|skills/.test(f.message)), JSON.stringify(incompleteFitting.configFaults));
 });
 
 test("verifier: structural faults — dangling links, unknown helpers, dead structure", async () => {

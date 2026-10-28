@@ -17,7 +17,10 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
   const composeBrief = (node, previousStamps) => {
     const fitting = agents[node.helper];
     const parts = [];
-    if (fitting?.instructions) parts.push(fitting.instructions);
+    if (fitting?.body) parts.push(fitting.body);
+    for (const skill of fitting?.skills ?? []) {
+      parts.push(`# Skill: ${skill.id}\n\n${skill.instructions}`);
+    }
     if (node.objective) parts.push(`# Objective\n\n${node.objective}`);
     if (node.body) parts.push(node.body);
     if (node.artifact) parts.push(`Produce your output artifact at: ${node.artifact}`);

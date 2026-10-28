@@ -935,7 +935,20 @@ content below is subdivided into objectives.
   for that work are being turned into helper-agent-config equivalents.
   The settled examples: spec-from-plan, tickets-from-spec, and
   implement-from-tickets, each an enforced task inside its own
-  refinement loop. (2026-10-27, the user's dictation)
+  refinement loop. (2026-10-27, the user's dictation) Sharpened
+  2026-10-28: this means the task-shaped skills — those designed
+  around completing a particular task — become tasks, and nothing
+  more; the engine's support for real skills is a separate concern
+  that stands. Helper agents hold actual skills (skill documents the
+  engine loads and gives them in their sessions); tasks are the
+  graph's workload nodes. Tasks do not supplant skills.
+- Skills and tasks, separate concerns: settled — the engine supports
+  skills natively for its helper agents: actual skill documents, own
+  files, loaded with the config, carried by the agents that need
+  them, and given to the agent in its session. Crafting tasks out of
+  some of the catalog's skills is the workload layer's business; the
+  capability layer — agents bearing skills — is independent of it.
+  (2026-10-28, the user's correction in session)
 - Review gate: every stage's output passes a PASS/FAIL review against
   criteria derived from the upstream reviewed document before the next
   stage consumes it; wayfinding is the ungated entry; a FAIL returns the

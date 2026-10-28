@@ -60,18 +60,24 @@ export function serializeFrontmatter(data) {
   return lines.join("\n");
 }
 
-export async function writeConfigTree(dir, { agents, nodes }) {
+export async function writeConfigTree(dir, { agents, nodes, skills = {} }) {
   const manifest = {
     version: "1",
     agents: Object.keys(agents).map((id) => `agents/${id}.md`),
+    skills: Object.keys(skills).map((id) => `skills/${id}.md`),
     graph: { nodes: nodes.map((n) => `nodes/${n.id}.md`) },
   };
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, "config.json"), JSON.stringify(manifest, null, 2));
+  for (const [id, skill] of Object.entries(skills)) {
+    await mkdir(join(dir, "skills"), { recursive: true });
+    const { instructions = "", ...data } = skill;
+    await writeFile(join(dir, "skills", `${id}.md`), `---\n${serializeFrontmatter({ id, ...data })}\n---\n${instructions}`);
+  }
   for (const [id, fitting] of Object.entries(agents)) {
     await mkdir(join(dir, "agents"), { recursive: true });
-    const { instructions = "", ...data } = fitting;
-    await writeFile(join(dir, "agents", `${id}.md`), `---\n${serializeFrontmatter({ id, ...data })}\n---\n${instructions}`);
+    const { body = "", ...data } = fitting;
+    await writeFile(join(dir, "agents", `${id}.md`), `---\n${serializeFrontmatter({ id, ...data })}\n---\n${body}`);
   }
   for (const node of nodes) {
     await mkdir(join(dir, "nodes"), { recursive: true });
