@@ -1,16 +1,23 @@
 ---
-name: TDD
-description: Build and fix code test-first — red, green, refactor — at seams the user has pre-agreed. Use when building a feature or fixing a bug, when the user asks to work test-first, or to make a change a regression test can lock down.
+name: Test-Driving
+description: The broad practice of testing changes in real cases before trusting them — build and fix test-first at pre-agreed seams; the project's own testing system is part of what it teaches and drives. Use when building a feature, fixing a bug, or locking a change down with a regression test.
 ---
 
-# Test-Driven Development
+# Test-Driving
 
-TDD is the red → green loop, made to produce tests worth keeping: what a
-good test is, where tests go, the anti-patterns, and the rules of the loop.
-Consult these before and during each cycle, not after.
+Test-driving is the broad practice of testing changes in real cases
+before trusting them — not just tests-first-then-code under a new name.
+The project's own testing system is part of what it teaches and drives:
+a change ships because real cases drove it, not because the ceremony
+ran.
 
-Before working, read what the project already knows and name things in the
-glossary's terms.
+At the heart of the practice is the red → green loop, made to produce
+tests worth keeping: what a good test is, where tests go, the
+anti-patterns, and the rules of the loop. Consult these before and
+during each cycle, not after.
+
+Before working, read what the project already knows and name things in
+the glossary's terms.
 
 ## What a good test is
 

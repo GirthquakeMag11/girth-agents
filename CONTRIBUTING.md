@@ -48,7 +48,7 @@ The rules:
    direction restriction. A skill that writes a piece reads the owning
    skill's references for the format.
 3. **Naming.** Named for what the skill does or produces — a gerund where
-   it reads naturally, otherwise the action's own name (`research`, `tdd`,
+   it reads naturally, otherwise the action's own name (`research`, `test-driving`,
    `wizard`). The name names the doing, not a role.
 4. **Reference-only skills.** A skill may be pure consult-on-demand
    material with no ordered steps (`codebase-design`); it owns nothing, and
@@ -62,7 +62,7 @@ The rules:
 These rules come from comparing this catalog with mattpocock/skills; they
 govern every new or changed skill. The *craft* behind them — context
 pointers, the information hierarchy, leading words, pruning — lives in the
-`writing-for-agents` skill; this list is the operational rule set.
+`technical-writing` skill; this list is the operational rule set.
 
 - **Invocation.** Skills are model-invoked: the agent can reach them on its
   own, so each carries a description. Entry points that only a human should

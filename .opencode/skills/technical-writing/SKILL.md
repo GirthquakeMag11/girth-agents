@@ -1,9 +1,9 @@
 ---
-name: Writing for Agents
+name: Technical Writing
 description: Write any document an agent consumes — a skill, an AGENTS.md, a doc reached by a pointer — with the same levers: context pointers with their trigger branches, progressive disclosure, leading words, and ruthless pruning. Use when creating or editing a skill or an agent-facing document.
 ---
 
-# Writing for Agents
+# Technical Writing
 
 Reference for writing any document an agent consumes: a skill, an
 `AGENTS.md`, a doc reached by a pointer. The packaging differs; the writing

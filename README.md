@@ -96,10 +96,10 @@ description.
 | `prototyping`        | A design question needs making concrete — the agent builds throwaway code that answers it and captures the verdict                                                                                    |
 | `wizard`             | A command needs a password, token, or other secret, or a step is mine alone to do — the agent fires immediately, generates a wizard that masks my keystrokes and checks every value, and offers to run it in a new terminal, waiting for my yes every time |
 | `grilling`           | A decision or plan needs working through with you — the agent walks the design tree one round of questions at a time                                                                                  |
-| `writing-for-agents` | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                                           |
+| `technical-writing`  | Writing a skill or an agent-facing document — the craft of pointers, disclosure, leading words, and pruning                                                                                           |
 | `questionnaire`      | A decision depends on someone outside the conversation — the agent writes a questionnaire aimed at exactly what you need back                                                                         |
 | `diagnosing-bugs`    | Something is broken and the cause is not obvious                                                                                                                                                      |
-| `tdd`                | Work that should be built or locked down test-first                                                                                                                                                   |
+| `test-driving`       | Test changes in real cases before trusting them — build and fix test-first at pre-agreed seams; the project's own testing system is part of what it teaches                                                                                                                                                   |
 | `code-review`        | A branch, PR, or work-in-progress change needs reviewing                                                                                                                                              |
 | `codebase-design`    | A module's interface, seam, or depth is being designed or judged                                                                                                                                      |
 | `research`           | A question needs facts from primary sources                                                                                                                                                           |
@@ -177,7 +177,7 @@ machinery.
                         │
                  implementing — one ticket at a time
                         │
-   the execution cycle ⇄ per ticket — tdd · code-review · codebase-design ·
+   the execution cycle ⇄ per ticket — test-driving · code-review · codebase-design ·
    diagnosing-bugs, until the ticket closes
                         │
                 maintaining-docs ──► /cut-release ↘ release
@@ -214,7 +214,7 @@ new thing surfaces
             │
             ├── ruled terms, conventions → codifying
             ├── revealed work → routed via tracking, never started in the loop
-            └─ /implement ── tickets by kind, worked with tdd, code-review,
+            └─ /implement ── tickets by kind, worked with test-driving, code-review,
                    │          codebase-design, diagnosing-bugs
                    └─ maintaining-docs ── everything stays true
                           └─ /cut-release ── the queue ships, dated and tagged
