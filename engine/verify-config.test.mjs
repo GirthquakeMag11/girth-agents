@@ -117,6 +117,30 @@ test("verifier: a trapped matrix path is named — the fail verdict has no route
   );
 });
 
+test("verifier: retry bounds are schema- and structure-checked", async () => {
+  const badBound = await verifyConfig(config({
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "t", type: "task", helper: "builder", artifact: "a.json", maxVisits: 0 },
+    ],
+    links: [{ from: "in", to: "t" }],
+  }));
+  assert.ok(badBound.configFaults.some((f) => f.code === "schema" && /maxVisits/.test(f.message)), JSON.stringify(badBound.configFaults));
+
+  const noExhaust = await verifyConfig(config({
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "t", type: "task", helper: "builder", artifact: "a.json", maxVisits: 3 },
+      { id: "out", type: "exit" },
+    ],
+    links: [
+      { from: "in", to: "t" },
+      { from: "t", to: "out" },
+    ],
+  }));
+  assert.ok(noExhaust.configFaults.some((f) => f.code === "graph.retry-no-exhaust"), JSON.stringify(noExhaust.configFaults));
+});
+
 test("verifier: a cycle with no escape is named a matrix loop, not a crash or silence", async () => {
   // grade → repair(grade's own session is never, resume not used) → grade, with no exit for fail
   const looped = await verifyConfig(config({

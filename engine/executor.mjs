@@ -36,6 +36,7 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       if (onStep) onStep({ projectId, ...step });
     };
     const sessionByNode = new Map();
+    const visitCount = new Map();
     let current = entryNode;
     const start = nodes.get(entryNode);
     if (!start) {
@@ -69,6 +70,22 @@ export function createExecutor({ graph, driver, readFile, artifactPath, writeExi
       if (node.type !== "task") {
         return { projectId, steps, failure: { kind: "bad-node", message: `node ${node.id} has unknown type ${node.type}` } };
       }
+
+      const visits = (visitCount.get(node.id) ?? 0) + 1;
+      if (node.maxVisits !== undefined && visits > node.maxVisits) {
+        const exhausted = (linksFrom.get(node.id) ?? []).find((l) => l.exhausted);
+        if (exhausted) {
+          pushStep({ nodeId: node.id, projectId, outcome: "exhausted" });
+          current = exhausted.to;
+          continue;
+        }
+        return {
+          projectId,
+          steps,
+          failure: { kind: "retry-limit", message: `node ${node.id} exceeded its maxVisits of ${node.maxVisits} with no exhausted link` },
+        };
+      }
+      visitCount.set(node.id, visits);
 
       let sessionIdx;
       if (node.resume) {

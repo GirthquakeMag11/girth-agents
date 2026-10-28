@@ -232,6 +232,14 @@ graph; the config knows the work.
     failure on a config the verifier proved sound is the engine's. The
     same gate runs on every shipped workflow config before it is
     trusted.
+The executor's hardcoded skeleton gains one more structural
+    enforcement: a task node may carry a maxVisits bound, and its
+    exhausted link is the route taken on the visit after the last —
+    the structure enforces loop limits, the config sets the number.
+    The first shipped workflow config (`config.json` beside the engine)
+    composes the refinement loop from it: build, grade, repair resuming
+    the builder's session with three retries, a bounce exit writing the
+    awaiting question when the limit trips.
 14. **Scheduling, the leash, and user edits.** Within a project the
     engine does one thing at a time: one current step in flight,
     everything else ready-but-waiting; a step is exclusive — every

@@ -48,6 +48,9 @@ function deepSchemaFaults(doc) {
       if (node.requires !== undefined && (!Array.isArray(node.requires) || node.requires.some((r) => typeof r !== "string"))) {
         faults.push(fault("schema", `node ${at}: requires must be an array of strings`));
       }
+      if (node.maxVisits !== undefined && (!Number.isInteger(node.maxVisits) || node.maxVisits < 1)) {
+        faults.push(fault("schema", `node ${at}: maxVisits must be a positive integer`));
+      }
     }
     if (node.type === "entry" && node.marker !== undefined && typeof node.marker !== "string") {
       faults.push(fault("schema", `node ${at}: marker must be a string`));
@@ -71,6 +74,9 @@ function deepSchemaFaults(doc) {
       if (typeof link.condition !== "object" || link.condition === null || typeof link.condition.field !== "string" || !("equals" in link.condition)) {
         faults.push(fault("schema", `${at}: condition needs a string field and an equals value`));
       }
+    }
+    if (link.exhausted !== undefined && typeof link.exhausted !== "boolean") {
+      faults.push(fault("schema", `${at}: exhausted must be a boolean`));
     }
   }
 
@@ -132,6 +138,12 @@ function structureFaults(doc) {
     }
     if (node.type === "exit" && (outbound.get(node.id) ?? []).length > 0) {
       faults.push(fault("graph.exit-routed", `exit ${node.id}: an exit terminates — links out of it are dead structure`));
+    }
+    if (node.type === "task" && node.maxVisits !== undefined) {
+      const exhaustedLinks = (outbound.get(node.id) ?? []).filter((l) => l.exhausted);
+      if (exhaustedLinks.length !== 1) {
+        faults.push(fault("graph.retry-no-exhaust", `node ${node.id}: maxVisits ${node.maxVisits} needs exactly one exhausted outbound link, found ${exhaustedLinks.length}`));
+      }
     }
   }
 

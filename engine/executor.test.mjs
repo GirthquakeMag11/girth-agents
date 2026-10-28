@@ -181,6 +181,74 @@ test("executor: a dispatch-time requirements failure is a named defect before an
   assert.equal(driver.prompted, 0, "no session may be prompted after a dispatch defect");
 });
 
+test("executor: maxVisits bounds a repair loop, routing the exhausted link on the excess", async () => {
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "build", type: "task", helper: "builder", artifact: "out.json", budgetMs: 5000 },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
+      { id: "repair", type: "task", helper: "builder", artifact: "out.json", budgetMs: 5000, resume: "build", maxVisits: 3 },
+      { id: "bounce", type: "exit" },
+    ],
+    links: [
+      { from: "in", to: "build" },
+      { from: "build", to: "grade" },
+      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
+      { from: "grade", to: "bounce", condition: { field: "verdict", equals: "pass" } },
+      { from: "repair", to: "grade" },
+      { from: "repair", to: "bounce", exhausted: true },
+    ],
+  };
+  const driver = fakeDriver();
+  driver.promptCalls = new Map();
+  const base = driver.prompt.bind(driver);
+  driver.prompt = (idx) => {
+    driver.promptCalls.set(idx, (driver.promptCalls.get(idx) ?? 0) + 1);
+    return base(idx);
+  };
+  const ex = createExecutor({
+    graph,
+    driver,
+    readFile: async () => JSON.stringify({ verdict: "fail" }),
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-h", entryNode: "in" });
+  assert.equal(result.terminal, "bounce", JSON.stringify(result.failure));
+  assert.equal(result.failure, undefined);
+  const buildSession = driver.sessions.find((s) => s.nodeId === "build");
+  // build's session: the build plus exactly three repairs — never a fourth
+  assert.equal(driver.promptCalls.get(driver.sessions.indexOf(buildSession)), 4);
+  assert.equal(
+    result.steps.filter((s) => s.nodeId === "repair" && s.outcome !== "exhausted").length,
+    3,
+    "repair must run three times, then the exhausted link takes over",
+  );
+});
+
+test("executor: maxVisits without an exhausted link is a named retry-limit failure", async () => {
+  const graph = {
+    nodes: [
+      { id: "in", type: "entry" },
+      { id: "grade", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000 },
+      { id: "repair", type: "task", helper: "checker", artifact: "verdict.json", budgetMs: 5000, maxVisits: 1 },
+    ],
+    links: [
+      { from: "in", to: "grade" },
+      { from: "grade", to: "repair", condition: { field: "verdict", equals: "fail" } },
+      { from: "repair", to: "grade" },
+    ],
+  };
+  const ex = createExecutor({
+    graph,
+    driver: fakeDriver(),
+    readFile: async () => JSON.stringify({ verdict: "fail" }),
+    artifactPath: (p, n) => `${p}/${n.artifact}`,
+  });
+  const result = await ex.run({ projectId: "repo-i", entryNode: "in" });
+  assert.equal(result.failure.kind, "retry-limit");
+  assert.ok(/maxVisits/.test(result.failure.message));
+});
+
 test("executor: two projects interleave without either losing its serial lane", async () => {
   const mk = (projectId, verdict) =>
     executor({ driver: fakeDriver(), entries: artifacts(projectId, verdict), projectId });

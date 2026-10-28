@@ -1,0 +1,36 @@
+{
+  "version": "1",
+  "helpers": {
+    "builder": {
+      "job": "Build the piece the brief names, exactly to its criteria, writing the staged output artifact.",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "capabilities": ["fs", "bash"],
+      "permissions": { "allow": ["fs", "bash"], "denyRest": true }
+    },
+    "checker": {
+      "job": "Grade finished work against its criteria and stamp the verdict.",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "capabilities": ["fs"],
+      "permissions": { "allow": ["fs"], "denyRest": true }
+    }
+  },
+  "graph": {
+    "nodes": [
+      { "id": "in", "type": "entry", "marker": "CONFIRMED" },
+      { "id": "build", "type": "task", "helper": "builder", "artifact": "work/out.json", "budgetMs": 600000 },
+      { "id": "grade", "type": "task", "helper": "checker", "artifact": "work/verdict.json", "budgetMs": 600000 },
+      { "id": "repair", "type": "task", "helper": "builder", "artifact": "work/out.json", "budgetMs": 600000, "resume": "build", "maxVisits": 3 },
+      { "id": "out-done", "type": "exit" },
+      { "id": "bounce", "type": "exit", "record": { "kind": "question" } }
+    ],
+    "links": [
+      { "from": "in", "to": "build" },
+      { "from": "build", "to": "grade" },
+      { "from": "grade", "to": "out-done", "condition": { "field": "verdict", "equals": "pass" } },
+      { "from": "grade", "to": "repair", "condition": { "field": "verdict", "equals": "fail" } },
+      { "from": "grade", "to": "repair" },
+      { "from": "repair", "to": "grade" },
+      { "from": "repair", "to": "bounce", "exhausted": true }
+    ]
+  }
+}
