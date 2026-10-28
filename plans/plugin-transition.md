@@ -25,6 +25,12 @@ after approval.
   export, no manual sifting — and a reviewer requests the message a
   plan item cites, by that citation. The citation is the query; the
   access is the plugin's, not a maintainer's chore.
+- Plan review — snapshot timing (chat M1269): the reviewer receives
+  the chatlog as it is at the time of the review — a snapshot exported
+  earlier and handed over later is stale by construction. Until the
+  plugin's citation access exists, the standing interim practice is a
+  snapshot taken at the moment the reviewers are launched, never
+  before.
 - Plan review — mandatory rules (chat M1200; reaffirmed M1220 with the
   rule that this entry itself must be cited): plan reviewers receive the
   raw chat log as it exists at review time — never a substitute; every
