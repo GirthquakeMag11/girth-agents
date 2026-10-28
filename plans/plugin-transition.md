@@ -14,6 +14,20 @@ after approval.
 
 ## Notes
 
+- Plan review — mandatory rules (chat M1200; reaffirmed M1220 with the
+  rule that this entry itself must be cited): plan reviewers receive the
+  raw chat log as it exists at review time — never a substitute; every
+  item in the plan cites the exact user message it was derived from,
+  and the reviewer confirms each item coheres with something specific
+  the user actually said; claims require verification and citation; a
+  reviewer FAILs a plan that is not wholly complete and ready for
+  specifying; the plan may never assert anything unverifiable — an
+  assertion about the user's intent, or about a technical matter;
+  uncleared fog is failure, lying is failure, being wrong is failure.
+  The agent is not exempt and may not alter these rules. This map's own
+  raw chat log lives at `/tmp/opencode/girth-agents-chat-log.md` (1225
+  messages, verbatim) and is handed to the reviewers themselves.
+
 - **Two layers, and reviewers must honor them.** [Ours] = this effort's
   own working process — how girth-agents itself is being built, its
   approvals, its testing, its releases. [The system] = the machine the
