@@ -113,74 +113,74 @@ after approval.
 - The start switch: settled — bootstrapping is how the engine is
   started in a project; the engine operates only where it has been
   started. The `/bootstrap` command is the necessary on-switch — without
-  it the always-awake engine would scatter files wherever OpenCode's
+  it the always-awake engine would scatter files (chat M492) wherever OpenCode's
   working directory happened to be. Eager and programmatic, but always
   *within* a deliberately started project. (2026-10-25, user)
 - Information-kind dispatch: settled — the engine sends its own help to
   answer an information-kind question. That help cannot fabricate, so
   it can fail openly; when it fails and the failure is not itself the
   answer, the question reaches the user after all. Authority-kind
-  questions reach the user, period. (2026-10-25, user)
+  questions reach the user, period. (2026-10-25, user) (chat M489)
 - Inside vs outside: settled — the engine's embedded agents produce
   everything downstream (reviewed plans, specs, tickets, work, and
   their reports), and that stays inside, never passing the entry-point
   tool. Only products of user-interaction sessions are outside, and
   they cross the boundary through the tool — the plan from an
   interactive wayfinding session being the entry that starts the chain.
-  (2026-10-26, user)
+  (2026-10-26, user) (chat M519)
 - Bootstrap is synchronous: settled — the run begins with the command
   and the user is present, so the residual asks happen right there, not
   through the inbox; at bootstrap the engine is not yet alive, nothing
   else is pending, and there is no inbox to put things in. Eager and
   programmatic describe the filling — everything derivable is derived —
-  not the moment. (2026-10-26, user)
+  not the moment. (2026-10-26, user) (chat M600)
 - `/retro`: shelved — joins handoff and pickup on the shelf for now,
   kept privately out of the plugin; its fate re-judged when the engine
-  exists. (2026-10-26, user)
+  exists. (2026-10-26, user) (chat M591)
 - Release notes: settled — each release tag also gets a GitHub Release
   page carrying the changelog section (minus the old one-line install).
   The old install line's audience is gone; the notes stay as history.
-  (2026-10-26, user)
+  (2026-10-26, user) (chat M588)
 - The old inbox helpers: settled — `curate-inbox` and `/close-inbox`
   retire; every old job has a new home (the screen, the answering
   helper, the engine picking up answers), and the helper's know-how
-  lives in its own definition. (2026-10-26, user)
+  lives in its own definition. (2026-10-26, user) (chat M584)
 - Checkpoints: settled — [The system]. After a stage PASSes, the work proceeds on its
   own; the old per-stage approvals (spec's Approve / Approve-and-Slice /
   Stop-and-Amend, slice's ticket-graph approval) fold into the gate.
   The user's one approval stays where direction is set — the plan at
-  wayfinding's end. (2026-10-26, user)
+  wayfinding's end. (2026-10-26, user) (chat M579)
 - The plugin's layout: settled — the plugin's package file and code
   live at the repo root, beside the catalog and the records; the
   install points at the repo itself, no extra path segment.
-  (2026-10-26, user)
+  (2026-10-26, user) (chat M574)
 - The testing system: settled — a committed automated harness drives
   the real pieces (parser, review loop, session spawn, inbox record,
   TUI slot) with assertions that map to trust; it gates merges to main
   with no manual step, and releases tag only from a green main, keeping
-  the release chain clean. (2026-10-26, user)
+  the release chain clean. (2026-10-26, user) (chat M568)
 - The builder: settled — one named helper does every stage's building,
   pointed at each brief in turn; the stage differences live in the
   briefs and the skills, not in separate agent descriptions. (2026-10-26,
-  user)
+  user) (chat M562)
 - The fixer: settled — no separate type; the builder repairs its own
   FAILed piece from the report, keeping its session across fix-rounds —
   settled from the start, in the loop's first narration ("the first
   agent rectifies") and again in the session-scope answer. (2026-10-26,
-  user, re-affirmed)
+  user, re-affirmed) (chat M557)
 - The fact-finder: settled — its own named agent type; it acquires
   answers for information-kind questions and is one of the helpers
   built to fail openly rather than fabricate. The third named agent
-  type. (2026-10-26, user)
+  type. (2026-10-26, user) (chat M550)
 - The inbox answerer: settled — a defined helper with its own job
   description runs each opened inbox item's seeded session (pose the
   question, discuss, record the answer), the same pattern as the
-  reviewer. The second named agent type. (2026-10-26, user)
+  reviewer. The second named agent type. (2026-10-26, user) (chat M547)
 - Sidebar's ongoing work: settled — the breakdown lists the engine's
   pieces in motion — being built, under review, sent back for repair —
   read from the records, never hand-written; the inbox counter covers
   the user's side, and idle or queued-but-unpicked pieces stay off the
-  list. (2026-10-26, user)
+  list. (2026-10-26, user) (chat M541)
 - Inbox and tracker, two jobs: settled — the inbox is the system's
   asynchronous send/receive channel with the user, not a view over the
   tracker. The tracker is the engine's internal record of what blocks
@@ -190,33 +190,33 @@ after approval.
   returns through the inbox and lands on the tracker question as its
   resolution. The inbox keeps its own record — the messages it sent and
   the replies received — because that is communication, not tracking.
-  (2026-10-26, user)
+  (2026-10-26, user) (chat M535)
 - The boundary's one door: settled — the plan from an interactive
   wayfinding session is the only outside document the entry-point tool
   accepts; everything else stays inside the engine or flows in through
-  its own channel (inbox answers, rulings). (2026-10-26, user)
+  its own channel (inbox answers, rulings). (2026-10-26, user) (chat M525)
 - Engine agents cannot lie: settled — agents the engine dispatches must
   never fabricate an answer; each is built to fail openly, reporting
-  "could not acquire" rather than inventing one. (2026-10-25, user)
+  "could not acquire" rather than inventing one. (2026-10-25, user) (chat M489)
 - The engine is awake: settled — the engine lives in the plugin and
   watches on its own, advancing ready work even between messages, on a
   strict leash: it touches only work it made itself, and files an agent
-  has cleared. (2026-10-25, user)
+  has cleared. (2026-10-25, user) (chat M480)
 - Entry points are the clearance: settled — the entry-point tool is how
   an agent tells the engine a newly introduced file is safe to touch;
   running the tool on a file is the act that makes it an entry point.
   A file the tool has never been pointed at stays out of the engine's
-  hands. (2026-10-25, user)
+  hands. (2026-10-25, user) (chat M480)
 - Session scope: settled — every stage runs fresh; the builder fixing
   its own piece keeps its session across fix-rounds (the engine detects
   and recovers a lost session); the checker is always fresh.
-  (2026-10-25, user)
+  (2026-10-25, user) (chat M470)
 - The exception: settled — a piece that exhausts its fix-rounds
   while still broken, with no answerable question to rectify it, is an
   exception, not a parked state: it means either the fix-round cap was
   too low for the task's scope, or an impossible task slipped through
   wayfinding — the destination on the far side of an uncrossable gap,
-  which wayfinding was supposed to catch. It produces a loud,
+  which wayfinding was supposed to catch. It produces a loud, (chat M634)
   observable failure that makes it back to us for figuring out how to
   fix. (2026-10-26, user)
 - Reviewer context: settled, for both layers — a review FAILing a
@@ -229,28 +229,28 @@ after approval.
   test-driving), never a demand to reconcile two separate contexts.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
-  this entry rules out. (2026-10-26, user)
+  this entry rules out. (chat M655, M663) (2026-10-26, user)
 - Concurrency: declared — the map has not yet addressed asynchronous,
   concurrent, and parallel work across codebases and operations of
   different sizes. The present and future stance must be on the record:
   what runs at once, what waits, and how engine work and the user's own
-  live work coexist. The full puzzle is for later; the stance is now.
+  live work coexist. The full puzzle is for later; the stance is now. (chat M864)
   (2026-10-26, user)
 - The engine's commit unit: settled — one commit per meaningful unit
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
-  working practice, formalized for the engine. (2026-10-26, user)
+  working practice, formalized for the engine. (chat M861) (2026-10-26, user)
 - Concurrency, plank four — machines: settled — one engine per
   machine, per checkout, for now: each machine's engine works its own
   checkout as its own serial lane, reconciled through the shared git
   history and the records (pull-first, absorb-or-alarm). A single
   global engine across machines is the future stance, needing
-  arbitration not yet designed. (2026-10-27, user)
+  arbitration not yet designed. (chat M917) (2026-10-27, user)
 - Crash and push contract: settled — the records are the ledger:
   local commits are the safety; a restarted engine rebuilds where
   things stood from the committed records and their states alone;
   unpushed commits retry on the next pass with a pull first; nothing
-  is ever force-pushed. There is no separate engine state store.
+  is ever force-pushed. There is no separate engine state store. (chat M914)
   (2026-10-27, user)
 - Engine-vs-user file discipline: settled — the engine checks each
   user edit it meets in its working files against its known context
@@ -259,28 +259,28 @@ after approval.
   for raises through the inbox — "intentional? then it needs a
   ruling; a mistake? then revert it" — and the engine never builds on
   or commits around the edit until the user answers. The system tests
-  accountability, never guesses intent. (2026-10-27, user)
+  accountability, never guesses intent. (chat M911, M910) (2026-10-27, user)
 - Concurrency, plank three — branch placement: settled — the present
   stance: everything the engine does lands on the working branch
   (records, reports, tickets, code alike), pulling before pushing,
   never force-pushing, never merging on its own; scope-based branching
-  is deferred to the future stance. (2026-10-27, user)
+  is deferred to the future stance. (chat M906) (2026-10-27, user)
 - Bootstrap in a live project: settled — a re-bootstrap is a step of
   its own: it waits for the step in flight, runs exclusively and
-  synchronously with the user, and the engine resumes after.
+  synchronously with the user, and the engine resumes after. (chat M903)
   (2026-10-27, user)
 - The name "inbox": settled — kept, with a glossary entry in
   girth-agents' own GLOSSARY.md defining it as the user's inbox as
   designed in this plugin, in contrast to OpenCode's own
-  agent-prompt-queue inbox of the same name. (2026-10-27, user)
+  agent-prompt-queue inbox of the same name. (chat M1010) (2026-10-27, user)
 - `domain-modeling`'s fate: settled — the skill survives, re-fit: the
   engine-side discipline lives in the caregiver; the interactive side
   keeps its function, guiding the user through term-work when judging
-  proposals and ruling meanings. (2026-10-27, user)
+  proposals and ruling meanings. (chat M1007) (2026-10-27, user)
 - Push-conflict terminal: settled — on non-fast-forward divergence the
   engine never merges: it holds its commits, leaves the working tree
   alone, and raises through the inbox (the reconciliation is the user's
-  authority); everything waits intact until answered. (2026-10-27,
+  authority); everything waits intact until answered. (chat M1004) (2026-10-27,
   user)
 - The shelved era's terms: settled — they stay. Each definition stands
   alone — none requires the handoff paradigm to be comprehensible —
@@ -288,7 +288,7 @@ after approval.
   system uses too (the chat's exhaustion, the ledger's rebuild, the
   inbox item's consumption). The shelf retired the paradigm, not the
   words; a term retires only by warrant, through the caregiver, with
-  the user's authority. (2026-10-27, user)
+  the user's authority. (chat M1037) (2026-10-27, user)
 - Plan-gate completeness: settled — the plan's PASS means the
   interactive grilling exhausted every user-answerable question
   visible in the wayfinding context, and the session never
@@ -297,13 +297,13 @@ after approval.
   see must be asked before PASS; what only the specifying context can
   surface arrives afterward through the inbox, honestly new and one at
   a time. The inbox carries newness, never deferral — grilling's
-  battery belongs to the interactive session. (2026-10-27, user)
+  battery belongs to the interactive session. (chat M1024) (2026-10-27, user)
 - The plan's repair chair: settled — the interactive session itself:
   the agent repairs the FAILed plan with the user, continuing the very
   conversation the plan came from. This is why the plan's review runs
   before its confirmation: a FAIL still has a live session to land in,
   and only a reviewed-and-confirmed plan enters the engine. This very
-  rectification is the worked example. (2026-10-27, user)
+  rectification is the worked example. (chat M1001) (2026-10-27, user)
 - The helpers' permissions: settled — each helper carries its own
   tailored permission ruleset, exactly as its configuration, toolset,
   and skills are tailored; the forbidden list is the engine's floor
@@ -317,86 +317,86 @@ after approval.
   processing means before it starts (the consent moment), and a park
   command stops the engine on that project, leaving the records in
   place and resumable by re-running bootstrap; the engine then stops
-  reading that repository until restarted. (2026-10-27, user)
+  reading that repository until restarted. (chat M990) (2026-10-27, user)
 - The orchestrator: settled — the one interactive primary is the
   orchestrator agent from the feature tracker: the face that runs the
-  user's sessions and coordinates the swarm of helpers behind it.
+  user's sessions and coordinates the swarm of helpers behind it. (chat M969)
   (2026-10-27, user)
 - Primary agents: settled — one interactive primary: the agent that
   runs the user's sessions (ideation, wayfinding, rulings); the six
   helpers are the machinery behind it, dispatched by the engine, never
   chosen as faces. The built-in `build` and `plan` primaries are
-  replaced by it. (2026-10-27, user; named 2026-10-27, user)
+  replaced by it. (chat M966) (2026-10-27, user; named 2026-10-27, user)
 - The pour is complete: settled — every item the user's test-driving
   surfaced is on the map and followed to an answer; the only open
   threads are the deliberate deferrals (the scaffold-migration
-  details, the future concurrency stance, and the spec details). (2026-10-27, user)
+  details, the future concurrency stance, and the spec details). (chat M963) (2026-10-27, user)
 - GitHub credentials: settled — bootstrapping includes an optional gh
   setup: the user who takes it provides credentials through gh, which
   the engine never stores separately; a declination lets the engine
   proceed without the GitHub integration (commits stay local, pushes
   and self-reports unavailable), recorded as a ruling like any
-  declination. (2026-10-27, user)
+  declination. (chat M960) (2026-10-27, user)
 - Offline pushes: settled — a failed push holds its commits locally —
   the ledger loses nothing — and retries on the next pass; there is
   no extra queue beyond the local unpushed commits themselves, and the
-  pull-first discipline applies on the network's return. (2026-10-27,
+  pull-first discipline applies on the network's return. (chat M957) (2026-10-27,
   user)
 - The unassigned sums: settled — the typed forms' exact shapes, the
   reports' owning skill, the context-map's format, the inbox message
   forms, the cap and budget numbers, and criterion-compilation
   mechanics are spec details: every direction is decided, and the spec
-  pins the shapes. (2026-10-27, user)
+  pins the shapes. (chat M954) (2026-10-27, user)
 - Abandoned sessions: settled — an abandoned interactive session is
   inert: an opened inbox item stays waiting in the inbox (nothing
   expires, nothing re-asks), and a half-built wayfinding session holds
   no entry point until confirmed, so it touches nothing. Timeouts
-  apply only to the engine's own steps, which are already capped.
+  apply only to the engine's own steps, which are already capped. (chat M951)
   (2026-10-27, user)
 - Self-report consent: settled — each self-report asks the user's
   permission at the moment of sending, and declining is always
   available; the payload stays the failing piece's brief and report —
   typed records only, no inbox prose, no secrets. (Identical repeated
   failures coalesce into one report — the flood control is spec
-  detail.) (2026-10-27, user)
+  detail.) (chat M948) (2026-10-27, user)
 - Dogfooding: settled — the engine develops girth-agents fully, plugin
   code included — the point of dogfooding — made safe by the
   two-checkout separation: it runs from a separate installed copy while
   developing this repo's checkout, and its own commits reach the
-  install only at the next deliberate plugin update. (2026-10-27,
+  install only at the next deliberate plugin update. (chat M945) (2026-10-27,
   user)
 - The direction-change path: settled — the user rules direction
   changes in a session, and the ordinary machinery carries them:
   amending the plan becomes a new plan revision through the same
   review; aborting closes the workstream's records with the reason;
   re-answering reopens the resolved question with the new answer.
-  Direction changes are authority, recorded like conventions.
+  Direction changes are authority, recorded like conventions. (chat M941)
   (2026-10-27, user)
 - The confirmation artifact: settled — the wayfinding session records
   the user's confirmation inside the plan file itself (a dated marker
   line) before the entry-point tool runs; the tool validates the
   marker as part of accepting the file — no marker, loud rejection. A
   dead tool run loses nothing: the marker survives and the tool
-  re-runs. (2026-10-27, user)
+  re-runs. (chat M938) (2026-10-27, user)
 - The forbidden list: settled — beyond the leash's one "never touch
   un-cleared files": never force-push, rebase, or reset history; never
   delete branches or merge on its own; never touch files outside the
   records and the files its tickets name; never copy secrets it was
   not handed for the task; never run network commands beyond its own
-  pushes and self-reports. (2026-10-27, user)
+  pushes and self-reports. (chat M935) (2026-10-27, user)
 - User sessions and the engine: settled — the user's sessions live
   outside the engine and never compete for its queue; their outputs
   cross the boundary at the already-designed doors (the entry-point
-  clearance, inbox replies, absorb-or-alarm). (2026-10-27, user)
+  clearance, inbox replies, absorb-or-alarm). (chat M932) (2026-10-27, user)
 - Inbox writes in the serial order: settled — the user's
   answering-session record-writes join the serial order like any other
   step: they land at the next slot, imperceptibly after the engine's
-  current step. Nothing writes at once. (2026-10-27, user)
+  current step. Nothing writes at once. (chat M929) (2026-10-27, user)
 - Sidebar truth: settled — the sidebar shows the work currently
   happening, as reported by the engine itself: a live, engine-maintained
   current-work report, not a reading of half-written records. The
   report updates atomically per state transition; the committed ledger
-  remains the recovery truth, the live report the display truth.
+  remains the recovery truth, the live report the display truth. (chat M926)
   (2026-10-27, user)
 - Startedness: settled — the bootstrap command activates the engine
   locally, per machine, per directory. A repo bootstrapped elsewhere
@@ -404,7 +404,7 @@ after approval.
   engine treats nothing as records before local activation. Two
   reasons: it must not clobber files inappropriately, and it must not
   pick up a project on an old schema without a bootstrap update first.
-  State travels through the records; activation is local.
+  State travels through the records; activation is local. (chat M920)
   (2026-10-27, user)
 - Scaffold migration: declared to revisit — when the plugin's
   schematics change, bootstrap must bring a repository into the current
@@ -412,11 +412,11 @@ after approval.
   plugin version or none at all. The mechanism is now found: local
   bootstrap is the activation AND the migration gate — running it
   brings the repo into the current paradigm; the migration rules'
-  details remain the circle-back. (2026-10-27, user)
+  details remain the circle-back. (chat M903) (2026-10-27, user)
 - Concurrency, plank two: settled — a chain's step is exclusive:
   every writing helper (checker, fact-finder, prove-it, caregiver,
   the consolidation pass) waits for the step in flight; only the
-  engine's passive watching runs always. (2026-10-27, user)
+  engine's passive watching runs always. (chat M900) (2026-10-27, user)
 - Concurrency, plank one: settled — within a project, the engine does
   one thing at a time: one chain's current step in flight, everything
   else ready-but-waiting; parallelism exists only across separate
@@ -428,7 +428,7 @@ after approval.
   combination — is accounted for and judged by criteria appropriate to
   its kind. The work stage of a docs or research repository produces
   documents, graded on writing's merits; mixed repositories grade each
-  part on its own. Fish are not judged on tree-climbing.
+  part on its own. Fish are not judged on tree-climbing. (chat M858)
   (2026-10-26, user)
 - Project kinds' shape: settled — one root store per repository (the
   tracker, glossary, inbox, reports); a root context-map record
@@ -436,31 +436,31 @@ after approval.
   relationships; an optional `context:` field for domain-qualified
   senses; agents read the store filtered to their context, never the
   union blob; per-package physical placement only on warrant, recorded
-  as a deviation like any other. (2026-10-26, user)
+  as a deviation like any other. (chat M855) (2026-10-26, user)
 - Lesson capture: settled — the reviewer jots candidate claims while
   writing its report (the separate pair of eyes mid-evidence); the
   engine's idle consolidation pass collects them, checks them against
-  what is already known, and hands them to prove-it. (2026-10-26, user)
+  what is already known, and hands them to prove-it. (chat M834) (2026-10-26, user)
 - The lesson store: settled — a committed tracker kind of its own:
   generalized, verified, recurring lessons, with their evidence
   referenced and held out of context; recall is how the agents read the
   store into their working context. The tracker's kind set gains it at
-  implementation, alongside term proposals. (2026-10-26, user)
+  implementation, alongside term proposals. (chat M831) (2026-10-26, user)
 - Unverifiable claims: settled — a lesson-claim prove-it can neither
   verify nor falsify vanishes from the recall path; if the uncertainty
   behind it blocks work, the ordinary question machinery handles it
   (information-kind to the fact-finder, authority-kind to the inbox).
-  The recall layer never harasses. (2026-10-26, user)
+  The recall layer never harasses. (chat M828) (2026-10-26, user)
 - Stratification: settled — a verified lesson-claim stratifies into the
   recall store only after it recurs across separate pieces of work; a
   single occurrence stays a specific hazard, found again on collision.
-  Learn-once rides the second-time signal. (2026-10-26, user)
+  Learn-once rides the second-time signal. (chat M825) (2026-10-26, user)
 - prove-it and fact-finder, mutual checks: settled — they keep each
   other in line: the fact-finder acquires facts that keep prove-it's
   reasoning grounded in evidence, and can correct it; prove-it verifies
   that reported facts cohere with the accepted knowledge — offering
   proof where a reported "fact" is incorrect — and pushes back to keep
-  the fact-finder's reporting diligent and accurate. Both fail openly.
+  the fact-finder's reporting diligent and accurate. Both fail openly. (chat M822)
   (2026-10-26, user)
 - `prove-it`: settled — a new named helper whose job is verifying the
   truth of claims that are not observable fact, held against what the
@@ -470,33 +470,33 @@ after approval.
   sources (assumed true — beyond proof and denial in context, like "the
   sky is blue"), and prove-it checks other claims against that
   confirmed knowledge. The sixth helper; both fail openly rather than
-  assert. (2026-10-26, user)
+  assert. (chat M818) (2026-10-26, user)
 - Lesson-claim verification: settled — prove-it verifies a
   lesson-claim before it stratifies into the recall store, marshalling
   the fact-finder where the check needs new base facts; a claim that
-  cannot be verified does not stratify. (2026-10-26, user)
+  cannot be verified does not stratify. (chat M818) (2026-10-26, user)
 - Recall layer: settled — in scope: the engine's agents remember
   lessons across work, separate from the canonical glossary, governed
   by one principle — lessons should only need to be learned once. Its
   shape is settled in the sibling entries: reviewer jots, prove-it
   verifies, recurrence stratifies, first occurrences are hazards, and
-  the store is a committed tracker kind. (2026-10-26, user)
+  the store is a committed tracker kind. (chat M796) (2026-10-26, user)
 - Glossary's own hygiene: settled — the glossary stays prose (a term
   and its definition); the mechanical gate checks only form (duplicate
   spellings, malformed entries, empty definitions). Meaning — one
   concept per entry, drift — is never a linter's job, always the
-  caregiver's and the user's, through the proposal pipeline.
+  caregiver's and the user's, through the proposal pipeline. (chat M793)
   (2026-10-26, user)
 - Glossary in reviews: settled — the project side of glossary
   enforcement: glossary-consistency joins the criteria the engine
   compiles from the records, and a stage's work that uses a term in a
   drifted sense fails its check — the glossary is a record the criteria
-  can point at. (2026-10-26, user)
+  can point at. (chat M788) (2026-10-26, user)
 - Glossary proposals' home: settled — term proposals are a tracker kind
   of their own, like questions and hazards: classified, recorded, and
   processed by the caregiver, with the inbox question referencing the
   proposal entry. The tracking skill's kind set and the bootstrapping
-  inventory gain the new kind at implementation. (2026-10-26, user)
+  inventory gain the new kind at implementation. (chat M784) (2026-10-26, user)
 - Glossary proposals: settled — filtered, never batched: filtered means
   "this isn't worth attending to," and the caregiver never acts on its
   own — filtered items never change the glossary. Each warranted
@@ -506,7 +506,7 @@ after approval.
   or crafts and corrects in the same breath — one interface, two depths
   of investment: precise crafting or leaning on suggestions. Domain
   modeling is a largely front-loaded task, and a reliable domain model
-  is worth the user's attention at a project's outset. (2026-10-26,
+  is worth the user's attention at a project's outset. (chat M778) (2026-10-26,
   user)
 - The vocabulary caregiver: settled — a new, small dedicated helper
   whose only context is the glossary. Its job is the labor — curating
@@ -517,7 +517,7 @@ after approval.
   and an agent-inferred definition is only as good as the context it
   infers from — so changes to a glossary are taken as seriously as
   changes to a convention, with the human in the loop. The fifth
-  helper; precisely tailored context per the role-shaped ruling.
+  helper; precisely tailored context per the role-shaped ruling. (chat M771)
   (2026-10-26, user)
 - Primary agents: declared open, then settled — the built-in `build`
   and `plan` primaries do not make sense in the new system's context;
@@ -681,7 +681,7 @@ after approval.
   PASS) is a hard tool in the plugin's code. (2026-10-25, user)
 - The checker: settled — a named reviewer agent type with its own job
   description; the engine points it at finished work to read and write
-  the PASS/FAIL report. The first agent type of the new system.
+  the PASS/FAIL report. The first agent type of the new system. (chat M445)
   (2026-10-25, user)
 - Handoff's shelf: settled — the handoff and pickup pair stays out of
   the plugin for now, kept privately in the repo; the engine, tracker,
