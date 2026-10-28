@@ -40,11 +40,19 @@ after approval.
   reviewer FAILs a plan that is not wholly complete and ready for
   specifying; the plan may never assert anything unverifiable — an
   assertion about the user's intent, or about a technical matter;
-  uncleared fog is failure, lying is failure, being wrong is failure.
-  The agent is not exempt and may not alter these rules. The interim
+  uncleared fog is failure, lying is failure, being wrong is failure
+  — and the user's standing prohibitions (chat M1200, verbatim in
+  substance): you are not exempt from the rules; you are not to
+  change the rules to suit you; you are not to circumvent the user's
+  authority for your own convenience; you are not to reinterpret the
+  design after the user has already approved it; you are not to
+  manipulate your reviewers into expediting your work; you are not to
+  close the wayfinding phase until wayfinding is actually completed
+  and properly. The interim
   mechanism until the plugin's citation access exists: a fresh
   snapshot export at each reviewer launch, never an earlier one
-  carried forward; the snapshot for round 3 is taken at dispatch.
+  carried forward; the snapshot for each review round is taken at
+  dispatch.
 
 - **Two layers, and reviewers must honor them.** [Ours] = this effort's
   own working process — how girth-agents itself is being built, its
@@ -60,30 +68,42 @@ after approval.
   reconcile two separate contexts. (Incident of 2026-10-26: an
   unlabeled map produced a legitimate FAIL, and the interpreter treated
   the representation problem as a design problem — the inversion this
-  warning exists to prevent.)
+  warning exists to prevent.) (chat M655, M663)
 
-- The catalog's identity carries into the plugin: skills, commands, and
-  agents stay plain Markdown, ship bundled with the plugin, and the
-  plugin's `setup()` registers them through the skill/command/agent
-  transforms. Nothing converts to code unless a trigger needs it. (chat M323)
-- The user's test-driving surfaced the change set: many item-level
-  changes aimed at cross-cutting concerns — too disorganized to enumerate
-  linearly. The map is the organizer: the cloud is harvested, then worked
-  decision by decision. (chat M315, M418)
+- The catalog's identity carries into the plugin: the catalog stays
+  plain Markdown, shipped bundled with the plugin and registered at
+  plugin setup — the user's own selection, "Bundle + register at
+  setup (Recommended)" (chat M323, the answer round). Skills and
+  commands register through their transforms; agents have no registry
+  entry — a verified negative (`AgentEditor` has no `add`, chat M1141
+  and M1156) — the helpers live embedded in the engine instead (see
+  "Helpers' realization"). Nothing converts to code unless a trigger
+  needs it.
+- The user's test-driving surfaced the change set in the user's own
+  words: "I have too many ideas that are too disorganized to
+  enumerate here at once — a lot of them are changes to individual
+  items meant to affect cross-cutting concerns" (chat M323). The map
+  is the organizer and the agent the one organizing: "Narrate in
+  chat, agent organizes" (chat M329, the answer round); the cloud is
+  harvested, then worked decision by decision.
 - `plans/installer-experience.md` ruled package-manager channels out of
   scope for the installer. The plugin supersedes that ruling where it
   lands; the channel decision settles how far. (chat M421)
 - Facts the map leans on: plugins register commands, skills, and tools
   via transforms — but NOT agents, verified negative live (`AgentEditor`
-  has no `add`, chat M1126); package plugins publish to npm and
-  install/update/check through `opencode plugin`; the repo remains the
-  dev workspace regardless of channel. (chat M497)
+  has no `add`; chat M1141 and M1156 carry the results); package
+  plugins publish to npm and install/update/check through `opencode
+  plugin`; the repo remains the dev workspace regardless of channel.
+  (sources: the V2 docs and the live probes; chat M497 ordered the
+  gathering)
 - TUI facts: the right-hand panel is the sidebar, reached by CLI-plugin
   slots (`sidebar.content`); a package ships a `./tui` export beside its
   server export — one package, two entries; CLI-only plugins configure
   separately in `cli.json`; plugin routes register whole screens through
   the TUI router; the menu is the command palette (Ctrl+P; Escape is
-  interrupt, not a menu).
+  interrupt, not a menu). (sources: the V2 docs — build/plugins/cli,
+  build/plugins/server, and cli/keybinds; chat M497 ordered the
+  survey)
 - Ground research (2026-10-25 survey, three cited notes in
   `docs/research/`): engine mechanics — spawning, driving, and awaiting
   sessions, always-awake lifetime, and detection all supported by the
@@ -96,7 +116,7 @@ after approval.
   payload. The rest of the old keystone list are verdicts now — no
   plugin-added agent IDs (`AgentEditor` has no `add`), `ctx.storage`
   survives restarts, code-mode tools execute — recorded under
-  Platform facts below (2026-10-27 live probes; chat M1126).
+  Platform facts below (2026-10-27 live probes; chat M1141, M1156).
 - Survey findings to fold in before the spec: the `tdd`/
   `writing-for-agents` renames should land as one change, not a
   half-renamed catalog. (The other two earlier findings — 0003's
@@ -131,9 +151,9 @@ after approval.
 - The start switch: settled — bootstrapping is how the engine is
   started in a project; the engine operates only where it has been
   started. The `/bootstrap` command is the necessary on-switch — without
-  it the always-awake engine would scatter files (chat M492) wherever OpenCode's
+  it the always-awake engine would scatter files wherever OpenCode's
   working directory happened to be. Eager and programmatic, but always
-  *within* a deliberately started project. (2026-10-25, user)
+  *within* a deliberately started project. (2026-10-25, user) (chat M492)
 - Information-kind dispatch: settled — the engine sends its own help to
   answer an information-kind question. That help cannot fabricate, so
   it can fail openly; when it fails and the failure is not itself the
@@ -173,8 +193,10 @@ after approval.
   install points at the repo itself, no extra path segment.
   (2026-10-26, user) (chat M574)
 - The testing system: settled — a committed automated harness drives
-  the real pieces (parser, review loop, session spawn, inbox record,
-  TUI slot) with assertions that map to trust; it gates merges to main
+  the real pieces with assertions that map to trust (chat M568 — the
+  adopted option's own words); which pieces it drives — parser,
+  review loop, session spawn, inbox record, TUI slot — is this map's
+  proposal for the spec to pin. It gates merges to main
   with no manual step, and releases tag only from a green main, keeping
   the release chain clean. (2026-10-26, user) (chat M568)
 - The builder: settled — one named helper does every stage's building,
@@ -212,9 +234,11 @@ after approval.
   wayfinding session is the only outside document the entry-point tool
   accepts; everything else stays inside the engine or flows in through
   its own channel (inbox answers, rulings). (2026-10-26, user) (chat M525)
-- Engine agents cannot lie: settled — agents the engine dispatches must
-  never fabricate an answer; each is built to fail openly, reporting
-  "could not acquire" rather than inventing one. (2026-10-25, user) (chat M489)
+- Engine agents cannot lie: settled — agents the engine dispatches
+  cannot be provoked into lying and therefore must be capable of
+  failing to acquire the answer, necessarily leaving some for the
+  user if that alone is not cause to close the question (chat M489,
+  the user's own correction). (2026-10-26, user)
 - The engine is awake: settled — the engine lives in the plugin and
   watches on its own, advancing ready work even between messages, on a
   strict leash: it touches only work it made itself, and files an agent
@@ -247,12 +271,12 @@ after approval.
   The 2026-10-26 incident is the worked example: a legitimate FAIL on
   an unlabeled map, mishandled as a design question — the inversion
   this entry rules out. (chat M655, M663) (2026-10-26, user)
-- Concurrency: declared — the map has not yet addressed asynchronous,
-  concurrent, and parallel work across codebases and operations of
-  different sizes. The present and future stance must be on the record:
-  what runs at once, what waits, and how engine work and the user's own
-  live work coexist. The full puzzle is for later; the stance is now. (chat M864)
-  (2026-10-26, user)
+- Concurrency: declared — the user's answer names the territory:
+  "asynchronous, concurrent, and parallel work across codebases and
+  operations of different sizes" (chat M864, the answer round); the
+  map then settled the present and future stance on the record in the
+  plank entries below. The full puzzle is for later; the stance is
+  now. (2026-10-26, user)
 - The engine's commit unit: settled — one commit per meaningful unit
   of engine work (a record change, a ticket outcome, a verdict), with
   a conventional message, pushed as it goes — the maintainer's own
@@ -274,12 +298,12 @@ after approval.
   works is either one the system's context can account for — "I want
   it to just silently absorb the difference" — or an accident; in the
   latter case "I want it to raise an alarm and tell me I messed up
-  before something breaks". What tells the two apart is the open
-  piece — the user's own "I am not sure how to walk this" — and this
-  map's proposed walk (check each edit against the engine's known
-  context and raise the remainder through the inbox before building
-  on it) is unruled, to be put to the user. (2026-10-27, user for
-  the two cases; the walk OPEN)
+  before something breaks". The walk that tells the two apart was put
+  to the user and endorsed: the engine checks each edit against its
+  accounting, silently absorbing what fits and alarming through the
+  inbox on what does not, before ever building on it — answered
+  "Check and absorb-or-alarm (Recommended)". (chat M910, M911 — both
+  answer rounds) (2026-10-27, user)
 - Concurrency, plank three — branch placement: settled — the present
   stance: everything the engine does lands on the working branch
   (records, reports, tickets, code alike), pulling before pushing,
@@ -306,20 +330,20 @@ after approval.
   four definitions are incomprehensible without the old handoff skill
   (chat M1037); the earlier "they stay" verdict was the agent's own
   inference, never ruled by the user. Unresolved, to be put to the
-  user. Each definition stands alone — none requires the handoff
-  paradigm to be comprehensible — and they describe the lifecycle of
-  context itself, which the new system uses too (the chat's
-  exhaustion, the ledger's rebuild, the inbox item's consumption).
-  Whether the four survive the shelf is the open question; the
-  answer is the user's. (open — awaits the user)
+  user. The map's own draft toward an answer — that each definition
+  stands alone, none requiring the handoff paradigm, and all four
+  describe the lifecycle of context itself — is precisely the
+  question the user posed, unanswered here. Whether the four survive
+  the shelf is the open question; the answer is the user's.
+  (open — awaits the user)
 - Plan-gate completeness: settled — the plan's PASS means the
   interactive grilling exhausted every user-answerable question
   visible in the wayfinding context, and the session never
   intentionally defers a visible question to a headless stage. The
   delineation between the two kinds of question: what the session can
   see must be asked before PASS; what only the specifying context can
-  surface arrives afterward through the inbox, honestly new and one at
-  a time. The inbox carries newness, never deferral — grilling's
+  surface arrives afterward through the inbox, honestly new. The
+  inbox carries newness, never deferral — grilling's
   battery belongs to the interactive session. (chat M1024) (2026-10-27, user)
 - The plan's repair chair: settled — the interactive session itself:
   the agent repairs the FAILed plan with the user, continuing the very
@@ -352,30 +376,34 @@ after approval.
   runs the user's sessions (ideation, wayfinding, rulings); the six
   helpers are the machinery behind it, dispatched by the engine, never
   chosen as faces. The built-in `build` and `plan` primaries are
-  replaced by it. (chat M966) (2026-10-27, user; named 2026-10-27, user)
+  replaced by it. (chat M966) (2026-10-27, user; named at chat M969)
 - Helpers' realization: settled — the helpers are embedded in the
   engine. The user's answer to the keystone-failure question (chat
   M1165, the answer round): "The helper agents are embedded in the
   engine, not in opencode, they're not subagents deployed from an
   interactive session so why would opencode need them 'registered'?"
   The platform side holds the negative: a plugin cannot register
-  brand-new agent IDs — `AgentEditor` has no `add` (chat M1126, live
-  probe). How the engine holds, configures, and runs each helper is
+  brand-new agent IDs — `AgentEditor` has no `add` (chat M1141,
+  M1156 — the live probes' results). How the engine holds, configures, and runs each helper is
   engine internals — a spec shape, never an OpenCode registry entry.
-  (2026-10-27, user for the embedded ruling; chat M1126 the fact)
+  (2026-10-27, user for the embedded ruling; chat M1126 wrote the
+  probe, results at chat M1141 and M1156)
 - The pour is complete: settled — every item the user's test-driving
   surfaced is on the map and followed to an answer; the only open
   threads are the deliberate deferrals (the scaffold-migration
   details, the future concurrency stance, and the spec details). (chat M963) (2026-10-27, user). The
-  round-2 review reopened two threads bound for the user — the
-  shelved-era terms and the file-discipline's walk (labeled OPEN
-  above).
+  re-review's findings have since reopened three threads bound for
+  the user — the shelved-era terms, flood-control coalescing, and the
+  V1 scope question (each labeled OPEN in its entry).
 - GitHub credentials: settled — bootstrapping includes an optional gh
-  setup: the user who takes it provides credentials through gh, which
-  the engine never stores separately; a declination lets the engine
-  proceed without the GitHub integration (commits stay local, pushes
-  and self-reports unavailable), recorded as a ruling like any
-  declination. (chat M960) (2026-10-27, user)
+  install; the user who follows through provides credentials through
+  gh, which the engine never stores separately; a declination lets
+  the engine proceed without GitHub and its integration (chat M960,
+  the answer round — the user's own words). What a declination
+  concretely costs (commits stay local, pushes and self-reports
+  unavailable) and whether it is recorded as a ruling are this map's
+  elaborations, not the user's words — spec-shaping claims.
+  (2026-10-27, user for the ruling)
 - Offline pushes: settled — a failed push holds its commits locally —
   the ledger loses nothing — and retries on the next pass; there is
   no extra queue beyond the local unpushed commits themselves, and the
@@ -397,7 +425,7 @@ after approval.
   available; the payload stays the failing piece's brief and report —
   typed records only, no inbox prose, no secrets (chat M948).
   Flood-control coalescing of repeated failures is an uncited
-  elaboration — open, to be ruled.
+  elaboration — OPEN, to be ruled, bound for the user.
 - Dogfooding: settled — the engine develops girth-agents fully, plugin
   code included — the point of dogfooding — made safe by the
   two-checkout separation: it runs from a separate installed copy while
@@ -445,10 +473,11 @@ after approval.
 - Scaffold migration: declared to revisit — when the plugin's
   schematics change, bootstrap must bring a repository into the current
   paradigm from its previous state, whether that state is a previous
-  plugin version or none at all. The mechanism is now found: local
-  bootstrap is the activation AND the migration gate — running it
-  brings the repo into the current paradigm; the migration rules'
-  details remain the circle-back. (chat M903) (2026-10-27, user)
+  plugin version or none at all (chat M903: bootstrap "needs to be
+  able to bring a repo into the current paradigm" — a stated
+  requirement, not a found mechanism). The activation's being local
+  is chat M920's ruling; the migration rules' details remain the
+  circle-back. (2026-10-27, user for the two source rulings)
 - Concurrency, plank two: settled — a chain's step is exclusive:
   every writing helper (checker, fact-finder, prove-it, caregiver,
   the consolidation pass) waits for the step in flight; only the
@@ -471,8 +500,10 @@ after approval.
   declaring the repository's contexts and their inter-context
   relationships; an optional `context:` field for domain-qualified
   senses; agents read the store filtered to their context, never the
-  union blob; per-package physical placement only on warrant, recorded
-  as a deviation like any other. (chat M855) (2026-10-26, user)
+  union blob; per-package physical placement only on warrant (the
+  adopted option's own words). Whether a warranted placement is
+  recorded as a deviation is this map's addition, not the user's —
+  spec-shaping. (chat M855) (2026-10-26, user)
 - Lesson capture: settled — the reviewer jots candidate claims while
   writing its report (the separate pair of eyes mid-evidence); the
   engine's idle consolidation pass collects them, checks them against
@@ -553,8 +584,13 @@ after approval.
   and an agent-inferred definition is only as good as the context it
   infers from — so changes to a glossary are taken as seriously as
   changes to a convention, with the human in the loop. The fifth
-  helper; precisely tailored context per the role-shaped ruling. (chat M771)
-  (2026-10-26, user)
+  helper; precisely tailored context per the role-shaped ruling. The
+  authority clauses are chat M775's own words — glossary entries are
+  as significant as conventions in how they shape a project's
+  progress; an agent-inferred definition is only as good as the
+  context it infers from, so a human in the loop is called for, and
+  changes to a glossary should be taken as seriously as changes to a
+  convention. (chat M771, M775) (2026-10-26, user)
 - Primary agents: declared open, then settled — the built-in `build`
   and `plan` primaries do not make sense in the new system's context;
   the replacement landed once the surroundings settled: one
@@ -668,6 +704,28 @@ after approval.
   ticket: each ticket's recorded outcome graded against its own
   criteria, with the code changes and the test-drive proof as evidence;
   the PASS stamps the ticket itself. (chat M669) (2026-10-26, user)
+- Ticket immutability and effort invalidation: settled — the user's
+  ruling from this effort's own failure (chat M1173): if work needs
+  to edit a ticket to complete its task, that ticket should never
+  have passed; a ticket needing change means one part of a greater
+  effort is wrong — the change invalidates the ticket, all tickets
+  sharing the effort, and the spec they came from. A ticket that
+  coheres with the spec but not reality means the spec in part does
+  not cohere with reality, and that spec FAILs. This being possible
+  is unacceptable: the system must make it impossible by the gate's
+  design. (2026-10-27, user)
+- The gates verify reality, not just records: settled — the user's
+  correction (chat M1174, the answer round): facts and reality are one
+  thing — "the gates verify against records, never against reality"
+  is a catastrophic failure; a fact recorded with a verification need
+  attached and then not checked is exactly the failure; every gate
+  verifies its load-bearing facts against reality, and an unchecked
+  one blocks. (2026-10-27, user)
+- The planning stage absorbs the lessons: settled — the user's order
+  (chat M1177): find what should have happened in the planning stage,
+  make it happen, and incorporate it into the planning stage's
+  design; every excruciating learning experience is put to use to
+  improve the design. (2026-10-27, user)
 - Two layers: settled — the destination's approvals (the umbrella spec
   approved once, by the user) are THIS effort's working process, not
   the plugin's rules; the checkpoints ruling (the plan is the chain's
@@ -831,11 +889,14 @@ after approval.
 - The plan's own review — open. The earlier rounds ran against the
   tracker, not the raw chat log (chat M1197, M1198), and were ruled
   compromised — passing grades for a failing plan (chat M1200). The
-  re-review against the raw log (round 2,
-  `docs/research/plan-review-2A/B/C.md`) FAILed on this plan's false
-  self-claims, citation corruptions, and uncited glosses; those are
-  being rectified and a round 3 follows. The gate closes only on
-  unanimous PASS under the citation rules (chat M1200).
+  re-review against the raw log FAILed twice: round 2
+  (`docs/research/plan-review-2A/B/C.md`) on false self-claims,
+  citation corruptions, and uncited glosses; round 3
+  (`docs/research/plan-review-3A/B/C.md`) on a wrongly re-opened
+  ruling, unrecorded gate rulings, and the unfixed recorder tail. The
+  rectification is in motion and a round 4 follows. The gate closes
+  only on unanimous PASS (chat M969) under the citation rules (chat
+  M1200).
 - Concurrency — settled: serial within a project, steps exclusive,
   writers wait, watching never sleeps, pull-first working-branch
   commits, absorb-or-alarm on user edits, records as the crash ledger,
@@ -854,15 +915,21 @@ after approval.
   kind; the review gate grades term use; the glossary stays prose with
   form-only mechanical checks (see Decisions so far). (chat M771, M778, M784, M788, M793)
 - The change cloud — closed at chat M963 (the pour); reopened since:
-  the shelved-era terms (chat M1037) and the file-discipline's walk
-  (chat M910), both labeled OPEN above and bound for the user.
-- Test scenarios harvested from this effort's own incidents: (1) a
-  representation with a cross-layer conflict FAILs review — the flag is
-  correct behavior, not a bug; (2) the interpreter classifies the
-  finding: representation repair for cross-layer artifacts, the design
-  question for same-layer conflicts, the scoping clarification for
-  unclear scope — never the reconciliation question that presumes one
-  layer (incident of 2026-10-26). (chat M655, M663)
+  the shelved-era terms (chat M1037), flood-control coalescing, and
+  the V1 scope question — each labeled OPEN and bound for the user.
+- Test scenarios harvested from this effort's own incidents (the
+  user's order: every learning experience put to use — chat M1177):
+  (1) a representation with a cross-layer conflict FAILs review — the
+  flag is correct behavior, not a bug; (2) the interpreter classifies
+  the finding: representation repair for cross-layer artifacts, the
+  design question for same-layer conflicts, the scoping clarification
+  for unclear scope — never the reconciliation question that presumes
+  one layer (incident of 2026-10-26; chat M655, M663); (3) a ruling
+  the user never made, recorded as theirs and passed by a review
+  that never saw the raw chat — the M1200 incident; (4) an unchecked
+  assumption that contradicted the user's intent and a platform fact
+  checkable at any time — the M1173 incident, its rules now settled
+  above.
 - Platform facts, verified in live probes (2026-10-27; the discarded
   pass paid for these): a plugin cannot register brand-new agent IDs —
   `AgentEditor` has no `add`; `ctx.storage` survives service restarts;
@@ -871,7 +938,8 @@ after approval.
   `index.ts` or `server.ts` at the package root, the package exports
   serving package channels. Still unverified, live-TUI-only: the git
   `./tui` auto-load, sidebar-slot live-reactivity, the full event
-  catalog, and the `session.idle` payload. (chat M1126)
+  catalog, and the `session.idle` payload. (chat M1126 wrote the
+  probes; the results landed at chat M1141 and M1156)
 - Spec details deferred by design: the typed forms (brief, checklist,
   verdict/report) and where each lives; the inbox message and reply
   forms; the cap's numbers; the test harness's shape, seams, and gate
@@ -887,6 +955,10 @@ after approval.
 
 ## Out of scope
 
+- OpenCode V1 support: OPEN — whether the catalog stays V2-only was
+  never put to the user (the earlier out-of-scope line was the
+  agent's own, removed at round 2); the scoping question is owed to
+  the user.
 - Zeroshot's four clashing assumptions — the research's findings, not
   the user's words: the workspace-restore/copy-checkout, keeping
   pipeline config outside the repo, verifying the live worktree rather
