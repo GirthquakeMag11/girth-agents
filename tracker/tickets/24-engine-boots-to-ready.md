@@ -17,7 +17,12 @@ its first reconcile-from-records, and reports `ready`. If it dies
 unexpectedly, the plugin respawns it with backoff; when the server shuts
 down, no respawn happens. Every start is idempotent.
 
-## Acceptance criteria
+## Work so far
+
+- 2026-10-27: tested at the spec's seams with node:test under `engine/` — 9 green: config validation (loud refusal, constraint named), stdio framing (versioned JSON-lines, full five-poke/six-notice vocabulary, unknown-kind tolerance), supervisor policy + real-child respawn with backoff and clean SIGTERM shutdown, the real engine process announcing version/ready/heartbeat, and exit 2 with the broken constraint named on invalid config.
+- 2026-10-27: the literal plugin server entry (loading via OpenCode, reading the watch-list from plugin storage, forwarding stdio) stays for the plugin's scaffold — untestable without a live install; the supervise-and-boot machinery it will call is built and green here.
+
+- **Done — 2026-10-27:** engine boots to ready — process, schema-validated config with loud refusal, versioned stdio vocabulary, watch-list handover, heartbeat, supervisor with backoff respawn; tests at `engine/engine.test.mjs`.
 
 - [ ] The engine process starts as a child of the plugin's server side and speaks versioned JSON-lines over stdio in both directions
 - [ ] All five pokes, all six notices (including the periodic heartbeat), and unknown-message tolerance are implemented and exercised
