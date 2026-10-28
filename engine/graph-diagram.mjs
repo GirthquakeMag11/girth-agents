@@ -9,7 +9,7 @@ const CLASS_DEFS = [
   "    classDef decide fill:#fef9c3,stroke:#a16207,stroke-width:2px",
   "    classDef done fill:#dcfce7,stroke:#15803d,stroke-width:2px",
   "    classDef bounce fill:#fee2e2,stroke:#b91c1c,stroke-width:2px",
-  "    classDef defect fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px,stroke-dasharray: 5 2",
+  "    classDef defect fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px",
 ];
 
 function mid(id) {
@@ -22,7 +22,7 @@ function isDecide(links) {
 
 function nodeLabel(node) {
   if (node.type === "entry") {
-    return `${node.id} — entry${node.marker ? ` · marker: ${node.marker}` : ""}`;
+    return `${node.id} — entry${node.marker ? ` · marker: ${node.marker.replace(/\*/g, "")}` : ""}`;
   }
   if (node.type === "exit") {
     if (node.record?.kind === "question") return `${node.id} — exit · question · awaiting-answer`;

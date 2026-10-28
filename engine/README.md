@@ -15,9 +15,9 @@ flowchart LR
     classDef decide fill:#fef9c3,stroke:#a16207,stroke-width:2px
     classDef done fill:#dcfce7,stroke:#15803d,stroke-width:2px
     classDef bounce fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
-    classDef defect fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px,stroke-dasharray: 5 2
+    classDef defect fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px
 
-    TICKETIN(["ticket-in — entry · marker: **Ready:**"]):::entry
+    TICKETIN(["ticket-in — entry · marker: Ready:"]):::entry
     IMPLEMENT["implement — task · builder · work/implementation.json"]:::task
     REVIEW{"review — task · reviewer · work/review.json"}:::decide
     REPAIR["repair — task · builder · resumes implement's session · maxVisits: 3"]:::task
