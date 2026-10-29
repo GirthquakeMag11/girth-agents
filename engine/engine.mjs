@@ -20,6 +20,21 @@ const log = (...parts) => process.stderr.write(parts.join(" ") + "\n");
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 const configArg = process.argv[2];
+if (configArg === "--version") {
+  process.stdout.write("girth-agents v1.2.0\n");
+  process.exit(0);
+}
+if (configArg === "--help") {
+  process.stdout.write([
+    "usage: node engine/engine.mjs [--version | --help | <config.json>]",
+    "",
+    "  <config.json>  run the engine against this graph config",
+    "  --version      print the version and exit",
+    "  --help         print this usage and exit",
+    "",
+  ].join("\n"));
+  process.exit(0);
+}
 if (!configArg) {
   log("engine: no config path given");
   process.exit(2);

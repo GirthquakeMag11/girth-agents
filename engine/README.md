@@ -23,6 +23,17 @@ From the workspace that holds the graph and the work:
 node /path/to/girth-agents/engine/engine.mjs graph.json
 ```
 
+The config path is the only argument that boots the engine. Two flags answer
+without a config file or a running OpenCode service:
+
+```sh
+node /path/to/girth-agents/engine/engine.mjs --version   # girth-agents v1.2.0
+node /path/to/girth-agents/engine/engine.mjs --help      # usage block
+```
+
+Both print to stdout and exit 0. With no config path the engine prints
+`engine: no config path given` to stderr and exits 2.
+
 The engine:
 
 - validates the config and refuses to boot with named faults;
