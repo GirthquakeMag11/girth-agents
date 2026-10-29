@@ -35,15 +35,15 @@ implement-from-ticket ──▶ review-implementation ── verdict=pass ──
         └────── verdict=fail ─────┘
 ```
 
-- `implement-from-ticket` — the entrance: the gate admits a ticket by
-  its ready stamp, and the graph begins here, dispatching the builder
-  (implements the ticket; the ticket stays the contract and is not
-  edited by the builder).
+- `implement-from-ticket` — where the graph begins: a ticket is
+  admitted by its ready stamp, and the builder dispatches (implements
+  the ticket; the ticket stays the contract and is not edited by the
+  builder).
 - `review-implementation` — dispatches the reviewer, fresh every time.
   The reviewer verifies by running, then writes the verdict stamp onto
   the ticket document.
-- The boundary: `verdict = pass` ends the run — the work's state is the
-  stamps on the ticket; nothing else is written, no exit node exists.
+- A `verdict = pass` ends the run — the work's state is the stamps on
+  the ticket; nothing else is written.
 - Repairs: a `fail` verdict routes back to `implement-from-ticket`,
   resuming the builder's session with the reviewer's report. Retry cap
   3; exhausting it is a loud retry-limit defect (no bounce composed
@@ -67,7 +67,7 @@ contract (`SPEC.md` §5); models are config per helper.
 
 The agreed extension, built only after the above is proven live:
 
-- The **spec lane**: `tickets-from-spec` (the entrance; slices an
+- The **spec lane**: `tickets-from-spec` — slices an
   approved-stamped spec into ticket documents) → `review-tickets`
   (grades the document set; pass ends the lane and stamps the spec,
   fail repairs the slicer with cap 3 — loud on exhaustion).

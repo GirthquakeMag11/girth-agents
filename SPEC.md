@@ -28,10 +28,7 @@ its own: whatever is true is on the documents.
 ## 3. Graph execution
 
 - Node types: `task` (dispatch one helper, one objective, one session)
-  and `trigger` (an observing node, §4). Entrance and exit are **not**
-  node types. They are the system's boundary as concepts: the entrance
-  is input routed in from outside, the exit is where a route carries
-  work out of the system.
+  and `trigger` (an observing node, §4).
 - Links live in the node they leave. A node's out-links are one
   unconditional link or a set of conditional links — never a mixture,
   never a catch-all. A stamp matching no declared condition is a loud
@@ -46,22 +43,17 @@ its own: whatever is true is on the documents.
   the excess is a loud retry-limit defect. The numbers are the graph's.
 - Step caps and time budgets are structural; the numbers are the graph's.
 
-## 4. The boundary — entrances and triggers
+## 4. Triggers
 
-- **Entrance**: the abstract boundary — input routed into the system
-  from outside. Whatever carries input in passes through a gate; an
-  invalid document is a loud defect, never adopted. An exit is the same
-  boundary in reverse: output routed out of the system, where the run
-  ends and the work's state remains on the documents.
-- **Trigger**: a concrete observing node, its own type — not constrained
-  to being an entrance, allowed anywhere in a graph. It designates a
-  directory to watch and a stamp pattern. A new or changed document in
-  that directory queues a match action. On an engine turn the match is
-  the trigger's output — the matched document and its captured stamp
-  text — routed by ordinary routing rules. Matching grants the engine
-  authority over that document. At most one match per idle turn;
-  multiple matches resolve alphabetically by relative path; each matched
-  document is its own run with fresh sessions and nothing carried across.
+A trigger is a concrete observing node — its own node type, not
+constrained to any position in a graph. It designates a directory to
+watch and a stamp pattern. A new or changed document in that directory
+queues a match action. On an engine turn the match is the trigger's
+output — the matched document and its captured stamp text — routed by
+ordinary routing rules. Matching grants the engine authority over that
+document. At most one match per idle turn; multiple matches resolve
+alphabetically by relative path; each matched document is its own run
+with fresh sessions and nothing carried across.
 
 ## 5. Sessions — the live contract (live-verified 2026-10-28)
 
