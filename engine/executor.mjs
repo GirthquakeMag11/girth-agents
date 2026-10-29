@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { composeBrief } from "./brief.mjs";
-import { findGraph, findNode, handoffTarget, outputPathFor } from "./config.mjs";
+import { MAX_VISITS, findGraph, findNode, handoffTarget, outputPathFor } from "./config.mjs";
 import { permissionsFor } from "./driver.mjs";
 
 export class DispatchDefect extends Error {
@@ -234,7 +234,7 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
     if (!node) throw new DispatchDefect("no-node", `graph '${graph.id}' names no node '${current}'`);
 
     visits[current] = (visits[current] ?? 0) + 1;
-    const hardCeiling = Math.min(node.maxVisits ?? 3, 3);
+    const hardCeiling = Math.min(node.maxVisits ?? MAX_VISITS, MAX_VISITS);
     if (visits[current] > hardCeiling) {
       throw new DispatchDefect(
         "max-visits",

@@ -8,6 +8,10 @@ a time; the rest wait in a FIFO queue.
 The full contract is `SPEC.md` at the repository root. Deferred work is
 tracked in `ROADMAP.md`.
 
+The current milestone is dogfood: use the engine to develop the engine.
+Freeze the engine during a dogfood cycle, change the graph, and treat the
+graph map as the contract.
+
 ## Run
 
 From the workspace that holds the graph and the work:
@@ -89,7 +93,7 @@ A single JSON file: `version`, `helpers`, `graphs`. See
 `engine/example-graph.json`. Any node may be a dispatch entry point. A node's
 handoff is `terminal`, `unconditional` (label `next`), or `conditional`
 (labels with one target each). Every node must reach a terminal; every cycle
-must carry `maxVisits` (1–3).
+must carry `maxVisits` (1–100; the shipped graph uses 20).
 
 A graph may carry `workflows`: labelled subsections with an `entry`, an
 `exit`, and a node list. They are views for reasoning, not containers; the

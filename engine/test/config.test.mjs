@@ -77,11 +77,12 @@ test("config: no terminal or no path to one is named", () => {
 
 test("config: maxVisits above the engine ceiling and escaping output paths are named", () => {
   const doc = structuredClone(EXAMPLE);
-  doc.graphs[0].nodes[0].maxVisits = 4;
+  doc.graphs[0].nodes[0].maxVisits = 101;
   doc.graphs[0].nodes[0].output = "../escape.md";
   const faults = codes(validateConfig(doc));
   assert.ok(faults.includes("schema.maxvisits"));
   assert.ok(faults.includes("schema.path"));
+  assert.equal(EXAMPLE.graphs[0].nodes[0].maxVisits, 20);
 });
 
 test("config: output paths resolve under outputRoot", () => {

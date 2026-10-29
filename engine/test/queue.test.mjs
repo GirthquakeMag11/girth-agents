@@ -57,11 +57,9 @@ test("queue: wait returns the completion and times out as running", async () => 
 });
 
 test("queue: pause holds the queue and resume restarts it", async () => {
+  const releases = [];
   const queue = createDispatchQueue({
-    run: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1));
-      return { ok: true };
-    },
+    run: () => new Promise((resolve) => releases.push(() => resolve({ ok: true }))),
   });
   queue.pause();
   queue.enqueue({ graph: "g", node: "a", prompt: "one" });
@@ -72,6 +70,9 @@ test("queue: pause holds the queue and resume restarts it", async () => {
   queue.resume();
   await tick();
   assert.equal(queue.active?.id, "d-1");
+  releases.shift()();
+  await tick();
+  assert.equal(queue.active, null);
 });
 
 test("queue: an unknown dispatch is null", async () => {

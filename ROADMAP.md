@@ -12,6 +12,30 @@ target version and an acceptance condition. Check an item only when its
 acceptance condition has been demonstrated, and prefer live proof over a
 green stand-in.
 
+## Current focus: dogfood
+
+The next milestone is not another engine feature. It is **using the engine
+to develop the engine**.
+
+- **Freeze the engine during a dogfood cycle.** Change the graph, not the
+  engine. Record engine defects and sharp corners; fix them as versioned
+  engine work after the run, never as a hot-patch in the middle of the
+  work.
+- **The map is the contract.** If the engine's behavior is not explainable
+  by `/graph` and `GRAPH.md` — nodes, sessions, handoffs, outputs,
+  `maxVisits`, workflow — that is a defect in the map or the engine. The
+  user must be able to reason from the graph without reading engine code.
+- **The first real task is a straightforward implementation task in this
+  repo.** It must change real code, run the real tests, and pass the
+  reviewer. The interactive agent dispatches it, waits, reads the
+  completion or defect, and reviews the diff.
+- **Measure the friction.** Using the engine must become easier and more
+  efficient than doing the task directly. Every extra step, wait, or
+  ambiguity is a sharp corner to record.
+- **The testing cap is gone.** The build-review workflow uses
+  `maxVisits: 20`; 100 is the engine's hard backstop, not the workflow's
+  policy.
+
 **Priority order:** sandbox and tool-surface enforcement first, then
 handoff atomicity and durability, then model/cost resilience, then
 operations, then reach. v1 is usable, but the trust boundary is still
@@ -22,7 +46,8 @@ cooperative helpers.
 - [x] One JSON graph config with strict validation and named faults.
 - [x] Helpers, nodes, outputs, terminal/unconditional/conditional handoffs.
 - [x] Any node can be a dispatch entry point; every node must reach a
-  terminal; every cycle carries `maxVisits` 1–3.
+  terminal; every cycle carries `maxVisits` 1–100 (the shipped graph uses
+  20; 100 is the engine backstop).
 - [x] Live OpenCode 2.2.0 sessions with leading-deny permissions.
 - [x] One handoff plugin tool surface, installed and preflighted by the
   engine.
@@ -157,9 +182,10 @@ double-route.
 
 - [ ] **H1.12 Timeout and retry policy.**
   - What: one documented node-budget default; retries only for declared
-    retryable errors; a hard 3× cap; no hidden retries.
+    retryable errors; the graph's `maxVisits` bound with the 100-visit
+    engine backstop; no hidden retries.
   - Acceptance: timeout, interrupt, and provider failure each produce the
-    declared outcome; the cap is enforced.
+    declared outcome; the configured bound is enforced.
 
 ### Verification
 
@@ -285,8 +311,9 @@ proven gap.
     migration is tested.
 
 - [ ] **V2.5 Bounce-back ladder.**
-  - What: config-composed retry/exhaustion ladders beyond the hard 3× cap,
-    without breaking the one-label/one-target rule.
+  - What: config-composed retry/exhaustion ladders beyond the configured
+    `maxVisits` bound and the 100-visit engine backstop, without breaking
+    the one-label/one-target rule.
   - Acceptance: a live exhausted loop follows the composed ladder or
     defects loudly.
 

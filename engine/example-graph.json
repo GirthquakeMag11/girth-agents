@@ -36,7 +36,7 @@
           "objective": "Implement the dispatched work.",
           "output": "implementation.md",
           "session": "resume",
-          "maxVisits": 3,
+          "maxVisits": 20,
           "handoff": {
             "mode": "unconditional",
             "to": "review",
@@ -49,7 +49,7 @@
           "objective": "Review the implementation against the dispatched prompt.",
           "output": "review.md",
           "session": "fresh",
-          "maxVisits": 3,
+          "maxVisits": 20,
           "handoff": {
             "mode": "conditional",
             "labels": [

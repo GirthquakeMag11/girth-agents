@@ -53,7 +53,7 @@ file.
           "objective": "Implement the dispatched work.",
           "output": "implementation.md",
           "session": "resume",
-          "maxVisits": 3,
+          "maxVisits": 20,
           "handoff": {
             "mode": "unconditional",
             "to": "review",
@@ -66,7 +66,7 @@ file.
           "objective": "Review the implementation against the dispatched prompt.",
           "output": "review.md",
           "session": "fresh",
-          "maxVisits": 3,
+          "maxVisits": 20,
           "handoff": {
             "mode": "conditional",
             "labels": [
@@ -103,8 +103,8 @@ file.
   must be in the workflow's node list. The engine routes by handoffs, not
   by workflow.
 - A node has `id`, `helper`, `objective`, `output` (relative path),
-  optional `session`, optional `budgetMs`, optional `maxVisits` (1–3),
-  and `handoff`.
+  optional `session`, optional `budgetMs`, optional `maxVisits` (1–100;
+  use 20 for a repair loop), and `handoff`.
 - `session` is `fresh` (default) or `resume`. Use `resume` for a node that
   should continue its own conversation on a repair loop (the implementation
   node). The reviewer should be `fresh`: a new session on every review

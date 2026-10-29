@@ -8,6 +8,10 @@ import { isAbsolute, resolve } from "node:path";
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
 const SESSION_MODES = new Set(["fresh", "resume"]);
 
+// The engine's backstop, not the workflow's policy. A graph may set any
+// maxVisits up to this; the shipped build-review graph uses 20.
+export const MAX_VISITS = 100;
+
 const fault = (code, message) => ({ code, message });
 
 function isObject(value) {
@@ -309,8 +313,8 @@ function validateGraph(graph, at, helperIds, faults) {
     }
     integer(node.budgetMs, `${nodeAt}.budgetMs`, faults, { min: 1 });
     integer(node.maxVisits, `${nodeAt}.maxVisits`, faults, { min: 1 });
-    if (node.maxVisits !== undefined && Number.isInteger(node.maxVisits) && node.maxVisits > 3) {
-      faults.push(fault("schema.maxvisits", `${nodeAt}.maxVisits: the engine's hard ceiling is 3`));
+    if (node.maxVisits !== undefined && Number.isInteger(node.maxVisits) && node.maxVisits > MAX_VISITS) {
+      faults.push(fault("schema.maxvisits", `${nodeAt}.maxVisits: the engine's hard ceiling is ${MAX_VISITS}`));
     }
     if (node.handoff === undefined) {
       faults.push(fault("schema.handoff-missing", `${nodeAt}.handoff: required`));

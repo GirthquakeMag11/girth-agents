@@ -347,7 +347,7 @@ schema is strict; unknown fields are faults.
           "objective": "Implement the dispatched work.",
           "output": "implementation.md",
           "session": "resume",
-          "maxVisits": 3,
+          "maxVisits": 20,
           "handoff": {
             "mode": "unconditional",
             "to": "review",
@@ -360,7 +360,7 @@ schema is strict; unknown fields are faults.
           "objective": "Review the implementation against the dispatched prompt.",
           "output": "review.md",
           "session": "fresh",
-          "maxVisits": 3,
+          "maxVisits": 20,
           "handoff": {
             "mode": "conditional",
             "labels": [
@@ -394,8 +394,9 @@ The verifier is the boot gate:
   workflow's nodes; every workflow node exists; every node is reachable
   from the entry and can reach the exit within the subsection.
 - **Sessions**: `session` is `fresh` or `resume`.
-- **Limits**: `maxVisits` is 1–3 (the engine's hard ceiling; config may
-  lower it), `maxSteps` is positive, `budgetMs` is positive.
+- **Limits**: `maxVisits` is 1–100 (the engine's backstop; the graph sets
+  the workflow's actual bound — the shipped graph uses 20), `maxSteps` is
+  positive, `budgetMs` is positive.
 
 The config path is the file the engine was started with; the interactive
 agent edits it and calls `reload`. A reload validates the whole file:
