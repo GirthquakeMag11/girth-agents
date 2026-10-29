@@ -3,9 +3,11 @@
 One ordinary program, always running, that dispatches a prompt into a
 graph of agent nodes. A node's helper does the work, writes an output,
 and pulls exactly one handoff lever; the engine maps the lever to the
-next node and continues. Single-threaded, synchronous, one active
-dispatch. The graph is config; the engine knows nodes, handoffs, and the
-live session contract — never a workflow.
+next node and continues. Single-threaded, synchronous: one active
+dispatch with a FIFO queue behind it. The user's interactive agent can
+author the graph and dispatch work into it. The graph is config; the
+engine knows nodes, handoffs, and the live session contract — never a
+workflow.
 
 ## 1. The process
 
@@ -14,24 +16,30 @@ it announces ready; any config fault is a refusal: exit 2, the broken
 constraint named on stderr.
 
 It speaks JSON-lines over stdio: pokes in, notices out; human logs on
-stderr. One active dispatch at a time. A second dispatch while busy or
-paused is rejected, not queued. There are no projects, no run objects,
-no durable state, and no history. The active dispatch is a live snapshot;
-a restart loses it. The engine's working directory is the workspace;
-output paths and the handoff tool are resolved against it.
+stderr. One dispatch runs at a time; further dispatches wait in a FIFO
+queue. There are no projects, no run objects, no durable state, and no
+history. The active dispatch and the queue are live memory; a restart
+loses both. The engine's working directory is the workspace; output
+paths, the config, and the handoff tool are resolved against it.
+
+The config may be reloaded while idle: a `reload` validates the file,
+swaps it on success, and returns named faults on failure while keeping
+the old graph. A reload during an active dispatch is rejected; the agent
+retries at the next boundary.
 
 Whatever starts the engine starts it; whatever stops it stops it. EOF,
 SIGTERM, or SIGINT interrupts the active session and exits.
 
 ## 2. The graph
 
-A graph has an `id`, `starts`, `outputRoot`, `maxSteps`, and `nodes`.
-A node is one agent activation and its handoff surface. A node has an
-`id`, `helper`, `objective`, `output`, optional `budgetMs`, optional
-`maxVisits`, and a `handoff`.
+A graph has an `id`, `outputRoot`, `maxSteps`, and `nodes`. A node is one
+agent activation and its handoff surface. A node has an `id`, `helper`,
+`objective`, `output`, optional `budgetMs`, optional `maxVisits`, and a
+`handoff`.
 
-`starts` is the non-empty set of nodes a dispatch may name. Every node
-is reachable from a start, and every path reaches a terminal node.
+Any node may be a dispatch entry point; the interactive agent chooses the
+node. Every node must be able to reach a terminal node, and every cycle
+must be bounded.
 
 A helper has an `id`, a `model` (`provider/model`), an optional `agent`
 (default `build`), `permissions` (the allowed action names), and optional
@@ -51,10 +59,15 @@ node whose session ends without an accepted handoff is a loud defect.
 
 ## 3. Dispatch
 
-The poke is `dispatch { graph, node, prompt }`. The graph must exist, the
-node must be in its `starts`, and the prompt must be non-empty. The prompt
-is the work item and is passed verbatim to every node in the dispatch;
-the node's `objective` is its role.
+The dispatch input is `{ graph, node, prompt, wait? }`. The graph must
+exist, the node must exist in it, and the prompt must be non-empty. Any
+node may be named. The prompt is the work item and is passed verbatim to
+every node in the dispatch; the node's `objective` is its role.
+
+A dispatch is enqueued and gets an id. `wait: true` waits for it to
+finish; `wait: false` returns the id immediately. `dispatch_wait` and
+`dispatch_status` read it later. One dispatch runs at a time; the queue
+is FIFO and in memory.
 
 Each node activation creates a fresh session; nothing is resumed. The only
 thing carried between nodes is the previous node's output path. No stamps,
@@ -95,6 +108,12 @@ location-scoped; OpenCode 2.2.0 has no per-session tool definition. It
 asserts the `handoff` permission and POSTs the label, the call id, and the
 server-provided session id to the engine's loopback acknowledgement
 endpoint, authenticated by a per-boot token.
+
+The same plugin also exposes the interactive agent's control tools —
+`dispatch`, `dispatch_wait`, `dispatch_status`, `reload`, and `graphs`.
+They call the engine's loopback control endpoint with the same token.
+Helper sessions are created with permissions that hide them; the
+interactive agent's session sees them.
 
 The engine's acknowledgement endpoint is authoritative:
 
@@ -187,21 +206,56 @@ completes the dispatch.
 
 ## 8. Control surface
 
+### 8.1 The parent surface
+
 Pokes:
 
-- `dispatch { graph, node, prompt }` — accepted only when idle and not
-  paused.
+- `dispatch { graph, node, prompt }` — enqueues a dispatch; returns its id.
+- `dispatch-status { id }` — `queued`, `running`, `completed`, `defect`,
+  or `cancelled`.
+- `dispatch-wait { id, timeoutMs? }` — wait for a dispatch.
 - `pause` — a boundary pause: the active node finishes, then the dispatch
   waits.
 - `resume` — continue a paused dispatch, or clear an idle pause.
-- `introspect` — a snapshot of `{ paused, active, lastEvent, lastDefect }`;
-  no history.
+- `reload` — validate and swap the config when idle; faults keep the old
+  graph.
+- `introspect` — `{ paused, active, queue, lastEvent, lastDefect }`; no
+  history.
 
-Notices: `version`, `ready`, `dispatched`, `step` (begin/end), `handoff`,
-`paused`, `resumed`, `completion` (completed/defect/cancelled), `defect`,
-`introspection`, and `heartbeat`. Exactly one completion per accepted
-dispatch. A dispatch defect ends only that dispatch; the heartbeat
-continues.
+Notices: `version`, `ready`, `queued`, `dispatched`, `step` (begin/end),
+`handoff`, `paused`, `resumed`, `completion` (completed/defect/cancelled),
+`defect`, `introspection`, and `heartbeat`. Exactly one completion per
+accepted dispatch. A dispatch defect ends only that dispatch; the
+heartbeat continues.
+
+### 8.2 The interactive agent's tools
+
+The same plugin gives the user's interactive agent:
+
+- `dispatch({ graph, node, prompt, wait?, timeoutMs? })` — enqueue; wait
+  or return the id.
+- `dispatch_wait({ dispatchId, timeoutMs? })` — wait for completion.
+- `dispatch_status({ dispatchId })` — the live state.
+- `reload()` — validate and swap the graph config; returns faults or the
+  new graph list.
+- `graphs()` — the config path and the current graphs and nodes.
+
+The tools are permission-gated. Helper sessions allow only `handoff` and
+their work actions; the interactive agent's session allows the control
+tools.
+
+### 8.3 The interactive agent's skills
+
+The v1 product ships two skills for the interactive agent, installed in
+the workspace's skill directory:
+
+- **graph authoring** — the config path, schema, helper/node/handoff
+  fields, validation, reload, and examples.
+- **dispatching** — how to start work at any node, wait or background,
+  read completion and defects, and use the queue.
+
+The skills are guidance for the user's agent; they are not helper craft
+and not engine code.
 
 ## 9. Config and the verifier
 
@@ -228,7 +282,6 @@ schema is strict; unknown fields are faults.
   "graphs": [
     {
       "id": "build-review",
-      "starts": ["implement"],
       "outputRoot": "work",
       "maxSteps": 100,
       "nodes": [
@@ -276,11 +329,15 @@ The verifier is the boot gate:
 - **Schema**: types, ids, models, permissions, output and config paths,
   unknown fields.
 - **Graph**: dangling handoff targets, duplicate labels or ids, mixed
-  modes, empty conditional label sets, unknown helpers, a start naming no
-  node, unreachable nodes, no terminal node, a start that cannot reach a
-  terminal, and an unbounded cycle.
+  modes, empty conditional label sets, unknown helpers, a node that
+  cannot reach a terminal, no terminal node, and an unbounded cycle.
 - **Limits**: `maxVisits` is 1–3 (the engine's hard ceiling; config may
   lower it), `maxSteps` is positive, `budgetMs` is positive.
+
+The config path is the file the engine was started with; the interactive
+agent edits it and calls `reload`. A reload validates the whole file:
+success swaps it for subsequent dispatches, failure returns the named
+faults and keeps the old graph.
 
 Any fault refuses boot with exit 2. Runtime faults are separate: no
 handoff, undeclared label, multiple handoffs, missing/empty/changed
@@ -291,9 +348,11 @@ output, failed/interrupted/timed-out session, `maxVisits`, and
 
 The handoff contract is enforced by the engine; it is not a security
 boundary against a helper with unrestricted filesystem or shell access.
-A helper that can read the service registration, the engine's
-acknowledgement token, or the plugin source — or write the workspace's
-`.opencode` — can forge routing or change the lever.
+The interactive agent is trusted and holds the control token; helper
+sessions are not given the control tools. A helper that can read the
+service registration, the engine's token, or the plugin source — or write
+the workspace's `.opencode` — can still forge routing or change the
+lever.
 
 Run helpers with no access to `service.json`, engine state, or the
 acknowledgement token; mount the plugin and config read-only outside the
@@ -315,8 +374,10 @@ the live server refuses.
 The proof sequence is fixed: one session and one lever; one node and one
 handoff; two nodes with output passing; the failure matrix (no handoff,
 double, undeclared label, missing output, output changed after handoff,
-session failure, timeout); then the control matrix (pause, resume,
-introspect, busy dispatch).
+session failure, timeout); the control matrix (pause, resume, introspect,
+queue, busy dispatch); and the complete user pipeline — an interactive
+agent authors a graph, reloads it, dispatches a prompt, waits or
+backgrounds it, and receives the product.
 
 ## 12. Out of scope
 
@@ -324,5 +385,6 @@ The programmatic node type — a work kind that computes a label without an
 agent — comes later, when a gap is found; the node's work slot is reserved
 for it. The old documents, stamps, projects, records, watchers,
 reconciler, delivery, entry/exit types, and the plugin ecosystem are gone.
-So are multiple active dispatches, durable dispatch recovery, and history.
-The handoff tool plugin is the one required exception.
+So are parallel dispatches, durable queue recovery, and history. The
+handoff tool plugin is the one required exception. The interactive
+agent's two skills are in scope; they are guidance, not engine code.
