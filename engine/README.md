@@ -1,9 +1,12 @@
-# The engine — v1
+# The engine — v1.2
 
 One ordinary program that dispatches a prompt into a graph of agent nodes.
 A node's helper does the work, writes an output file, and pulls exactly one
 handoff lever; the engine routes to the label's target. One dispatch runs at
 a time; the rest wait in a FIFO queue.
+
+There is one graph per engine configuration. Workflows are labelled
+subsections of that graph, not separate graphs.
 
 The full contract is `SPEC.md` at the repository root. Deferred work is
 tracked in `ROADMAP.md`.
@@ -23,9 +26,10 @@ node /path/to/girth-agents/engine/engine.mjs graph.json
 The engine:
 
 - validates the config and refuses to boot with named faults;
-- writes `.opencode/plugins/engine-handoff/` (the one tool provider),
-  `.opencode/skills/{graph-authoring,dispatching}/SKILL.md`, and the
-  `.opencode/commands/graph.md` command into the workspace;
+- writes `.opencode/plugins/engine-handoff/` (the one tool provider,
+  including the `/graph` command), `.opencode/skills/{graph-authoring,dispatching}/SKILL.md`,
+  and `.opencode/agents/graph-view.md` into the workspace; it removes the
+  old engine-installed `.opencode/commands/graph.md`;
 - writes `GRAPH.md` — the current graph as a Mermaid map, workflow table,
   and node table — and regenerates it on every valid reload;
 - preflights the plugin against the live OpenCode server;
@@ -44,18 +48,23 @@ registration at `~/.local/state/opencode/service.json` (or
 Over stdio:
 
 ```json
-{"kind":"dispatch","graph":"build-review","node":"implement","prompt":"The work item."}
+{"kind":"dispatch","node":"implement","prompt":"The work item."}
 ```
 
 Then `dispatch-status` / `dispatch-wait` with the returned `dispatchId`.
-`pause`, `resume`, `reload`, and `introspect` are also pokes. `ready`,
-`queued`, `dispatched`, `step`, `handoff`, `completion`, `defect`,
-`reloaded`, `introspection`, and `heartbeat` are notices.
+`dispatch-cancel`, `pause`, `resume`, `reload`, and `introspect` are also
+pokes. `ready`, `queued`, `dispatched`, `step`, `handoff`, `completion`,
+`defect`, `reloaded`, `introspection`, and `heartbeat` are notices. Step and
+completion notices carry the dispatch's cost and token usage.
 
 ## The graph view
 
-Type `/graph` in an interactive session. The command calls the engine's
-`graph_map` tool and prints, verbatim:
+Type `/graph` in an interactive session. It takes no arguments and has no
+subcommands. The plugin command runs `engine/graph-view.mjs` for the exact
+text, switches the session to the read-only `graph-view` agent for one
+reply, then restores the previous agent. That agent cannot dispatch work.
+The CLI asks the running engine for the map; if the engine is down, it
+renders the same map from the config and says so. It prints, verbatim:
 
 - a Mermaid map with the workflow box, entry/exit, node ids, helpers, and
   `↻ resume` / `✦ fresh` session markers;
@@ -63,39 +72,41 @@ Type `/graph` in an interactive session. The command calls the engine's
 - a node table with objective, output, session, handoff, and max visits;
 - the legend and the one-line live state.
 
-No narrative, no subcommands. `/graph build-review` narrows to one graph.
-The same content is in `GRAPH.md`, so the graph can stay open beside the
-chat independently of the agent.
+No narrative, no graph id, no subcommands. The same content is in
+`GRAPH.md`, so the graph can stay open beside the chat independently of the
+agent.
 
 ## The interactive agent
 
 New sessions in the workspace see the plugin tools:
 
-- `dispatch({ graph, node, prompt, wait?, timeoutMs? })`
+- `dispatch({ node, prompt, wait?, timeoutMs? })`
 - `dispatch_wait({ dispatchId, timeoutMs? })`
 - `dispatch_status({ dispatchId })`
+- `dispatch_cancel({ dispatchId })`
 - `reload()`
-- `graphs()`
-- `graph_map({ graph? })`
+- `graph_info()`
+- `graph_map()`
 
 `wait: true` blocks like a normal task; `wait: false` returns the dispatch
-id immediately. The two installed skills are the guidance:
+id immediately. `dispatch_cancel` removes a queued dispatch or interrupts
+the active one. The two installed skills are the guidance:
 
 - **graph-authoring** — the config path, schema, validation, and reload.
-- **dispatching** — start at any node, wait or background, read completion.
+- **dispatching** — start at any node, wait or background, cancel, report.
 
 A session that existed before the engine installed the plugin/skills may
 need a new session to see them.
 
 ## Config
 
-A single JSON file: `version`, `helpers`, `graphs`. See
+A single JSON file: `version`, `helpers`, `graph`. See
 `engine/example-graph.json`. Any node may be a dispatch entry point. A node's
 handoff is `terminal`, `unconditional` (label `next`), or `conditional`
 (labels with one target each). Every node must reach a terminal; every cycle
 must carry `maxVisits` (1–100; the shipped graph uses 20).
 
-A graph may carry `workflows`: labelled subsections with an `entry`, an
+The graph may carry `workflows`: labelled subsections with an `entry`, an
 `exit`, and a node list. They are views for reasoning, not containers; the
 engine routes by handoffs, not by workflow.
 
@@ -112,20 +123,24 @@ From `engine/`:
 node live-proof.mjs
 ```
 
-It creates `/tmp/opencode/v1-live`, starts the engine, and proves:
+It creates a scratch workspace under `/tmp/opencode`, starts the engine, and
+proves:
 
-1. `GRAPH.md` and the `/graph` command are generated;
-2. a stdio dispatch runs the build-review graph to its terminal;
+1. one graph boots, `GRAPH.md` and the read-only `/graph` command are
+   generated, and the CLI map leaves the engine idle;
+2. a stdio dispatch runs the build-review graph to its terminal and reports
+   cost and tokens;
 3. a second dispatch queues behind the active one and both complete;
 4. the interactive agent dispatches through the plugin tool and waits;
-5. the session-check graph shows one builder session across three visits
-   and a new reviewer session on every review;
-6. the interactive agent renders `graph_map` as a Mermaid map;
-7. the interactive agent edits the graph, calls `reload`, and both the
+5. a queued dispatch and the active dispatch are cancelled without killing
+   the engine;
+6. the interactive agent edits the graph, calls `reload`, and both the
    engine and `GRAPH.md` swap it.
 
 It uses the real OpenCode service and the real handoff plugin. It spends a
-small amount on the helper models.
+small amount on the helper models. The builder-resume/reviewer-fresh
+regression is covered by the offline executor test, not by a second
+workflow in the product graph.
 
 ## Tests
 

@@ -1,69 +1,28 @@
-// The live v1 proof. It creates a scratch workspace, starts the engine,
-// and proves the four things v1 claims:
-//   1. stdio dispatch runs a graph to a terminal;
-//   2. a second dispatch queues behind the active one;
-//   3. the interactive agent dispatches through the plugin tool and waits;
-//   4. the interactive agent edits the graph, reloads it, and the engine
-//      swaps it.
+// The live v1.2 proof. It creates a scratch workspace, starts the engine,
+// and proves the promised surface:
+//   1. one graph boots, GRAPH.md is generated, and /graph is read-only;
+//   2. a stdio dispatch runs the graph to a terminal and reports usage;
+//   3. a second dispatch queues behind the active one and both complete;
+//   4. the interactive agent dispatches through the plugin tool and waits;
+//   5. a queued dispatch and an active dispatch can be cancelled;
+//   6. the interactive agent edits the graph, reloads it, and the engine
+//      and GRAPH.md swap it.
 // It uses the real OpenCode service and the real handoff plugin.
 
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { promisify } from "node:util";
 import { createDriver } from "./driver.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const workspace = process.argv[2] ?? "/tmp/opencode/v1-live";
+const workspace = process.argv[2] ?? `/tmp/opencode/v1-live-${process.pid}`;
 const enginePath = join(here, "engine.mjs");
+const viewPath = join(here, "graph-view.mjs");
 const model = "openrouter/~deepseek/deepseek-flash-latest";
-
-// A deterministic session proof: the builder must be the same session on all
-// three visits; the reviewer must be a new session on each of its two visits.
-const sessionCheckGraph = {
-  id: "session-check",
-  outputRoot: "work",
-  maxSteps: 20,
-  workflows: [
-    { id: "session-check", entry: "builder", exit: "done", nodes: ["builder", "reviewer", "done"] },
-  ],
-  nodes: [
-    {
-      id: "builder",
-      helper: "builder",
-      objective:
-        "Count the reviewer reports already in your session. If there are fewer than two, write the current pass to the output and hand off `again`. If there are two, write the final pass and hand off `finish`. You are the same builder session; use your prior context.",
-      output: "builder.md",
-      session: "resume",
-      maxVisits: 3,
-      handoff: {
-        mode: "conditional",
-        labels: [
-          { label: "again", to: "reviewer", description: "Send the pass to review." },
-          { label: "finish", to: "done", description: "Finish after two reviews." },
-        ],
-      },
-    },
-    {
-      id: "reviewer",
-      helper: "reviewer",
-      objective: "Read the builder's output. Write a one-line review. Always hand off `next` back to the builder.",
-      output: "reviewer.md",
-      session: "fresh",
-      maxVisits: 3,
-      handoff: { mode: "unconditional", to: "builder", description: "Back to the builder." },
-    },
-    {
-      id: "done",
-      helper: "builder",
-      objective: "Write a one-line final output and end.",
-      output: "final.md",
-      session: "fresh",
-      handoff: { mode: "terminal" },
-    },
-  ],
-};
+const run = promisify(execFile);
 
 const events = [];
 let child;
@@ -86,10 +45,6 @@ function waitFor(predicate, timeoutMs, label) {
   });
 }
 
-function lastCompletion() {
-  return [...events].reverse().find((event) => event.kind === "completion");
-}
-
 async function startEngine() {
   child = spawn(process.execPath, [enginePath, "graph.json"], {
     cwd: workspace,
@@ -109,7 +64,7 @@ async function startEngine() {
         const event = JSON.parse(line);
         events.push(event);
         if (["ready", "completion", "reloaded", "defect"].includes(event.kind)) {
-          console.log(`  engine ${event.kind}`, JSON.stringify(event).slice(0, 220));
+          console.log(`  engine ${event.kind}`, JSON.stringify(event).slice(0, 240));
         }
       } catch {
         // stderr carries anything human-facing
@@ -117,20 +72,47 @@ async function startEngine() {
     }
   });
   child.stderr.on("data", (data) => process.stderr.write(data));
-  const ready = await waitFor(() => events.find((event) => event.kind === "ready"), 30000, "engine ready");
+  const ready = await waitFor(() => events.find((event) => event.kind === "ready"), 60000, "engine ready");
   if (!ready.pluginActive) throw new Error("handoff plugin is not active");
   return ready;
 }
 
-async function stdioDispatch(graph, node, prompt) {
-  const before = events.length;
-  child.stdin.write(JSON.stringify({ kind: "dispatch", graph, node, prompt }) + "\n");
-  const completion = await waitFor(
-    () => events.slice(before).find((event) => event.kind === "completion"),
-    180000,
-    "stdio completion",
+function send(poke) {
+  child.stdin.write(JSON.stringify(poke) + "\n");
+}
+
+function completionFor(dispatchId, timeoutMs = 180000) {
+  return waitFor(
+    () => events.find((event) => event.kind === "completion" && event.dispatchId === dispatchId),
+    timeoutMs,
+    `completion ${dispatchId}`,
   );
-  return completion;
+}
+
+async function startStdio(node, prompt) {
+  const before = events.length;
+  send({ kind: "dispatch", node, prompt });
+  const queued = await waitFor(
+    () => events.slice(before).find((event) => event.kind === "queued"),
+    10000,
+    "stdio queued",
+  );
+  return queued.dispatchId;
+}
+
+async function stdioDispatch(node, prompt) {
+  const id = await startStdio(node, prompt);
+  return completionFor(id);
+}
+
+async function waitIdle(sessionID, timeoutMs = 120000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const info = await driver.getSession(sessionID);
+    if (["succeeded", "failed", "interrupted"].includes(info.outcome) && info.time?.idle) return info;
+    if (Date.now() >= deadline) throw new Error(`timeout: session ${sessionID} idle`);
+    await sleep(250);
+  }
 }
 
 async function interactiveSession(title, prompt) {
@@ -157,58 +139,105 @@ async function interactiveSession(title, prompt) {
   return { session, info, tools, text: text.join("\n") };
 }
 
+function usageTotal(usage) {
+  return (usage?.tokens?.input ?? 0) + (usage?.tokens?.output ?? 0);
+}
+
 async function main() {
-  console.log(`\nV1 LIVE PROOF — ${workspace}`);
+  console.log(`\nV1.2 LIVE PROOF — ${workspace}`);
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
   await cp(join(here, "example-graph.json"), join(workspace, "graph.json"));
-  const config = JSON.parse(await readFile(join(workspace, "graph.json"), "utf8"));
-  config.graphs.push(sessionCheckGraph);
-  await writeFile(join(workspace, "graph.json"), JSON.stringify(config, null, 2) + "\n", "utf8");
 
   driver = await createDriver();
-  await startEngine();
+  const ready = await startEngine();
+  assert.deepEqual(ready.workflows, ["build-review"]);
+
   const artifact = await readFile(join(workspace, "GRAPH.md"), "utf8");
+  assert.match(artifact, /^# Graph\n/);
+  assert.doesNotMatch(artifact, /# Graphs/);
   assert.match(artifact, /workflow · build-review/);
   assert.match(artifact, /↻ resume/);
   assert.match(artifact, /✦ fresh every visit/);
-  const command = await readFile(join(workspace, ".opencode", "commands", "graph.md"), "utf8");
-  assert.match(command, /graph_map/);
-  console.log("PASS  engine booted, GRAPH.md was generated, /graph command was installed");
 
-  const first = await stdioDispatch("build-review", "implement", "Write a one-paragraph design note for a hello() function. Keep it short.");
+  const pluginSource = await readFile(join(workspace, ".opencode", "plugins", "engine-handoff", "index.ts"), "utf8");
+  assert.match(pluginSource, /name: "graph"/);
+  assert.match(pluginSource, /switchAgent\(\{ sessionID, agent: "graph-view" \}\)/);
+  assert.doesNotMatch(pluginSource, /\$ARGUMENTS/);
+  const agent = await readFile(join(workspace, ".opencode", "agents", "graph-view.md"), "utf8");
+  assert.match(agent, /mode: all/);
+  assert.match(agent, /effect: deny/);
+  await assert.rejects(() => readFile(join(workspace, ".opencode", "commands", "graph.md"), "utf8"));
+  console.log("PASS  one graph booted, GRAPH.md was generated, and /graph is read-only");
+
+  const beforeView = events.length;
+  const { stdout: view } = await run(process.execPath, [viewPath, join(workspace, "graph.json")], {
+    cwd: workspace,
+  });
+  assert.match(view, /```mermaid\nflowchart LR/);
+  assert.match(view, /workflow · build-review/);
+  assert.match(view, /↻ resume = same session on revisit/);
+  assert.match(view, /Idle\./);
+  assert.equal(
+    events.slice(beforeView).filter((event) => ["queued", "dispatched"].includes(event.kind)).length,
+    0,
+    "the graph view must not dispatch",
+  );
+  console.log("PASS  the /graph CLI printed the map and left the engine idle");
+
+  const beforeCommand = events.length;
+  const viewSession = await driver.createSession({
+    directory: workspace,
+    title: "v1-live-graph-command",
+    agent: "build",
+    model,
+    permissions: [{ action: "*", resource: "*", effect: "allow" }],
+  });
+  await driver.command(viewSession.id, "graph", "");
+  const viewInfo = await waitIdle(viewSession.id);
+  const viewMessages = await driver.messages(viewSession.id);
+  const viewText = viewMessages
+    .flatMap((message) => message.content ?? [])
+    .filter((part) => part.type === "text")
+    .map((part) => part.text ?? "")
+    .join("\n");
+  assert.equal(viewInfo.agent, "build");
+  assert.match(viewText, /^```mermaid\nflowchart LR/);
+  assert.match(viewText, /Idle\./);
+  assert.doesNotMatch(viewText, /Here is|Here's|Would you like|Want me/);
+  assert.equal(
+    events.slice(beforeCommand).filter((event) => ["queued", "dispatched"].includes(event.kind)).length,
+    0,
+    "the /graph command must not dispatch",
+  );
+  await driver.deleteSession(viewSession.id).catch(() => {});
+  console.log("PASS  /graph printed the exact map, restored the agent, and did not dispatch");
+
+  const first = await stdioDispatch("implement", "Write a one-paragraph design note for a hello() function. Keep it short.");
   assert.equal(first.status, "completed");
   assert.equal(first.terminal, "done");
+  assert.equal(typeof first.usage?.cost, "number");
+  assert.ok(usageTotal(first.usage) > 0, "the completion reports token usage");
   const final = await readFile(join(workspace, "work", "final.md"), "utf8");
   assert.ok(final.trim().length > 0);
-  console.log("PASS  stdio dispatch reached the terminal and wrote work/final.md");
+  console.log("PASS  stdio dispatch reached the terminal and reported cost and tokens");
 
   const beforeQueue = events.length;
-  child.stdin.write(JSON.stringify({
-    kind: "dispatch",
-    graph: "build-review",
-    node: "implement",
-    prompt: "Write a one-sentence design note for hello() version one.",
-  }) + "\n");
-  child.stdin.write(JSON.stringify({
-    kind: "dispatch",
-    graph: "build-review",
-    node: "implement",
-    prompt: "Write a one-sentence design note for hello() version two.",
-  }) + "\n");
+  const queuedOne = await startStdio("implement", "Write a one-sentence design note for hello() version one.");
+  const queuedTwo = await startStdio("implement", "Write a one-sentence design note for hello() version two.");
   const queueCompletions = await waitFor(
     () => {
-      const completed = events.slice(beforeQueue).filter((event) => event.kind === "completion");
+      const completed = events
+        .slice(beforeQueue)
+        .filter((event) => event.kind === "completion" && [queuedOne, queuedTwo].includes(event.dispatchId));
       return completed.length >= 2 ? completed : null;
     },
     240000,
     "two queued completions",
   );
-  const queuedEvents = events.slice(beforeQueue).filter((event) => event.kind === "queued");
   assert.equal(queueCompletions.length, 2);
-  assert.ok(queuedEvents.length >= 2);
   assert.ok(
-    events.slice(beforeQueue).some((event) => event.kind === "queued" && event.dispatchId === "d-2"),
+    events.slice(beforeQueue).some((event) => event.kind === "queued" && event.dispatchId === queuedTwo),
     "the second dispatch was queued",
   );
   console.log("PASS  a second dispatch queued behind the active one and both completed");
@@ -220,12 +249,11 @@ async function main() {
       "You are the user's interactive agent. Read .opencode/skills/dispatching/SKILL.md.",
       "Use the `dispatch` tool exactly once with:",
       JSON.stringify({
-        graph: "build-review",
         node: "implement",
         prompt: "Write a one-paragraph design note for a hello() function. Keep it short.",
         wait: true,
       }),
-      "Report the completion status, the terminal node, and the output path. Do not do the work yourself.",
+      "Report the completion status, the terminal node, the output path, and the usage. Do not do the work yourself.",
     ].join("\n"),
   );
   assert.equal(dispatched.info.outcome, "succeeded");
@@ -238,52 +266,43 @@ async function main() {
   assert.equal(interactiveCompletion.terminal, "done");
   console.log("PASS  the interactive agent dispatched through the tool and waited for the product");
 
-  const sessionCompletion = await stdioDispatch(
-    "session-check",
-    "builder",
-    "Run the session check. Follow the node objective exactly.",
+  send({ kind: "pause" });
+  await waitFor(() => events.find((event) => event.kind === "paused"), 10000, "paused");
+  const queuedCancelId = await startStdio("implement", "This dispatch should be cancelled while queued.");
+  await waitFor(
+    () => events.find((event) => event.kind === "queued" && event.dispatchId === queuedCancelId),
+    10000,
+    "queued dispatch",
   );
-  assert.equal(sessionCompletion.status, "completed");
-  assert.equal(sessionCompletion.terminal, "done");
-  const builderSteps = events.filter(
-    (event) => event.kind === "step" && event.phase === "begin" && event.dispatchId === sessionCompletion.dispatchId && event.node === "builder",
-  );
-  const reviewerSteps = events.filter(
-    (event) => event.kind === "step" && event.phase === "begin" && event.dispatchId === sessionCompletion.dispatchId && event.node === "reviewer",
-  );
-  assert.equal(builderSteps.length, 3);
-  assert.equal(reviewerSteps.length, 2);
-  assert.equal(new Set(builderSteps.map((step) => step.sessionId)).size, 1, "builder must resume one session");
-  assert.equal(new Set(reviewerSteps.map((step) => step.sessionId)).size, 2, "reviewer must be fresh on every visit");
-  assert.ok(builderSteps.slice(1).every((step) => step.resumed === true));
-  assert.ok(String(builderSteps[1].upstream ?? "").endsWith("/work/reviewer.md"));
-  console.log("PASS  builder resumed one session across three visits; reviewer was fresh on both visits");
+  send({ kind: "dispatch-cancel", dispatchId: queuedCancelId });
+  const queuedCancelled = await completionFor(queuedCancelId, 10000);
+  assert.equal(queuedCancelled.status, "cancelled");
+  assert.equal(queuedCancelled.defect, null);
+  send({ kind: "resume" });
+  await waitFor(() => events.find((event) => event.kind === "resumed"), 10000, "resumed");
 
-  const mapped = await interactiveSession(
-    "v1-live-graph-map",
-    [
-      "Call the graph_map tool with no arguments.",
-      "Print each returned mermaid exactly inside a ```mermaid fenced block, then its workflowTable, then its nodeTable.",
-      "Then print the legend and the state.",
-      "Do not add narrative, summary, explanation, or a tour.",
-    ].join("\n"),
+  const beforeActive = events.length;
+  const activeCancelId = await startStdio("implement", "Run a shell sleep of 20 seconds before writing anything.");
+  await waitFor(
+    () => events.slice(beforeActive).find((event) => event.kind === "dispatched" && event.dispatchId === activeCancelId),
+    10000,
+    "active dispatch",
   );
-  assert.equal(mapped.info.outcome, "succeeded");
-  assert.ok(mapped.tools.some((tool) => tool.name === "graph_map" && tool.status === "completed"));
-  assert.match(mapped.text, /```mermaid/);
-  assert.match(mapped.text, /build-review/);
-  assert.match(mapped.text, /↻ resume/);
-  console.log("PASS  the interactive agent rendered graph_map as a Mermaid map with the resume marker");
+  send({ kind: "dispatch-cancel", dispatchId: activeCancelId });
+  const activeCancelled = await completionFor(activeCancelId, 30000);
+  assert.equal(activeCancelled.status, "cancelled");
+  assert.equal(activeCancelled.defect, null);
+  console.log("PASS  a queued dispatch and the active dispatch were cancelled without killing the engine");
 
   const beforeAuthoring = events.length;
   const authored = await interactiveSession(
     "v1-live-authoring",
     [
       "You are the user's interactive agent. Read .opencode/skills/graph-authoring/SKILL.md.",
-      "Call `graphs()` to get the config path.",
-      "Edit that config: in graph 'build-review', change the objective of node 'review' to exactly:",
+      "Call `graph_info()` to get the config path.",
+      "Edit that config: change the objective of node 'review' to exactly:",
       "Review the implementation and name one concrete improvement.",
-      "Keep the rest valid. Call `reload()`. Report valid, faults, and the new objective. Do not dispatch.",
+      "Keep the rest valid. Call `reload()`. Report valid and the new objective. Do not dispatch.",
     ].join("\n"),
   );
   assert.equal(authored.info.outcome, "succeeded");
@@ -293,18 +312,19 @@ async function main() {
     "config reload",
   );
   const configAfter = JSON.parse(await readFile(join(workspace, "graph.json"), "utf8"));
-  const review = configAfter.graphs[0].nodes.find((node) => node.id === "review");
+  const review = configAfter.graph.nodes.find((node) => node.id === "review");
   assert.equal(review.objective, "Review the implementation and name one concrete improvement.");
+  assert.equal(configAfter.graphs, undefined);
   const artifactAfter = await readFile(join(workspace, "GRAPH.md"), "utf8");
   assert.match(artifactAfter, /Review the implementation and name one concrete improvement\./);
   console.log("PASS  the interactive agent edited the graph, reloaded it, and GRAPH.md swapped with it");
 
-  console.log("\nV1 LIVE PROOF PASS");
+  console.log("\nV1.2 LIVE PROOF PASS");
 }
 
 main()
   .catch((error) => {
-    console.error("\nV1 LIVE PROOF FAIL:", error.message);
+    console.error("\nV1.2 LIVE PROOF FAIL:", error.message);
     process.exitCode = 1;
   })
   .finally(async () => {

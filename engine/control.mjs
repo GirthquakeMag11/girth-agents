@@ -45,8 +45,9 @@ const ROUTES = {
   "/tool/dispatch": "dispatch",
   "/tool/dispatch/wait": "dispatchWait",
   "/tool/dispatch/status": "dispatchStatus",
+  "/tool/dispatch/cancel": "dispatchCancel",
   "/tool/reload": "reload",
-  "/tool/graphs": "graphs",
+  "/tool/graph-info": "graphInfo",
   "/tool/graph-map": "graphMap",
 };
 

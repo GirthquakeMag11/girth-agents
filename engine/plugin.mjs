@@ -3,23 +3,29 @@
 // the handoff lever and the interactive control tools. The plugin is written
 // into the workspace by the engine, with the engine's loopback URL and token.
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-function renderPlugin({ url, token }) {
+function renderPlugin({ url, token, graphCli, configPath, nodePath }) {
   return `import { Plugin } from "@opencode/plugin";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 const ENGINE_URL = ${JSON.stringify(url)};
 const TOKEN = ${JSON.stringify(token)};
+const GRAPH_CLI = ${JSON.stringify(graphCli)};
+const CONFIG_PATH = ${JSON.stringify(configPath)};
+const NODE_PATH = ${JSON.stringify(nodePath)};
+const exec = promisify(execFile);
 
 // One tool surface for both sides:
 // - handoff: the helper's lever inside a node.
-// - dispatch/dispatch_wait/dispatch_status/reload/graphs: the interactive
-//   agent's control surface. Helper sessions are created with permissions
-//   that hide the control tools; the interactive session sees them.
+// - dispatch/dispatch_wait/dispatch_status/dispatch_cancel/reload/graph_info/graph_map:
+//   the interactive agent's control surface. Helper sessions are created with
+//   permissions that hide the control tools; the interactive session sees them.
 export default Plugin.define({
   id: "engine-handoff",
   async setup(ctx) {
@@ -51,6 +57,37 @@ export default Plugin.define({
       return json ?? {};
     };
 
+    const graphText = async () => {
+      try {
+        const { stdout } = await exec(NODE_PATH, [GRAPH_CLI, CONFIG_PATH], { cwd: ctx.location.directory });
+        return String(stdout).replace(/\\s+$/, "");
+      } catch {
+        return "Engine not running.";
+      }
+    };
+
+    await ctx.command.transform((editor) => {
+      editor.add({
+        name: "graph",
+        description: "Show the graph as a Mermaid map, workflows, and nodes.",
+        async execute({ sessionID }) {
+          const text = await graphText();
+          const session = await ctx.session.get({ sessionID });
+          const previous = session.agent;
+          await ctx.session.switchAgent({ sessionID, agent: "graph-view" });
+          try {
+            await ctx.session.prompt({
+              sessionID,
+              text: text + "\\n\\nReturn the text above verbatim. Do not add narrative, summary, explanation, or a tour. Do not call any tools.",
+            });
+            await ctx.session.wait({ sessionID });
+          } finally {
+            await ctx.session.switchAgent({ sessionID, agent: previous });
+          }
+        },
+      });
+    });
+
     await ctx.tool.transform((editor) => {
       editor.add({
         name: "handoff",
@@ -78,23 +115,21 @@ export default Plugin.define({
       editor.add({
         name: "dispatch",
         description:
-          "Dispatch a prompt into a graph at any node. wait=true blocks for the result; wait=false returns a dispatch id immediately.",
+          "Dispatch a prompt into the graph at any node. wait=true blocks for the result; wait=false returns a dispatch id immediately.",
         input: {
           type: "object",
           properties: {
-            graph: { type: "string" },
             node: { type: "string" },
             prompt: { type: "string" },
             wait: { type: "boolean" },
             timeoutMs: { type: "number" },
           },
-          required: ["graph", "node", "prompt"],
+          required: ["node", "prompt"],
           additionalProperties: false,
         },
         options: { codemode: false, permission: "dispatch" },
         async execute(input, context) {
           const started = await call("/tool/dispatch", {
-            graph: input.graph,
             node: input.node,
             prompt: input.prompt,
           }, context, "dispatch");
@@ -150,6 +185,24 @@ export default Plugin.define({
       });
 
       editor.add({
+        name: "dispatch_cancel",
+        description: "Cancel a queued dispatch, or interrupt and cancel the active dispatch.",
+        input: {
+          type: "object",
+          properties: { dispatchId: { type: "string" } },
+          required: ["dispatchId"],
+          additionalProperties: false,
+        },
+        options: { codemode: false, permission: "dispatch_cancel" },
+        async execute(input, context) {
+          const result = await call("/tool/dispatch/cancel", {
+            dispatchId: input.dispatchId,
+          }, context, "dispatch_cancel");
+          return { content: JSON.stringify(result) };
+        },
+      });
+
+      editor.add({
         name: "reload",
         description: "Validate and swap the graph config. Returns named faults and keeps the old graph if invalid.",
         input: { type: "object", properties: {}, additionalProperties: false },
@@ -161,12 +214,12 @@ export default Plugin.define({
       });
 
       editor.add({
-        name: "graphs",
-        description: "List the current graphs, their nodes, and the config path.",
+        name: "graph_info",
+        description: "Return the config path and the one graph's workflows, nodes, and helpers.",
         input: { type: "object", properties: {}, additionalProperties: false },
-        options: { codemode: false, permission: "graphs" },
+        options: { codemode: false, permission: "graph_info" },
         async execute(input, context) {
-          const result = await call("/tool/graphs", {}, context, "graphs");
+          const result = await call("/tool/graph-info", {}, context, "graph_info");
           return { content: JSON.stringify(result) };
         },
       });
@@ -174,15 +227,11 @@ export default Plugin.define({
       editor.add({
         name: "graph_map",
         description:
-          "Return the current graph as a deterministic Mermaid map, workflow table, node table, legend, and live state. This is the graph as a thing; display it verbatim.",
-        input: {
-          type: "object",
-          properties: { graph: { type: "string" } },
-          additionalProperties: false,
-        },
+          "Return the graph as a deterministic Mermaid map, workflow table, node table, legend, and live state. This is the graph as a thing; display it verbatim.",
+        input: { type: "object", properties: {}, additionalProperties: false },
         options: { codemode: false, permission: "graph_map" },
         async execute(input, context) {
-          const result = await call("/tool/graph-map", { graph: input.graph }, context, "graph_map");
+          const result = await call("/tool/graph-map", {}, context, "graph_map");
           return { content: JSON.stringify(result) };
         },
       });
@@ -192,11 +241,11 @@ export default Plugin.define({
 `;
 }
 
-export async function installPlugin({ cwd, url, token }) {
+export async function installPlugin({ cwd, url, token, graphCli, configPath, nodePath }) {
   const dir = join(cwd, ".opencode", "plugins", "engine-handoff");
   await mkdir(dir, { recursive: true });
   const path = join(dir, "index.ts");
-  await writeFile(path, renderPlugin({ url, token }), "utf8");
+  await writeFile(path, renderPlugin({ url, token, graphCli, configPath, nodePath }), "utf8");
   return path;
 }
 
@@ -209,25 +258,42 @@ export async function installSkills({ cwd }) {
   }
 }
 
-export async function installCommands({ cwd }) {
-  const dir = join(cwd, ".opencode", "commands");
-  await mkdir(dir, { recursive: true });
-  await writeFile(
-    join(dir, "graph.md"),
-    `---
-description: Show the current graph as a Mermaid map, workflow table, and node table.
----
-Call the graph_map tool with $ARGUMENTS.
-
-For each returned graph, print its \`mermaid\` exactly inside a \`\`\`mermaid fenced block, then its \`workflowTable\`, then its \`nodeTable\`. Then print the \`legend\` and the \`state\`.
-
-Do not add narrative, summary, explanation, or a tour.
-`,
-    "utf8",
-  );
+export async function removeCommands({ cwd }) {
+  const path = join(cwd, ".opencode", "commands", "graph.md");
+  try {
+    const body = await readFile(path, "utf8");
+    if (body.includes("graph-view") || body.includes("graph_map")) await rm(path, { force: true });
+  } catch {
+    // no engine-installed command to remove
+  }
 }
 
-export async function preflightPlugin(driver, cwd, { timeoutMs = 10000 } = {}) {
+export async function installAgent({ cwd }) {
+  const dir = join(cwd, ".opencode", "agents");
+  await mkdir(dir, { recursive: true });
+  const body = `---
+description: Read-only graph view. Shows the graph map and tables; it cannot dispatch work.
+mode: all
+permissions:
+  - action: "*"
+    resource: "*"
+    effect: deny
+  - action: graph_map
+    resource: "*"
+    effect: allow
+  - action: graph_info
+    resource: "*"
+    effect: allow
+---
+
+You are the read-only graph view. The user message contains the exact
+output to display. Print that output verbatim. Do not call any tools. Do
+not dispatch work. Do not add narrative, summary, explanation, or a tour.
+`;
+  await writeFile(join(dir, "graph-view.md"), body, "utf8");
+}
+
+export async function preflightPlugin(driver, cwd, { timeoutMs = 30000 } = {}) {
   if (!driver) return null;
   const deadline = Date.now() + timeoutMs;
   let last = [];

@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { composeBrief } from "./brief.mjs";
-import { MAX_VISITS, findGraph, findNode, handoffTarget, outputPathFor } from "./config.mjs";
+import { MAX_VISITS, findNode, handoffTarget, outputPathFor } from "./config.mjs";
 import { permissionsFor } from "./driver.mjs";
 
 export class DispatchDefect extends Error {
@@ -97,7 +97,72 @@ export function checkHandoffOrder(messages, handoff) {
   return null;
 }
 
-async function runNode({ driver, config, graph, node, helper, record, cwd, previousOutput, onEvent, sessions }) {
+const EMPTY_TOKENS = () => ({ input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } });
+
+export function emptyUsage() {
+  return { cost: 0, tokens: EMPTY_TOKENS() };
+}
+
+function usageOf(info) {
+  const tokens = info?.tokens ?? {};
+  return {
+    cost: typeof info?.cost === "number" ? info.cost : 0,
+    tokens: {
+      input: tokens.input ?? 0,
+      output: tokens.output ?? 0,
+      reasoning: tokens.reasoning ?? 0,
+      cache: {
+        read: tokens.cache?.read ?? 0,
+        write: tokens.cache?.write ?? 0,
+      },
+    },
+  };
+}
+
+function usageDelta(before, after) {
+  const a = usageOf(before);
+  const b = usageOf(after);
+  return {
+    cost: Math.max(0, b.cost - a.cost),
+    tokens: {
+      input: Math.max(0, b.tokens.input - a.tokens.input),
+      output: Math.max(0, b.tokens.output - a.tokens.output),
+      reasoning: Math.max(0, b.tokens.reasoning - a.tokens.reasoning),
+      cache: {
+        read: Math.max(0, b.tokens.cache.read - a.tokens.cache.read),
+        write: Math.max(0, b.tokens.cache.write - a.tokens.cache.write),
+      },
+    },
+  };
+}
+
+function addUsage(total, delta) {
+  const t = total ?? emptyUsage();
+  return {
+    cost: t.cost + delta.cost,
+    tokens: {
+      input: t.tokens.input + delta.tokens.input,
+      output: t.tokens.output + delta.tokens.output,
+      reasoning: t.tokens.reasoning + delta.tokens.reasoning,
+      cache: {
+        read: t.tokens.cache.read + delta.tokens.cache.read,
+        write: t.tokens.cache.write + delta.tokens.cache.write,
+      },
+    },
+  };
+}
+
+async function sessionInfo(driver, sessionId) {
+  try {
+    return await driver.getSession(sessionId);
+  } catch {
+    return null;
+  }
+}
+
+async function runNode({ driver, graph, node, helper, record, cwd, previousOutput, onEvent, sessions }) {
+  if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
+
   const outputAbs = outputPathFor(graph, node, cwd);
   const sessionMode = node.session ?? "fresh";
   record.nodeDef = node;
@@ -116,7 +181,7 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
   } else {
     const session = await driver.createSession({
       directory: cwd,
-      title: `${record.id}/${graph.id}/${node.id}`,
+      title: `${record.id}/${node.id}`,
       agent: helper.agent ?? "build",
       model: helper.model,
       permissions: permissionsFor({
@@ -128,6 +193,7 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
     if (sessionMode === "resume") sessions.set(node.id, sessionId);
   }
   record.sessionId = sessionId;
+  const before = await sessionInfo(driver, sessionId);
   onEvent("step", {
     dispatchId: record.id,
     node: node.id,
@@ -149,6 +215,7 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
 
   let info;
   try {
+    if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
     info = await driver.prompt(sessionId, brief, { budgetMs: node.budgetMs ?? 600000 });
   } catch (e) {
     if (sessionMode === "fresh" && process.env.ENGINE_KEEP_SESSIONS !== "1") {
@@ -158,6 +225,9 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
   }
 
   try {
+    const delta = usageDelta(before, info);
+    record.usage = addUsage(record.usage, delta);
+
     if (info.outcome !== "succeeded") {
       throw new DispatchDefect(`session-${info.outcome}`, `node '${node.id}' session ${sessionId} ended ${info.outcome}`);
     }
@@ -170,6 +240,7 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
         node: node.id,
         phase: "end",
         outcome: info.outcome,
+        usage: delta,
         at: new Date().toISOString(),
       });
       return { outputPath: outputAbs, handoff: null };
@@ -206,6 +277,7 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
       label: record.handoff.label,
       sessionMode,
       resumed,
+      usage: delta,
       at: new Date().toISOString(),
     });
     return { outputPath: outputAbs, handoff: record.handoff };
@@ -217,21 +289,24 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
 }
 
 export async function runDispatch({ driver, config, record, cwd, onEvent = () => {}, waitIfPaused = async () => {} }) {
-  const graph = findGraph(config, record.graph);
-  if (!graph) throw new DispatchDefect("no-graph", `dispatch names no graph '${record.graph}'`);
+  const graph = config.graph;
+  if (!graph) throw new DispatchDefect("no-graph", "the config has no graph");
 
   let current = record.node;
   let previousOutput = null;
   const visits = record.visits ?? {};
   const maxSteps = graph.maxSteps ?? 100;
   const sessions = new Map();
+  record.usage = record.usage ?? emptyUsage();
 
   try {
   for (let step = 0; step < maxSteps; step += 1) {
+    if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
     await waitIfPaused();
+    if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
 
     const node = findNode(graph, current);
-    if (!node) throw new DispatchDefect("no-node", `graph '${graph.id}' names no node '${current}'`);
+    if (!node) throw new DispatchDefect("no-node", `the graph has no node '${current}'`);
 
     visits[current] = (visits[current] ?? 0) + 1;
     const hardCeiling = Math.min(node.maxVisits ?? MAX_VISITS, MAX_VISITS);
@@ -249,7 +324,6 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
 
     const result = await runNode({
       driver,
-      config,
       graph,
       node,
       helper,
@@ -262,7 +336,7 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
 
     if (node.handoff.mode === "terminal") {
       record.terminal = current;
-      return { terminal: current, visits: { ...visits }, output: result.outputPath };
+      return { terminal: current, visits: { ...visits }, output: result.outputPath, usage: record.usage };
     }
 
     const target = handoffTarget(node, result.handoff.label);
@@ -286,7 +360,7 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
     current = target;
   }
 
-  throw new DispatchDefect("step-overflow", `graph '${graph.id}' exceeded ${maxSteps} steps`);
+  throw new DispatchDefect("step-overflow", `the graph exceeded ${maxSteps} steps`);
   } finally {
     if (process.env.ENGINE_KEEP_SESSIONS !== "1") {
       for (const sessionId of sessions.values()) {

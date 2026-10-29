@@ -275,8 +275,7 @@ function validateGraph(graph, at, helperIds, faults) {
     faults.push(fault("schema.graph", `${at}: must be an object`));
     return;
   }
-  strict(graph, ["id", "outputRoot", "maxSteps", "workflows", "nodes"], at, faults);
-  string(graph.id, `${at}.id`, faults);
+  strict(graph, ["outputRoot", "maxSteps", "workflows", "nodes"], at, faults);
   if (graph.outputRoot !== undefined) relativePath(graph.outputRoot, `${at}.outputRoot`, faults);
   integer(graph.maxSteps, `${at}.maxSteps`, faults, { min: 1 });
 
@@ -350,8 +349,8 @@ function validateGraph(graph, at, helperIds, faults) {
 export function validateConfig(doc) {
   const faults = [];
   if (!isObject(doc)) return [fault("schema.config", "config must be an object")];
-  strict(doc, ["version", "helpers", "graphs"], "config", faults);
-  if (doc.version !== "2") faults.push(fault("schema.version", "config.version: must be the string '2'"));
+  strict(doc, ["version", "helpers", "graph"], "config", faults);
+  if (doc.version !== "3") faults.push(fault("schema.version", "config.version: must be the string '3'"));
 
   const helperIds = new Set();
   if (!Array.isArray(doc.helpers) || doc.helpers.length === 0) {
@@ -366,17 +365,10 @@ export function validateConfig(doc) {
     }
   }
 
-  const graphIds = new Set();
-  if (!Array.isArray(doc.graphs) || doc.graphs.length === 0) {
-    faults.push(fault("schema.graphs", "config.graphs: must be a non-empty array"));
+  if (!isObject(doc.graph)) {
+    faults.push(fault("schema.graph", "config.graph: must be an object"));
   } else {
-    for (const [i, graph] of doc.graphs.entries()) {
-      validateGraph(graph, `config.graphs[${i}]`, helperIds, faults);
-      if (isObject(graph) && typeof graph.id === "string" && graph.id.trim() !== "") {
-        if (graphIds.has(graph.id)) faults.push(fault("schema.graph-id", `config.graphs[${i}].id: duplicate '${graph.id}'`));
-        graphIds.add(graph.id);
-      }
-    }
+    validateGraph(doc.graph, "config.graph", helperIds, faults);
   }
 
   return faults;
@@ -399,10 +391,6 @@ export async function loadConfig(path) {
   return { doc: faults.length === 0 ? doc : null, faults, path };
 }
 
-export function findGraph(doc, id) {
-  return doc?.graphs?.find((graph) => graph.id === id) ?? null;
-}
-
 export function findNode(graph, id) {
   return graph?.nodes?.find((node) => node.id === id) ?? null;
 }
@@ -422,7 +410,6 @@ export function handoffTarget(node, label) {
 
 export function graphSummary(graph) {
   return {
-    id: graph.id,
     maxSteps: graph.maxSteps ?? 100,
     outputRoot: graph.outputRoot ?? ".",
     workflows: graph.workflows ?? [],
@@ -442,5 +429,15 @@ export function graphSummary(graph) {
 }
 
 export function configSummary(doc, path) {
-  return { configPath: path, graphs: doc.graphs.map(graphSummary) };
+  return {
+    configPath: path,
+    graph: graphSummary(doc.graph),
+    helpers: doc.helpers.map((helper) => ({
+      id: helper.id,
+      model: helper.model,
+      agent: helper.agent ?? "build",
+      permissions: helper.permissions,
+      craft: helper.craft ?? null,
+    })),
+  };
 }

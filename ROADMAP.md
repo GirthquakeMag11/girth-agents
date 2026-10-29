@@ -1,11 +1,11 @@
 # Roadmap
 
-**Baseline:** v1 (tag `v1`, commit `236e2e9`) plus the v1.1 graph-model
-slice — live-proven on OpenCode 2.2.0. The engine runs agent-node graphs,
-enforces one handoff per node, queues dispatches FIFO, validates and
-reloads config, resumes the implementation session across a review loop,
-keeps the reviewer fresh, and gives the interactive agent a graph map,
-artifact, and command.
+**Baseline:** v1.2 (tag `v1.2.0`). The engine runs one graph of agent-node
+workflows, enforces one handoff per node, queues dispatches FIFO, validates
+and reloads config, resumes the implementation session across a review
+loop, keeps the reviewer fresh, cancels queued or active work, reports
+cost and tokens, and gives the interactive agent a deterministic read-only
+graph view.
 
 This document tracks deferred work. It is not a wish list: each item has a
 target version and an acceptance condition. Check an item only when its
@@ -60,12 +60,12 @@ cooperative helpers.
 - [x] Live config reload with named faults; the old graph stays on a bad
   edit.
 - [x] Interactive tools: `dispatch`, `dispatch_wait`, `dispatch_status`,
-  `reload`, `graphs`.
+  `dispatch_cancel`, `reload`, `graph_info`, `graph_map`.
 - [x] Interactive skills: graph-authoring, dispatching.
-- [x] 28 offline tests and a live proof covering stdio dispatch, queue,
-  interactive dispatch/wait, config authoring/reload; background
-  dispatch (wait:false then dispatch_wait) was exercised in a separate
-  live probe.
+- [x] 41 offline tests and a live proof covering stdio dispatch, queue,
+  interactive dispatch/wait, config authoring/reload, cancellation, cost,
+  and the read-only graph view; background dispatch (wait:false then
+  dispatch_wait) was exercised in a separate live probe.
 
 ## Shipped after v1 (v1.1 graph-model slice)
 
@@ -77,16 +77,39 @@ cooperative helpers.
 - [x] **Session modes.** A node declares `session: "fresh"` (default) or
   `"resume"`. The implementation node resumes its original builder session
   on a fail loop; the resumed brief carries the reviewer's output path.
-  The reviewer is fresh on every review pass. The live proof shows one
-  builder session id across three visits and different reviewer session
-  ids on both visits.
+  The reviewer is fresh on every review pass. An offline fake-driver test
+  proves one builder session id across three visits and different
+  reviewer session ids on both visits; no second workflow is added to the
+  product graph.
 - [x] **Graph view.** `graph_map` returns a deterministic Mermaid map,
   workflow table, node table, legend, and live state. `/graph` prints them
   verbatim with no narrative; `GRAPH.md` is written on boot and every
-  valid reload. The live proof renders the map in an interactive session
-  and checks the resume/fresh markers.
+  valid reload.
 - [x] **Session lifecycle cleanup.** Fresh sessions are deleted after
   their visit; resume sessions are deleted at dispatch end.
+
+## v1.2 — One graph and a read-only view
+
+- [x] **One graph only.** The top-level `graphs` array and graph id are
+  gone. The config is `{ version: "3", helpers, graph }`; workflows remain
+  labelled subsections. `dispatch({ node, prompt })`, `graph_info()`, and
+  `graph_map()` carry no graph id. Multiple separate graphs are not
+  planned.
+- [x] **Read-only, argument-free `/graph`.** The plugin command takes no
+  arguments, runs `engine/graph-view.mjs` for the exact text, switches the
+  session to a `graph-view` agent for one reply, and restores the previous
+  agent. The agent's permissions deny the mutating tools. The CLI prints
+  the map/tables/legend/state directly and falls back to the config with
+  `Engine not running.` when the engine is down.
+- [x] **Failure-path coverage.** Failed, interrupted, and timed-out
+  sessions produce `session-failed`, `session-interrupted`, or
+  `session-timeout` with the session id; the old `session is not defined`
+  ReferenceError is fixed and regression-tested.
+- [x] **Cancellation.** `dispatch_cancel` removes a queued dispatch or
+  interrupts the active one; a cancelled dispatch ends as `cancelled`,
+  never a defect. Killing the engine is no longer the stop mechanism.
+- [x] **Cost and tokens.** Step and completion notices carry per-step and
+  per-dispatch cost and token usage; introspection exposes the same.
 
 ## v1.1 — Hardening
 
@@ -307,8 +330,8 @@ proven gap.
 - [ ] **V2.4 Schema versioning and migration.**
   - What: config version negotiation and migration; reject unknown
     versions with named faults.
-  - Acceptance: a v2 config loads on the declared engine version and a
-    migration is tested.
+  - Acceptance: a version-3 config loads on the declared engine version and
+    a migration from an older config is tested.
 
 - [ ] **V2.5 Bounce-back ladder.**
   - What: config-composed retry/exhaustion ladders beyond the configured
@@ -327,6 +350,9 @@ proven gap.
 - A UI as the primary surface; the conversation is the product surface.
   A read-only dashboard may be considered in O1.6.
 - Parallel dispatches by default; one active dispatch remains the default.
+- Multiple separate graphs or a graph selector. One config is one graph;
+  workflows are subsections, not separate graphs. A second graph would need
+  a separate ruling and a separate version.
 
 ## Open roadmap decisions
 

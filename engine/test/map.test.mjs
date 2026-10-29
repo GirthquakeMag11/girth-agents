@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "../config.mjs";
-import { renderAllMaps, renderGraphArtifact, renderGraphMap } from "../map.mjs";
+import { renderGraphArtifact, renderGraphMap, renderState } from "../map.mjs";
 
 const loaded = await loadConfig(fileURLToPath(new URL("../example-graph.json", import.meta.url)));
-const graph = loaded.doc.graphs[0];
+const graph = loaded.doc.graph;
 
 test("map: the workflow is a labelled box with entry and exit", () => {
   const map = renderGraphMap(graph);
@@ -37,20 +37,20 @@ test("map: the workflow and node tables carry the same config fields", () => {
 test("map: live state highlights the active node and reports the queue", () => {
   const runtime = {
     paused: false,
-    active: { dispatchId: "d-1", graph: "build-review", node: "review" },
+    active: { dispatchId: "d-1", node: "review" },
     queue: [{ dispatchId: "d-2" }],
     lastDefect: null,
   };
   const map = renderGraphMap(graph, { runtime });
   assert.match(map.mermaid, /class n1 active/);
-  const all = renderAllMaps(loaded.doc, { runtime });
-  assert.equal(all.state, "Active: d-1 at review. Queue: d-2.");
+  const state = renderState(runtime);
+  assert.equal(state, "Active: d-1 at review. Queue: d-2.");
 });
 
 test("map: the artifact contains the map, workflow table, node table, and legend", () => {
   const artifact = renderGraphArtifact(loaded.doc, "graph.json");
-  assert.match(artifact, /# Graphs/);
-  assert.match(artifact, /## build-review/);
+  assert.match(artifact, /# Graph/);
+  assert.doesNotMatch(artifact, /# Graphs/);
   assert.match(artifact, /```mermaid/);
   assert.match(artifact, /### Workflows/);
   assert.match(artifact, /### Nodes/);

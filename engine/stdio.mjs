@@ -8,6 +8,7 @@ export const POKES = [
   "dispatch",
   "dispatch-status",
   "dispatch-wait",
+  "dispatch-cancel",
   "pause",
   "resume",
   "reload",

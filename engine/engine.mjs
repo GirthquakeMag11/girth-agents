@@ -6,13 +6,13 @@
 import { randomBytes } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { loadConfig, findGraph, findNode, handoffTarget, configSummary } from "./config.mjs";
+import { loadConfig, findNode, handoffTarget, configSummary } from "./config.mjs";
 import { createDispatchQueue } from "./queue.mjs";
-import { runDispatch, checkOutput, DispatchDefect } from "./executor.mjs";
+import { runDispatch, checkOutput, DispatchDefect, emptyUsage } from "./executor.mjs";
 import { createDriver } from "./driver.mjs";
 import { startControlServer, ControlError } from "./control.mjs";
-import { installPlugin, installSkills, installCommands, preflightPlugin } from "./plugin.mjs";
-import { renderAllMaps, renderGraphMap, renderState, renderGraphArtifact } from "./map.mjs";
+import { installPlugin, installSkills, removeCommands, installAgent, preflightPlugin } from "./plugin.mjs";
+import { renderGraphMap, renderState, renderGraphArtifact } from "./map.mjs";
 import { encode, decode } from "./stdio.mjs";
 
 const say = (kind, payload = {}) => process.stdout.write(encode(kind, payload) + "\n");
@@ -59,25 +59,20 @@ function event(kind, payload = {}) {
   say(kind, payload);
 }
 
-function summarizeGraphs() {
-  return config.graphs.map((graph) => graph.id);
+function graphSummary() {
+  return configSummary(config, configPath).graph;
 }
 
 async function onDispatch(body) {
-  const { graph, node, prompt } = body ?? {};
-  if (typeof graph !== "string" || graph.trim() === "") {
-    throw new ControlError(400, "dispatch needs a graph id");
-  }
+  const { node, prompt } = body ?? {};
   if (typeof node !== "string" || node.trim() === "") {
     throw new ControlError(400, "dispatch needs a node id");
   }
   if (typeof prompt !== "string" || prompt.trim() === "") {
     throw new ControlError(400, "dispatch needs a non-empty prompt");
   }
-  const graphDef = findGraph(config, graph);
-  if (!graphDef) throw new ControlError(400, `unknown graph '${graph}'`);
-  if (!findNode(graphDef, node)) throw new ControlError(400, `graph '${graph}' has no node '${node}'`);
-  const record = queue.enqueue({ graph, node, prompt });
+  if (!findNode(config.graph, node)) throw new ControlError(400, `the graph has no node '${node}'`);
+  const record = queue.enqueue({ node, prompt });
   return { body: { ok: true, dispatchId: record.id, state: record.state } };
 }
 
@@ -94,6 +89,19 @@ async function onDispatchWait(body) {
   if (typeof id !== "string" || id.trim() === "") throw new ControlError(400, "dispatch wait needs a dispatch id");
   const timeoutMs = typeof body?.timeoutMs === "number" ? body.timeoutMs : 300000;
   const result = await queue.wait(id, timeoutMs);
+  if (!result) throw new ControlError(404, `unknown dispatch '${id}'`);
+  return { body: { ok: true, ...result } };
+}
+
+async function onDispatchCancel(body) {
+  const id = body?.dispatchId ?? body?.id;
+  if (typeof id !== "string" || id.trim() === "") throw new ControlError(400, "dispatch cancel needs a dispatch id");
+  const result = await queue.cancel(id, {
+    interrupt: async (sessionId) => {
+      const live = await getDriver();
+      await live.interrupt(sessionId);
+    },
+  });
   if (!result) throw new ControlError(404, `unknown dispatch '${id}'`);
   return { body: { ok: true, ...result } };
 }
@@ -143,16 +151,16 @@ async function onReload() {
   if (queue.active) throw new ControlError(409, "reload rejected: a dispatch is active");
   const loaded = await loadConfig(configPath);
   if (loaded.faults.length > 0) {
-    event("reloaded", { configPath, valid: false, graphs: summarizeGraphs(), faults: loaded.faults });
+    event("reloaded", { configPath, valid: false, faults: loaded.faults });
     return { body: { ok: true, valid: false, faults: loaded.faults } };
   }
   config = loaded.doc;
   const artifact = await writeGraphArtifact();
-  event("reloaded", { configPath, valid: true, graphs: summarizeGraphs(), faults: [], artifact });
-  return { body: { ok: true, valid: true, faults: [], graphs: summarizeGraphs(), artifact } };
+  event("reloaded", { configPath, valid: true, faults: [], artifact });
+  return { body: { ok: true, valid: true, faults: [], graph: graphSummary(), artifact } };
 }
 
-function onGraphs() {
+function onGraphInfo() {
   return { body: { ok: true, ...configSummary(config, configPath) } };
 }
 
@@ -160,21 +168,15 @@ function runtimeSnapshot() {
   return { ...queue.introspect(), lastDefect };
 }
 
-function onGraphMap(body) {
-  const graphId = body?.graph;
+function onGraphMap() {
   const runtime = runtimeSnapshot();
-  if (typeof graphId === "string" && graphId.trim() !== "") {
-    const graph = findGraph(config, graphId);
-    if (!graph) throw new ControlError(404, `unknown graph '${graphId}'`);
-    return {
-      body: {
-        ok: true,
-        ...renderGraphMap(graph, { runtime }),
-        state: renderState(runtime),
-      },
-    };
-  }
-  return { body: { ok: true, ...renderAllMaps(config, { runtime }) } };
+  return {
+    body: {
+      ok: true,
+      ...renderGraphMap(config.graph, { runtime }),
+      state: renderState(runtime),
+    },
+  };
 }
 
 async function writeGraphArtifact() {
@@ -205,15 +207,24 @@ async function boot() {
       dispatch: onDispatch,
       dispatchStatus: onDispatchStatus,
       dispatchWait: onDispatchWait,
+      dispatchCancel: onDispatchCancel,
       reload: onReload,
-      graphs: onGraphs,
+      graphInfo: onGraphInfo,
       graphMap: onGraphMap,
     },
   });
 
-  await installPlugin({ cwd, url: control.url, token });
+  await installPlugin({
+    cwd,
+    url: control.url,
+    token,
+    graphCli: join(import.meta.dirname, "graph-view.mjs"),
+    configPath,
+    nodePath: process.execPath,
+  });
   await installSkills({ cwd });
-  await installCommands({ cwd });
+  await removeCommands({ cwd });
+  await installAgent({ cwd });
 
   let pluginActive = false;
   try {
@@ -241,7 +252,7 @@ async function boot() {
   });
 
   say("version", { version: 2 });
-  say("ready", { configPath, graphs: summarizeGraphs(), pluginActive, cwd, artifact });
+  say("ready", { configPath, pluginActive, cwd, artifact, workflows: (config.graph.workflows ?? []).map((wf) => wf.id) });
 
   const heartbeatMs = Math.max(1000, Number(process.env.HEARTBEAT_MS || 0) || 5000);
   heartbeat = setInterval(() => {
@@ -249,7 +260,13 @@ async function boot() {
     say("heartbeat", {
       at: new Date().toISOString(),
       paused: queue?.paused ?? false,
-      active: active ? { dispatchId: active.id, graph: active.graph, node: active.node } : null,
+      active: active
+        ? {
+            dispatchId: active.id,
+            node: active.node,
+            usage: active.usage ?? emptyUsage(),
+          }
+        : null,
     });
   }, heartbeatMs);
 }
@@ -267,11 +284,11 @@ async function shutdown() {
     }
     say("completion", {
       dispatchId: active.id,
-      graph: active.graph,
       status: "cancelled",
       terminal: active.terminal ?? null,
       visits: active.visits ?? {},
       defect: null,
+      usage: active.usage ?? emptyUsage(),
       at: new Date().toISOString(),
     });
   }
@@ -307,6 +324,9 @@ process.stdin.on("data", (chunk) => {
           case "dispatch-wait":
             say("dispatch-result", (await onDispatchWait(msg)).body);
             break;
+          case "dispatch-cancel":
+            say("dispatch-status", (await onDispatchCancel(msg)).body);
+            break;
           case "pause":
             queue.pause();
             break;
@@ -322,7 +342,7 @@ process.stdin.on("data", (chunk) => {
               lastEvent,
               lastDefect,
               configPath,
-              graphs: summarizeGraphs(),
+              graph: graphSummary(),
             });
             break;
           default:

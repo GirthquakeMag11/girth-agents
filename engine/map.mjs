@@ -50,9 +50,8 @@ function nodeLabel(node, workflow) {
 export const MAP_LEGEND =
   "↻ resume = same session on revisit · ✦ fresh = new session every visit · stadium/dashed = terminal · box = workflow view";
 
-function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
+export function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
   const nodes = graph.nodes ?? [];
-  const byId = new Map(nodes.map((node) => [node.id, node]));
   const vars = new Map(nodes.map((node, index) => [node.id, `n${index}`]));
   const lines = ["flowchart LR"];
 
@@ -115,7 +114,7 @@ function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
     if (node.handoff?.mode === "terminal") lines.push(`  class ${varName} terminal`);
   }
 
-  if (runtime?.active && runtime.active.graph === graph.id) {
+  if (runtime?.active) {
     const activeVar = vars.get(runtime.active.node);
     if (activeVar) lines.push(`  class ${activeVar} active`);
   }
@@ -165,7 +164,6 @@ export function renderGraphMap(graph, { runtime = null } = {}) {
   const workflows = graph.workflows ?? [];
   const workflow = workflows.length === 1 ? workflows[0] : null;
   return {
-    graph: graph.id,
     mermaid: renderMermaid(graph, { runtime, workflow }),
     workflowTable: renderWorkflowTable(graph),
     nodeTable: renderNodeTable(graph),
@@ -173,27 +171,23 @@ export function renderGraphMap(graph, { runtime = null } = {}) {
   };
 }
 
-export function renderAllMaps(config, { runtime = null } = {}) {
-  return {
-    graphs: config.graphs.map((graph) => renderGraphMap(graph, { runtime })),
-    legend: MAP_LEGEND,
-    state: renderState(runtime),
-  };
-}
-
 export function renderGraphArtifact(config, configPath) {
-  const sections = ["# Graphs", "", `Generated from \`${configPath}\`.`, ""];
-  for (const graph of config.graphs) {
-    const map = renderGraphMap(graph, { runtime: null });
-    sections.push(`## ${graph.id}`, "");
-    sections.push("```mermaid");
-    sections.push(map.mermaid);
-    sections.push("```", "");
-    sections.push(MAP_LEGEND, "");
-    if (map.workflowTable) {
-      sections.push("### Workflows", "", map.workflowTable, "");
-    }
-    sections.push("### Nodes", "", map.nodeTable, "");
+  const map = renderGraphMap(config.graph, { runtime: null });
+  const sections = [
+    "# Graph",
+    "",
+    `Generated from \`${configPath}\`.`,
+    "",
+    "```mermaid",
+    map.mermaid,
+    "```",
+    "",
+    MAP_LEGEND,
+    "",
+  ];
+  if (map.workflowTable) {
+    sections.push("### Workflows", "", map.workflowTable, "");
   }
+  sections.push("### Nodes", "", map.nodeTable, "");
   return sections.join("\n") + "\n";
 }

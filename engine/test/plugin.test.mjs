@@ -1,21 +1,83 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { installPlugin, installSkills, installCommands, preflightPlugin } from "../plugin.mjs";
+import { installPlugin, installSkills, removeCommands, installAgent, preflightPlugin } from "../plugin.mjs";
+
+const pluginInput = (dir) => ({
+  cwd: dir,
+  url: "http://127.0.0.1:1234",
+  token: "token-123",
+  graphCli: "/opt/engine/graph-view.mjs",
+  configPath: "/tmp/graph.json",
+  nodePath: "/usr/bin/node",
+});
 
 test("plugin: the installed tool surface contains the lever and the control tools", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-plugin-"));
   try {
-    const path = await installPlugin({ cwd: dir, url: "http://127.0.0.1:1234", token: "token-123" });
+    const path = await installPlugin(pluginInput(dir));
     const source = await readFile(path, "utf8");
-    for (const name of ["handoff", "dispatch", "dispatch_wait", "dispatch_status", "reload", "graphs", "graph_map"]) {
+    for (const name of ["handoff", "dispatch", "dispatch_wait", "dispatch_status", "dispatch_cancel", "reload", "graph_info", "graph_map"]) {
       assert.match(source, new RegExp(`name: "${name}"`));
     }
+    assert.doesNotMatch(source, /name: "graphs"/);
+    assert.doesNotMatch(source, /graph: \{ type: "string" \}/);
+    assert.doesNotMatch(source, /required: \["graph"/);
     assert.match(source, /http:\/\/127\.0\.0\.1:1234/);
     assert.match(source, /token-123/);
     assert.match(source, /engine-handoff/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("plugin: the /graph command is registered read-only and argument-free", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-command-"));
+  try {
+    const path = await installPlugin(pluginInput(dir));
+    const source = await readFile(path, "utf8");
+    assert.match(source, /ctx\.command\.transform/);
+    assert.match(source, /name: "graph"/);
+    assert.match(source, /switchAgent\(\{ sessionID, agent: "graph-view" \}\)/);
+    assert.match(source, /GRAPH_CLI/);
+    assert.match(source, /Return the text above verbatim/);
+    assert.doesNotMatch(source, /\$ARGUMENTS/);
+    assert.doesNotMatch(source, /subagent: true/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("plugin: the graph-view agent is read-only and may not dispatch", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-agent-"));
+  try {
+    await installAgent({ cwd: dir });
+    const agent = await readFile(join(dir, ".opencode", "agents", "graph-view.md"), "utf8");
+    assert.match(agent, /mode: all/);
+    assert.match(agent, /action: "\*"\n    resource: "\*"\n    effect: deny/);
+    assert.match(agent, /action: graph_map/);
+    assert.match(agent, /action: graph_info/);
+    assert.doesNotMatch(agent, /action: dispatch/);
+    assert.match(agent, /Print that output verbatim/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("plugin: removeCommands removes the old engine command and leaves a user command", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-commands-"));
+  try {
+    const commands = join(dir, ".opencode", "commands");
+    await mkdir(commands, { recursive: true });
+    await writeFile(join(commands, "graph.md"), "---\nagent: graph-view\n---\nCall graph_map.\n", "utf8");
+    await removeCommands({ cwd: dir });
+    await assert.rejects(() => readFile(join(commands, "graph.md"), "utf8"));
+
+    await writeFile(join(commands, "graph.md"), "Review the graph by hand.\n", "utf8");
+    await removeCommands({ cwd: dir });
+    assert.equal(await readFile(join(commands, "graph.md"), "utf8"), "Review the graph by hand.\n");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -29,23 +91,10 @@ test("plugin: both interactive skills are installed as SKILL.md", async () => {
     const dispatching = await readFile(join(dir, ".opencode", "skills", "dispatching", "SKILL.md"), "utf8");
     assert.match(authoring, /name: graph-authoring/);
     assert.match(authoring, /reload\(\)/);
+    assert.doesNotMatch(authoring, /graphs\(\)/);
     assert.match(dispatching, /name: dispatching/);
     assert.match(dispatching, /dispatch_wait/);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-});
-
-test("plugin: the /graph command is installed and calls graph_map", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "engine-command-"));
-  try {
-    await installCommands({ cwd: dir });
-    const command = await readFile(join(dir, ".opencode", "commands", "graph.md"), "utf8");
-    assert.match(command, /graph_map/);
-    assert.match(command, /\$ARGUMENTS/);
-    assert.match(command, /Do not add narrative/);
-    assert.match(command, /workflowTable/);
-    assert.match(command, /nodeTable/);
+    assert.doesNotMatch(dispatching, /graphs\(\)/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

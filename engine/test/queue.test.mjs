@@ -13,12 +13,13 @@ test("queue: one active dispatch, the rest FIFO", async () => {
       }),
   });
 
-  queue.enqueue({ graph: "g", node: "a", prompt: "one" });
-  queue.enqueue({ graph: "g", node: "a", prompt: "two" });
-  queue.enqueue({ graph: "g", node: "a", prompt: "three" });
+  queue.enqueue({ node: "a", prompt: "one" });
+  queue.enqueue({ node: "a", prompt: "two" });
+  queue.enqueue({ node: "a", prompt: "three" });
   await tick();
 
   assert.equal(queue.active.id, "d-1");
+  assert.equal(queue.active.node, "a");
   assert.deepEqual(queue.introspect().queue.map((record) => record.dispatchId), ["d-2", "d-3"]);
 
   releases.shift()();
@@ -42,7 +43,7 @@ test("queue: wait returns the completion and times out as running", async () => 
   const queue = createDispatchQueue({
     run: () => new Promise((resolve) => releases.push(() => resolve({ ok: true }))),
   });
-  queue.enqueue({ graph: "g", node: "a", prompt: "one" });
+  queue.enqueue({ node: "a", prompt: "one" });
   await tick();
 
   const early = await queue.wait("d-1", 5);
@@ -62,7 +63,7 @@ test("queue: pause holds the queue and resume restarts it", async () => {
     run: () => new Promise((resolve) => releases.push(() => resolve({ ok: true }))),
   });
   queue.pause();
-  queue.enqueue({ graph: "g", node: "a", prompt: "one" });
+  queue.enqueue({ node: "a", prompt: "one" });
   await tick();
   assert.equal(queue.active, null);
   assert.equal(queue.paused, true);
@@ -75,8 +76,62 @@ test("queue: pause holds the queue and resume restarts it", async () => {
   assert.equal(queue.active, null);
 });
 
+test("queue: a queued dispatch can be cancelled before it starts", async () => {
+  const completions = [];
+  const releases = [];
+  const queue = createDispatchQueue({
+    run: () => new Promise((resolve) => releases.push(() => resolve({ ok: true }))),
+    onEvent: (kind, payload) => {
+      if (kind === "completion") completions.push(payload);
+    },
+  });
+  queue.enqueue({ node: "a", prompt: "one" });
+  queue.enqueue({ node: "a", prompt: "two" });
+  await tick();
+
+  const cancelled = await queue.cancel("d-2");
+  assert.equal(cancelled.state, "cancelled");
+  assert.equal(queue.introspect().queue.length, 0);
+  assert.equal(completions.at(-1).dispatchId, "d-2");
+  assert.equal(completions.at(-1).status, "cancelled");
+
+  releases.shift()();
+  await tick();
+  assert.equal(queue.status("d-1").state, "completed");
+  assert.equal(queue.status("d-2").state, "cancelled");
+});
+
+test("queue: the active dispatch can be interrupted and reported as cancelled", async () => {
+  let interrupted = null;
+  let finishRun;
+  const completions = [];
+  const queue = createDispatchQueue({
+    run: () => new Promise((resolve) => { finishRun = resolve; }),
+    onEvent: (kind, payload) => {
+      if (kind === "completion") completions.push(payload);
+    },
+  });
+  queue.enqueue({ node: "a", prompt: "one" });
+  await tick();
+  queue.active.sessionId = "s1";
+
+  const cancelling = await queue.cancel("d-1", {
+    interrupt: async (sessionId) => { interrupted = sessionId; },
+  });
+  assert.equal(interrupted, "s1");
+  assert.equal(cancelling.cancelRequested, true);
+  assert.equal(cancelling.state, "running");
+
+  finishRun({ ok: true });
+  await tick();
+  assert.equal(queue.status("d-1").state, "cancelled");
+  assert.equal(completions.at(-1).status, "cancelled");
+  assert.equal(completions.at(-1).defect, null);
+});
+
 test("queue: an unknown dispatch is null", async () => {
   const queue = createDispatchQueue({ run: async () => ({}) });
   assert.equal(queue.status("d-404"), null);
   assert.equal(await queue.wait("d-404", 10), null);
+  assert.equal(await queue.cancel("d-404"), null);
 });

@@ -32,7 +32,11 @@ SIGTERM, or SIGINT interrupts the active session and exits.
 
 ## 2. The graph
 
-A graph has an `id`, `outputRoot`, `maxSteps`, `workflows`, and `nodes`.
+The config has exactly one graph. A graph has `outputRoot`, `maxSteps`,
+`workflows`, and `nodes`. There is no graph id, no graph selector, and no
+"all graphs"; a second graph is a separate config and a separate ruling,
+not part of this schema.
+
 A node is one agent activation and its handoff surface. A node has an `id`,
 `helper`, `objective`, `output`, optional `session`, optional `budgetMs`,
 optional `maxVisits`, and a `handoff`.
@@ -75,15 +79,17 @@ designated for reasoning; they are not dispatch constraints.
 
 ## 3. Dispatch
 
-The dispatch input is `{ graph, node, prompt, wait? }`. The graph must
-exist, the node must exist in it, and the prompt must be non-empty. Any
-node may be named. The prompt is the work item and is passed verbatim to
-every node in the dispatch; the node's `objective` is its role.
+The dispatch input is `{ node, prompt, wait? }`. The node must exist in the
+graph, and the prompt must be non-empty. Any node may be named. The prompt
+is the work item and is passed verbatim to every node in the dispatch; the
+node's `objective` is its role.
 
 A dispatch is enqueued and gets an id. `wait: true` waits for it to
 finish; `wait: false` returns the id immediately. `dispatch_wait` and
 `dispatch_status` read it later. One dispatch runs at a time; the queue
-is FIFO and in memory.
+is FIFO and in memory. `dispatch_cancel` removes a queued dispatch or
+interrupts the active one; a cancelled dispatch ends with `status:
+"cancelled"`, never a defect.
 
 Each node activation creates a fresh session by default. A node with
 `session: "resume"` keeps one session per dispatch and reuses it on every
@@ -124,7 +130,7 @@ and names what is unmet.
 ## 5. The handoff lever
 
 The lever is one OpenCode V2 plugin tool, installed by the engine in the
-workspace under `.opencode/plugins/handoff/`. It exposes a direct
+workspace under `.opencode/plugins/engine-handoff/`. It exposes a direct
 `handoff({ label })` tool with `codemode: false`. The tool is
 location-scoped; OpenCode 2.2.0 has no per-session tool definition. It
 asserts the `handoff` permission and POSTs the label, the call id, and the
@@ -132,10 +138,10 @@ server-provided session id to the engine's loopback acknowledgement
 endpoint, authenticated by a per-boot token.
 
 The same plugin also exposes the interactive agent's control tools —
-`dispatch`, `dispatch_wait`, `dispatch_status`, `reload`, and `graphs`.
-They call the engine's loopback control endpoint with the same token.
-Helper sessions are created with permissions that hide them; the
-interactive agent's session sees them.
+`dispatch`, `dispatch_wait`, `dispatch_status`, `dispatch_cancel`, `reload`,
+`graph_info`, and `graph_map`. They call the engine's loopback control
+endpoint with the same token. Helper sessions are created with permissions
+that hide them; the interactive agent's session sees them.
 
 The engine's acknowledgement endpoint is authoritative:
 
@@ -192,10 +198,10 @@ completes the dispatch.
    outcome, the message order, and the output hash.
 7. Route: a terminal node completes the dispatch; otherwise the label's
    target runs next. Increment the visit count.
-8. On any defect: emit it, delete the dispatch's fresh and resume
-   sessions, end the dispatch with `completion status:"defect"`, and
-   return to idle. The engine stays alive. The same cleanup runs after a
-   terminal completion.
+8. On any defect or cancellation: emit the completion, delete the
+   dispatch's fresh and resume sessions, end the dispatch with
+   `completion status:"defect"` or `"cancelled"`, and return to idle. The
+   engine stays alive. The same cleanup runs after a terminal completion.
 
 ## 7. Sessions — the live contract (OpenCode 2.2.0, live-verified)
 
@@ -238,10 +244,12 @@ completes the dispatch.
 
 Pokes:
 
-- `dispatch { graph, node, prompt }` — enqueues a dispatch; returns its id.
-- `dispatch-status { id }` — `queued`, `running`, `completed`, `defect`,
-  or `cancelled`.
+- `dispatch { node, prompt }` — enqueues a dispatch; returns its id.
+- `dispatch-status { id }` — `queued`, `running`, `completed`,
+  `defect`, or `cancelled`.
 - `dispatch-wait { id, timeoutMs? }` — wait for a dispatch.
+- `dispatch-cancel { id }` — remove a queued dispatch, or interrupt and
+  cancel the active dispatch.
 - `pause` — a boundary pause: the active node finishes, then the dispatch
   waits.
 - `resume` — continue a paused dispatch, or clear an idle pause.
@@ -252,7 +260,8 @@ Pokes:
 
 Notices: `version`, `ready`, `queued`, `dispatched`, `step` (begin/end),
 `handoff`, `paused`, `resumed`, `completion` (completed/defect/cancelled),
-`defect`, `introspection`, and `heartbeat`. Exactly one completion per
+`defect`, `introspection`, and `heartbeat`. Step and completion notices
+carry the dispatch's cost and token usage. Exactly one completion per
 accepted dispatch. A dispatch defect ends only that dispatch; the
 heartbeat continues.
 
@@ -260,19 +269,22 @@ heartbeat continues.
 
 The same plugin gives the user's interactive agent:
 
-- `dispatch({ graph, node, prompt, wait?, timeoutMs? })` — enqueue; wait
-  or return the id.
+- `dispatch({ node, prompt, wait?, timeoutMs? })` — enqueue; wait or
+  return the id.
 - `dispatch_wait({ dispatchId, timeoutMs? })` — wait for completion.
 - `dispatch_status({ dispatchId })` — the live state.
+- `dispatch_cancel({ dispatchId })` — cancel a queued or active dispatch.
 - `reload()` — validate and swap the graph config; returns faults or the
-  new graph list.
-- `graphs()` — the config path and the current graphs and nodes.
-- `graph_map({ graph? })` — the deterministic Mermaid map, workflow table,
-  node table, legend, and live state.
+  graph summary.
+- `graph_info()` — the config path and the one graph's workflows, nodes,
+  and helpers.
+- `graph_map()` — the deterministic Mermaid map, workflow table, node
+  table, legend, and live state.
 
 The tools are permission-gated. Helper sessions allow only `handoff` and
 their work actions; the interactive agent's session allows the control
-tools.
+tools. There is no `graphs()` tool and no graph id anywhere in the
+surface.
 
 ### 8.3 The interactive agent's skills
 
@@ -294,11 +306,17 @@ workflow table, a node table, a legend, and a one-line live state from the
 config and the queue. The agent prints them; it does not author, summarize,
 or explain them.
 
-The `/graph` command takes an optional graph id and calls `graph_map`; it
-prints the Mermaid block, the workflow table, the node table, the legend,
-and the state. It has no subcommands. Every valid reload and every boot
-also writes the same map and tables to `GRAPH.md` in the workspace, so the
-user can keep the graph open beside the chat, independent of the agent.
+The `/graph` command is argument-free and read-only. The plugin command
+runs `engine/graph-view.mjs` for the exact text, switches the session to
+the dedicated `graph-view` agent for one reply, and restores the previous
+agent afterward. The `graph-view` agent denies every mutating tool, so the
+reply cannot dispatch work. The CLI asks the running engine for the map;
+if the engine is not running, it renders the same map and tables from the
+config and says so. It prints the Mermaid block, the workflow table, the
+node table, the legend, and the state. It has no arguments, no graph id,
+and no subcommands. Every valid reload and every boot also writes the same
+map and tables to `GRAPH.md` in the workspace, so the user can keep the
+graph open beside the chat, independent of the agent.
 
 The map is a view of the config, not a second source of truth. The node
 markers come from `session`: `↻ resume` or `✦ fresh`; the workflow box and
@@ -307,106 +325,102 @@ handoff, and max visits. The live state comes from the queue.
 
 ## 9. Config and the verifier
 
-The config is one JSON file: `version`, `helpers`, and `graphs`. The
-schema is strict; unknown fields are faults.
+The config is one JSON file: `version`, `helpers`, and `graph`. The schema
+is strict; unknown fields are faults. Config version is the string `"3"`.
 
 ```json
 {
-  "version": "2",
+  "version": "3",
   "helpers": [
     {
       "id": "builder",
       "model": "openrouter/~deepseek/deepseek-flash-latest",
-      "permissions": ["read", "edit", "shell"],
-      "craft": "Work only within the dispatched prompt's scope. Follow the repository's conventions. Write the output before you hand off."
+      "agent": "build",
+      "permissions": [
+        "read",
+        "edit",
+        "shell"
+      ],
+      "craft": "Work only within the dispatched prompt's scope. Follow the repository's conventions. Write the output file before you hand off."
     },
     {
       "id": "reviewer",
       "model": "openrouter/~deepseek/deepseek-flash-latest",
-      "permissions": ["read", "edit", "shell"],
+      "agent": "build",
+      "permissions": [
+        "read",
+        "edit",
+        "shell"
+      ],
       "craft": "Judge the work against the dispatched prompt and the upstream output. Write your review before you hand off."
     }
   ],
-  "graphs": [
-    {
-      "id": "build-review",
-      "outputRoot": "work",
-      "maxSteps": 100,
-      "workflows": [
-        {
-          "id": "build-review",
-          "entry": "implement",
-          "exit": "done",
-          "nodes": ["implement", "review", "done"]
+  "graph": {
+    "outputRoot": "work",
+    "maxSteps": 100,
+    "workflows": [
+      {
+        "id": "build-review",
+        "entry": "implement",
+        "exit": "done",
+        "nodes": [
+          "implement",
+          "review",
+          "done"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "implement",
+        "helper": "builder",
+        "objective": "Implement the dispatched work.",
+        "output": "implementation.md",
+        "session": "resume",
+        "maxVisits": 20,
+        "handoff": {
+          "mode": "unconditional",
+          "to": "review",
+          "description": "The implementation is written and ready for review."
         }
-      ],
-      "nodes": [
-        {
-          "id": "implement",
-          "helper": "builder",
-          "objective": "Implement the dispatched work.",
-          "output": "implementation.md",
-          "session": "resume",
-          "maxVisits": 20,
-          "handoff": {
-            "mode": "unconditional",
-            "to": "review",
-            "description": "The implementation is written and ready for review."
-          }
-        },
-        {
-          "id": "review",
-          "helper": "reviewer",
-          "objective": "Review the implementation against the dispatched prompt.",
-          "output": "review.md",
-          "session": "fresh",
-          "maxVisits": 20,
-          "handoff": {
-            "mode": "conditional",
-            "labels": [
-              { "label": "pass", "to": "done", "description": "The work meets the objective; finish." },
-              { "label": "fail", "to": "implement", "description": "The work is unmet; name exactly what must change." }
-            ]
-          }
-        },
-        {
-          "id": "done",
-          "helper": "builder",
-          "objective": "Finalize the work and write the final report.",
-          "output": "final.md",
-          "session": "fresh",
-          "handoff": { "mode": "terminal" }
+      },
+      {
+        "id": "review",
+        "helper": "reviewer",
+        "objective": "Review the implementation against the dispatched prompt.",
+        "output": "review.md",
+        "session": "fresh",
+        "maxVisits": 20,
+        "handoff": {
+          "mode": "conditional",
+          "labels": [
+            {
+              "label": "pass",
+              "to": "done",
+              "description": "The work meets the objective; finish."
+            },
+            {
+              "label": "fail",
+              "to": "implement",
+              "description": "The work is unmet; name exactly what must change."
+            }
+          ]
         }
-      ]
-    }
-  ]
+      },
+      {
+        "id": "done",
+        "helper": "builder",
+        "objective": "Finalize the work and write the final report.",
+        "output": "final.md",
+        "session": "fresh",
+        "handoff": {
+          "mode": "terminal"
+        }
+      }
+    ]
+  }
 }
 ```
-
-The verifier is the boot gate:
-
-- **Schema**: types, ids, models, permissions, output and config paths,
-  unknown fields.
-- **Graph**: dangling handoff targets, duplicate labels or ids, mixed
-  modes, empty conditional label sets, unknown helpers, a node that
-  cannot reach a terminal, no terminal node, and an unbounded cycle.
-- **Workflows**: unique ids; entry and exit exist and are in the
-  workflow's nodes; every workflow node exists; every node is reachable
-  from the entry and can reach the exit within the subsection.
-- **Sessions**: `session` is `fresh` or `resume`.
-- **Limits**: `maxVisits` is 1–100 (the engine's backstop; the graph sets
-  the workflow's actual bound — the shipped graph uses 20), `maxSteps` is
-  positive, `budgetMs` is positive.
-
-The config path is the file the engine was started with; the interactive
-agent edits it and calls `reload`. A reload validates the whole file:
-success swaps it for subsequent dispatches, failure returns the named
-faults and keeps the old graph.
-
-Any fault refuses boot with exit 2. Runtime faults are separate: no
-handoff, undeclared label, multiple handoffs, missing/empty/changed
-output, failed/interrupted/timed-out session, `maxVisits`, and
-`maxSteps`.
 
 ## 10. The trust boundary
 
@@ -438,13 +452,15 @@ the live server refuses.
 The proof sequence is fixed: one session and one lever; one node and one
 handoff; two nodes with output passing; the failure matrix (no handoff,
 double, undeclared label, missing output, output changed after handoff,
-session failure, timeout); the control matrix (pause, resume, introspect,
-queue, busy dispatch); the session graph (the builder's session id is
-identical across its three visits while the reviewer's session ids differ
-on every visit, and the resumed brief carries the reviewer's output); and
+session failure, interrupt, timeout); the control matrix (pause, resume,
+introspect, queue, busy dispatch, cancel queued, cancel active); the
+session regression (an offline fake-driver test proves the builder's
+session id is identical across its three visits while the reviewer's
+session ids differ on every visit, and the resumed brief carries the
+reviewer's output — no second workflow is added to the product graph); and
 the complete user pipeline — an interactive agent authors a graph, reloads
-it, dispatches a prompt, waits or backgrounds it, receives the product,
-and renders the graph map/artifact.
+it, dispatches a prompt, waits or backgrounds it, receives the product and
+its cost, cancels work, and renders the read-only graph view/artifact.
 
 ## 12. Out of scope
 
@@ -452,6 +468,8 @@ The programmatic node type — a work kind that computes a label without an
 agent — comes later, when a gap is found; the node's work slot is reserved
 for it. The old documents, stamps, projects, records, watchers,
 reconciler, delivery, entry/exit types, and the plugin ecosystem are gone.
-So are parallel dispatches, durable queue recovery, and history. The
-handoff tool plugin is the one required exception. The interactive
-agent's two skills are in scope; they are guidance, not engine code.
+So are parallel dispatches, multiple separate graphs, durable queue
+recovery, dispatch history, per-dispatch output isolation, and a hard
+cost budget. The handoff tool plugin is the one required exception. The
+interactive agent's two skills are in scope; they are guidance, not engine
+code.

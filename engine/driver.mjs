@@ -146,6 +146,14 @@ export async function createDriver({ serviceFile, fetchImpl = fetch } = {}) {
       return r.json?.data ?? [];
     },
 
+    async command(sessionID, name, text = "") {
+      const { res, text: body } = await req(`/api/session/${encodeURIComponent(sessionID)}/command`, {
+        method: "POST",
+        body: { name, text },
+      });
+      if (!res.ok) throw defect("session-command", `session command returned ${res.status}: ${body.slice(0, 300)}`);
+    },
+
     async plugins(directory) {
       const qs = new URLSearchParams({ "location[directory]": directory });
       const { res, text, json } = await req(`/api/plugin?${qs}`);
