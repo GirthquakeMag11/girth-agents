@@ -5,7 +5,8 @@ A node's helper does the work, writes an output file, and pulls exactly one
 handoff lever; the engine routes to the label's target. One dispatch runs at
 a time; the rest wait in a FIFO queue.
 
-The full contract is `SPEC.md` at the repository root.
+The full contract is `SPEC.md` at the repository root. Deferred work is
+tracked in `ROADMAP.md`.
 
 ## Run
 
