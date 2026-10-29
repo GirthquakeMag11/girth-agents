@@ -11,9 +11,10 @@ see `GRAPH.md`.
 
 A process that boots from config or not at all; that serves every
 activated project on the machine, one at a time each; that talks to its
-parent over a versioned stdio channel; that commits its own work units
-and never force-pushes. It is not a plugin, not a catalog, not a
-workflow. Its scope ends at the graph runner and its seams.
+parent over a versioned stdio channel. It is an ordinary program:
+whatever starts it starts it, whatever stops it stops it. It is not a
+plugin, not a catalog, not a workflow. Its scope ends at the graph
+runner and its seams.
 
 ## 2. The state contract
 
@@ -46,9 +47,8 @@ its own: whatever is true is on the documents.
 ## 4. Entries and triggers
 
 - **Entry**: an abstraction — the representation of where outside input
-  enters the system. `claim-input` hands the engine a file; the entry
-  validates it against its own configured gate; an invalid claim is a
-  loud defect, never adopted.
+  enters the system. Input that reaches the graph passes the entry's own
+  configured gate; anything invalid is a loud defect, never adopted.
 - **Trigger**: a concrete observing node, its own type — not constrained
   to being an entrance, allowed anywhere in a graph. It designates a
   directory to watch and a stamp pattern. A new or changed document in
@@ -84,8 +84,6 @@ its own: whatever is true is on the documents.
 - Watching: filesystem events over each project's watched directories
   plus a periodic reconcile pass — events are live-only; the pass
   catches what they miss.
-- Delivery: the engine commits its own units, pulls first, holds
-  divergence for the user.
 
 ## 7. Config and the verifier
 
@@ -110,10 +108,3 @@ the documents and the server would show.
 The graph's workflow (`GRAPH.md`). The plugin. The inbox. The
 bounce-back ladder (future, composed in config). Everything else — the
 engine is the engine, full stop.
-
-## 10. Open rulings — engine side
-
-1. **How the engine is spawned and dies** now that no plugin supervises
-   it.
-2. **`claim-input`'s eventual fate** once trigger matches prove out.
-3. **Delivery's reach** — which documents the engine commits and when.
