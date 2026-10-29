@@ -47,6 +47,7 @@ const ROUTES = {
   "/tool/dispatch/status": "dispatchStatus",
   "/tool/reload": "reload",
   "/tool/graphs": "graphs",
+  "/tool/graph-map": "graphMap",
 };
 
 export function startControlServer({ token, handlers, host = "127.0.0.1", port = 0 }) {

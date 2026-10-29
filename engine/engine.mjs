@@ -4,13 +4,15 @@
 // handoff tool and the interactive agent's tools reach the queue.
 
 import { randomBytes } from "node:crypto";
-import { resolve } from "node:path";
+import { writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { loadConfig, findGraph, findNode, handoffTarget, configSummary } from "./config.mjs";
 import { createDispatchQueue } from "./queue.mjs";
 import { runDispatch, checkOutput, DispatchDefect } from "./executor.mjs";
 import { createDriver } from "./driver.mjs";
 import { startControlServer, ControlError } from "./control.mjs";
-import { installPlugin, installSkills, preflightPlugin } from "./plugin.mjs";
+import { installPlugin, installSkills, installCommands, preflightPlugin } from "./plugin.mjs";
+import { renderAllMaps, renderGraphMap, renderState, renderGraphArtifact } from "./map.mjs";
 import { encode, decode } from "./stdio.mjs";
 
 const say = (kind, payload = {}) => process.stdout.write(encode(kind, payload) + "\n");
@@ -145,12 +147,45 @@ async function onReload() {
     return { body: { ok: true, valid: false, faults: loaded.faults } };
   }
   config = loaded.doc;
-  event("reloaded", { configPath, valid: true, graphs: summarizeGraphs(), faults: [] });
-  return { body: { ok: true, valid: true, faults: [], graphs: summarizeGraphs() } };
+  const artifact = await writeGraphArtifact();
+  event("reloaded", { configPath, valid: true, graphs: summarizeGraphs(), faults: [], artifact });
+  return { body: { ok: true, valid: true, faults: [], graphs: summarizeGraphs(), artifact } };
 }
 
 function onGraphs() {
   return { body: { ok: true, ...configSummary(config, configPath) } };
+}
+
+function runtimeSnapshot() {
+  return { ...queue.introspect(), lastDefect };
+}
+
+function onGraphMap(body) {
+  const graphId = body?.graph;
+  const runtime = runtimeSnapshot();
+  if (typeof graphId === "string" && graphId.trim() !== "") {
+    const graph = findGraph(config, graphId);
+    if (!graph) throw new ControlError(404, `unknown graph '${graphId}'`);
+    return {
+      body: {
+        ok: true,
+        ...renderGraphMap(graph, { runtime }),
+        state: renderState(runtime),
+      },
+    };
+  }
+  return { body: { ok: true, ...renderAllMaps(config, { runtime }) } };
+}
+
+async function writeGraphArtifact() {
+  try {
+    const path = join(cwd, "GRAPH.md");
+    await writeFile(path, renderGraphArtifact(config, configPath), "utf8");
+    return path;
+  } catch (e) {
+    log(`engine: could not write GRAPH.md: ${e.message}`);
+    return null;
+  }
 }
 
 async function boot() {
@@ -160,6 +195,7 @@ async function boot() {
     process.exit(2);
   }
   config = loaded.doc;
+  const artifact = await writeGraphArtifact();
 
   const token = randomBytes(16).toString("hex");
   control = await startControlServer({
@@ -171,11 +207,13 @@ async function boot() {
       dispatchWait: onDispatchWait,
       reload: onReload,
       graphs: onGraphs,
+      graphMap: onGraphMap,
     },
   });
 
   await installPlugin({ cwd, url: control.url, token });
   await installSkills({ cwd });
+  await installCommands({ cwd });
 
   let pluginActive = false;
   try {
@@ -203,7 +241,7 @@ async function boot() {
   });
 
   say("version", { version: 2 });
-  say("ready", { configPath, graphs: summarizeGraphs(), pluginActive, cwd });
+  say("ready", { configPath, graphs: summarizeGraphs(), pluginActive, cwd, artifact });
 
   const heartbeatMs = Math.max(1000, Number(process.env.HEARTBEAT_MS || 0) || 5000);
   heartbeat = setInterval(() => {

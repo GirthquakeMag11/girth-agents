@@ -170,6 +170,22 @@ export default Plugin.define({
           return { content: JSON.stringify(result) };
         },
       });
+
+      editor.add({
+        name: "graph_map",
+        description:
+          "Return the current graph as a deterministic Mermaid map, workflow table, node table, legend, and live state. This is the graph as a thing; display it verbatim.",
+        input: {
+          type: "object",
+          properties: { graph: { type: "string" } },
+          additionalProperties: false,
+        },
+        options: { codemode: false, permission: "graph_map" },
+        async execute(input, context) {
+          const result = await call("/tool/graph-map", { graph: input.graph }, context, "graph_map");
+          return { content: JSON.stringify(result) };
+        },
+      });
     });
   },
 });
@@ -191,6 +207,24 @@ export async function installSkills({ cwd }) {
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, await readFile(source, "utf8"), "utf8");
   }
+}
+
+export async function installCommands({ cwd }) {
+  const dir = join(cwd, ".opencode", "commands");
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    join(dir, "graph.md"),
+    `---
+description: Show the current graph as a Mermaid map, workflow table, and node table.
+---
+Call the graph_map tool with $ARGUMENTS.
+
+For each returned graph, print its \`mermaid\` exactly inside a \`\`\`mermaid fenced block, then its \`workflowTable\`, then its \`nodeTable\`. Then print the \`legend\` and the \`state\`.
+
+Do not add narrative, summary, explanation, or a tour.
+`,
+    "utf8",
+  );
 }
 
 export async function preflightPlugin(driver, cwd, { timeoutMs = 10000 } = {}) {

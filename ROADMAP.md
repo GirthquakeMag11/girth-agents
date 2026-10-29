@@ -1,9 +1,11 @@
 # Roadmap
 
-**Baseline:** v1 (tag `v1`, commit `236e2e9`) — live-proven on OpenCode
-2.2.0. The engine runs agent-node graphs, enforces one handoff per node,
-queues dispatches FIFO, validates and reloads config, and gives the
-interactive agent five tools and two skills.
+**Baseline:** v1 (tag `v1`, commit `236e2e9`) plus the v1.1 graph-model
+slice — live-proven on OpenCode 2.2.0. The engine runs agent-node graphs,
+enforces one handoff per node, queues dispatches FIFO, validates and
+reloads config, resumes the implementation session across a review loop,
+keeps the reviewer fresh, and gives the interactive agent a graph map,
+artifact, and command.
 
 This document tracks deferred work. It is not a wish list: each item has a
 target version and an acceptance condition. Check an item only when its
@@ -35,10 +37,31 @@ cooperative helpers.
 - [x] Interactive tools: `dispatch`, `dispatch_wait`, `dispatch_status`,
   `reload`, `graphs`.
 - [x] Interactive skills: graph-authoring, dispatching.
-- [x] 21 offline tests and a live proof covering stdio dispatch, queue,
+- [x] 28 offline tests and a live proof covering stdio dispatch, queue,
   interactive dispatch/wait, config authoring/reload; background
   dispatch (wait:false then dispatch_wait) was exercised in a separate
   live probe.
+
+## Shipped after v1 (v1.1 graph-model slice)
+
+- [x] **Workflows are labelled subsections of a graph.** A workflow is
+  `{ id, entry, exit, nodes }`; it is a view, not a container, not a
+  runtime unit, and not a dispatch target. Nodes and edges belong to the
+  graph; a node may be in zero, one, or multiple workflows. The engine
+  routes by handoffs, never by workflow.
+- [x] **Session modes.** A node declares `session: "fresh"` (default) or
+  `"resume"`. The implementation node resumes its original builder session
+  on a fail loop; the resumed brief carries the reviewer's output path.
+  The reviewer is fresh on every review pass. The live proof shows one
+  builder session id across three visits and different reviewer session
+  ids on both visits.
+- [x] **Graph view.** `graph_map` returns a deterministic Mermaid map,
+  workflow table, node table, legend, and live state. `/graph` prints them
+  verbatim with no narrative; `GRAPH.md` is written on boot and every
+  valid reload. The live proof renders the map in an interactive session
+  and checks the resume/fresh markers.
+- [x] **Session lifecycle cleanup.** Fresh sessions are deleted after
+  their visit; resume sessions are deleted at dispatch end.
 
 ## v1.1 — Hardening
 

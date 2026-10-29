@@ -19,6 +19,52 @@ const workspace = process.argv[2] ?? "/tmp/opencode/v1-live";
 const enginePath = join(here, "engine.mjs");
 const model = "openrouter/~deepseek/deepseek-flash-latest";
 
+// A deterministic session proof: the builder must be the same session on all
+// three visits; the reviewer must be a new session on each of its two visits.
+const sessionCheckGraph = {
+  id: "session-check",
+  outputRoot: "work",
+  maxSteps: 20,
+  workflows: [
+    { id: "session-check", entry: "builder", exit: "done", nodes: ["builder", "reviewer", "done"] },
+  ],
+  nodes: [
+    {
+      id: "builder",
+      helper: "builder",
+      objective:
+        "Count the reviewer reports already in your session. If there are fewer than two, write the current pass to the output and hand off `again`. If there are two, write the final pass and hand off `finish`. You are the same builder session; use your prior context.",
+      output: "builder.md",
+      session: "resume",
+      maxVisits: 3,
+      handoff: {
+        mode: "conditional",
+        labels: [
+          { label: "again", to: "reviewer", description: "Send the pass to review." },
+          { label: "finish", to: "done", description: "Finish after two reviews." },
+        ],
+      },
+    },
+    {
+      id: "reviewer",
+      helper: "reviewer",
+      objective: "Read the builder's output. Write a one-line review. Always hand off `next` back to the builder.",
+      output: "reviewer.md",
+      session: "fresh",
+      maxVisits: 3,
+      handoff: { mode: "unconditional", to: "builder", description: "Back to the builder." },
+    },
+    {
+      id: "done",
+      helper: "builder",
+      objective: "Write a one-line final output and end.",
+      output: "final.md",
+      session: "fresh",
+      handoff: { mode: "terminal" },
+    },
+  ],
+};
+
 const events = [];
 let child;
 let driver;
@@ -76,9 +122,9 @@ async function startEngine() {
   return ready;
 }
 
-async function stdioDispatch(prompt) {
+async function stdioDispatch(graph, node, prompt) {
   const before = events.length;
-  child.stdin.write(JSON.stringify({ kind: "dispatch", graph: "build-review", node: "implement", prompt }) + "\n");
+  child.stdin.write(JSON.stringify({ kind: "dispatch", graph, node, prompt }) + "\n");
   const completion = await waitFor(
     () => events.slice(before).find((event) => event.kind === "completion"),
     180000,
@@ -116,12 +162,21 @@ async function main() {
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
   await cp(join(here, "example-graph.json"), join(workspace, "graph.json"));
+  const config = JSON.parse(await readFile(join(workspace, "graph.json"), "utf8"));
+  config.graphs.push(sessionCheckGraph);
+  await writeFile(join(workspace, "graph.json"), JSON.stringify(config, null, 2) + "\n", "utf8");
 
   driver = await createDriver();
   await startEngine();
-  console.log("PASS  engine booted with the handoff plugin active");
+  const artifact = await readFile(join(workspace, "GRAPH.md"), "utf8");
+  assert.match(artifact, /workflow · build-review/);
+  assert.match(artifact, /↻ resume/);
+  assert.match(artifact, /✦ fresh every visit/);
+  const command = await readFile(join(workspace, ".opencode", "commands", "graph.md"), "utf8");
+  assert.match(command, /graph_map/);
+  console.log("PASS  engine booted, GRAPH.md was generated, /graph command was installed");
 
-  const first = await stdioDispatch("Write a one-paragraph design note for a hello() function. Keep it short.");
+  const first = await stdioDispatch("build-review", "implement", "Write a one-paragraph design note for a hello() function. Keep it short.");
   assert.equal(first.status, "completed");
   assert.equal(first.terminal, "done");
   const final = await readFile(join(workspace, "work", "final.md"), "utf8");
@@ -183,6 +238,43 @@ async function main() {
   assert.equal(interactiveCompletion.terminal, "done");
   console.log("PASS  the interactive agent dispatched through the tool and waited for the product");
 
+  const sessionCompletion = await stdioDispatch(
+    "session-check",
+    "builder",
+    "Run the session check. Follow the node objective exactly.",
+  );
+  assert.equal(sessionCompletion.status, "completed");
+  assert.equal(sessionCompletion.terminal, "done");
+  const builderSteps = events.filter(
+    (event) => event.kind === "step" && event.phase === "begin" && event.dispatchId === sessionCompletion.dispatchId && event.node === "builder",
+  );
+  const reviewerSteps = events.filter(
+    (event) => event.kind === "step" && event.phase === "begin" && event.dispatchId === sessionCompletion.dispatchId && event.node === "reviewer",
+  );
+  assert.equal(builderSteps.length, 3);
+  assert.equal(reviewerSteps.length, 2);
+  assert.equal(new Set(builderSteps.map((step) => step.sessionId)).size, 1, "builder must resume one session");
+  assert.equal(new Set(reviewerSteps.map((step) => step.sessionId)).size, 2, "reviewer must be fresh on every visit");
+  assert.ok(builderSteps.slice(1).every((step) => step.resumed === true));
+  assert.ok(String(builderSteps[1].upstream ?? "").endsWith("/work/reviewer.md"));
+  console.log("PASS  builder resumed one session across three visits; reviewer was fresh on both visits");
+
+  const mapped = await interactiveSession(
+    "v1-live-graph-map",
+    [
+      "Call the graph_map tool with no arguments.",
+      "Print each returned mermaid exactly inside a ```mermaid fenced block, then its workflowTable, then its nodeTable.",
+      "Then print the legend and the state.",
+      "Do not add narrative, summary, explanation, or a tour.",
+    ].join("\n"),
+  );
+  assert.equal(mapped.info.outcome, "succeeded");
+  assert.ok(mapped.tools.some((tool) => tool.name === "graph_map" && tool.status === "completed"));
+  assert.match(mapped.text, /```mermaid/);
+  assert.match(mapped.text, /build-review/);
+  assert.match(mapped.text, /↻ resume/);
+  console.log("PASS  the interactive agent rendered graph_map as a Mermaid map with the resume marker");
+
   const beforeAuthoring = events.length;
   const authored = await interactiveSession(
     "v1-live-authoring",
@@ -200,10 +292,12 @@ async function main() {
     30000,
     "config reload",
   );
-  const config = JSON.parse(await readFile(join(workspace, "graph.json"), "utf8"));
-  const review = config.graphs[0].nodes.find((node) => node.id === "review");
+  const configAfter = JSON.parse(await readFile(join(workspace, "graph.json"), "utf8"));
+  const review = configAfter.graphs[0].nodes.find((node) => node.id === "review");
   assert.equal(review.objective, "Review the implementation and name one concrete improvement.");
-  console.log("PASS  the interactive agent edited the graph, reloaded it, and the engine swapped it");
+  const artifactAfter = await readFile(join(workspace, "GRAPH.md"), "utf8");
+  assert.match(artifactAfter, /Review the implementation and name one concrete improvement\./);
+  console.log("PASS  the interactive agent edited the graph, reloaded it, and GRAPH.md swapped with it");
 
   console.log("\nV1 LIVE PROOF PASS");
 }

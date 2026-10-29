@@ -97,8 +97,9 @@ export function checkHandoffOrder(messages, handoff) {
   return null;
 }
 
-async function runNode({ driver, config, graph, node, helper, record, cwd, previousOutput, onEvent }) {
+async function runNode({ driver, config, graph, node, helper, record, cwd, previousOutput, onEvent, sessions }) {
   const outputAbs = outputPathFor(graph, node, cwd);
+  const sessionMode = node.session ?? "fresh";
   record.nodeDef = node;
   record.graphDef = graph;
   record.outputPath = outputAbs;
@@ -107,22 +108,34 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
   record.handoffDefect = null;
   record.sessionId = null;
 
-  const session = await driver.createSession({
-    directory: cwd,
-    title: `${record.id}/${graph.id}/${node.id}`,
-    agent: helper.agent ?? "build",
-    model: helper.model,
-    permissions: permissionsFor({
-      handoff: node.handoff.mode !== "terminal",
-      allow: helper.permissions,
-    }),
-  });
-  record.sessionId = session.id;
+  let sessionId;
+  let resumed = false;
+  if (sessionMode === "resume" && sessions.has(node.id)) {
+    sessionId = sessions.get(node.id);
+    resumed = true;
+  } else {
+    const session = await driver.createSession({
+      directory: cwd,
+      title: `${record.id}/${graph.id}/${node.id}`,
+      agent: helper.agent ?? "build",
+      model: helper.model,
+      permissions: permissionsFor({
+        handoff: node.handoff.mode !== "terminal",
+        allow: helper.permissions,
+      }),
+    });
+    sessionId = session.id;
+    if (sessionMode === "resume") sessions.set(node.id, sessionId);
+  }
+  record.sessionId = sessionId;
   onEvent("step", {
     dispatchId: record.id,
     node: node.id,
     phase: "begin",
-    sessionId: session.id,
+    sessionId,
+    sessionMode,
+    resumed,
+    upstream: previousOutput,
     at: new Date().toISOString(),
   });
 
@@ -136,9 +149,11 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
 
   let info;
   try {
-    info = await driver.prompt(session.id, brief, { budgetMs: node.budgetMs ?? 600000 });
+    info = await driver.prompt(sessionId, brief, { budgetMs: node.budgetMs ?? 600000 });
   } catch (e) {
-    await driver.deleteSession(session.id);
+    if (sessionMode === "fresh" && process.env.ENGINE_KEEP_SESSIONS !== "1") {
+      await driver.deleteSession(sessionId);
+    }
     throw e;
   }
 
@@ -176,7 +191,7 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
       );
     }
 
-    const messages = await driver.messages(session.id);
+    const messages = await driver.messages(sessionId);
     const order = checkHandoffOrder(messages, record.handoff);
     if (order) {
       throw new DispatchDefect("handoff.not-last", `node '${node.id}': ${order}`);
@@ -189,11 +204,15 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
       phase: "end",
       outcome: info.outcome,
       label: record.handoff.label,
+      sessionMode,
+      resumed,
       at: new Date().toISOString(),
     });
     return { outputPath: outputAbs, handoff: record.handoff };
   } finally {
-    if (process.env.ENGINE_KEEP_SESSIONS !== "1") await driver.deleteSession(session.id);
+    if (sessionMode === "fresh" && process.env.ENGINE_KEEP_SESSIONS !== "1") {
+      await driver.deleteSession(sessionId);
+    }
   }
 }
 
@@ -205,7 +224,9 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
   let previousOutput = null;
   const visits = record.visits ?? {};
   const maxSteps = graph.maxSteps ?? 100;
+  const sessions = new Map();
 
+  try {
   for (let step = 0; step < maxSteps; step += 1) {
     await waitIfPaused();
 
@@ -236,6 +257,7 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
       cwd,
       previousOutput,
       onEvent,
+      sessions,
     });
 
     if (node.handoff.mode === "terminal") {
@@ -265,4 +287,11 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
   }
 
   throw new DispatchDefect("step-overflow", `graph '${graph.id}' exceeded ${maxSteps} steps`);
+  } finally {
+    if (process.env.ENGINE_KEEP_SESSIONS !== "1") {
+      for (const sessionId of sessions.values()) {
+        await driver.deleteSession(sessionId).catch(() => {});
+      }
+    }
+  }
 }

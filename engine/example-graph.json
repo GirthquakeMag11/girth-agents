@@ -21,12 +21,21 @@
       "id": "build-review",
       "outputRoot": "work",
       "maxSteps": 100,
+      "workflows": [
+        {
+          "id": "build-review",
+          "entry": "implement",
+          "exit": "done",
+          "nodes": ["implement", "review", "done"]
+        }
+      ],
       "nodes": [
         {
           "id": "implement",
           "helper": "builder",
           "objective": "Implement the dispatched work.",
           "output": "implementation.md",
+          "session": "resume",
           "maxVisits": 3,
           "handoff": {
             "mode": "unconditional",
@@ -39,6 +48,7 @@
           "helper": "reviewer",
           "objective": "Review the implementation against the dispatched prompt.",
           "output": "review.md",
+          "session": "fresh",
           "maxVisits": 3,
           "handoff": {
             "mode": "conditional",
@@ -53,6 +63,7 @@
           "helper": "builder",
           "objective": "Finalize the work and write the final report.",
           "output": "final.md",
+          "session": "fresh",
           "handoff": { "mode": "terminal" }
         }
       ]

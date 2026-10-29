@@ -6,6 +6,7 @@ import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
+const SESSION_MODES = new Set(["fresh", "resume"]);
 
 const fault = (code, message) => ({ code, message });
 
@@ -192,12 +193,85 @@ function stronglyConnected(ids, byId) {
   return components;
 }
 
+function workflowPath(start, target, byId, allowed) {
+  if (start === target) return true;
+  const seen = new Set([start]);
+  const stack = [start];
+  while (stack.length > 0) {
+    const id = stack.pop();
+    for (const next of edgesOf(byId.get(id))) {
+      if (!allowed.has(next) || seen.has(next)) continue;
+      if (next === target) return true;
+      seen.add(next);
+      stack.push(next);
+    }
+  }
+  return false;
+}
+
+function validateWorkflows(workflows, at, byId, nodeIds, faults) {
+  if (workflows === undefined) return;
+  if (!Array.isArray(workflows)) {
+    faults.push(fault("schema.workflows", `${at}: must be an array`));
+    return;
+  }
+  const ids = new Set();
+  for (const [i, workflow] of workflows.entries()) {
+    const wfAt = `${at}[${i}]`;
+    if (!isObject(workflow)) {
+      faults.push(fault("schema.workflow", `${wfAt}: must be an object`));
+      continue;
+    }
+    strict(workflow, ["id", "entry", "exit", "nodes"], wfAt, faults);
+    string(workflow.id, `${wfAt}.id`, faults);
+    string(workflow.entry, `${wfAt}.entry`, faults);
+    string(workflow.exit, `${wfAt}.exit`, faults);
+    if (typeof workflow.id === "string" && workflow.id.trim() !== "") {
+      if (ids.has(workflow.id)) faults.push(fault("graph.duplicate-workflow", `${wfAt}.id: duplicate '${workflow.id}'`));
+      ids.add(workflow.id);
+    }
+    if (!Array.isArray(workflow.nodes) || workflow.nodes.length === 0) {
+      faults.push(fault("schema.workflow-nodes", `${wfAt}.nodes: must be a non-empty array`));
+      continue;
+    }
+    const subset = new Set();
+    for (const [j, id] of workflow.nodes.entries()) {
+      if (typeof id !== "string" || id.trim() === "") {
+        faults.push(fault("schema.workflow-nodes", `${wfAt}.nodes[${j}]: must be a non-empty node id`));
+        continue;
+      }
+      if (subset.has(id)) faults.push(fault("graph.duplicate-workflow-node", `${wfAt}.nodes[${j}]: duplicate '${id}'`));
+      subset.add(id);
+      if (!nodeIds.has(id)) faults.push(fault("graph.workflow-unknown-node", `${wfAt}.nodes[${j}]: names no node '${id}'`));
+    }
+    if (typeof workflow.entry === "string" && !nodeIds.has(workflow.entry)) {
+      faults.push(fault("graph.workflow-entry", `${wfAt}.entry: names no node '${workflow.entry}'`));
+    } else if (typeof workflow.entry === "string" && !subset.has(workflow.entry)) {
+      faults.push(fault("graph.workflow-entry", `${wfAt}.entry: '${workflow.entry}' is not in the workflow's nodes`));
+    }
+    if (typeof workflow.exit === "string" && !nodeIds.has(workflow.exit)) {
+      faults.push(fault("graph.workflow-exit", `${wfAt}.exit: names no node '${workflow.exit}'`));
+    } else if (typeof workflow.exit === "string" && !subset.has(workflow.exit)) {
+      faults.push(fault("graph.workflow-exit", `${wfAt}.exit: '${workflow.exit}' is not in the workflow's nodes`));
+    }
+    if (subset.size === 0 || typeof workflow.entry !== "string" || typeof workflow.exit !== "string") continue;
+    for (const id of subset) {
+      if (!workflowPath(workflow.entry, id, byId, subset)) {
+        faults.push(fault("graph.workflow-unreachable", `${wfAt}: '${id}' is not reachable from entry '${workflow.entry}'`));
+      }
+      if (!workflowPath(id, workflow.exit, byId, subset)) {
+        faults.push(fault("graph.workflow-unreachable", `${wfAt}: '${id}' cannot reach exit '${workflow.exit}'`));
+      }
+    }
+  }
+}
+
 function validateGraph(graph, at, helperIds, faults) {
   if (!isObject(graph)) {
     faults.push(fault("schema.graph", `${at}: must be an object`));
     return;
   }
-  strict(graph, ["id", "outputRoot", "maxSteps", "nodes"], at, faults);
+  strict(graph, ["id", "outputRoot", "maxSteps", "workflows", "nodes"], at, faults);
   string(graph.id, `${at}.id`, faults);
   if (graph.outputRoot !== undefined) relativePath(graph.outputRoot, `${at}.outputRoot`, faults);
   integer(graph.maxSteps, `${at}.maxSteps`, faults, { min: 1 });
@@ -222,7 +296,7 @@ function validateGraph(graph, at, helperIds, faults) {
       faults.push(fault("schema.node", `${nodeAt}: must be an object`));
       continue;
     }
-    strict(node, ["id", "helper", "objective", "output", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
+    strict(node, ["id", "helper", "objective", "output", "session", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
     string(node.id, `${nodeAt}.id`, faults);
     string(node.helper, `${nodeAt}.helper`, faults);
     if (node.helper !== undefined && typeof node.helper === "string" && !helperIds.has(node.helper)) {
@@ -230,6 +304,9 @@ function validateGraph(graph, at, helperIds, faults) {
     }
     string(node.objective, `${nodeAt}.objective`, faults);
     relativePath(node.output, `${nodeAt}.output`, faults);
+    if (node.session !== undefined && !SESSION_MODES.has(node.session)) {
+      faults.push(fault("schema.session", `${nodeAt}.session: must be 'fresh' or 'resume'`));
+    }
     integer(node.budgetMs, `${nodeAt}.budgetMs`, faults, { min: 1 });
     integer(node.maxVisits, `${nodeAt}.maxVisits`, faults, { min: 1 });
     if (node.maxVisits !== undefined && Number.isInteger(node.maxVisits) && node.maxVisits > 3) {
@@ -262,6 +339,8 @@ function validateGraph(graph, at, helperIds, faults) {
       }
     }
   }
+
+  validateWorkflows(graph.workflows, `${at}.workflows`, byId, nodeIds, faults);
 }
 
 export function validateConfig(doc) {
@@ -342,11 +421,13 @@ export function graphSummary(graph) {
     id: graph.id,
     maxSteps: graph.maxSteps ?? 100,
     outputRoot: graph.outputRoot ?? ".",
+    workflows: graph.workflows ?? [],
     nodes: graph.nodes.map((node) => ({
       id: node.id,
       helper: node.helper,
       objective: node.objective,
       output: node.output,
+      session: node.session ?? "fresh",
       maxVisits: node.maxVisits ?? null,
       handoff:
         node.handoff.mode === "conditional"

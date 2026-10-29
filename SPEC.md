@@ -32,10 +32,10 @@ SIGTERM, or SIGINT interrupts the active session and exits.
 
 ## 2. The graph
 
-A graph has an `id`, `outputRoot`, `maxSteps`, and `nodes`. A node is one
-agent activation and its handoff surface. A node has an `id`, `helper`,
-`objective`, `output`, optional `budgetMs`, optional `maxVisits`, and a
-`handoff`.
+A graph has an `id`, `outputRoot`, `maxSteps`, `workflows`, and `nodes`.
+A node is one agent activation and its handoff surface. A node has an `id`,
+`helper`, `objective`, `output`, optional `session`, optional `budgetMs`,
+optional `maxVisits`, and a `handoff`.
 
 Any node may be a dispatch entry point; the interactive agent chooses the
 node. Every node must be able to reach a terminal node, and every cycle
@@ -57,6 +57,22 @@ No node mixes modes. Every label resolves to exactly one target. There is
 no catch-all. A label that is not declared is a loud defect; a non-terminal
 node whose session ends without an accepted handoff is a loud defect.
 
+### Workflows
+
+A workflow is a labelled subsection of a graph:
+
+```json
+{ "id": "build-review", "entry": "implement", "exit": "done", "nodes": ["implement", "review", "done"] }
+```
+
+It is a view for reasoning, not a container, not a runtime unit, and not a
+dispatch target. The nodes and edges belong to the graph; a node may be in
+zero, one, or multiple workflows. The workflow's connections are the
+graph's connections among its nodes; the workflow does not define edges.
+The engine routes by handoffs, never by workflow. Workflows do not change
+sessions, labels, outputs, or queue behavior. The entry and exit are
+designated for reasoning; they are not dispatch constraints.
+
 ## 3. Dispatch
 
 The dispatch input is `{ graph, node, prompt, wait? }`. The graph must
@@ -69,9 +85,15 @@ finish; `wait: false` returns the id immediately. `dispatch_wait` and
 `dispatch_status` read it later. One dispatch runs at a time; the queue
 is FIFO and in memory.
 
-Each node activation creates a fresh session; nothing is resumed. The only
-thing carried between nodes is the previous node's output path. No stamps,
-documents, records, or engine state cross.
+Each node activation creates a fresh session by default. A node with
+`session: "resume"` keeps one session per dispatch and reuses it on every
+visit; the resumed brief includes the upstream output path (for the
+implementation node, the review that failed it), and the helper's original
+session context remains. Fresh sessions are deleted after their visit;
+resume sessions are deleted at dispatch end. The reviewer is always fresh.
+
+The only thing carried between nodes is the previous node's output path. No
+stamps, documents, records, or engine state cross.
 
 A dispatch ends when a terminal node completes, or on a loud defect.
 `maxSteps` bounds node activations; `maxVisits` bounds repeats; exceeding
@@ -152,10 +174,12 @@ completes the dispatch.
 ## 6. The node lifecycle
 
 1. Resolve the node; check `maxVisits` and `maxSteps`.
-2. Create a fresh session with the helper's model and agent, a location
-   at the engine's working directory, and permissions that are a leading
-   `deny *`, then `handoff` for a non-terminal node, then the helper's
-   allowed actions.
+2. Create or reuse the node's session. A `fresh` node creates a session
+   with the helper's model and agent, a location at the engine's working
+   directory, and permissions that are a leading `deny *`, then `handoff`
+   for a non-terminal node, then the helper's allowed actions. A `resume`
+   node reuses the session stored for that node in this dispatch, or
+   creates and stores it on the first visit.
 3. The helper session's permissions are the tool gate: a leading
    `deny *`, then `handoff` for a non-terminal node, then the helper's
    allowed actions. The interactive control tools are not in that list;
@@ -168,8 +192,10 @@ completes the dispatch.
    outcome, the message order, and the output hash.
 7. Route: a terminal node completes the dispatch; otherwise the label's
    target runs next. Increment the visit count.
-8. On any defect: emit it, end the dispatch with `completion
-   status:"defect"`, and return to idle. The engine stays alive.
+8. On any defect: emit it, delete the dispatch's fresh and resume
+   sessions, end the dispatch with `completion status:"defect"`, and
+   return to idle. The engine stays alive. The same cleanup runs after a
+   terminal completion.
 
 ## 7. Sessions — the live contract (OpenCode 2.2.0, live-verified)
 
@@ -241,6 +267,8 @@ The same plugin gives the user's interactive agent:
 - `reload()` — validate and swap the graph config; returns faults or the
   new graph list.
 - `graphs()` — the config path and the current graphs and nodes.
+- `graph_map({ graph? })` — the deterministic Mermaid map, workflow table,
+  node table, legend, and live state.
 
 The tools are permission-gated. Helper sessions allow only `handoff` and
 their work actions; the interactive agent's session allows the control
@@ -258,6 +286,24 @@ the workspace's skill directory:
 
 The skills are guidance for the user's agent; they are not helper craft
 and not engine code.
+
+### 8.4 The graph view
+
+`graph_map` is the graph as a thing: the engine generates a Mermaid map, a
+workflow table, a node table, a legend, and a one-line live state from the
+config and the queue. The agent prints them; it does not author, summarize,
+or explain them.
+
+The `/graph` command takes an optional graph id and calls `graph_map`; it
+prints the Mermaid block, the workflow table, the node table, the legend,
+and the state. It has no subcommands. Every valid reload and every boot
+also writes the same map and tables to `GRAPH.md` in the workspace, so the
+user can keep the graph open beside the chat, independent of the agent.
+
+The map is a view of the config, not a second source of truth. The node
+markers come from `session`: `↻ resume` or `✦ fresh`; the workflow box and
+entry/exit come from `workflows`; the node table carries objective, output,
+handoff, and max visits. The live state comes from the queue.
 
 ## 9. Config and the verifier
 
@@ -286,12 +332,21 @@ schema is strict; unknown fields are faults.
       "id": "build-review",
       "outputRoot": "work",
       "maxSteps": 100,
+      "workflows": [
+        {
+          "id": "build-review",
+          "entry": "implement",
+          "exit": "done",
+          "nodes": ["implement", "review", "done"]
+        }
+      ],
       "nodes": [
         {
           "id": "implement",
           "helper": "builder",
           "objective": "Implement the dispatched work.",
           "output": "implementation.md",
+          "session": "resume",
           "maxVisits": 3,
           "handoff": {
             "mode": "unconditional",
@@ -304,6 +359,7 @@ schema is strict; unknown fields are faults.
           "helper": "reviewer",
           "objective": "Review the implementation against the dispatched prompt.",
           "output": "review.md",
+          "session": "fresh",
           "maxVisits": 3,
           "handoff": {
             "mode": "conditional",
@@ -318,6 +374,7 @@ schema is strict; unknown fields are faults.
           "helper": "builder",
           "objective": "Finalize the work and write the final report.",
           "output": "final.md",
+          "session": "fresh",
           "handoff": { "mode": "terminal" }
         }
       ]
@@ -333,6 +390,10 @@ The verifier is the boot gate:
 - **Graph**: dangling handoff targets, duplicate labels or ids, mixed
   modes, empty conditional label sets, unknown helpers, a node that
   cannot reach a terminal, no terminal node, and an unbounded cycle.
+- **Workflows**: unique ids; entry and exit exist and are in the
+  workflow's nodes; every workflow node exists; every node is reachable
+  from the entry and can reach the exit within the subsection.
+- **Sessions**: `session` is `fresh` or `resume`.
 - **Limits**: `maxVisits` is 1–3 (the engine's hard ceiling; config may
   lower it), `maxSteps` is positive, `budgetMs` is positive.
 
@@ -377,9 +438,12 @@ The proof sequence is fixed: one session and one lever; one node and one
 handoff; two nodes with output passing; the failure matrix (no handoff,
 double, undeclared label, missing output, output changed after handoff,
 session failure, timeout); the control matrix (pause, resume, introspect,
-queue, busy dispatch); and the complete user pipeline — an interactive
-agent authors a graph, reloads it, dispatches a prompt, waits or
-backgrounds it, and receives the product.
+queue, busy dispatch); the session graph (the builder's session id is
+identical across its three visits while the reviewer's session ids differ
+on every visit, and the resumed brief carries the reviewer's output); and
+the complete user pipeline — an interactive agent authors a graph, reloads
+it, dispatches a prompt, waits or backgrounds it, receives the product,
+and renders the graph map/artifact.
 
 ## 12. Out of scope
 

@@ -89,3 +89,23 @@ test("config: output paths resolve under outputRoot", () => {
   const node = graph.nodes[0];
   assert.equal(outputPathFor(graph, node, "/tmp/work"), "/tmp/work/work/implementation.md");
 });
+
+test("config: a workflow is a referenced subsection with a reachable entry and exit", () => {
+  const doc = structuredClone(EXAMPLE);
+  const wf = doc.graphs[0].workflows[0];
+  wf.entry = "nowhere";
+  assert.ok(codes(validateConfig(doc)).includes("graph.workflow-entry"));
+
+  const unreachable = structuredClone(EXAMPLE);
+  unreachable.graphs[0].workflows[0].nodes = ["implement", "done"];
+  const faults = codes(validateConfig(unreachable));
+  assert.ok(faults.includes("graph.workflow-unreachable"), JSON.stringify(faults));
+});
+
+test("config: session modes are fresh or resume", () => {
+  const doc = structuredClone(EXAMPLE);
+  doc.graphs[0].nodes[0].session = "sometimes";
+  assert.ok(codes(validateConfig(doc)).includes("schema.session"));
+  assert.equal(EXAMPLE.graphs[0].nodes[0].session, "resume");
+  assert.equal(EXAMPLE.graphs[0].nodes[1].session, "fresh");
+});
