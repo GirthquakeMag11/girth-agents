@@ -159,7 +159,7 @@ async function runNode({ driver, config, graph, node, helper, record, cwd, previ
 
   try {
     if (info.outcome !== "succeeded") {
-      throw new DispatchDefect(`session-${info.outcome}`, `node '${node.id}' session ${session.id} ended ${info.outcome}`);
+      throw new DispatchDefect(`session-${info.outcome}`, `node '${node.id}' session ${sessionId} ended ${info.outcome}`);
     }
 
     if (node.handoff.mode === "terminal") {
