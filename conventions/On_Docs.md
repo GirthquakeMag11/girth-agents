@@ -1,3 +1,0 @@
-# On Docs
-
-- **2026-10-28 — the engine's graph illustration stays in sync with the configured graph** — every change that updates the engine's graph configuration must, in the same change, update the graph illustration in the engine's README; the two are never allowed to drift. The ruling's mechanical form is enforced by a committed check: the illustration is generated from the live config and the drift test fails when they diverge.

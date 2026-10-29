@@ -1,7 +1,0 @@
-{
-  "$schema": "https://opencode.ai/config.json",
-  // Intentionally empty: this repo ships no project settings.
-  // The catalog is discovered from .opencode/{agents,skills,commands} when
-  // working inside this repo, and installed via scripts/install.sh when
-  // working everywhere else.
-}
