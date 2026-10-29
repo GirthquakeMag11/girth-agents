@@ -1,4 +1,0 @@
----
-id: exit
-type: exit
----

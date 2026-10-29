@@ -1,8 +1,7 @@
-// Service discovery and attach: a second process becomes an OpenCode
-// server client exactly the way the TUI does — read the registration
-// file the server writes, authenticate with its Basic credentials, and
-// verify health and identity before trusting it. Failure is a typed
-// defect, never a guess: the password and the port are never hardcoded.
+// Service discovery and attach: read the registration file the server
+// writes, authenticate with its Basic credentials, and verify health
+// before trusting it. Failure is a typed defect, never a guess: the
+// password and the port are never hardcoded.
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -31,9 +30,7 @@ export async function discover(serviceFile = process.env.OPENCODE_SERVICE_FILE |
   }
   let info;
   try {
-    const res = await fetchImpl(`${url}/api/info`, {
-      headers: { authorization: basicAuth(password) },
-    });
+    const res = await fetchImpl(`${url}/api/info`, { headers: { authorization: basicAuth(password) } });
     if (!res.ok) {
       const err = new Error(`service health check returned ${res.status}`);
       err.kind = "service-health";
@@ -46,5 +43,5 @@ export async function discover(serviceFile = process.env.OPENCODE_SERVICE_FILE |
     err.kind = "service-health";
     throw err;
   }
-  return { url, password, info };
+  return { url: url.replace(/\/$/, ""), password, info };
 }

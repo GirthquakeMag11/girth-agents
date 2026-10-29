@@ -1,240 +1,268 @@
-// The graph executor core: hardcoded flow structure, config-driven
-// everything else. It walks a schema-valid graph — dispatch through the
-// session driver, read only the node's configured artifact, route by
-// the stamp fields its conditions parse — and halts on any defect.
-// It knows no particular workflow.
+// The dispatch loop. One node at a time: create a fresh session, send the
+// brief, wait for a handoff acknowledgement, verify the output and the
+// order, then route to the label's target. Any missing or ambiguous piece
+// is a typed defect; no node silently falls through.
 
-const DEFAULT_BUDGET_MS = 30000;
-const MAX_STEPS = 1000;
+import { createHash } from "node:crypto";
+import { readFile, stat } from "node:fs/promises";
+import { composeBrief } from "./brief.mjs";
+import { findGraph, findNode, handoffTarget, outputPathFor } from "./config.mjs";
+import { permissionsFor } from "./driver.mjs";
 
-function timeout(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export class DispatchDefect extends Error {
+  constructor(code, message) {
+    super(message);
+    this.kind = code;
+  }
 }
 
-export function createExecutor({ graph, driver, readFile, artifactPath, writeExitRecord, onStep, agents = {} }) {
-  const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
-
-  const composeBrief = (node, previousStamps, claim) => {
-    const fitting = agents[node.helper];
-    const parts = [];
-    if (fitting?.body) parts.push(fitting.body);
-    for (const skill of fitting?.skills ?? []) {
-      parts.push(`# Skill: ${skill.id}\n\n${skill.instructions}`);
-    }
-    if (claim?.file) {
-      parts.push(`# The claimed input\n\nThe engine claimed '${claim.file}' as this run's input. Read it first: it is the work's contract.`);
-    }
-    if (node.objective) parts.push(`# Objective\n\n${node.objective}`);
-    if (node.body) parts.push(node.body);
-    if (node.artifact) parts.push(`Produce your output artifact at: ${node.artifact}`);
-    if (previousStamps) {
-      parts.push(`# The reviewer's report\n\n${JSON.stringify(previousStamps, null, 2)}`);
-    }
-    return parts.join("\n\n");
+export async function checkOutput(path) {
+  let info;
+  try {
+    info = await stat(path);
+  } catch (e) {
+    if (e?.code === "ENOENT") throw new DispatchDefect("output.missing", `no output at ${path}`);
+    throw new DispatchDefect("output.check", `output check failed at ${path}: ${e.message}`);
+  }
+  if (!info.isFile()) throw new DispatchDefect("output.not-file", `output path is not a regular file: ${path}`);
+  if (info.size === 0) throw new DispatchDefect("output.empty", `output is empty: ${path}`);
+  const content = await readFile(path);
+  return {
+    path,
+    bytes: info.size,
+    hash: createHash("sha256").update(content).digest("hex"),
   };
-  const linksFrom = new Map();
-  for (const link of graph.links) {
-    const list = linksFrom.get(link.from) ?? [];
-    list.push(link);
-    linksFrom.set(link.from, list);
+}
+
+function toolParts(messages) {
+  // The session history endpoint returns newest first. Routing order is
+  // chronological, so sort by the message and tool timestamps before
+  // flattening; never trust the array order.
+  const ordered = [...(messages ?? [])].sort(
+    (a, b) => (a.time?.created ?? 0) - (b.time?.created ?? 0),
+  );
+  const parts = [];
+  for (const message of ordered) {
+    const content = [...(message.content ?? message.parts ?? [])].sort(
+      (a, b) => (a.time?.created ?? 0) - (b.time?.created ?? 0),
+    );
+    for (const part of content) {
+      if (part?.type === "tool") parts.push({ message, part });
+    }
+  }
+  return parts;
+}
+
+// The handoff must be the last tool call in the session, and no other tool
+// may finish after the acknowledgement was accepted. This catches the
+// parallel-call race the red team reproduced: a sleep finishing after handoff.
+export function checkHandoffOrder(messages, handoff) {
+  const parts = toolParts(messages);
+  if (parts.length === 0) return "the session history has no tool calls";
+
+  let index = -1;
+  if (handoff.callID) index = parts.findIndex(({ part }) => part.id === handoff.callID);
+  if (index === -1) {
+    for (let i = parts.length - 1; i >= 0; i -= 1) {
+      const { part } = parts[i];
+      if (part.name === "handoff" && part.state?.input?.label === handoff.label) {
+        index = i;
+        break;
+      }
+    }
+  }
+  if (index === -1) return "the accepted handoff call is not in the session history";
+
+  const { part } = parts[index];
+  if (part.state?.status && part.state.status !== "completed") {
+    return `the handoff call ended ${part.state.status}`;
   }
 
-  // Strict routing: a node's out-links are either one unconditional link
-// or a set of conditional links — never a mixture, never a catch-all.
-// A stamp that matches no declared condition is a loud defect, not a
-// route. The exhausted link is the retry bound's own route, outside
-// both sets.
-  function route(nodeId, stamps) {
-    const links = (linksFrom.get(nodeId) ?? []).filter((l) => !l.exhausted);
-    if (links.length === 0) return { empty: true, nodeId };
-    const conditional = links.filter((l) => l.condition);
-    if (conditional.length > 0) {
-      for (const link of conditional) {
-        if (stamps[link.condition.field] === link.condition.equals) return { to: link.to };
-      }
-      return { noRoute: true, nodeId };
-    }
-    if (links.length > 1) return { ambiguous: true, nodeId };
-    return { to: links[0].to };
+  const after = parts.slice(index + 1);
+  if (after.length > 0) {
+    return `tool '${after[0].part.name}' followed the handoff`;
   }
 
-  async function run({ projectId, entryNode, directory, claim }) {
-    const steps = [];
-    const pushStep = (step) => {
-      steps.push(step);
-      if (onStep) onStep({ projectId, ...step });
-    };
-    const sessionByNode = new Map();
-    const visitCount = new Map();
-    let lastStamps = undefined;
-    let current = entryNode;
-    const start = nodes.get(entryNode);
-    if (!start) {
-      return { projectId, steps, failure: { kind: "unknown-entry", message: `no node named ${entryNode}` } };
+  const acceptedAt = Date.parse(handoff.at);
+  if (Number.isFinite(acceptedAt)) {
+    for (const entry of parts) {
+      if (entry.part === part) continue;
+      const completed = entry.part.time?.completed;
+      if (typeof completed === "number" && completed > acceptedAt) {
+        return `tool '${entry.part.name}' completed after the handoff was accepted`;
+      }
     }
-
-    for (let guard = 0; guard < MAX_STEPS; guard++) {
-      const node = nodes.get(current);
-      if (!node) {
-        return { projectId, steps, failure: { kind: "no-node", message: `graph names no node ${current}` } };
-      }
-
-      if (node.type === "exit") {
-        let exit;
-        if (node.record && writeExitRecord) {
-          exit = await writeExitRecord({ projectId, node, steps });
-        }
-        return { projectId, terminal: node.id, steps, failure: undefined, exit };
-      }
-
-      // Dispatch one node's session and read its artifact; returns { stamps }
-      // or { failure }. Shared by tasks and dispatch-capable entries.
-      async function dispatchStep(node) {
-        let sessionIdx;
-        if (node.resume) {
-          sessionIdx = sessionByNode.get(node.resume);
-          if (sessionIdx === undefined) {
-            pushStep({ nodeId: node.id, projectId, outcome: "resume-missing" });
-            return {
-              failure: { kind: "resume-missing", message: `node ${node.id} resumes ${node.resume}, whose session is not in this run` },
-            };
-          }
-        } else {
-          try {
-            sessionIdx = await driver.spawn({ nodeId: node.id, helper: node.helper, projectId, directory, node });
-          } catch (e) {
-            pushStep({ nodeId: node.id, projectId, outcome: "dispatch-defect" });
-            return { failure: { kind: "dispatch-defect", message: e.message } };
-          }
-          sessionByNode.set(node.id, sessionIdx);
-        }
-        if (onStep) onStep({ projectId, nodeId: node.id, outcome: "dispatched", sessionIdx, at: new Date().toISOString() });
-        const brief = composeBrief(node, node.resume ? lastStamps : undefined, claim);
-        const promptPromise = driver.prompt(sessionIdx, brief);
-        const budgetMs = node.budgetMs ?? DEFAULT_BUDGET_MS;
-        let timer;
-        const budget = new Promise((resolve) => {
-          timer = setTimeout(() => resolve("TIME"), budgetMs);
-        });
-
-        const raced = await Promise.race([promptPromise, budget]);
-        clearTimeout(timer);
-        if (raced === "TIME") {
-          driver.interrupt(sessionIdx);
-          await promptPromise;
-          pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
-          return {
-            failure: { kind: "time-budget", message: `step ${node.id} breached its ${budgetMs}ms budget` },
-          };
-        }
-
-        if (raced.outcome === "failed") {
-          pushStep({ nodeId: node.id, projectId, outcome: "failed" });
-          return { failure: { kind: "session-failed", message: `step ${node.id}'s session failed` } };
-        }
-
-        if (raced.outcome === "interrupted") {
-          pushStep({ nodeId: node.id, projectId, outcome: "interrupted" });
-          return { failure: { kind: "session-interrupted", message: `step ${node.id} was interrupted` } };
-        }
-
-        // Succeeded: read exactly the configured artifact — nothing else is output.
-        const path = artifactPath(projectId, node);
-        let stamps;
-        try {
-          const content = await readFile(path);
-          if (content === null) {
-            pushStep({ nodeId: node.id, projectId, outcome: "artifact-missing" });
-            return { failure: { kind: "artifact-missing", message: `step ${node.id}: no artifact at ${path}` } };
-          }
-          stamps = JSON.parse(content);
-          if (stamps === null || typeof stamps !== "object") {
-            throw new Error("artifact is not a JSON object");
-          }
-        } catch (e) {
-          pushStep({ nodeId: node.id, projectId, outcome: "artifact-malformed" });
-          return {
-            failure: { kind: "artifact-malformed", message: `step ${node.id}: artifact at ${path} is malformed (${e.message})` },
-          };
-        }
-
-        pushStep({ nodeId: node.id, projectId, outcome: "succeeded", stamps });
-        lastStamps = stamps;
-        return { stamps };
-      }
-
-      if (node.type === "entry") {
-        pushStep({ nodeId: node.id, projectId, outcome: "entered" });
-        if (node.helper) {
-          // the entry is also the first work step: dispatch it, then route
-          const step = await dispatchStep(node);
-          if (step.failure) return { projectId, steps, failure: step.failure };
-        }
-        const next = route(node.id, {});
-        if (next.empty) {
-          return { projectId, steps, failure: { kind: "no-route", message: `entry ${node.id}: no outbound link` } };
-        }
-        if (!next.to) {
-          return { projectId, steps, failure: { kind: "no-route", message: `entry ${node.id}: no routable outbound link` } };
-        }
-        current = next.to;
-        continue;
-      }
-
-      if (node.type !== "task") {
-        return { projectId, steps, failure: { kind: "bad-node", message: `node ${node.id} has unknown type ${node.type}` } };
-      }
-
-      const visits = (visitCount.get(node.id) ?? 0) + 1;
-      if (node.maxVisits !== undefined && visits > node.maxVisits) {
-        const exhausted = (linksFrom.get(node.id) ?? []).find((l) => l.exhausted);
-        if (exhausted) {
-          pushStep({ nodeId: node.id, projectId, outcome: "exhausted" });
-          current = exhausted.to;
-          continue;
-        }
-        return {
-          projectId,
-          steps,
-          failure: { kind: "retry-limit", message: `node ${node.id} exceeded its maxVisits of ${node.maxVisits} with no exhausted link` },
-        };
-      }
-      visitCount.set(node.id, visits);
-
-      const step = await dispatchStep(node);
-      if (step.failure) return { projectId, steps, failure: step.failure };
-
-      const { stamps } = step;
-      const next = route(node.id, stamps);
-      if (next.empty) {
-        return {
-          projectId,
-          steps,
-          failure: { kind: "no-route", message: `step ${node.id}: no outbound link` },
-        };
-      }
-      if (next.noRoute) {
-        return {
-          projectId,
-          steps,
-          failure: {
-            kind: "no-route",
-            message: `step ${node.id}: the stamp ${JSON.stringify(stamps)} matched no declared condition`,
-          },
-        };
-      }
-      if (next.ambiguous) {
-        return {
-          projectId,
-          steps,
-          failure: { kind: "ambiguous-route", message: `step ${node.id}: more than one unconditional outbound link` },
-        };
-      }
-      current = next.to;
-    }
-
-    return { projectId, steps, failure: { kind: "step-overflow", message: `more than ${MAX_STEPS} steps` } };
   }
 
-  return { run };
+  return null;
+}
+
+async function runNode({ driver, config, graph, node, helper, record, cwd, previousOutput, onEvent }) {
+  const outputAbs = outputPathFor(graph, node, cwd);
+  record.nodeDef = node;
+  record.graphDef = graph;
+  record.outputPath = outputAbs;
+  record.output = null;
+  record.handoff = null;
+  record.handoffDefect = null;
+  record.sessionId = null;
+
+  const session = await driver.createSession({
+    directory: cwd,
+    title: `${record.id}/${graph.id}/${node.id}`,
+    agent: helper.agent ?? "build",
+    model: helper.model,
+    permissions: permissionsFor({
+      handoff: node.handoff.mode !== "terminal",
+      allow: helper.permissions,
+    }),
+  });
+  record.sessionId = session.id;
+  onEvent("step", {
+    dispatchId: record.id,
+    node: node.id,
+    phase: "begin",
+    sessionId: session.id,
+    at: new Date().toISOString(),
+  });
+
+  const brief = composeBrief({
+    helper,
+    node,
+    prompt: record.prompt,
+    previousOutput,
+    outputAbs,
+  });
+
+  let info;
+  try {
+    info = await driver.prompt(session.id, brief, { budgetMs: node.budgetMs ?? 600000 });
+  } catch (e) {
+    await driver.deleteSession(session.id);
+    throw e;
+  }
+
+  try {
+    if (info.outcome !== "succeeded") {
+      throw new DispatchDefect(`session-${info.outcome}`, `node '${node.id}' session ${session.id} ended ${info.outcome}`);
+    }
+
+    if (node.handoff.mode === "terminal") {
+      const output = await checkOutput(outputAbs);
+      record.output = output;
+      onEvent("step", {
+        dispatchId: record.id,
+        node: node.id,
+        phase: "end",
+        outcome: info.outcome,
+        at: new Date().toISOString(),
+      });
+      return { outputPath: outputAbs, handoff: null };
+    }
+
+    if (record.handoffDefect) throw record.handoffDefect;
+    if (!record.handoff) {
+      throw new DispatchDefect(
+        "handoff.none",
+        `node '${node.id}' ended without an accepted handoff`,
+      );
+    }
+
+    const output = await checkOutput(outputAbs);
+    if (output.hash !== record.handoff.outputHash) {
+      throw new DispatchDefect(
+        "output.changed",
+        `node '${node.id}' output changed after the handoff was accepted`,
+      );
+    }
+
+    const messages = await driver.messages(session.id);
+    const order = checkHandoffOrder(messages, record.handoff);
+    if (order) {
+      throw new DispatchDefect("handoff.not-last", `node '${node.id}': ${order}`);
+    }
+
+    record.output = output;
+    onEvent("step", {
+      dispatchId: record.id,
+      node: node.id,
+      phase: "end",
+      outcome: info.outcome,
+      label: record.handoff.label,
+      at: new Date().toISOString(),
+    });
+    return { outputPath: outputAbs, handoff: record.handoff };
+  } finally {
+    if (process.env.ENGINE_KEEP_SESSIONS !== "1") await driver.deleteSession(session.id);
+  }
+}
+
+export async function runDispatch({ driver, config, record, cwd, onEvent = () => {}, waitIfPaused = async () => {} }) {
+  const graph = findGraph(config, record.graph);
+  if (!graph) throw new DispatchDefect("no-graph", `dispatch names no graph '${record.graph}'`);
+
+  let current = record.node;
+  let previousOutput = null;
+  const visits = record.visits ?? {};
+  const maxSteps = graph.maxSteps ?? 100;
+
+  for (let step = 0; step < maxSteps; step += 1) {
+    await waitIfPaused();
+
+    const node = findNode(graph, current);
+    if (!node) throw new DispatchDefect("no-node", `graph '${graph.id}' names no node '${current}'`);
+
+    visits[current] = (visits[current] ?? 0) + 1;
+    const hardCeiling = Math.min(node.maxVisits ?? 3, 3);
+    if (visits[current] > hardCeiling) {
+      throw new DispatchDefect(
+        "max-visits",
+        `node '${current}' exceeded its visit bound (${hardCeiling})`,
+      );
+    }
+    record.node = current;
+    record.visits = { ...visits };
+
+    const helper = config.helpers.find((entry) => entry.id === node.helper);
+    if (!helper) throw new DispatchDefect("unknown-helper", `node '${node.id}' names no helper '${node.helper}'`);
+
+    const result = await runNode({
+      driver,
+      config,
+      graph,
+      node,
+      helper,
+      record,
+      cwd,
+      previousOutput,
+      onEvent,
+    });
+
+    if (node.handoff.mode === "terminal") {
+      record.terminal = current;
+      return { terminal: current, visits: { ...visits }, output: result.outputPath };
+    }
+
+    const target = handoffTarget(node, result.handoff.label);
+    if (!target) {
+      throw new DispatchDefect(
+        "handoff.unknown-label",
+        `node '${node.id}' accepted handoff '${result.handoff.label}' with no target`,
+      );
+    }
+
+    record.handoff = { from: current, label: result.handoff.label, to: target };
+    onEvent("handoff", {
+      dispatchId: record.id,
+      from: current,
+      label: result.handoff.label,
+      to: target,
+      at: new Date().toISOString(),
+    });
+
+    previousOutput = result.outputPath;
+    current = target;
+  }
+
+  throw new DispatchDefect("step-overflow", `graph '${graph.id}' exceeded ${maxSteps} steps`);
 }

@@ -156,9 +156,10 @@ completes the dispatch.
    at the engine's working directory, and permissions that are a leading
    `deny *`, then `handoff` for a non-terminal node, then the helper's
    allowed actions.
-3. Verify the session's tool snapshot before prompting: the handoff tool
-   is visible exactly for non-terminal nodes, and no tool outside the
-   allowed set is visible. A mismatch is a defect before any work starts.
+3. The helper session's permissions are the tool gate: a leading
+   `deny *`, then `handoff` for a non-terminal node, then the helper's
+   allowed actions. The interactive control tools are not in that list;
+   they are hidden from the helper.
 4. Prompt the brief and start the budget timer.
 5. Wait for the handoff acknowledgement or for the session to go idle.
    The acknowledgement is authoritative; the wait endpoint's 204 is only
@@ -199,8 +200,9 @@ completes the dispatch.
   deny-rest. A trailing wildcard deny shadows everything. An allow-only
   list is not deny-rest; unlisted tools remain visible and default to
   `ask`. Use the actions `read`, `edit`, and `shell`; the handoff action
-  is the tool's permission name. Verify the session's tool snapshot
-  before dispatch.
+  is the tool's permission name. The engine creates every helper session
+  with the leading deny, then the handoff allow, then the helper's
+  actions; a per-session snapshot assertion is v1.1 hardening.
 - The handoff tool plugin is location-scoped. It is not a workflow
   plugin; it is the one tool provider the engine requires.
 
@@ -366,7 +368,7 @@ scratch workspace with trusted helpers and says so.
 
 No mechanism is called working until it has run against the real
 OpenCode service at the cheapest size. The handoff tool, the
-acknowledgement, the permission snapshot, the idle/order check, and the
+acknowledgement, the permission gate, the idle/order check, and the
 output hash are live-proven or they are not claimed. Stand-in servers
 mirror the 2.2.0 wire and reject drift; they never certify a tool behavior
 the live server refuses.

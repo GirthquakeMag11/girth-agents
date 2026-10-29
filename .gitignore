@@ -4,6 +4,6 @@
 # Tooling
 node_modules/
 
-# Future build output (catalog generation)
-dist/
-site/
+# Engine runtime installs
+.opencode/
+work/

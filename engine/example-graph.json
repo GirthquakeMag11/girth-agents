@@ -1,0 +1,61 @@
+{
+  "version": "2",
+  "helpers": [
+    {
+      "id": "builder",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "agent": "build",
+      "permissions": ["read", "edit", "shell"],
+      "craft": "Work only within the dispatched prompt's scope. Follow the repository's conventions. Write the output file before you hand off."
+    },
+    {
+      "id": "reviewer",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "agent": "build",
+      "permissions": ["read", "edit", "shell"],
+      "craft": "Judge the work against the dispatched prompt and the upstream output. Write your review before you hand off."
+    }
+  ],
+  "graphs": [
+    {
+      "id": "build-review",
+      "outputRoot": "work",
+      "maxSteps": 100,
+      "nodes": [
+        {
+          "id": "implement",
+          "helper": "builder",
+          "objective": "Implement the dispatched work.",
+          "output": "implementation.md",
+          "maxVisits": 3,
+          "handoff": {
+            "mode": "unconditional",
+            "to": "review",
+            "description": "The implementation is written and ready for review."
+          }
+        },
+        {
+          "id": "review",
+          "helper": "reviewer",
+          "objective": "Review the implementation against the dispatched prompt.",
+          "output": "review.md",
+          "maxVisits": 3,
+          "handoff": {
+            "mode": "conditional",
+            "labels": [
+              { "label": "pass", "to": "done", "description": "The work meets the objective; finish." },
+              { "label": "fail", "to": "implement", "description": "The work is unmet; name exactly what must change." }
+            ]
+          }
+        },
+        {
+          "id": "done",
+          "helper": "builder",
+          "objective": "Finalize the work and write the final report.",
+          "output": "final.md",
+          "handoff": { "mode": "terminal" }
+        }
+      ]
+    }
+  ]
+}
