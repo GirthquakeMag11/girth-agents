@@ -17,6 +17,9 @@ green stand-in.
 The next milestone is not another engine feature. It is **using the engine
 to develop the engine**.
 
+Paused side-tracks and unconcluded design threads are tracked in
+`THREADS.md`.
+
 - **Freeze the engine during a dogfood cycle.** Change the graph, not the
   engine. Record engine defects and sharp corners; fix them as versioned
   engine work after the run, never as a hot-patch in the middle of the
