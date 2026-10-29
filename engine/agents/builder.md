@@ -6,7 +6,6 @@ capabilities: [fs, bash]
 permissions:
   allow: [fs, bash]
   denyRest: true
-skills: [skills/test-first.md]
 ---
 # The builder's craft
 

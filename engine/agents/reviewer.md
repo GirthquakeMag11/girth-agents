@@ -6,7 +6,6 @@ capabilities: [fs, bash]
 permissions:
   allow: [fs, bash]
   denyRest: true
-skills: [skills/verify-by-running.md]
 ---
 # The reviewer's craft
 

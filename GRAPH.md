@@ -62,16 +62,13 @@ not in a skill.
   follow the project's conventions, does it deliver what the ticket
   says — and stamps exactly pass or fail, with reasons.
 
-A **skill** is a reusable technique a helper draws on — named, described,
-attachable to any helper — never a persona. The shipped graph has two:
-
-- `test-first` — build at the seam the ticket names: a failing test that
-  pins the behavior, made green, refactored within the green.
-- `verify-by-running` — judge work by running it and reading the diff,
-  never by another's written claim.
-
 Both helpers run on pre-granted allow-list permissions over the live
 session contract (`SPEC.md` §6); models are config per helper.
+
+Skills are an engine mechanism — the brief can carry a helper a named
+technique (`SPEC.md` §3) — but this graph ships none. The helpers' craft
+lives in their own bodies; no skill enters the graph until one is ruled
+and its written form agreed.
 
 ## 5. The lanes to come
 

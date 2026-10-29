@@ -1,7 +1,6 @@
 {
   "version": "1",
   "agents": ["agents/builder.md", "agents/reviewer.md"],
-  "skills": ["skills/test-first.md", "skills/verify-by-running.md"],
   "graph": {
     "nodes": [
       "nodes/implement-from-ticket.md",
