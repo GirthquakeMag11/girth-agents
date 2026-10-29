@@ -41,6 +41,36 @@ handoff atomicity and durability, then model/cost resilience, then
 operations, then reach. v1 is usable, but the trust boundary is still
 cooperative helpers.
 
+### Dogfood log — first real task (v1.2.0)
+
+Task: add `--version` and `--help` to `engine/engine.mjs`, with a CLI test
+and README update. Dispatched through the product `build-review` graph.
+
+- **Result:** implement 1 → review 1 (pass) → done 1. The reviewer ran the
+  suite; 44 tests passed. The task cost about $0.0090 and 28,816 input /
+  4,028 output tokens. No engine meta-edit during the dispatch; the task
+  diff was committed after review.
+- **Sharp corner: command output was rewritten.** The original markdown
+  `/graph` command ran a `subagent: true` child, and the parent summarised
+  the child's map. Fixed by registering `/graph` as a plugin command that
+  runs the deterministic CLI, switches the session to the read-only
+  `graph-view` agent for one reply, and restores the prior agent. Verified
+  exact output, no tools, no dispatch, agent restored.
+- **Sharp corner: plugin reload after a recreated workspace.** OpenCode did
+  not reliably load a plugin when a scratch workspace directory was deleted
+  and recreated under the same path. The live proof now uses a unique
+  scratch workspace per run; a stable workspace restart was reliable.
+- **Sharp corner: `node` on PATH.** Non-interactive shells here do not have
+  `node` on PATH; the builder used the fnm Node install. The installed
+  `/graph` command embeds the engine's absolute `process.execPath`.
+- **Residual risk: the chat reply is an echo.** The CLI output is
+  deterministic and read-only, but the one reply that displays it is still
+  a model echo. It complied exactly in the proof; a future version can
+  replace the echo if OpenCode exposes a direct assistant-message channel.
+- **Deferred: shared `work/`.** The first task wrote `work/*.md`; a second
+  dispatch would overwrite them. Per-dispatch output isolation remains a
+  separate decision.
+
 ## Shipped in v1
 
 - [x] One JSON graph config with strict validation and named faults.
@@ -62,7 +92,7 @@ cooperative helpers.
 - [x] Interactive tools: `dispatch`, `dispatch_wait`, `dispatch_status`,
   `dispatch_cancel`, `reload`, `graph_info`, `graph_map`.
 - [x] Interactive skills: graph-authoring, dispatching.
-- [x] 41 offline tests and a live proof covering stdio dispatch, queue,
+- [x] 44 offline tests and a live proof covering stdio dispatch, queue,
   interactive dispatch/wait, config authoring/reload, cancellation, cost,
   and the read-only graph view; background dispatch (wait:false then
   dispatch_wait) was exercised in a separate live probe.
