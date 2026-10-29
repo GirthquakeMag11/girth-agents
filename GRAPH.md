@@ -1,0 +1,86 @@
+# The graph that ships with the engine
+
+The workflow the engine runs. Config content, not engine code — the
+node tree, the helper fittings, the skills, and the stamp vocabulary
+the workflow uses. When the graph changes, this document changes with
+it: the two are the agreement.
+
+## 1. The documents
+
+One document per work unit, in the project itself:
+
+- **Ticket** — the unit of implementation. Its shape: a title line, a
+  `**Kind:**` line, a stamp line, and a "What it delivers" section.
+- **Spec** — the unit the tickets are sliced from (when the tickets
+  lane exists).
+
+Every state transition is a stamped, dated line on the document.
+
+## 2. The stamp vocabulary of this workflow
+
+| Stamp | Written form | Meaning | Written by |
+|---|---|---|---|
+| ready | `**Ready:** <date>` | this ticket can be implemented; the claim gate admits it | the slicer / the one who makes the ticket |
+| verdict | `**Verdict:** pass` or `fail` | the reviewer's stamp on the ticket itself | the reviewer |
+| done | `**Done:** <date>` | the work passed; this ticket is finished | *open ruling 1* |
+
+A document without a declared stamp, or carrying a stamp no condition
+mentions, is a loud defect — never routed, never adopted.
+
+## 3. The shipped graph
+
+```
+implement-from-ticket ──▶ review-implementation ── verdict=pass ──▶ exit
+        ▲                         │
+        └────── verdict=fail ─────┘
+```
+
+- `implement-from-ticket` — the entry: admits a claimed ticket by its
+  ready stamp, then dispatches the builder (implements the ticket; the
+  ticket stays the contract and is not edited by the builder).
+- `review-implementation` — dispatches the reviewer, fresh every time.
+  The reviewer verifies by running, then writes the verdict stamp onto
+  the ticket document.
+- `exit` — the terminal. Writes nothing; the verdict and done stamps on
+  the ticket are the state.
+- Repairs: a `fail` verdict routes back to `implement-from-ticket`,
+  resuming the builder's session with the reviewer's report. Retry cap
+  3; exhausting it is a loud retry-limit defect (no bounce composed
+  yet).
+- The review's stamp space is exactly `pass` and `fail`; anything else
+  halts as a defect.
+
+## 4. Helpers and skills
+
+- **builder** — implements the claimed ticket test-first at its seams,
+  works the repo's own conventions, fails openly rather than fabricate.
+- **reviewer** — verifies against the ticket on both axes — does it
+  follow the project's conventions, does it deliver what the ticket
+  says — by running the tests and reading the diff, never the report's
+  say-so; stamps exactly pass or fail with reasons.
+
+Both run on pre-granted allow-list permissions over the live session
+contract (`SPEC.md` §5); models are config per helper.
+
+## 5. The lanes to come
+
+The agreed extension, built only after the above is proven live:
+
+- The **spec lane**: `tickets-from-spec` (entry; slices an
+  approved-stamped spec into ticket documents) → `review-tickets`
+  (grades the document set; pass ends the lane and stamps the spec,
+  fail repairs the slicer with cap 3 — loud on exhaustion).
+- The **ticket trigger**: watches the tickets directory for ready-stamped
+  tickets; one match per idle turn, alphabetical; each ticket is its own
+  run through the shipped graph above. The done-stamp is what stops a
+  finished ticket from matching again.
+
+## 6. Open rulings — graph side
+
+1. **Who writes the done-stamp** at pass: the engine's terminal stroke,
+   the reviewer's own pen, or a marks task.
+2. **The spec's admission stamp** — its wording (a dated Approved line?).
+3. **`review-tickets`' grading criteria** — what makes a sliced ticket
+   set right.
+4. **The exact written forms** of the verdict and done lines — the
+   label family is settled, the words are candidates until ruled.
