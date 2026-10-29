@@ -82,7 +82,7 @@ its own: whatever is true is on the documents.
 ## 6. The control surface
 
 - JSON-lines over stdio: pokes in, notices out — step events, defects,
-  exit records, a periodic heartbeat, and full typed introspection of
+  run completions, a periodic heartbeat, and full typed introspection of
   any session, in flight or finished, on demand. The engine is never a
   black box.
 - Watching: filesystem events over each project's watched directories
