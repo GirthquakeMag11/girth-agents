@@ -7,6 +7,7 @@ const fitting = (extra = {}) => ({
   model: "m/x",
   capabilities: ["fs"],
   permissions: { allow: ["fs"], denyRest: true },
+  body: "# The worker's craft\n\nDo the work to its criteria.",
   skills: [{ id: "craft", instructions: "# The craft\n\nDo the work to its criteria." }],
   ...extra,
 });
@@ -37,6 +38,28 @@ test("verifier: a sound config verifies clean", async () => {
   assert.deepEqual(result.configFaults, []);
 });
 
+test("verifier: skills are reusable and optional — an agent's craft is its own body, never a skill's", async () => {
+  // an agent without any skill still verifies sound: its substance is its
+  // own body. Skills are techniques it may be given, not the agent itself.
+  const bodiedOnly = await verifyConfig(config({
+    nodes: SOUND_NODES,
+    links: SOUND_LINKS,
+    agents: { builder: fitting({ skills: undefined }), checker: fitting({ skills: undefined }) },
+  }));
+  assert.equal(bodiedOnly.valid, true, JSON.stringify(bodiedOnly.configFaults));
+
+  // a skill name alone, no craft in the agent, is the old inversion — now a named fault
+  const shell = await verifyConfig(config({
+    nodes: SOUND_NODES,
+    links: SOUND_LINKS,
+    agents: {
+      builder: fitting({ body: undefined }),
+      checker: fitting(),
+    },
+  }));
+  assert.ok(shell.configFaults.some((f) => f.code === "schema" && /body must be non-empty|craft lives in its own file/.test(f.message)), JSON.stringify(shell.configFaults));
+});
+
 test("verifier: schema faults are named with their constraint", async () => {
   const missingArtifact = await verifyConfig(config({
     nodes: [{ id: "in", type: "entry" }, { id: "t", type: "task", helper: "builder", objective: "do" }],
@@ -56,10 +79,10 @@ test("verifier: schema faults are named with their constraint", async () => {
 
   const incompleteFitting = await verifyConfig({
     version: "1",
-    agents: { builder: { job: "worker" } }, // no capabilities, permissions, model, or instructions
+    agents: { builder: { job: "worker" } }, // no capabilities, permissions, model, or craft
     graph: { nodes: [], links: [] },
   });
-  assert.ok(incompleteFitting.configFaults.some((f) => f.code === "schema" && /capabilities|permissions|model|skills/.test(f.message)), JSON.stringify(incompleteFitting.configFaults));
+  assert.ok(incompleteFitting.configFaults.some((f) => f.code === "schema" && /capabilities|permissions|model|body/.test(f.message)), JSON.stringify(incompleteFitting.configFaults));
 });
 
 test("verifier: structural faults — dangling links, unknown helpers, dead structure", async () => {

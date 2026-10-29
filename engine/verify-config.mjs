@@ -95,13 +95,15 @@ function deepSchemaFaults(doc) {
     if (typeof fitting.model !== "string" || fitting.model.trim() === "") {
       faults.push(fault("schema", `helper ${id}: model must be a non-empty string`));
     }
-    if (!Array.isArray(fitting.skills) || fitting.skills.length === 0) {
-      faults.push(fault("schema", `agent ${id}: skills must not be empty — an agent is more than a name`));
-    } else {
-      for (const skill of fitting.skills) {
-        if (!skill || typeof skill.instructions !== "string" || skill.instructions.trim() === "") {
-          faults.push(fault("schema", `agent ${id}: skill '${skill?.id ?? "?"}' has no instructions`));
-        }
+    if (typeof fitting.body !== "string" || fitting.body.trim() === "") {
+      faults.push(fault("schema", `agent ${id}: its body must be non-empty — an agent's craft lives in its own file; skills are reusable techniques, never the agent`));
+    }
+    if (fitting.skills !== undefined && !Array.isArray(fitting.skills)) {
+      faults.push(fault("schema", `agent ${id}: skills, when present, must be an array of referenced techniques`));
+    }
+    for (const skill of fitting.skills ?? []) {
+      if (!skill || typeof skill.instructions !== "string" || skill.instructions.trim() === "") {
+        faults.push(fault("schema", `agent ${id}: skill '${skill?.id ?? "?"}' has no instructions`));
       }
     }
   }

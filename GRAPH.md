@@ -50,16 +50,28 @@ implement-from-ticket ──▶ review-implementation ── verdict=pass ──
 
 ## 4. Helpers and skills
 
+A **helper** (agent) is a worker: its own file carries the identity and
+the substance — who it is, its standing craft, and its grants (model,
+capabilities, permissions). The craft lives in the agent's own body,
+not in a skill.
+
 - **builder** — implements the claimed ticket test-first at its seams,
   works by the repo's own conventions, and fails openly rather than
   fabricate.
 - **reviewer** — verifies against the ticket on both axes — does it
   follow the project's conventions, does it deliver what the ticket
-  says — by running the tests and reading the diff, never the report's
-  say-so; stamps exactly pass or fail, with reasons.
+  says — and stamps exactly pass or fail, with reasons.
 
-Both run on pre-granted allow-list permissions over the live session
-contract (`SPEC.md` §6); models are config per helper.
+A **skill** is a reusable technique a helper draws on — named, described,
+attachable to any helper — never a persona. The shipped graph has two:
+
+- `test-first` — build at the seam the ticket names: a failing test that
+  pins the behavior, made green, refactored within the green.
+- `verify-by-running` — judge work by running it and reading the diff,
+  never by another's written claim.
+
+Both helpers run on pre-granted allow-list permissions over the live
+session contract (`SPEC.md` §6); models are config per helper.
 
 ## 5. The lanes to come
 
