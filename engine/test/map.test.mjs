@@ -10,7 +10,7 @@ const graph = loaded.doc.graphs[0];
 
 test("map: the workflow is a labelled box with entry and exit", () => {
   const map = renderGraphMap(graph);
-  assert.match(map.mermaid, /subgraph wf\["workflow · build-review/);
+  assert.match(map.mermaid, /subgraph wf \["workflow · build-review/);
   assert.match(map.mermaid, /entry implement · exit done/);
   assert.match(map.mermaid, /n0\["implement · builder<br\/>entry<br\/>↻ resume"\]/);
   assert.match(map.mermaid, /n1\["review · reviewer<br\/>✦ fresh every visit"\]/);

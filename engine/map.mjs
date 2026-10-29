@@ -62,7 +62,7 @@ function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
   const single = workflow !== null;
 
   if (single) {
-    lines.push(`  subgraph wf["workflow · ${mermaidText(workflow.id)}<br/>entry ${mermaidText(workflow.entry)} · exit ${mermaidText(workflow.exit)}"]`);
+    lines.push(`  subgraph wf ["workflow · ${mermaidText(workflow.id)}<br/>entry ${mermaidText(workflow.entry)} · exit ${mermaidText(workflow.exit)}"]`);
     lines.push("    direction LR");
     for (const node of inside) {
       const varName = vars.get(node.id);
