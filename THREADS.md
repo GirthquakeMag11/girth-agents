@@ -167,6 +167,8 @@ same OpenCode context, with minimal friction and entropy?
 - The graph view is a **full-screen overlay in the command palette** (and/or
   a key combination), dismissed back to chat. It lives in the same OpenCode
   context, not a separate application or window.
+- Other parts of the UI are not defined enough to distract from the
+  bird's-eye view; the overlay is the current target.
 - It is a **bird's-eye view** of the graph, for both managing the graph and
   observing it work. It should show which nodes are currently active with
   work. The state model should anticipate **plural active nodes** and
