@@ -1,0 +1,441 @@
+{
+  "graph": {
+    "outputRoot": "work",
+    "workflows": [
+      {
+        "id": "A",
+        "entry": "a1",
+        "exit": "a2",
+        "nodes": [
+          "a1",
+          "a2",
+          "x",
+          "z"
+        ],
+        "connections": [
+          "B",
+          "C"
+        ],
+        "strict": false
+      },
+      {
+        "id": "B",
+        "entry": "x",
+        "exit": "y",
+        "nodes": [
+          "x",
+          "y"
+        ],
+        "connections": [
+          "C"
+        ],
+        "strict": false
+      },
+      {
+        "id": "C",
+        "entry": "y",
+        "exit": "o2",
+        "nodes": [
+          "y",
+          "o2"
+        ],
+        "connections": [],
+        "strict": false
+      },
+      {
+        "id": "D",
+        "entry": "d1",
+        "exit": "d1",
+        "nodes": [
+          "d1"
+        ],
+        "connections": [],
+        "strict": false
+      }
+    ],
+    "nodes": [
+      {
+        "id": "a1",
+        "helper": "builder",
+        "objective": "Start A.",
+        "output": "a1.md",
+        "handoff": {
+          "mode": "unconditional",
+          "to": "a2"
+        }
+      },
+      {
+        "id": "a2",
+        "helper": "builder",
+        "objective": "Continue A.",
+        "output": "a2.md",
+        "handoff": {
+          "mode": "unconditional",
+          "to": "x"
+        }
+      },
+      {
+        "id": "x",
+        "helper": "builder",
+        "objective": "Shared A and B.",
+        "output": "x.md",
+        "handoff": {
+          "mode": "conditional",
+          "labels": [
+            {
+              "label": "toY",
+              "to": "y"
+            },
+            {
+              "label": "toZ",
+              "to": "z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "z",
+        "helper": "reviewer",
+        "objective": "A only.",
+        "output": "z.md",
+        "handoff": {
+          "mode": "unconditional",
+          "to": "d1"
+        }
+      },
+      {
+        "id": "d1",
+        "helper": "builder",
+        "objective": "D only.",
+        "output": "d1.md",
+        "handoff": {
+          "mode": "terminal"
+        }
+      },
+      {
+        "id": "y",
+        "helper": "builder",
+        "objective": "Shared B and C.",
+        "output": "y.md",
+        "handoff": {
+          "mode": "unconditional",
+          "to": "o2"
+        }
+      },
+      {
+        "id": "o2",
+        "helper": "builder",
+        "objective": "C exit.",
+        "output": "o2.md",
+        "handoff": {
+          "mode": "unconditional",
+          "to": "o"
+        }
+      },
+      {
+        "id": "o",
+        "helper": "builder",
+        "objective": "Outside every workflow.",
+        "output": "o.md",
+        "handoff": {
+          "mode": "terminal"
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "node dispatch at x",
+      "active": [
+        {
+          "dispatchId": "d-node",
+          "node": "x",
+          "workflow": null,
+          "state": "running"
+        }
+      ],
+      "queue": [],
+      "containers": [],
+      "escapes": [],
+      "details": [
+        {
+          "node": "x",
+          "memberships": [
+            {
+              "workflowId": "A",
+              "state": "inactive"
+            },
+            {
+              "workflowId": "B",
+              "state": "inactive"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A queued at a1",
+      "active": [],
+      "queue": [
+        {
+          "dispatchId": "q-a",
+          "node": "a1",
+          "workflow": "A",
+          "state": "queued"
+        }
+      ],
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "queued",
+          "primary": false
+        }
+      ],
+      "escapes": [],
+      "details": []
+    },
+    {
+      "name": "A active at z",
+      "active": [
+        {
+          "dispatchId": "d-a-z",
+          "node": "z",
+          "workflow": "A",
+          "state": "running"
+        }
+      ],
+      "queue": [],
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        }
+      ],
+      "escapes": [],
+      "details": [
+        {
+          "node": "z",
+          "memberships": [
+            {
+              "workflowId": "A",
+              "state": "active"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A active at x",
+      "active": [
+        {
+          "dispatchId": "d-a-x",
+          "node": "x",
+          "workflow": "A",
+          "state": "running"
+        }
+      ],
+      "queue": [],
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        }
+      ],
+      "escapes": [],
+      "details": [
+        {
+          "node": "x",
+          "memberships": [
+            {
+              "workflowId": "A",
+              "state": "active"
+            },
+            {
+              "workflowId": "B",
+              "state": "inactive"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A active at y",
+      "active": [
+        {
+          "dispatchId": "d-a-y",
+          "node": "y",
+          "workflow": "A",
+          "state": "running"
+        }
+      ],
+      "queue": [],
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        },
+        {
+          "workflowId": "B",
+          "kind": "connected",
+          "state": "active",
+          "primary": false
+        },
+        {
+          "workflowId": "C",
+          "kind": "connected",
+          "state": "active",
+          "primary": false
+        }
+      ],
+      "escapes": [],
+      "details": [
+        {
+          "node": "y",
+          "memberships": [
+            {
+              "workflowId": "B",
+              "state": "active"
+            },
+            {
+              "workflowId": "C",
+              "state": "active"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A active at o",
+      "active": [
+        {
+          "dispatchId": "d-a-o",
+          "node": "o",
+          "workflow": "A",
+          "state": "running"
+        }
+      ],
+      "queue": [],
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        }
+      ],
+      "escapes": [
+        {
+          "node": "o",
+          "mainWorkflow": "A"
+        }
+      ],
+      "details": [
+        {
+          "node": "o",
+          "memberships": []
+        }
+      ]
+    },
+    {
+      "name": "A active at d1",
+      "active": [
+        {
+          "dispatchId": "d-a-d1",
+          "node": "d1",
+          "workflow": "A",
+          "state": "running"
+        }
+      ],
+      "queue": [],
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        }
+      ],
+      "escapes": [
+        {
+          "node": "d1",
+          "mainWorkflow": "A"
+        }
+      ],
+      "details": [
+        {
+          "node": "d1",
+          "memberships": [
+            {
+              "workflowId": "D",
+              "state": "inactive"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A active at z and B active at y",
+      "active": [
+        {
+          "dispatchId": "d-a-z",
+          "node": "z",
+          "workflow": "A",
+          "state": "running"
+        },
+        {
+          "dispatchId": "d-b-y",
+          "node": "y",
+          "workflow": "B",
+          "state": "running"
+        }
+      ],
+      "queue": [],
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        },
+        {
+          "workflowId": "B",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        }
+      ],
+      "escapes": [],
+      "details": [
+        {
+          "node": "z",
+          "memberships": [
+            {
+              "workflowId": "A",
+              "state": "active"
+            }
+          ]
+        },
+        {
+          "node": "y",
+          "memberships": [
+            {
+              "workflowId": "B",
+              "state": "active"
+            },
+            {
+              "workflowId": "C",
+              "state": "inactive"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+
+DASHBOARD LIVE PROOF — non-strict /tmp/opencode/dashboard-live-383174
+PASS  queued workflow mains and a node dispatch queue without containers
+PASS  active main workflow container at a1
+PASS  active connected workflow container at b1 and Details B membership
+PASS  non-strict escape warning node
+PASS  dashboard adapter reloads changed graph structure without a TUI restart
+
+DASHBOARD LIVE PROOF — strict /tmp/opencode/dashboard-live-383174-strict
+PASS  strict escape is an engine defect visible in structured runtime
+
+DASHBOARD LIVE PROOF PASS

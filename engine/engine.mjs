@@ -6,22 +6,25 @@
 import { randomBytes } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { loadConfig, findNode, handoffTarget, configSummary } from "./config.mjs";
+import { loadConfig, handoffTarget, configSummary, graphInfoResponse } from "./config.mjs";
+import { resolveDispatchTarget, workflowEscape } from "./workflow.mjs";
 import { createDispatchQueue } from "./queue.mjs";
 import { runDispatch, checkOutput, DispatchDefect, emptyUsage } from "./executor.mjs";
 import { createDriver } from "./driver.mjs";
 import { startControlServer, ControlError } from "./control.mjs";
-import { installPlugin, installSkills, removeCommands, installAgent, preflightPlugin } from "./plugin.mjs";
-import { renderGraphMap, renderState, renderGraphArtifact } from "./map.mjs";
+import { installPlugin, installSkills, removeCommands, removeAgent, preflightPlugin } from "./plugin.mjs";
+import { renderGraphMapResponse, renderGraphArtifact } from "./map.mjs";
+import { getActivityHistory, workflowForEvent } from "./history.mjs";
 import { encode, decode } from "./stdio.mjs";
 
 const say = (kind, payload = {}) => process.stdout.write(encode(kind, payload) + "\n");
 const log = (...parts) => process.stderr.write(parts.join(" ") + "\n");
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+const ENGINE_VERSION = "1.3.0";
 
 const configArg = process.argv[2];
 if (configArg === "--version") {
-  process.stdout.write("girth-agents v1.2.0\n");
+  process.stdout.write(`girth-agents v${ENGINE_VERSION}\n`);
   process.exit(0);
 }
 if (configArg === "--help") {
@@ -49,6 +52,7 @@ let queue = null;
 let control = null;
 let lastEvent = null;
 let lastDefect = null;
+const history = getActivityHistory();
 let stopping = false;
 let heartbeat = null;
 
@@ -69,6 +73,8 @@ async function getDriver() {
 }
 
 function event(kind, payload = {}) {
+  const workflow = workflowForEvent(payload, (id) => (queue ? queue.status(id) : null));
+  history.append(kind, payload, { workflow });
   lastEvent = { kind, ...payload };
   if (kind === "defect") lastDefect = payload;
   say(kind, payload);
@@ -79,16 +85,14 @@ function graphSummary() {
 }
 
 async function onDispatch(body) {
-  const { node, prompt } = body ?? {};
-  if (typeof node !== "string" || node.trim() === "") {
-    throw new ControlError(400, "dispatch needs a node id");
+  let target;
+  try {
+    target = resolveDispatchTarget(config.graph, body);
+  } catch (e) {
+    throw new ControlError(400, e.message);
   }
-  if (typeof prompt !== "string" || prompt.trim() === "") {
-    throw new ControlError(400, "dispatch needs a non-empty prompt");
-  }
-  if (!findNode(config.graph, node)) throw new ControlError(400, `the graph has no node '${node}'`);
-  const record = queue.enqueue({ node, prompt });
-  return { body: { ok: true, dispatchId: record.id, state: record.state } };
+  const record = queue.enqueue({ node: target.node, prompt: body.prompt, workflow: target.workflow });
+  return { body: { ok: true, dispatchId: record.id, state: record.state, node: target.node, workflow: target.workflow } };
 }
 
 async function onDispatchStatus(body) {
@@ -144,6 +148,15 @@ async function onHandoff(body) {
     throw new ControlError(422, `label '${label}' is not declared for node '${node.id}' (allowed: ${allowed})`);
   }
 
+  const escape = workflowEscape(config.graph, active.workflow, target);
+  if (escape) {
+    active.handoffDefect = new DispatchDefect(
+      escape.code,
+      `handoff '${label}' from '${node.id}' to '${target}': ${escape.message}`,
+    );
+    throw new ControlError(422, active.handoffDefect.message);
+  }
+
   let output;
   try {
     output = await checkOutput(active.outputPath);
@@ -176,22 +189,21 @@ async function onReload() {
 }
 
 function onGraphInfo() {
-  return { body: { ok: true, ...configSummary(config, configPath) } };
+  return { body: graphInfoResponse(config, configPath, ENGINE_VERSION) };
 }
 
 function runtimeSnapshot() {
-  return { ...queue.introspect(), lastDefect };
+  return {
+    ...queue.introspect(),
+    lastDefect,
+    lastEvent,
+    history: history.snapshot(),
+    historyEpoch: history.epoch,
+  };
 }
 
 function onGraphMap() {
-  const runtime = runtimeSnapshot();
-  return {
-    body: {
-      ok: true,
-      ...renderGraphMap(config.graph, { runtime }),
-      state: renderState(runtime),
-    },
-  };
+  return { body: renderGraphMapResponse(config.graph, runtimeSnapshot()) };
 }
 
 async function writeGraphArtifact() {
@@ -233,13 +245,10 @@ async function boot() {
     cwd,
     url: control.url,
     token,
-    graphCli: join(import.meta.dirname, "graph-view.mjs"),
-    configPath,
-    nodePath: process.execPath,
   });
   await installSkills({ cwd });
   await removeCommands({ cwd });
-  await installAgent({ cwd });
+  await removeAgent({ cwd });
 
   let pluginActive = false;
   try {
@@ -297,7 +306,7 @@ async function shutdown() {
     } catch {
       // a dying session is already stopped
     }
-    say("completion", {
+    event("completion", {
       dispatchId: active.id,
       status: "cancelled",
       terminal: active.terminal ?? null,
@@ -356,6 +365,8 @@ process.stdin.on("data", (chunk) => {
               ...queue.introspect(),
               lastEvent,
               lastDefect,
+              history: history.snapshot(),
+              historyEpoch: history.epoch,
               configPath,
               graph: graphSummary(),
             });

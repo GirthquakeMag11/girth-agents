@@ -133,26 +133,33 @@ test("executor: a failed resumed visit keeps the resumed session id", async () =
         helper: "builder",
         objective: "A.",
         output: "a.md",
-        session: "resume",
         maxVisits: 3,
         handoff: {
           mode: "conditional",
-          labels: [{ label: "again", to: "a", description: "again" }],
+          labels: [{ label: "again", to: "b", description: "again" }],
         },
+      },
+      {
+        id: "b",
+        helper: "reviewer",
+        objective: "B.",
+        output: "b.md",
+        maxVisits: 3,
+        handoff: { mode: "unconditional", to: "a", resume: true },
       },
     ];
     let record;
     let calls = 0;
     const driver = fakeDriver({
-      onPrompt: async ({ session, brief }) => {
+      onPrompt: async ({ session, node, brief }) => {
         calls += 1;
-        if (calls === 2) return { outcome: "failed" };
+        if (node === "a" && calls === 3) return { outcome: "failed" };
         const output = outputFromBrief(brief);
         await mkdir(dirname(output), { recursive: true });
         await writeFile(output, `pass ${calls}\n`, "utf8");
         const content = await readFile(output);
         record.handoff = {
-          label: "again",
+          label: node === "a" ? "again" : "next",
           callID: null,
           outputHash: createHash("sha256").update(content).digest("hex"),
           outputPath: output,
@@ -182,7 +189,7 @@ test("executor: a failed resumed visit keeps the resumed session id", async () =
     );
     assert.equal(record.visits.a, 2);
     assert.equal(record.sessionId, "s1");
-    assert.deepEqual(driver.deleted, ["s1"]);
+    assert.ok(driver.deleted.includes("s1"));
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -198,7 +205,6 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
         helper: "builder",
         objective: "Build.",
         output: "builder.md",
-        session: "resume",
         maxVisits: 3,
         handoff: {
           mode: "conditional",
@@ -213,9 +219,8 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
         helper: "reviewer",
         objective: "Review.",
         output: "reviewer.md",
-        session: "fresh",
         maxVisits: 3,
-        handoff: { mode: "unconditional", to: "builder" },
+        handoff: { mode: "unconditional", to: "builder", resume: true },
       },
       {
         id: "done",
@@ -288,6 +293,124 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
     assert.equal(record.usage.cost, 3);
     assert.equal(record.usage.tokens.input, 60);
     assert.equal(record.usage.tokens.output, 12);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("executor: a strict workflow escape wins over a failed session outcome", async () => {
+  const graph = {
+    outputRoot: "work",
+    maxSteps: 10,
+    workflows: [{ id: "A", entry: "a", exit: "term", nodes: ["a", "term"], strict: true }],
+    nodes: [
+      {
+        id: "a",
+        helper: "builder",
+        objective: "choose",
+        output: "a.md",
+        handoff: { mode: "unconditional", to: "term" },
+      },
+      { id: "term", helper: "builder", objective: "finish", output: "term.md", handoff: { mode: "terminal" } },
+    ],
+  };
+  const doc = { ...config, graph };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+  const driver = fakeDriver({
+    onPrompt: async () => {
+      record.handoffDefect = Object.assign(new Error("workflow escape"), { kind: "workflow.escape" });
+      return { outcome: "failed" };
+    },
+  });
+  await assert.rejects(
+    () => runDispatch({ driver, config: doc, record, cwd: "/tmp", onEvent: () => {} }),
+    (error) => error.kind === "workflow.escape",
+  );
+});
+
+test("executor: a recorded workflow escape wins when the prompt throws", async () => {
+  const graph = {
+    outputRoot: "work",
+    maxSteps: 10,
+    workflows: [{ id: "A", entry: "a", exit: "term", nodes: ["a", "term"], strict: true }],
+    nodes: [
+      {
+        id: "a",
+        helper: "builder",
+        objective: "choose",
+        output: "a.md",
+        handoff: { mode: "unconditional", to: "term" },
+      },
+      { id: "term", helper: "builder", objective: "finish", output: "term.md", handoff: { mode: "terminal" } },
+    ],
+  };
+  const doc = { ...config, graph };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+  const driver = fakeDriver({
+    onPrompt: async () => {
+      record.handoffDefect = Object.assign(new Error("workflow escape"), { kind: "workflow.escape" });
+      const error = new Error("session timeout");
+      error.kind = "session-timeout";
+      throw error;
+    },
+  });
+  await assert.rejects(
+    () => runDispatch({ driver, config: doc, record, cwd: "/tmp", onEvent: () => {} }),
+    (error) => error.kind === "workflow.escape",
+  );
+});
+
+test("executor: resume is rejected when the target is not the input source", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-resume-return-"));
+  try {
+    const graphConfig = structuredClone(config);
+    graphConfig.graph.nodes = [
+      { id: "a", helper: "builder", objective: "A.", output: "a.md", handoff: { mode: "unconditional", to: "b" } },
+      {
+        id: "b",
+        helper: "builder",
+        objective: "B.",
+        output: "b.md",
+        handoff: { mode: "unconditional", to: "c", resume: true },
+      },
+      { id: "c", helper: "builder", objective: "C.", output: "c.md", handoff: { mode: "terminal" } },
+    ];
+    let record;
+    const driver = fakeDriver({
+      onPrompt: async ({ brief }) => {
+        const output = outputFromBrief(brief);
+        await mkdir(dirname(output), { recursive: true });
+        await writeFile(output, "ok\n", "utf8");
+        const content = await readFile(output);
+        record.handoff = {
+          label: "next",
+          callID: null,
+          outputHash: createHash("sha256").update(content).digest("hex"),
+          outputPath: output,
+          at: new Date().toISOString(),
+        };
+        return { outcome: "succeeded", cost: 0.1, tokens: { input: 1, output: 1 } };
+      },
+    });
+    driver.messages = async () => [
+      {
+        time: { created: 1 },
+        content: [
+          {
+            type: "tool",
+            id: "h",
+            name: "handoff",
+            state: { status: "completed", input: { label: record.handoff?.label } },
+            time: { created: 1, completed: 1 },
+          },
+        ],
+      },
+    ];
+    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    await assert.rejects(
+      () => runDispatch({ driver, config: graphConfig, record, cwd: dir, onEvent: () => {} }),
+      (error) => error.kind === "resume.not-return",
+    );
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

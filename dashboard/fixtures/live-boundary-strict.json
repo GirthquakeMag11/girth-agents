@@ -1,0 +1,80 @@
+{
+  "version": "3",
+  "helpers": [
+    {
+      "id": "builder",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "agent": "build",
+      "permissions": [
+        "read",
+        "edit",
+        "shell"
+      ],
+      "craft": "Execute the node objective. Write the declared output file with a short result, then call the handoff tool exactly once with the declared label."
+    }
+  ],
+  "graph": {
+    "outputRoot": "work",
+    "maxSteps": 10,
+    "workflows": [
+      {
+        "id": "A",
+        "entry": "a1",
+        "exit": "a1",
+        "nodes": [
+          "a1"
+        ],
+        "connections": [
+          "B"
+        ],
+        "strict": true
+      },
+      {
+        "id": "B",
+        "entry": "b1",
+        "exit": "b1",
+        "nodes": [
+          "b1"
+        ],
+        "connections": [],
+        "strict": false
+      }
+    ],
+    "nodes": [
+      {
+        "id": "a1",
+        "helper": "builder",
+        "objective": "Write work/a1.md containing exactly: strict main. Then hand off with label next.",
+        "output": "a1.md",
+        "maxVisits": 2,
+        "handoff": {
+          "mode": "unconditional",
+          "to": "b1",
+          "description": "Move into connected B."
+        }
+      },
+      {
+        "id": "b1",
+        "helper": "builder",
+        "objective": "Write work/b1.md containing exactly: strict connected. Then hand off with label next.",
+        "output": "b1.md",
+        "maxVisits": 2,
+        "handoff": {
+          "mode": "unconditional",
+          "to": "o",
+          "description": "Attempt to leave the strict boundary."
+        }
+      },
+      {
+        "id": "o",
+        "helper": "builder",
+        "objective": "Write work/o.md containing exactly: strict escape.",
+        "output": "o.md",
+        "maxVisits": 2,
+        "handoff": {
+          "mode": "terminal"
+        }
+      }
+    ]
+  }
+}

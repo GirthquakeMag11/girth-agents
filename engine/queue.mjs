@@ -28,6 +28,7 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     return {
       dispatchId: record.id,
       node: record.node,
+      workflow: record.workflow ?? null,
       state: record.state,
       cancelRequested: Boolean(record.cancelled),
       createdAt: record.createdAt,
@@ -93,11 +94,12 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     }
   }
 
-  function enqueue({ node, prompt }) {
+  function enqueue({ node, prompt, workflow = null }) {
     const id = `d-${++state.nextId}`;
     const record = {
       id,
       node,
+      workflow,
       prompt,
       state: "queued",
       createdAt: new Date().toISOString(),
@@ -111,7 +113,7 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     });
     state.records.set(id, record);
     state.queue.push(record);
-    emit("queued", { dispatchId: id, node, at: record.createdAt });
+    emit("queued", { dispatchId: id, node, workflow, at: record.createdAt });
     pump();
     return record;
   }

@@ -1,0 +1,40 @@
+  example-graph.json                             1 workflow · 3 nodes  ● live  valid  v1.3.0  read-only · esc to close  
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                        
+ ╭─Outline────────────╮ ╭─Graph────────────────────────────────────────────────────╮ ╭─Details────────────────────────╮ 
+ │ WORKFLOWS          │ │                                                          │ │ review                       █ │ 
+ │ ● build-review     │ │                                                          │ │ ● running · reviewer         █ │ 
+ │                    │ │         ╔═build-review════════════════════════════════╗  │ │                              █ │ 
+ │ NODES              │ │         ║                                             ║  │ │ CONTRACT                     █ │ 
+ │ ◌ implement        │ │         ║  ╭────────────────────────────────╮         ║  │ │ output work/review.md        █ │ 
+ │ ● review           │ │         ║  │  implement           ◌ queued  │         ║  │ │ max 20 visits                █ │ 
+ │ ■ done             │ │         ║  │  builder                       │◀──────┐ ║  │ │ visits 1/20                  █ │ 
+ │                    │ │         ║  ╰────────────────────────────────╯       │ ║  │ │ pass → done                  ▀ │ 
+ │ STATE              │ │         ║                   │                       │ ║  │ │ fail → implement · resume      │ 
+ │ ● running 1        │ │         ║                   │─ next                 │ ║  │ │                                │ 
+ │ ◌ queued 1         │ │         ║                   │               fail ↻ ─│ ║  │ │ BRIEF                          │ 
+ │ ○ idle 1           │ │         ║                   ▼                       │ ║  │ │ Review the implementation      │ 
+ │                    │ │         ║  ╭━━──────────────────────────────╮       │ ║  │ │ against the dispatched prompt  │ 
+ │ GRAPH              │ │         ║  │  review             ● running  │       │ ║  │ │                                │ 
+ │ 1wf · 3n · 3 links │ │         ║  │  reviewer                      │───────┘ ║  │ │                                │ 
+ │                    │ │         ║  ╰────────────────────────────────╯         ║  │ ╰────────────────────────────────╯ 
+ │                    │ │         ║                   │                         ║  │                                    
+ │                    │ │         ║                   │─ pass                   ║  │ ╭─History────────────────────────╮ 
+ │                    │ │         ║                   │                         ║  │ │ 14:00:31  d-1  review · begin  │ 
+ │                    │ │         ║                   ▼                         ║  │ │ 14:00:31  d-1... review · next │ 
+ │                    │ │         ║  ╭────────────────────────────────╮         ║  │ │ 14:00:31  d-1...cceeded · next │ 
+ │                    │ │         ║  │  done              ■ terminal  │         ║  │ │ 13:59:59  d-1...lement · begin │ 
+ │                    │ │         ║  │  builder                       │         ║  │ │ 13:59:59  d-1...ed · implement │ 
+ │                    │ │         ║  ╰────────────────────────────────╯         ║  │ │ 13:59:58  d-1...ew · implement │ 
+ │                    │ │         ║                                             ║  │ │                                │ 
+ │                    │ │         ╚═════════════════════════════════════════════╝  │ │                                │ 
+ ╰────────────────────╯ ╰──────────────────────────────────────────────────────────╯ ╰────────────────────────────────╯ 
+                                                                                                                        
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  RUN CONSOLE                                                                                                           
+  active   ● d-1 review · running · 00:03                                                                               
+  queue    ◌ d-2 implement                                                                                              
+  cost     $0.0182 · 2.5k tokens                                                                                        
+  defect   none                                                                                                         
+  event    step · review · 14:00:31                                                                                     
+  1 active · 1 queued · 0 defects · elapsed 00:03 · updated 14:00:35  $0.0182 · 2.5k tokens · read-only · esc to close  

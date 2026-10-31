@@ -31,6 +31,13 @@ file.
       "agent": "build",
       "permissions": ["read", "edit", "shell"],
       "craft": "Standing instructions for this helper."
+    },
+    {
+      "id": "reviewer",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "agent": "build",
+      "permissions": ["read", "edit", "shell"],
+      "craft": "Review the work and name exactly what must change."
     }
   ],
   "graph": {
@@ -50,7 +57,6 @@ file.
         "helper": "builder",
         "objective": "Implement the dispatched work.",
         "output": "implementation.md",
-        "session": "resume",
         "maxVisits": 20,
         "handoff": {
           "mode": "unconditional",
@@ -63,13 +69,12 @@ file.
         "helper": "reviewer",
         "objective": "Review the implementation against the dispatched prompt.",
         "output": "review.md",
-        "session": "fresh",
         "maxVisits": 20,
         "handoff": {
           "mode": "conditional",
           "labels": [
             { "label": "pass", "to": "done", "description": "The work meets the objective; finish." },
-            { "label": "fail", "to": "implement", "description": "Name exactly what must change." }
+            { "label": "fail", "to": "implement", "description": "Name exactly what must change.", "resume": true }
           ]
         }
       },
@@ -78,7 +83,6 @@ file.
         "helper": "builder",
         "objective": "Finalize the work and write the final report.",
         "output": "final.md",
-        "session": "fresh",
         "handoff": { "mode": "terminal" }
       }
     ]
@@ -102,25 +106,32 @@ file.
   must be in the workflow's node list. The engine routes by handoffs, not
   by workflow.
 - A node has `id`, `helper`, `objective`, `output` (relative path),
-  optional `session`, optional `budgetMs`, optional `maxVisits` (1–100;
-  use 20 for a repair loop), and `handoff`.
-- `session` is `fresh` (default) or `resume`. Use `resume` for a node that
-  should continue its own conversation on a repair loop (the implementation
-  node). The reviewer should be `fresh`: a new session on every review
-  pass. `resume` sessions are reused within one dispatch and deleted when
-  the dispatch ends.
+  optional `budgetMs`, optional `maxVisits` (1–100; use 20 for a repair
+  loop), and `handoff`. Nodes do not have a session mode.
+- Session retention is a **handoff** decision. A non-terminal handoff may
+  set `"resume": true`; false or omitted starts a new session. `resume` is
+  honored only when the handoff target is the node that supplied the
+  current input (the return path). The engine keeps that target session
+  alive for the return and deletes it when the dispatch ends. A
+  `resume: true` handoff to any other node is a loud defect.
 - `handoff` is exactly one of:
   - `{ "mode": "terminal" }` — the node ends after writing its output.
-  - `{ "mode": "unconditional", "to": "<node>", "description": "..." }` —
-    the agent calls the label `next`.
-  - `{ "mode": "conditional", "labels": [{ "label", "to", "description" }] }`
-    — the agent calls exactly one label.
+  - `{ "mode": "unconditional", "to": "<node>", "description": "...",
+    "resume"?: true }` — the agent calls the label `next`.
+  - `{ "mode": "conditional", "labels": [{ "label", "to",
+    "description", "resume"?: true }] }` — the agent calls exactly one
+    label. A label may set `resume: true` only when its target is the node
+    that supplied the current input.
 - No node mixes handoff modes. Every label has one target. There is no
   catch-all.
-- Any node may be a dispatch entry point. Every node must be able to reach
+- Any node may be a dispatch entry point. A workflow may be dispatched at
+  its entry. Every node must be able to reach
   a terminal node. Every cycle must carry `maxVisits` on each node in the
   cycle.
 - `output` must be a relative path with no `..`.
+- `workflows[].connections` names other workflows and is transitive.
+- `workflows[].strict: true` rejects handoffs outside the main workflow
+  and its transitive connections.
 
 ## After editing
 
@@ -128,6 +139,6 @@ Call `reload()`. Success returns `valid: true` and the graph summary.
 Failure returns `valid: false` and faults; the old graph stays active.
 Fix every fault before dispatching.
 
-The same map/table is written to `GRAPH.md` on every valid reload. The user
-can run `/graph` at any time to see the current graph in the chat. `/graph`
-is read-only: it cannot dispatch work.
+The same map/table is written to `GRAPH.md` on every valid reload. The
+native dashboard reads the graph and the engine's structured runtime state;
+the interim `/graph` command and `graph-view` agent are removed.

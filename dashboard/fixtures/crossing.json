@@ -1,0 +1,33 @@
+{
+  "graph": {
+    "workflows": [
+      {
+        "id": "E",
+        "entry": "e1",
+        "exit": "e3",
+        "nodes": ["e1", "e3"],
+        "connections": [],
+        "strict": false
+      },
+      {
+        "id": "F",
+        "entry": "e2",
+        "exit": "e4",
+        "nodes": ["e2", "e4"],
+        "connections": [],
+        "strict": false
+      }
+    ],
+    "nodes": [
+      { "id": "e1", "helper": "builder", "objective": "E one.", "output": "e1.md", "handoff": { "mode": "terminal" } },
+      { "id": "e2", "helper": "builder", "objective": "F one.", "output": "e2.md", "handoff": { "mode": "terminal" } },
+      { "id": "e3", "helper": "builder", "objective": "E two.", "output": "e3.md", "handoff": { "mode": "terminal" } },
+      { "id": "e4", "helper": "builder", "objective": "F two.", "output": "e4.md", "handoff": { "mode": "terminal" } }
+    ]
+  },
+  "order": ["e1", "e2", "e3", "e4"],
+  "containers": [
+    { "workflowId": "E", "kind": "main", "state": "active", "primary": true, "nodeIds": ["e1", "e3"] },
+    { "workflowId": "F", "kind": "connected", "state": "active", "primary": false, "nodeIds": ["e2", "e4"] }
+  ]
+}

@@ -1,6 +1,6 @@
-// The live v1.2 proof. It creates a scratch workspace, starts the engine,
+// The live v1.3 proof. It creates a scratch workspace, starts the engine,
 // and proves the promised surface:
-//   1. one graph boots, GRAPH.md is generated, and /graph is read-only;
+//   1. one graph boots and GRAPH.md is generated without the interim command;
 //   2. a stdio dispatch runs the graph to a terminal and reports usage;
 //   3. a second dispatch queues behind the active one and both complete;
 //   4. the interactive agent dispatches through the plugin tool and waits;
@@ -20,7 +20,6 @@ import { createDriver } from "./driver.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 const workspace = process.argv[2] ?? `/tmp/opencode/v1-live-${process.pid}`;
 const enginePath = join(here, "engine.mjs");
-const viewPath = join(here, "graph-view.mjs");
 const model = "openrouter/~deepseek/deepseek-flash-latest";
 const run = promisify(execFile);
 
@@ -144,10 +143,25 @@ function usageTotal(usage) {
 }
 
 async function main() {
-  console.log(`\nV1.2 LIVE PROOF — ${workspace}`);
+  console.log(`\nV1.3 LIVE PROOF — ${workspace}`);
+  const cli = await run(process.execPath, [enginePath, "--version"]);
+  assert.equal(cli.stdout, "girth-agents v1.3.0\n");
+
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
   await cp(join(here, "example-graph.json"), join(workspace, "graph.json"));
+  await mkdir(join(workspace, ".opencode", "agents"), { recursive: true });
+  await mkdir(join(workspace, ".opencode", "commands"), { recursive: true });
+  await writeFile(
+    join(workspace, ".opencode", "agents", "graph-view.md"),
+    "---\ndescription: Read-only graph view.\n---\nCall graph_map.\n",
+    "utf8",
+  );
+  await writeFile(
+    join(workspace, ".opencode", "commands", "graph.md"),
+    "---\nagent: graph-view\n---\nCall graph_map.\n",
+    "utf8",
+  );
 
   driver = await createDriver();
   const ready = await startEngine();
@@ -157,61 +171,36 @@ async function main() {
   assert.match(artifact, /^# Graph\n/);
   assert.doesNotMatch(artifact, /# Graphs/);
   assert.match(artifact, /workflow · build-review/);
-  assert.match(artifact, /↻ resume/);
-  assert.match(artifact, /✦ fresh every visit/);
+  assert.match(artifact, /resume = this route reuses/);
+  assert.match(artifact, /fail → implement \(resume\)/);
+
+  await assert.rejects(() => readFile(join(workspace, ".opencode", "commands", "graph.md"), "utf8"));
+  await assert.rejects(() => readFile(join(workspace, ".opencode", "agents", "graph-view.md"), "utf8"));
 
   const pluginSource = await readFile(join(workspace, ".opencode", "plugins", "engine-handoff", "index.ts"), "utf8");
-  assert.match(pluginSource, /name: "graph"/);
-  assert.match(pluginSource, /switchAgent\(\{ sessionID, agent: "graph-view" \}\)/);
-  assert.doesNotMatch(pluginSource, /\$ARGUMENTS/);
-  const agent = await readFile(join(workspace, ".opencode", "agents", "graph-view.md"), "utf8");
-  assert.match(agent, /mode: all/);
-  assert.match(agent, /effect: deny/);
-  await assert.rejects(() => readFile(join(workspace, ".opencode", "commands", "graph.md"), "utf8"));
-  console.log("PASS  one graph booted, GRAPH.md was generated, and /graph is read-only");
-
-  const beforeView = events.length;
-  const { stdout: view } = await run(process.execPath, [viewPath, join(workspace, "graph.json")], {
-    cwd: workspace,
-  });
-  assert.match(view, /```mermaid\nflowchart LR/);
-  assert.match(view, /workflow · build-review/);
-  assert.match(view, /↻ resume = same session on revisit/);
-  assert.match(view, /Idle\./);
-  assert.equal(
-    events.slice(beforeView).filter((event) => ["queued", "dispatched"].includes(event.kind)).length,
-    0,
-    "the graph view must not dispatch",
-  );
-  console.log("PASS  the /graph CLI printed the map and left the engine idle");
-
-  const beforeCommand = events.length;
-  const viewSession = await driver.createSession({
-    directory: workspace,
-    title: "v1-live-graph-command",
-    agent: "build",
-    model,
-    permissions: [{ action: "*", resource: "*", effect: "allow" }],
-  });
-  await driver.command(viewSession.id, "graph", "");
-  const viewInfo = await waitIdle(viewSession.id);
-  const viewMessages = await driver.messages(viewSession.id);
-  const viewText = viewMessages
-    .flatMap((message) => message.content ?? [])
-    .filter((part) => part.type === "text")
-    .map((part) => part.text ?? "")
-    .join("\n");
-  assert.equal(viewInfo.agent, "build");
-  assert.match(viewText, /^```mermaid\nflowchart LR/);
-  assert.match(viewText, /Idle\./);
-  assert.doesNotMatch(viewText, /Here is|Here's|Would you like|Want me/);
-  assert.equal(
-    events.slice(beforeCommand).filter((event) => ["queued", "dispatched"].includes(event.kind)).length,
-    0,
-    "the /graph command must not dispatch",
-  );
-  await driver.deleteSession(viewSession.id).catch(() => {});
-  console.log("PASS  /graph printed the exact map, restored the agent, and did not dispatch");
+  const url = /const ENGINE_URL = "([^"]+)"/.exec(pluginSource)?.[1];
+  const token = /const TOKEN = "([^"]+)"/.exec(pluginSource)?.[1];
+  assert.ok(url && token);
+  const control = async (path, body = {}) => {
+    const res = await fetch(url + path, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-engine-token": token },
+      body: JSON.stringify(body),
+    });
+    assert.equal(res.ok, true, path);
+    return res.json();
+  };
+  const info = await control("/tool/graph-info");
+  assert.equal(info.version, "1.3.0");
+  assert.equal(info.valid, true);
+  const map = await control("/tool/graph-map");
+  assert.equal(map.ok, true);
+  assert.ok(map.runtime);
+  assert.ok("active" in map.runtime);
+  assert.ok(Array.isArray(map.runtime.queue));
+  assert.ok("lastDefect" in map.runtime);
+  assert.ok("lastEvent" in map.runtime);
+  console.log("PASS  one graph booted, legacy command/agent were removed, and graph-info/runtime are structured");
 
   const first = await stdioDispatch("implement", "Write a one-paragraph design note for a hello() function. Keep it short.");
   assert.equal(first.status, "completed");
@@ -319,12 +308,12 @@ async function main() {
   assert.match(artifactAfter, /Review the implementation and name one concrete improvement\./);
   console.log("PASS  the interactive agent edited the graph, reloaded it, and GRAPH.md swapped with it");
 
-  console.log("\nV1.2 LIVE PROOF PASS");
+  console.log("\nV1.3 LIVE PROOF PASS");
 }
 
 main()
   .catch((error) => {
-    console.error("\nV1.2 LIVE PROOF FAIL:", error.message);
+    console.error("\nV1.3 LIVE PROOF FAIL:", error.message);
     process.exitCode = 1;
   })
   .finally(async () => {

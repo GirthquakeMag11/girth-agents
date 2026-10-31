@@ -135,3 +135,19 @@ test("queue: an unknown dispatch is null", async () => {
   assert.equal(await queue.wait("d-404", 10), null);
   assert.equal(await queue.cancel("d-404"), null);
 });
+
+test("queue: workflow engagement is carried on the dispatch snapshot", async () => {
+  const releases = [];
+  const queue = createDispatchQueue({
+    run: () => new Promise((resolve) => releases.push(() => resolve({ ok: true }))),
+  });
+  queue.enqueue({ node: "implement", prompt: "workflow dispatch", workflow: "build-review" });
+  queue.enqueue({ node: "review", prompt: "node dispatch" });
+  await tick();
+
+  assert.equal(queue.status("d-1").workflow, "build-review");
+  assert.equal(queue.status("d-2").workflow, null);
+  releases.shift()();
+  await tick();
+  assert.equal(queue.status("d-1").state, "completed");
+});

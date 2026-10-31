@@ -1,33 +1,42 @@
 # Roadmap
 
-**Baseline:** v1.2 (tag `v1.2.0`). The engine runs one graph of agent-node
-workflows, enforces one handoff per node, queues dispatches FIFO, validates
-and reloads config, resumes the implementation session across a review
-loop, keeps the reviewer fresh, cancels queued or active work, reports
-cost and tokens, and gives the interactive agent a deterministic read-only
-graph view.
+**Baseline:** v1.3. The engine runs one graph of agent-node workflows,
+enforces one handoff per node, queues dispatches FIFO, validates and
+reloads config, resumes the implementation session across a review loop,
+keeps the reviewer fresh, cancels queued or active work, reports cost and
+tokens, supports node-or-workflow dispatch with transitive workflow
+connections and strict boundaries, and exposes structured runtime state
+for the native dashboard.
 
 This document tracks deferred work. It is not a wish list: each item has a
 target version and an acceptance condition. Check an item only when its
 acceptance condition has been demonstrated, and prefer live proof over a
 green stand-in.
 
-## Current focus: dogfood
+## Current focus: native dashboard
 
-The next milestone is not another engine feature. It is **using the engine
-to develop the engine**.
+The workflow-boundary/native-dashboard slice is v1.3 and is implemented and
+live-proofed. The current polish slice adds static workflow containers, a
+shape-only running-node border sweep, a one-shot connector runner, and a
+split Details/History right column with a session activity timeline. Dogfood
+can resume; the polish sequence is independently reviewed.
 
 Paused side-tracks and unconcluded design threads are tracked in
 `THREADS.md`.
+
+- **The map is the contract.** If the engine's behavior is not explainable
+  by `GRAPH.md` and the native dashboard — nodes, sessions, handoffs, outputs,
+  `maxVisits`, workflow — that is a defect in the map or the engine. The
+  user must be able to reason from the graph without reading engine code.
+
+### Dogfood (paused)
+
+These rules apply when dogfood resumes:
 
 - **Freeze the engine during a dogfood cycle.** Change the graph, not the
   engine. Record engine defects and sharp corners; fix them as versioned
   engine work after the run, never as a hot-patch in the middle of the
   work.
-- **The map is the contract.** If the engine's behavior is not explainable
-  by `/graph` and `GRAPH.md` — nodes, sessions, handoffs, outputs,
-  `maxVisits`, workflow — that is a defect in the map or the engine. The
-  user must be able to reason from the graph without reading engine code.
 - **The first real task is a straightforward implementation task in this
   repo.** It must change real code, run the real tests, and pass the
   reviewer. The interactive agent dispatches it, waits, reads the
@@ -95,31 +104,50 @@ and README update. Dispatched through the product `build-review` graph.
 - [x] Interactive tools: `dispatch`, `dispatch_wait`, `dispatch_status`,
   `dispatch_cancel`, `reload`, `graph_info`, `graph_map`.
 - [x] Interactive skills: graph-authoring, dispatching.
-- [x] 44 offline tests and a live proof covering stdio dispatch, queue,
+- [x] 56 offline tests and a live proof covering stdio dispatch, queue,
   interactive dispatch/wait, config authoring/reload, cancellation, cost,
-  and the read-only graph view; background dispatch (wait:false then
+  and the read-only graph artifact/runtime; background dispatch (wait:false then
   dispatch_wait) was exercised in a separate live probe.
 
 ## Shipped after v1 (v1.1 graph-model slice)
 
-- [x] **Workflows are labelled subsections of a graph.** A workflow is
-  `{ id, entry, exit, nodes }`; it is a view, not a container, not a
-  runtime unit, and not a dispatch target. Nodes and edges belong to the
-  graph; a node may be in zero, one, or multiple workflows. The engine
-  routes by handoffs, never by workflow.
-- [x] **Session modes.** A node declares `session: "fresh"` (default) or
-  `"resume"`. The implementation node resumes its original builder session
-  on a fail loop; the resumed brief carries the reviewer's output path.
-  The reviewer is fresh on every review pass. An offline fake-driver test
-  proves one builder session id across three visits and different
-  reviewer session ids on both visits; no second workflow is added to the
-  product graph.
+- [x] **Workflows are labelled subsections of a graph.** At v1.1 a
+  workflow was `{ id, entry, exit, nodes }`, a view and not a dispatch
+  target. Nodes and edges belong to the graph; a node may be in zero, one,
+  or multiple workflows. The engine routes by handoffs, never by workflow.
+  v1.3 adds workflow dispatch targets with transitive connections and
+  strict boundaries.
+- [x] **Session retention is route-scoped.** At v1.1 nodes declared
+  `session`; v1.3 moves retention to the handoff. A non-terminal handoff
+  may set `resume: true`, honored only when it returns to the node that
+  supplied the current input. The sample's review `fail` handoff resumes
+  the builder session; the reviewer starts fresh every visit.
 - [x] **Graph view.** `graph_map` returns a deterministic Mermaid map,
-  workflow table, node table, legend, and live state. `/graph` prints them
-  verbatim with no narrative; `GRAPH.md` is written on boot and every
-  valid reload.
+  workflow table, node table, legend, and live state; `GRAPH.md` is
+  written on boot and every valid reload. The interim `/graph` command
+  was removed in v1.3.
 - [x] **Session lifecycle cleanup.** Fresh sessions are deleted after
   their visit; resume sessions are deleted at dispatch end.
+
+## v1.3 — Workflow boundaries and native dashboard
+
+- [x] **Workflow dispatch target.** `dispatch` accepts exactly one of
+  `node` or `workflow`; a workflow dispatch starts at its entry and records
+  its main workflow in status.
+- [x] **Workflow connections and strict boundaries.** Workflows may declare
+  transitive `connections`; `strict: true` rejects escapes with
+  `workflow.escape`.
+- [x] **Structured runtime.** `graph_map` includes `runtime.active`,
+  `runtime.queue`, `runtime.lastDefect`, and `runtime.lastEvent`.
+- [x] **Remove the interim graph view.** The `graph-view` primary agent and
+  `/graph` command are no longer generated; the native dashboard is the
+  replacement surface.
+- [x] **Native dashboard.** `DASHBOARD-SPEC.md` and the
+  `DASHBOARD-MOTION-HISTORY-SPEC.md` amendment are implemented by tickets
+  005–014: native OpenTUI widgets, graph as configured, workflow
+  containers, static containers, a shape-only running-node border sweep,
+  one-shot connector runners, split Details/History, responsive layout, and
+  live/renderer proof. The proof artifacts live in `dashboard/proof/`.
 
 ## v1.2 — One graph and a read-only view
 
@@ -128,12 +156,8 @@ and README update. Dispatched through the product `build-review` graph.
   labelled subsections. `dispatch({ node, prompt })`, `graph_info()`, and
   `graph_map()` carry no graph id. Multiple separate graphs are not
   planned.
-- [x] **Read-only, argument-free `/graph`.** The plugin command takes no
-  arguments, runs `engine/graph-view.mjs` for the exact text, switches the
-  session to a `graph-view` agent for one reply, and restores the previous
-  agent. The agent's permissions deny the mutating tools. The CLI prints
-  the map/tables/legend/state directly and falls back to the config with
-  `Engine not running.` when the engine is down.
+- Historical: the v1.2 `/graph` command and `graph-view` agent were removed
+  in v1.3. See the native dashboard specification.
 - [x] **Failure-path coverage.** Failed, interrupted, and timed-out
   sessions produce `session-failed`, `session-interrupted`, or
   `session-timeout` with the session id; the old `session is not defined`
@@ -263,7 +287,17 @@ double-route.
     creation, forged handoff, and cross-run access.
   - Acceptance: every probe is blocked or defected in the sandbox.
 
-## v1.2 — Operations and product
+## Post-v1.3 — Dashboard run archive
+
+- [ ] **O1.2 Dispatch history and tracing.**
+  - What: per-dispatch event history, outputs, sessions, costs, defects;
+    an introspection/history query; retention policy. This is the
+    completed-dispatch **run archive**, distinct from the dashboard's
+    session activity timeline (`runtime.history`).
+  - Acceptance: a completed or failed dispatch can be reconstructed after
+    the process moves on.
+
+## Historical v1.2 — Operations and product
 
 Target: dependable daily operation, visible history, and a product that
 can be installed and run without the author in the loop.
@@ -274,12 +308,6 @@ can be installed and run without the author in the loop.
   - What: persist queued/running dispatch state; recover or explicitly
     defect after a restart; no silent loss.
   - Acceptance: a restart during a queue preserves or names every dispatch.
-
-- [ ] **O1.2 Dispatch history and tracing.**
-  - What: per-dispatch event history, outputs, sessions, costs, defects;
-    an introspection/history query; retention policy.
-  - Acceptance: a completed or failed dispatch can be reconstructed after
-    the process moves on.
 
 - [ ] **O1.3 Cancellation.**
   - What: cancel a queued or active dispatch; interrupt the session; emit
@@ -381,7 +409,8 @@ proven gap.
   node and ends at a terminal.
 - The plugin ecosystem, catalog, skillset marketplace, inbox, supervisor.
 - A UI as the primary surface; the conversation is the product surface.
-  A read-only dashboard may be considered in O1.6.
+  The native dashboard is a read-only secondary surface, in progress in
+  v1.3.
 - Parallel dispatches by default; one active dispatch remains the default.
 - Multiple separate graphs or a graph selector. One config is one graph;
   workflows are subsections, not separate graphs. A second graph would need

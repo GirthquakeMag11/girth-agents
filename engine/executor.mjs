@@ -1,4 +1,4 @@
-// The dispatch loop. One node at a time: create a fresh session, send the
+// The dispatch loop. One node at a time: create or resume a session, send the
 // brief, wait for a handoff acknowledgement, verify the output and the
 // order, then route to the label's target. Any missing or ambiguous piece
 // is a typed defect; no node silently falls through.
@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { composeBrief } from "./brief.mjs";
-import { MAX_VISITS, findNode, handoffTarget, outputPathFor } from "./config.mjs";
+import { MAX_VISITS, findNode, handoffTarget, handoffResume, resumableNodes, outputPathFor } from "./config.mjs";
 import { permissionsFor } from "./driver.mjs";
 
 export class DispatchDefect extends Error {
@@ -160,11 +160,10 @@ async function sessionInfo(driver, sessionId) {
   }
 }
 
-async function runNode({ driver, graph, node, helper, record, cwd, previousOutput, onEvent, sessions }) {
+async function runNode({ driver, graph, node, helper, record, cwd, previousOutput, onEvent, sessions, resume = false, resumable = false }) {
   if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
 
   const outputAbs = outputPathFor(graph, node, cwd);
-  const sessionMode = node.session ?? "fresh";
   record.nodeDef = node;
   record.graphDef = graph;
   record.outputPath = outputAbs;
@@ -175,10 +174,18 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
 
   let sessionId;
   let resumed = false;
-  if (sessionMode === "resume" && sessions.has(node.id)) {
+  if (resume) {
+    if (!sessions.has(node.id)) {
+      throw new DispatchDefect("resume.no-session", `node '${node.id}' requested resume but has no retained session`);
+    }
     sessionId = sessions.get(node.id);
     resumed = true;
   } else {
+    if (sessions.has(node.id)) {
+      const stale = sessions.get(node.id);
+      sessions.delete(node.id);
+      if (process.env.ENGINE_KEEP_SESSIONS !== "1") await driver.deleteSession(stale).catch(() => {});
+    }
     const session = await driver.createSession({
       directory: cwd,
       title: `${record.id}/${node.id}`,
@@ -190,7 +197,7 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
       }),
     });
     sessionId = session.id;
-    if (sessionMode === "resume") sessions.set(node.id, sessionId);
+    if (resume || resumable) sessions.set(node.id, sessionId);
   }
   record.sessionId = sessionId;
   const before = await sessionInfo(driver, sessionId);
@@ -199,7 +206,7 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
     node: node.id,
     phase: "begin",
     sessionId,
-    sessionMode,
+    sessionMode: resume ? "resume" : "fresh",
     resumed,
     upstream: previousOutput,
     at: new Date().toISOString(),
@@ -218,15 +225,18 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
     if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
     info = await driver.prompt(sessionId, brief, { budgetMs: node.budgetMs ?? 600000 });
   } catch (e) {
-    if (sessionMode === "fresh" && process.env.ENGINE_KEEP_SESSIONS !== "1") {
+    if (!resume && !resumable && process.env.ENGINE_KEEP_SESSIONS !== "1") {
       await driver.deleteSession(sessionId);
     }
+    if (!record.cancelled && record.handoffDefect) throw record.handoffDefect;
     throw e;
   }
 
   try {
     const delta = usageDelta(before, info);
     record.usage = addUsage(record.usage, delta);
+
+    if (record.handoffDefect) throw record.handoffDefect;
 
     if (info.outcome !== "succeeded") {
       throw new DispatchDefect(`session-${info.outcome}`, `node '${node.id}' session ${sessionId} ended ${info.outcome}`);
@@ -246,7 +256,6 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
       return { outputPath: outputAbs, handoff: null };
     }
 
-    if (record.handoffDefect) throw record.handoffDefect;
     if (!record.handoff) {
       throw new DispatchDefect(
         "handoff.none",
@@ -275,14 +284,14 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
       phase: "end",
       outcome: info.outcome,
       label: record.handoff.label,
-      sessionMode,
+      sessionMode: resume ? "resume" : "fresh",
       resumed,
       usage: delta,
       at: new Date().toISOString(),
     });
     return { outputPath: outputAbs, handoff: record.handoff };
   } finally {
-    if (sessionMode === "fresh" && process.env.ENGINE_KEEP_SESSIONS !== "1") {
+    if (!resume && !resumable && process.env.ENGINE_KEEP_SESSIONS !== "1") {
       await driver.deleteSession(sessionId);
     }
   }
@@ -294,9 +303,12 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
 
   let current = record.node;
   let previousOutput = null;
+  let upstream = null;
   const visits = record.visits ?? {};
   const maxSteps = graph.maxSteps ?? 100;
   const sessions = new Map();
+  const resumable = resumableNodes(graph);
+  let resume = false;
   record.usage = record.usage ?? emptyUsage();
 
   try {
@@ -332,6 +344,8 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
       previousOutput,
       onEvent,
       sessions,
+      resume,
+      resumable: resumable.has(node.id),
     });
 
     if (node.handoff.mode === "terminal") {
@@ -356,8 +370,17 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
       at: new Date().toISOString(),
     });
 
+    const wantsResume = handoffResume(node, result.handoff.label);
+    if (wantsResume && target !== upstream) {
+      throw new DispatchDefect(
+        "resume.not-return",
+        `node '${node.id}' requests resume on '${result.handoff.label}', but target '${target}' is not the node that supplied its input (${upstream ?? "dispatch entry"})`,
+      );
+    }
     previousOutput = result.outputPath;
+    upstream = current;
     current = target;
+    resume = wantsResume;
   }
 
   throw new DispatchDefect("step-overflow", `the graph exceeded ${maxSteps} steps`);

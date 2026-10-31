@@ -6,7 +6,6 @@ import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
-const SESSION_MODES = new Set(["fresh", "resume"]);
 
 // The engine's backstop, not the workflow's policy. A graph may set any
 // maxVisits up to this; the shipped build-review graph uses 20.
@@ -42,6 +41,11 @@ function integer(value, at, faults, { required = false, min = 1 } = {}) {
   if (!Number.isInteger(value) || value < min) {
     faults.push(fault("schema.integer", `${at}: must be an integer >= ${min}`));
   }
+}
+
+function boolean(value, at, faults) {
+  if (value === undefined) return;
+  if (typeof value !== "boolean") faults.push(fault("schema.boolean", `${at}: must be a boolean`));
 }
 
 function relativePath(value, at, faults, { required = true } = {}) {
@@ -106,12 +110,13 @@ function validateHandoff(handoff, at, nodeIds, faults) {
     return;
   }
   if (handoff.mode === "unconditional") {
-    strict(handoff, ["mode", "to", "description"], at, faults);
+    strict(handoff, ["mode", "to", "description", "resume"], at, faults);
     string(handoff.to, `${at}.to`, faults);
     if (handoff.to !== undefined && typeof handoff.to === "string" && !nodeIds.has(handoff.to)) {
       faults.push(fault("graph.dangling-handoff", `${at}.to: names no node '${handoff.to}'`));
     }
     if (handoff.description !== undefined) string(handoff.description, `${at}.description`, faults);
+    boolean(handoff.resume, `${at}.resume`, faults);
     return;
   }
 
@@ -127,10 +132,11 @@ function validateHandoff(handoff, at, nodeIds, faults) {
       faults.push(fault("schema.label", `${labelAt}: must be an object`));
       continue;
     }
-    strict(label, ["label", "to", "description"], labelAt, faults);
+    strict(label, ["label", "to", "description", "resume"], labelAt, faults);
     string(label.label, `${labelAt}.label`, faults);
     string(label.to, `${labelAt}.to`, faults);
     string(label.description, `${labelAt}.description`, faults);
+    boolean(label.resume, `${labelAt}.resume`, faults);
     if (typeof label.label === "string" && label.label.trim() !== "") {
       if (labels.has(label.label)) faults.push(fault("graph.duplicate-label", `${labelAt}.label: duplicate '${label.label}'`));
       labels.add(label.label);
@@ -219,6 +225,11 @@ function validateWorkflows(workflows, at, byId, nodeIds, faults) {
     faults.push(fault("schema.workflows", `${at}: must be an array`));
     return;
   }
+  const workflowIds = new Set(
+    workflows
+      .filter((workflow) => isObject(workflow) && typeof workflow.id === "string" && workflow.id.trim() !== "")
+      .map((workflow) => workflow.id),
+  );
   const ids = new Set();
   for (const [i, workflow] of workflows.entries()) {
     const wfAt = `${at}[${i}]`;
@@ -226,10 +237,31 @@ function validateWorkflows(workflows, at, byId, nodeIds, faults) {
       faults.push(fault("schema.workflow", `${wfAt}: must be an object`));
       continue;
     }
-    strict(workflow, ["id", "entry", "exit", "nodes"], wfAt, faults);
+    strict(workflow, ["id", "entry", "exit", "nodes", "connections", "strict"], wfAt, faults);
     string(workflow.id, `${wfAt}.id`, faults);
     string(workflow.entry, `${wfAt}.entry`, faults);
     string(workflow.exit, `${wfAt}.exit`, faults);
+    boolean(workflow.strict, `${wfAt}.strict`, faults);
+    if (workflow.connections !== undefined) {
+      if (!Array.isArray(workflow.connections)) {
+        faults.push(fault("schema.workflow-connections", `${wfAt}.connections: must be an array of workflow ids`));
+      } else {
+        const seen = new Set();
+        for (const [j, id] of workflow.connections.entries()) {
+          const at = `${wfAt}.connections[${j}]`;
+          if (typeof id !== "string" || id.trim() === "") {
+            faults.push(fault("schema.workflow-connections", `${at}: must be a non-empty workflow id`));
+          } else if (id === workflow.id) {
+            faults.push(fault("graph.self-connection", `${at}: workflow '${id}' cannot connect to itself`));
+          } else if (seen.has(id)) {
+            faults.push(fault("graph.duplicate-connection", `${at}: duplicate '${id}'`));
+          } else if (!workflowIds.has(id)) {
+            faults.push(fault("graph.unknown-connection", `${at}: names no workflow '${id}'`));
+          }
+          seen.add(id);
+        }
+      }
+    }
     if (typeof workflow.id === "string" && workflow.id.trim() !== "") {
       if (ids.has(workflow.id)) faults.push(fault("graph.duplicate-workflow", `${wfAt}.id: duplicate '${workflow.id}'`));
       ids.add(workflow.id);
@@ -299,7 +331,7 @@ function validateGraph(graph, at, helperIds, faults) {
       faults.push(fault("schema.node", `${nodeAt}: must be an object`));
       continue;
     }
-    strict(node, ["id", "helper", "objective", "output", "session", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
+    strict(node, ["id", "helper", "objective", "output", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
     string(node.id, `${nodeAt}.id`, faults);
     string(node.helper, `${nodeAt}.helper`, faults);
     if (node.helper !== undefined && typeof node.helper === "string" && !helperIds.has(node.helper)) {
@@ -307,9 +339,6 @@ function validateGraph(graph, at, helperIds, faults) {
     }
     string(node.objective, `${nodeAt}.objective`, faults);
     relativePath(node.output, `${nodeAt}.output`, faults);
-    if (node.session !== undefined && !SESSION_MODES.has(node.session)) {
-      faults.push(fault("schema.session", `${nodeAt}.session: must be 'fresh' or 'resume'`));
-    }
     integer(node.budgetMs, `${nodeAt}.budgetMs`, faults, { min: 1 });
     integer(node.maxVisits, `${nodeAt}.maxVisits`, faults, { min: 1 });
     if (node.maxVisits !== undefined && Number.isInteger(node.maxVisits) && node.maxVisits > MAX_VISITS) {
@@ -399,6 +428,28 @@ export function outputPathFor(graph, node, cwd) {
   return resolve(cwd, graph.outputRoot ?? ".", node.output);
 }
 
+export function handoffResume(node, label) {
+  if (!node?.handoff) return false;
+  if (node.handoff.mode === "unconditional") return node.handoff.resume === true;
+  if (node.handoff.mode === "conditional") {
+    return node.handoff.labels.find((entry) => entry.label === label)?.resume === true;
+  }
+  return false;
+}
+
+export function resumableNodes(graph) {
+  const ids = new Set();
+  for (const node of graph.nodes ?? []) {
+    if (node.handoff?.mode === "unconditional" && node.handoff.resume === true) ids.add(node.handoff.to);
+    if (node.handoff?.mode === "conditional") {
+      for (const label of node.handoff.labels ?? []) {
+        if (label.resume === true) ids.add(label.to);
+      }
+    }
+  }
+  return ids;
+}
+
 export function handoffTarget(node, label) {
   if (!node?.handoff) return null;
   if (node.handoff.mode === "unconditional") return label === "next" ? node.handoff.to : null;
@@ -406,6 +457,34 @@ export function handoffTarget(node, label) {
     return node.handoff.labels.find((entry) => entry.label === label)?.to ?? null;
   }
   return null;
+}
+
+export function workflowById(graph, id) {
+  return (graph.workflows ?? []).find((workflow) => workflow.id === id) ?? null;
+}
+
+export function workflowsForNode(graph, nodeId) {
+  return (graph.workflows ?? [])
+    .filter((workflow) => workflow.nodes.includes(nodeId))
+    .map((workflow) => workflow.id);
+}
+
+export function allowedWorkflows(graph, workflowId) {
+  const byId = new Map((graph.workflows ?? []).map((workflow) => [workflow.id, workflow]));
+  const allowed = new Set();
+  if (!byId.has(workflowId)) return allowed;
+  allowed.add(workflowId);
+  const stack = [workflowId];
+  while (stack.length > 0) {
+    const workflow = byId.get(stack.pop());
+    for (const next of workflow?.connections ?? []) {
+      if (!allowed.has(next) && byId.has(next)) {
+        allowed.add(next);
+        stack.push(next);
+      }
+    }
+  }
+  return allowed;
 }
 
 export function graphSummary(graph) {
@@ -418,7 +497,6 @@ export function graphSummary(graph) {
       helper: node.helper,
       objective: node.objective,
       output: node.output,
-      session: node.session ?? "fresh",
       maxVisits: node.maxVisits ?? null,
       handoff:
         node.handoff.mode === "conditional"
@@ -426,6 +504,10 @@ export function graphSummary(graph) {
           : { mode: node.handoff.mode, to: node.handoff.to ?? null },
     })),
   };
+}
+
+export function graphInfoResponse(doc, path, version) {
+  return { ok: true, version, valid: true, ...configSummary(doc, path) };
 }
 
 export function configSummary(doc, path) {

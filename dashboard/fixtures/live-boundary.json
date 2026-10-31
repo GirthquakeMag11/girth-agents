@@ -1,0 +1,91 @@
+{
+  "version": "3",
+  "helpers": [
+    {
+      "id": "builder",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "agent": "build",
+      "permissions": [
+        "read",
+        "edit",
+        "shell"
+      ],
+      "craft": "Execute the node objective. Write the declared output file with a short result, then call the handoff tool exactly once with the declared label."
+    },
+    {
+      "id": "reviewer",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "agent": "build",
+      "permissions": [
+        "read",
+        "edit",
+        "shell"
+      ],
+      "craft": "Judge the work and write the declared output file, then call the declared handoff label."
+    }
+  ],
+  "graph": {
+    "outputRoot": "work",
+    "maxSteps": 20,
+    "workflows": [
+      {
+        "id": "A",
+        "entry": "a1",
+        "exit": "a1",
+        "nodes": [
+          "a1"
+        ],
+        "connections": [
+          "B"
+        ],
+        "strict": false
+      },
+      {
+        "id": "B",
+        "entry": "b1",
+        "exit": "b1",
+        "nodes": [
+          "b1"
+        ],
+        "connections": [],
+        "strict": false
+      }
+    ],
+    "nodes": [
+      {
+        "id": "a1",
+        "helper": "builder",
+        "objective": "Write work/a1.md containing exactly: main. Then hand off with label next.",
+        "output": "a1.md",
+        "maxVisits": 2,
+        "handoff": {
+          "mode": "unconditional",
+          "to": "b1",
+          "description": "The main node is ready; move into connected B."
+        }
+      },
+      {
+        "id": "b1",
+        "helper": "builder",
+        "objective": "Write work/b1.md containing exactly: connected. Then hand off with label next.",
+        "output": "b1.md",
+        "maxVisits": 2,
+        "handoff": {
+          "mode": "unconditional",
+          "to": "o",
+          "description": "Leave the connected workflow for the escape proof."
+        }
+      },
+      {
+        "id": "o",
+        "helper": "builder",
+        "objective": "Write work/o.md containing exactly: escaped. Then stop.",
+        "output": "o.md",
+        "maxVisits": 2,
+        "handoff": {
+          "mode": "terminal"
+        }
+      }
+    ]
+  }
+}

@@ -16,39 +16,31 @@ function relativeOutput(graph, node) {
   return root === "." ? node.output : `${root}/${node.output}`;
 }
 
-function sessionText(node) {
-  if (node.session === "resume") return "resume — same session on revisit";
-  if (node.maxVisits !== undefined && node.handoff?.mode !== "terminal") {
-    return "fresh — new session every visit";
-  }
-  return "fresh";
+function sessionSuffix(resume) {
+  return resume === true ? " (resume)" : "";
 }
 
 function handoffText(node) {
   if (!node.handoff) return "";
   if (node.handoff.mode === "terminal") return "terminal";
-  if (node.handoff.mode === "unconditional") return `next → ${node.handoff.to}`;
-  return node.handoff.labels.map((label) => `${label.label} → ${label.to}`).join("; ");
-}
-
-function inAnyCycle(node) {
-  // A fresh marker is useful only where the node can be revisited. maxVisits
-  // is the config's own signal that a node is in a bounded loop.
-  return node.maxVisits !== undefined && node.handoff?.mode !== "terminal";
+  if (node.handoff.mode === "unconditional") {
+    return `next → ${node.handoff.to}${sessionSuffix(node.handoff.resume)}`;
+  }
+  return node.handoff.labels
+    .map((label) => `${label.label} → ${label.to}${sessionSuffix(label.resume)}`)
+    .join("; ");
 }
 
 function nodeLabel(node, workflow) {
   const bits = [`${node.id} · ${node.helper}`];
   if (workflow && workflow.entry === node.id) bits.push("entry");
   if (workflow && workflow.exit === node.id) bits.push("exit");
-  if (node.session === "resume") bits.push("↻ resume");
-  else if (inAnyCycle(node)) bits.push("✦ fresh every visit");
   if (node.handoff?.mode === "terminal") bits.push("terminal");
   return mermaidText(bits.join("<br/>"));
 }
 
 export const MAP_LEGEND =
-  "↻ resume = same session on revisit · ✦ fresh = new session every visit · stadium/dashed = terminal · box = workflow view";
+  "resume = this route reuses the target session · stadium/dashed = terminal · box = workflow view · workflow table carries connections/strict";
 
 export function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
   const nodes = graph.nodes ?? [];
@@ -92,25 +84,21 @@ export function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
     if (!handoff || handoff.mode === "terminal") continue;
     if (handoff.mode === "unconditional") {
       const to = vars.get(handoff.to);
-      if (to) lines.push(`  ${from} -->|next| ${to}`);
+      if (to) lines.push(`  ${from} -->|${mermaidText("next" + sessionSuffix(handoff.resume))}| ${to}`);
     } else {
       for (const label of handoff.labels ?? []) {
         const to = vars.get(label.to);
-        if (to) lines.push(`  ${from} -->|${mermaidText(label.label)}| ${to}`);
+        if (to) lines.push(`  ${from} -->|${mermaidText(label.label + sessionSuffix(label.resume))}| ${to}`);
       }
     }
   }
 
-  lines.push("  classDef resume stroke-width:3px,stroke:#0f766e");
-  lines.push("  classDef fresh stroke-dasharray:4 2,stroke:#b7791f");
   lines.push("  classDef terminal stroke-width:2px,stroke-dasharray:4 2");
   lines.push("  classDef active fill:#d1fae5,stroke:#047857,stroke-width:3px");
 
   for (const node of nodes) {
     const varName = vars.get(node.id);
     if (!varName) continue;
-    if (node.session === "resume") lines.push(`  class ${varName} resume`);
-    else if (inAnyCycle(node)) lines.push(`  class ${varName} fresh`);
     if (node.handoff?.mode === "terminal") lines.push(`  class ${varName} terminal`);
   }
 
@@ -126,10 +114,10 @@ export function renderWorkflowTable(graph) {
   const workflows = graph.workflows ?? [];
   if (workflows.length === 0) return "";
   const lines = [
-    "| Workflow | Entry | Exit | Nodes |",
-    "|---|---|---|---|",
+    "| Workflow | Entry | Exit | Nodes | Connections | Strict |",
+    "|---|---|---|---|---|---|",
     ...workflows.map((workflow) =>
-      `| ${tableText(workflow.id)} | ${tableText(workflow.entry)} | ${tableText(workflow.exit)} | ${workflow.nodes.map(tableText).join(", ")} |`,
+      `| ${tableText(workflow.id)} | ${tableText(workflow.entry)} | ${tableText(workflow.exit)} | ${workflow.nodes.map(tableText).join(", ")} | ${(workflow.connections ?? []).map(tableText).join(", ") || "—"} | ${workflow.strict === true ? "yes" : "no"} |`,
     ),
   ];
   return lines.join("\n");
@@ -137,12 +125,12 @@ export function renderWorkflowTable(graph) {
 
 export function renderNodeTable(graph) {
   const lines = [
-    "| Node | Helper | Objective | Output | Session | Handoff | Max visits |",
-    "|---|---|---|---|---|---|---|",
+    "| Node | Helper | Objective | Output | Handoff | Max visits |",
+    "|---|---|---|---|---|---|",
   ];
   for (const node of graph.nodes ?? []) {
     lines.push(
-      `| ${tableText(node.id)} | ${tableText(node.helper)} | ${tableText(node.objective)} | ${tableText(relativeOutput(graph, node))} | ${tableText(sessionText(node))} | ${tableText(handoffText(node))} | ${node.maxVisits ?? "—"} |`,
+      `| ${tableText(node.id)} | ${tableText(node.helper)} | ${tableText(node.objective)} | ${tableText(relativeOutput(graph, node))} | ${tableText(handoffText(node))} | ${node.maxVisits ?? "—"} |`,
     );
   }
   return lines.join("\n");
@@ -168,6 +156,15 @@ export function renderGraphMap(graph, { runtime = null } = {}) {
     workflowTable: renderWorkflowTable(graph),
     nodeTable: renderNodeTable(graph),
     legend: MAP_LEGEND,
+  };
+}
+
+export function renderGraphMapResponse(graph, runtime = null) {
+  return {
+    ok: true,
+    ...renderGraphMap(graph, { runtime }),
+    state: renderState(runtime),
+    runtime,
   };
 }
 

@@ -3,15 +3,12 @@ import assert from "node:assert/strict";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { installPlugin, installSkills, removeCommands, installAgent, preflightPlugin } from "../plugin.mjs";
+import { installPlugin, installSkills, removeCommands, removeAgent, preflightPlugin } from "../plugin.mjs";
 
 const pluginInput = (dir) => ({
   cwd: dir,
   url: "http://127.0.0.1:1234",
   token: "token-123",
-  graphCli: "/opt/engine/graph-view.mjs",
-  configPath: "/tmp/graph.json",
-  nodePath: "/usr/bin/node",
 });
 
 test("plugin: the installed tool surface contains the lever and the control tools", async () => {
@@ -33,39 +30,6 @@ test("plugin: the installed tool surface contains the lever and the control tool
   }
 });
 
-test("plugin: the /graph command is registered read-only and argument-free", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "engine-command-"));
-  try {
-    const path = await installPlugin(pluginInput(dir));
-    const source = await readFile(path, "utf8");
-    assert.match(source, /ctx\.command\.transform/);
-    assert.match(source, /name: "graph"/);
-    assert.match(source, /switchAgent\(\{ sessionID, agent: "graph-view" \}\)/);
-    assert.match(source, /GRAPH_CLI/);
-    assert.match(source, /Return the text above verbatim/);
-    assert.doesNotMatch(source, /\$ARGUMENTS/);
-    assert.doesNotMatch(source, /subagent: true/);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-});
-
-test("plugin: the graph-view agent is read-only and may not dispatch", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "engine-agent-"));
-  try {
-    await installAgent({ cwd: dir });
-    const agent = await readFile(join(dir, ".opencode", "agents", "graph-view.md"), "utf8");
-    assert.match(agent, /mode: all/);
-    assert.match(agent, /action: "\*"\n    resource: "\*"\n    effect: deny/);
-    assert.match(agent, /action: graph_map/);
-    assert.match(agent, /action: graph_info/);
-    assert.doesNotMatch(agent, /action: dispatch/);
-    assert.match(agent, /Print that output verbatim/);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-});
-
 test("plugin: removeCommands removes the old engine command and leaves a user command", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-commands-"));
   try {
@@ -78,6 +42,23 @@ test("plugin: removeCommands removes the old engine command and leaves a user co
     await writeFile(join(commands, "graph.md"), "Review the graph by hand.\n", "utf8");
     await removeCommands({ cwd: dir });
     assert.equal(await readFile(join(commands, "graph.md"), "utf8"), "Review the graph by hand.\n");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("plugin: removeAgent removes the old engine agent and leaves a user agent", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-agent-cleanup-"));
+  try {
+    const agents = join(dir, ".opencode", "agents");
+    await mkdir(agents, { recursive: true });
+    await writeFile(join(agents, "graph-view.md"), "---\ndescription: Read-only graph view.\n---\nCall graph_map.\n", "utf8");
+    await removeAgent({ cwd: dir });
+    await assert.rejects(() => readFile(join(agents, "graph-view.md"), "utf8"));
+
+    await writeFile(join(agents, "graph-view.md"), "A user-authored agent.\n", "utf8");
+    await removeAgent({ cwd: dir });
+    assert.equal(await readFile(join(agents, "graph-view.md"), "utf8"), "A user-authored agent.\n");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

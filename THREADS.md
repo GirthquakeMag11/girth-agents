@@ -7,7 +7,7 @@ was in progress, and so a later architectural ruling has the full context.
 When a thread closes, move the decision into `SPEC.md` or `ROADMAP.md` and
 remove it here.
 
-Last updated: 2026-10-29
+Last updated: 2026-10-30
 
 ## Process rules
 
@@ -17,23 +17,26 @@ Last updated: 2026-10-29
   how the explanation landed and does not know what context the next action
   was taken in.
 - **Keep user decisions separate from our proposals.** A proposal is not a
-  decision. Do not let a design draft or an implementation choice silently
+  decision. Do not let a proposal or an implementation choice silently
   become part of the shared context.
 - **State what we are about to do before doing it.** If we are producing a
-  draft, a mockup, a test, or a code change, say so and say why.
+  test or a code change, say so and say why.
 - **One active thread at a time.** When a side-track opens, record it here
   and mark the original thread paused, rather than abandoning it.
 
 ## T1 — Refining the engine through dogfood
 
-**Status:** open, paused by T2/T3  
+**Status:** open; dashboard work is complete. Ready to resume dogfood.  
 **Question:** does using the engine to develop the engine actually make real
 work easier and more efficient than doing it directly?
 
 ### Settled
 
-- The engine is frozen at **v1.2.0** (tag `v1.2.0`, commit `c538678`) for the
-  dogfood cycle. During the cycle, change the graph, not engine semantics.
+- The engine was frozen at **v1.2.0** (tag `v1.2.0`, commit `c538678`) for
+  the dogfood cycle. The freeze is explicitly lifted for the
+  workflow-boundary/native-dashboard slice, which is **v1.3.0**. The native
+  dashboard is implemented, live-proofed, and independently reviewed; T1 can
+  resume.
 - The first real task was adding `--version` / `--help` to `engine/engine.mjs`,
   with `engine/test/cli.test.mjs` and README updates.
 - That task ran through the product `build-review` graph:
@@ -58,84 +61,22 @@ work easier and more efficient than doing it directly?
   implementation task, choose one likely to trigger a review fail, or pause
   dogfood until the UI/entropy system is defined.
 - **Which sharp corners block further dogfood?** Shared `work/` output,
-  the graph command echo, plugin reload behavior, and the missing explicit
-  friction comparison.
+  plugin reload behavior and the missing explicit friction comparison. The
+  graph command echo was removed in v1.3.
 - **When does the freeze end?** Any engine change discovered during dogfood
   must become versioned engine work after the cycle, not a mid-run hot-patch.
 
 ### Next decision
 
 After the UI/entropy thread is defined, decide whether to continue dogfood
-under v1.2.0, resolve the UI thread first, or close the cycle and version the
+under v1.3.0, resolve the UI thread first, or close the cycle and version the
 next engine work. Then choose the next task and the friction measurements to
 record.
 
-## T2 — The `/graph` rendering surface
-
-**Status:** surface decided at a high level; concrete overlay design open in
-T3. The current chat echo is an interim, not the target.  
-**Question:** where should the deterministic graph output be rendered, and
-how much OpenCode involvement is acceptable to get it there?
-
-### User ruling
-
-- The graph view is a **full-screen overlay inside OpenCode**, opened from
-  the command palette and/or a key combination, and dismissed back to chat.
-- It is a **bird's-eye view** used both to manage the graph and to observe it
-  working.
-- It is not a separate local web workbench and not a chat message. The
-  separate web workbench was rejected for context-switching and for making
-  the OpenCode relationship ill-defined.
-- The first version is **optimized for understanding**, not editing.
-  Editing happens through the skilled interactive agent via the
-  configuration schema; editing in the view can be considered later.
-- The view updates when a graph change is applied, not on every draft edit.
-- The chat `/graph` echo is therefore no longer the target surface. It may
-  remain as an interim until the overlay exists.
-
-### Settled
-
-- `/graph` in chat is argument-free: one graph, no graph id, no subcommands.
-- It is read-only by construction: the command cannot dispatch work.
-- The output is produced by `engine/graph-view.mjs`: it asks the running
-  engine for `/tool/graph-map`, or renders the same map/tables from the
-  config and appends `Engine not running.` when the engine is down.
-- The current implementation is a plugin-registered command. It runs the
-  CLI, switches the session to the `graph-view` agent for one reply, and
-  restores the previous agent. Verified live: exact output, no tools, no
-  dispatch, agent restored, engine idle.
-- The agent is doing no work. It is a renderer for the CLI output.
-- OpenCode V2's command executor returns `void`; there is no documented
-  assistant-message append API. The current in-chat paths are:
-  - prompt → agent (the current echo),
-  - synthetic → notice, not rendered Markdown,
-  - shell → raw text, not Mermaid/tables.
-
-### Open
-
-- The concrete overlay design: visual grammar, layout, interaction, and
-  information hierarchy. See T3.
-- Whether the overlay is implemented as an OpenCode TUI plugin/panel, a
-  command-palette screen, or another native OpenCode surface. This must be
-  proven against the installed version, not assumed.
-- Whether the chat echo is kept as a fallback or removed once the overlay
-  exists.
-- Whether any direct chat-rendering API is still wanted after the overlay
-  exists. This is no longer on the critical path for the graph view.
-
-### Proposals (not approved)
-
-These were discussed but are not decisions:
-
-- a TUI panel opened by `/graph`, with map/inspector/run/coherence tabs;
-- a persistent sidebar and composer status line;
-- a coherence ledger and draft/apply flow;
-- a local web workbench (rejected).
-
 ## T3 — UI/UX and graph perception
 
-**Status:** open; user decisions recorded; no UI design approved; no
-implementation started.  
+**Status:** implemented and independently reviewed; tickets 005–014 passed.
+The native dashboard and motion/history sequence is complete.
 **Question:** how should the user perceive and reason about the graph in the
 same OpenCode context, with minimal friction and entropy?
 
@@ -187,8 +128,50 @@ same OpenCode context, with minimal friction and entropy?
 - The first version should **update on application of a graph change**, not
   live-edit/draft preview. Edits are not expected to be continuous enough
   to require live update.
-- The user wants to **iterate on visual design drafts**, not debate visual
-  elements they cannot see.
+- The native dashboard is the v1 design direction: **Outline** and **Graph**
+  on the left/middle, a right column split into **Details** (active work)
+  and **History** (activity timeline), plus a read-only run console and
+  status footer. The Graph pane shows the graph as configured.
+- The implementation must use native OpenTUI widgets and theme surfaces.
+  A pre-rendered character grid with per-cell color spans is explicitly
+  rejected, even if it uses theme colors.
+- Color mapping A: node border/emphasis follows state; link color follows
+  handoff semantics (`next`, `pass`, `fail`); workflow containers and
+  membership use categorical theme colors; Details carries literal detail.
+- Active nodes are visually prominent. Workflow containers are static. A
+  running node keeps its color, surface, text, and layout fixed; a two-cell
+  heavier segment moves slowly along its top border. A new handoff sends one
+  accent token along the actual connector. Inactive and queued nodes are
+  still and desaturated. Queued nodes use the warning treatment.
+- A workflow-targeted dispatch shows its main workflow container, including
+  while queued. A node dispatch shows no workflow container. Connected
+  workflow containers appear only while the active node is inside them;
+  main membership suppresses connected containers. Shared nodes are drawn
+  once.
+- An escape outside the main and connected workflows shows a small warning;
+  `strict: true` makes it an engine defect.
+- Details is a live-work inspector: one entry per active dispatch, active
+  first, with saturated active and desaturated inactive memberships. With
+  no active dispatch it is empty; queued work appears in the Graph and Run
+  console, not Details. Multiple active entries are supported by the model
+  for future parallel execution. There is no idle/default Details node and
+  no v1 node selection.
+- History is a session-scoped (engine-process) activity timeline, newest
+  first, with Details above it in the split right column and a one-line
+  strip at collapsed sizes. It is not a run archive. The run archive is
+  roadmapped for a later version.
+- The specification is `DASHBOARD-SPEC.md` plus the motion/history amendment
+  `DASHBOARD-MOTION-HISTORY-SPEC.md`; tickets 005–014 implement them. The
+  live boundary proof, renderer motion proof, and real `DashboardView`
+  captures are under `dashboard/proof/`; the runnable non-strict and strict
+  fixtures are `dashboard/fixtures/live-boundary.json` and
+  `dashboard/fixtures/live-boundary-strict.json`.
+- v1 is read-only and exists to show the graph's structure, behavior, and
+  current state. It has no graph editing, no Validate/Apply/Run/Dispatch
+  controls, no product/agent tabs, and no scoped chat.
+- Work is dispatched through the interactive agent's `dispatch` tool.
+- The overlay is modal: Escape returns to the same chat, session, and agent
+  without changing tabs.
 
 ### User definitions
 
@@ -221,28 +204,13 @@ same OpenCode context, with minimal friction and entropy?
 
 - The concrete entropy-wrangling/coherence system. The user explicitly says
   it is not in place yet. A UI must not be treated as if it were the system.
-- The visual grammar, layout, interaction model, and information hierarchy
-  of the overlay.
+- The detailed visual grammar beyond `DASHBOARD-SPEC.md`; implementation
+  review may refine it.
 - Whether any of our proposals — coherence ledger, sidebar, composer status,
   inspector tabs, run history, draft/apply — are accepted. None are approved.
-- How to represent plural active nodes, queues, concurrency, and future
-  parallel workflows.
-- The exact OpenCode surface and API for the overlay, and whether the
-  installed version supports it. This must be proven, not assumed.
-- Whether the current `/graph` chat echo remains as a fallback or is removed.
-
-### Process correction
-
-- Drafts A and B (map + right inspector; full-width map + bottom drawer) were
-  produced before this record was updated. They are **exploratory, not
-  approved**, and should not be treated as the design. They were an attempt
-  to respond to the request for visual drafts; the record should have been
-  updated first.
-- The Firefox activity was those mockups being rendered to images. That was
-  not stated before the tool calls, so the user saw unexplained browser
-  activity. Say what is being done and why before doing it.
-- The next step is to agree on the record and the unresolved questions
-  before producing more drafts or implementation.
+- Concurrent/parallel workflow execution beyond the plural-ready display
+  model.
+- Whether a table view remains as a secondary alternative.
 
 ## Settled decisions that should not be relitigated accidentally
 
@@ -253,6 +221,9 @@ same OpenCode context, with minimal friction and entropy?
 - `implement` resumes its builder session on a fail loop; `review` is fresh
   every visit.
 - `maxVisits: 20` on implement and review; 100 is the engine backstop.
-- `/graph` is argument-free and read-only; `GRAPH.md` is generated on boot
-  and every valid reload.
-- Engine v1.2.0 is the frozen dogfood baseline.
+- The interim `graph-view` primary agent and `/graph` command are removed,
+  including their engine regeneration path. The native dashboard replaces
+  them.
+- The OpenCode `session.panel` full-screen surface and `esc` return to the
+  same chat/session/agent have been proven.
+- Engine v1.2.0 is the frozen dogfood baseline; v1.3.0 is the workflow-boundary/native-dashboard slice.

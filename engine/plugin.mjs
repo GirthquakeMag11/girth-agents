@@ -9,17 +9,11 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-function renderPlugin({ url, token, graphCli, configPath, nodePath }) {
+function renderPlugin({ url, token }) {
   return `import { Plugin } from "@opencode/plugin";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 
 const ENGINE_URL = ${JSON.stringify(url)};
 const TOKEN = ${JSON.stringify(token)};
-const GRAPH_CLI = ${JSON.stringify(graphCli)};
-const CONFIG_PATH = ${JSON.stringify(configPath)};
-const NODE_PATH = ${JSON.stringify(nodePath)};
-const exec = promisify(execFile);
 
 // One tool surface for both sides:
 // - handoff: the helper's lever inside a node.
@@ -57,37 +51,6 @@ export default Plugin.define({
       return json ?? {};
     };
 
-    const graphText = async () => {
-      try {
-        const { stdout } = await exec(NODE_PATH, [GRAPH_CLI, CONFIG_PATH], { cwd: ctx.location.directory });
-        return String(stdout).replace(/\\s+$/, "");
-      } catch {
-        return "Engine not running.";
-      }
-    };
-
-    await ctx.command.transform((editor) => {
-      editor.add({
-        name: "graph",
-        description: "Show the graph as a Mermaid map, workflows, and nodes.",
-        async execute({ sessionID }) {
-          const text = await graphText();
-          const session = await ctx.session.get({ sessionID });
-          const previous = session.agent;
-          await ctx.session.switchAgent({ sessionID, agent: "graph-view" });
-          try {
-            await ctx.session.prompt({
-              sessionID,
-              text: text + "\\n\\nReturn the text above verbatim. Do not add narrative, summary, explanation, or a tour. Do not call any tools.",
-            });
-            await ctx.session.wait({ sessionID });
-          } finally {
-            await ctx.session.switchAgent({ sessionID, agent: previous });
-          }
-        },
-      });
-    });
-
     await ctx.tool.transform((editor) => {
       editor.add({
         name: "handoff",
@@ -115,22 +78,24 @@ export default Plugin.define({
       editor.add({
         name: "dispatch",
         description:
-          "Dispatch a prompt into the graph at any node. wait=true blocks for the result; wait=false returns a dispatch id immediately.",
+          "Dispatch a prompt into the graph at exactly one of a node or a workflow. A workflow dispatch starts at its entry and engages the workflow boundary; a node dispatch engages no workflow. wait=true blocks for the result; wait=false returns a dispatch id immediately.",
         input: {
           type: "object",
           properties: {
-            node: { type: "string" },
+            node: { type: "string", description: "Start at this node. Do not combine with workflow." },
+            workflow: { type: "string", description: "Start this workflow at its entry. Do not combine with node." },
             prompt: { type: "string" },
             wait: { type: "boolean" },
             timeoutMs: { type: "number" },
           },
-          required: ["node", "prompt"],
+          required: ["prompt"],
           additionalProperties: false,
         },
         options: { codemode: false, permission: "dispatch" },
         async execute(input, context) {
           const started = await call("/tool/dispatch", {
             node: input.node,
+            workflow: input.workflow,
             prompt: input.prompt,
           }, context, "dispatch");
           let result = started;
@@ -241,11 +206,11 @@ export default Plugin.define({
 `;
 }
 
-export async function installPlugin({ cwd, url, token, graphCli, configPath, nodePath }) {
+export async function installPlugin({ cwd, url, token }) {
   const dir = join(cwd, ".opencode", "plugins", "engine-handoff");
   await mkdir(dir, { recursive: true });
   const path = join(dir, "index.ts");
-  await writeFile(path, renderPlugin({ url, token, graphCli, configPath, nodePath }), "utf8");
+  await writeFile(path, renderPlugin({ url, token }), "utf8");
   return path;
 }
 
@@ -268,29 +233,14 @@ export async function removeCommands({ cwd }) {
   }
 }
 
-export async function installAgent({ cwd }) {
-  const dir = join(cwd, ".opencode", "agents");
-  await mkdir(dir, { recursive: true });
-  const body = `---
-description: Read-only graph view. Shows the graph map and tables; it cannot dispatch work.
-mode: all
-permissions:
-  - action: "*"
-    resource: "*"
-    effect: deny
-  - action: graph_map
-    resource: "*"
-    effect: allow
-  - action: graph_info
-    resource: "*"
-    effect: allow
----
-
-You are the read-only graph view. The user message contains the exact
-output to display. Print that output verbatim. Do not call any tools. Do
-not dispatch work. Do not add narrative, summary, explanation, or a tour.
-`;
-  await writeFile(join(dir, "graph-view.md"), body, "utf8");
+export async function removeAgent({ cwd }) {
+  const path = join(cwd, ".opencode", "agents", "graph-view.md");
+  try {
+    const body = await readFile(path, "utf8");
+    if (body.includes("Read-only graph view") || body.includes("graph_map")) await rm(path, { force: true });
+  } catch {
+    // no engine-installed agent to remove
+  }
 }
 
 export async function preflightPlugin(driver, cwd, { timeoutMs = 30000 } = {}) {

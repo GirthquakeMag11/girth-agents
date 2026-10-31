@@ -6,8 +6,9 @@ and pulls exactly one handoff lever; the engine maps the lever to the
 next node and continues. Single-threaded, synchronous: one active
 dispatch with a FIFO queue behind it. The user's interactive agent can
 author the graph and dispatch work into it. The graph is config; the
-engine knows nodes, handoffs, and the live session contract — never a
-workflow.
+engine knows nodes, handoffs, workflows as named views and optional
+dispatch boundaries, and the live session contract. It routes by
+handoffs, never by workflow.
 
 ## 1. The process
 
@@ -17,9 +18,9 @@ constraint named on stderr.
 
 It speaks JSON-lines over stdio: pokes in, notices out; human logs on
 stderr. One dispatch runs at a time; further dispatches wait in a FIFO
-queue. There are no projects, no run objects, no durable state, and no
-history. The active dispatch and the queue are live memory; a restart
-loses both. The engine's working directory is the workspace; output
+queue. There are no projects, no run objects, no durable state, and no durable
+history. The active dispatch and the queue are live memory; the dashboard's
+bounded activity history is also live memory. A restart loses them. The engine's working directory is the workspace; output
 paths, the config, and the handoff tool are resolved against it.
 
 The config may be reloaded while idle: a `reload` validates the file,
@@ -38,12 +39,12 @@ The config has exactly one graph. A graph has `outputRoot`, `maxSteps`,
 not part of this schema.
 
 A node is one agent activation and its handoff surface. A node has an `id`,
-`helper`, `objective`, `output`, optional `session`, optional `budgetMs`,
+`helper`, `objective`, `output`, optional `budgetMs`,
 optional `maxVisits`, and a `handoff`.
 
-Any node may be a dispatch entry point; the interactive agent chooses the
-node. Every node must be able to reach a terminal node, and every cycle
-must be bounded.
+Any node may be a dispatch entry point. A workflow may be dispatched at
+its entry. The interactive agent chooses a node or workflow. Every node
+must be able to reach a terminal node, and every cycle must be bounded.
 
 A helper has an `id`, a `model` (`provider/model`), an optional `agent`
 (default `build`), `permissions` (the allowed action names), and optional
@@ -66,23 +67,39 @@ node whose session ends without an accepted handoff is a loud defect.
 A workflow is a labelled subsection of a graph:
 
 ```json
-{ "id": "build-review", "entry": "implement", "exit": "done", "nodes": ["implement", "review", "done"] }
+{
+  "id": "build-review",
+  "entry": "implement",
+  "exit": "done",
+  "nodes": ["implement", "review", "done"],
+  "connections": ["review-only"],
+  "strict": false
+}
 ```
 
-It is a view for reasoning, not a container, not a runtime unit, and not a
-dispatch target. The nodes and edges belong to the graph; a node may be in
-zero, one, or multiple workflows. The workflow's connections are the
-graph's connections among its nodes; the workflow does not define edges.
-The engine routes by handoffs, never by workflow. Workflows do not change
-sessions, labels, outputs, or queue behavior. The entry and exit are
-designated for reasoning; they are not dispatch constraints.
+It is a view for reasoning and an optional dispatch target. The nodes and
+edges belong to the graph; a node may be in zero, one, or multiple
+workflows. `connections` names workflows reachable from this workflow; it
+does not define graph edges. The allowed boundary of a workflow dispatch
+is the main workflow plus the transitive closure of its connections.
+`strict: true` makes a handoff outside that boundary a `workflow.escape`
+defect; otherwise the escape is allowed and is visual in the dashboard.
+The entry and exit are designated for reasoning; a node dispatch may start
+anywhere. The engine routes by handoffs, never by workflow.
 
 ## 3. Dispatch
 
-The dispatch input is `{ node, prompt, wait? }`. The node must exist in the
-graph, and the prompt must be non-empty. Any node may be named. The prompt
-is the work item and is passed verbatim to every node in the dispatch; the
-node's `objective` is its role.
+The dispatch input is `{ node?, workflow?, prompt, wait? }`. Exactly one of
+`node` or `workflow` is supplied, and the prompt must be non-empty. A node
+target may be any node. A workflow target starts at the workflow's entry and
+records that workflow as the dispatch's main workflow. The prompt is the
+work item and is passed verbatim to every node in the dispatch; the node's
+`objective` is its role.
+
+A workflow dispatch carries its main workflow in status. The allowed
+boundary is the main workflow plus its transitive `connections`. If the
+active node leaves that boundary, strict workflows defect; non-strict
+workflows continue and the dashboard shows an escape.
 
 A dispatch is enqueued and gets an id. `wait: true` waits for it to
 finish; `wait: false` returns the id immediately. `dispatch_wait` and
@@ -91,12 +108,14 @@ is FIFO and in memory. `dispatch_cancel` removes a queued dispatch or
 interrupts the active one; a cancelled dispatch ends with `status:
 "cancelled"`, never a defect.
 
-Each node activation creates a fresh session by default. A node with
-`session: "resume"` keeps one session per dispatch and reuses it on every
-visit; the resumed brief includes the upstream output path (for the
-implementation node, the review that failed it), and the helper's original
-session context remains. Fresh sessions are deleted after their visit;
-resume sessions are deleted at dispatch end. The reviewer is always fresh.
+Each dispatch starts with a fresh session. Session retention is a handoff
+decision: a non-terminal handoff may set `"resume": true`; false or omitted
+starts a new session. `resume` is honored only when the handoff target is
+the node that supplied the current input. The engine retains that target
+session for the return, and the resumed brief includes the upstream output
+path. A `resume: true` handoff to any other node is a loud
+`resume.not-return` defect. Retained sessions are deleted at dispatch end;
+fresh sessions are deleted after their visit.
 
 The only thing carried between nodes is the previous node's output path. No
 stamps, documents, records, or engine state cross.
@@ -180,12 +199,14 @@ completes the dispatch.
 ## 6. The node lifecycle
 
 1. Resolve the node; check `maxVisits` and `maxSteps`.
-2. Create or reuse the node's session. A `fresh` node creates a session
-   with the helper's model and agent, a location at the engine's working
-   directory, and permissions that are a leading `deny *`, then `handoff`
-   for a non-terminal node, then the helper's allowed actions. A `resume`
-   node reuses the session stored for that node in this dispatch, or
-   creates and stores it on the first visit.
+2. Create or reuse the node's session from the incoming handoff. A fresh
+   entry creates a session with the helper's model and agent, a location at
+   the engine's working directory, and permissions that are a leading
+   `deny *`, then `handoff` for a non-terminal node, then the helper's
+   allowed actions. A `resume: true` handoff to the node that supplied the
+   current input reuses that node's retained session; any non-resume
+   handoff starts fresh, and a `resume: true` handoff to any other node is
+   a `resume.not-return` defect.
 3. The helper session's permissions are the tool gate: a leading
    `deny *`, then `handoff` for a non-terminal node, then the helper's
    allowed actions. The interactive control tools are not in that list;
@@ -244,7 +265,7 @@ completes the dispatch.
 
 Pokes:
 
-- `dispatch { node, prompt }` — enqueues a dispatch; returns its id.
+- `dispatch { node?, workflow?, prompt }` — enqueues exactly one target; returns its id.
 - `dispatch-status { id }` — `queued`, `running`, `completed`,
   `defect`, or `cancelled`.
 - `dispatch-wait { id, timeoutMs? }` — wait for a dispatch.
@@ -255,8 +276,9 @@ Pokes:
 - `resume` — continue a paused dispatch, or clear an idle pause.
 - `reload` — validate and swap the config when idle; faults keep the old
   graph.
-- `introspect` — `{ paused, active, queue, lastEvent, lastDefect }`; no
-  history.
+- `introspect` — `{ paused, active, queue, lastEvent, lastDefect, history,
+  historyEpoch }`; the same structured activity history exposed by
+  `graph-map`.
 
 Notices: `version`, `ready`, `queued`, `dispatched`, `step` (begin/end),
 `handoff`, `paused`, `resumed`, `completion` (completed/defect/cancelled),
@@ -269,7 +291,7 @@ heartbeat continues.
 
 The same plugin gives the user's interactive agent:
 
-- `dispatch({ node, prompt, wait?, timeoutMs? })` — enqueue; wait or
+- `dispatch({ node?, workflow?, prompt, wait?, timeoutMs? })` — enqueue; wait or
   return the id.
 - `dispatch_wait({ dispatchId, timeoutMs? })` — wait for completion.
 - `dispatch_status({ dispatchId })` — the live state.
@@ -293,8 +315,8 @@ the workspace's skill directory:
 
 - **graph authoring** — the config path, schema, helper/node/handoff
   fields, validation, reload, and examples.
-- **dispatching** — how to start work at any node, wait or background,
-  read completion and defects, and use the queue.
+- **dispatching** — how to start work at a node or workflow, wait or
+  background, read completion and defects, and use the queue.
 
 The skills are guidance for the user's agent; they are not helper craft
 and not engine code.
@@ -302,26 +324,33 @@ and not engine code.
 ### 8.4 The graph view
 
 `graph_map` is the graph as a thing: the engine generates a Mermaid map, a
-workflow table, a node table, a legend, and a one-line live state from the
-config and the queue. The agent prints them; it does not author, summarize,
+workflow table, a node table, a legend, a one-line state, and a structured
+`runtime` object from the config, the queue, and engine event state. The agent prints them; it does not author, summarize,
 or explain them.
 
-The `/graph` command is argument-free and read-only. The plugin command
-runs `engine/graph-view.mjs` for the exact text, switches the session to
-the dedicated `graph-view` agent for one reply, and restores the previous
-agent afterward. The `graph-view` agent denies every mutating tool, so the
-reply cannot dispatch work. The CLI asks the running engine for the map;
-if the engine is not running, it renders the same map and tables from the
-config and says so. It prints the Mermaid block, the workflow table, the
-node table, the legend, and the state. It has no arguments, no graph id,
-and no subcommands. Every valid reload and every boot also writes the same
-map and tables to `GRAPH.md` in the workspace, so the user can keep the
-graph open beside the chat, independent of the agent.
+Every valid reload and every boot writes the map and tables to `GRAPH.md`
+in the workspace, so the graph can be read independently of the agent. The
+interim `/graph` chat command and its `graph-view` primary agent were
+removed; the native dashboard in `DASHBOARD-SPEC.md` is the replacement
+surface. The engine exposes `graph_map` and structured runtime state for
+that dashboard.
 
-The map is a view of the config, not a second source of truth. The node
-markers come from `session`: `↻ resume` or `✦ fresh`; the workflow box and
-entry/exit come from `workflows`; the node table carries objective, output,
+The map is a view of the config, not a second source of truth. The node table
+shows handoff labels and whether a return handoff resumes the target session;
+the workflow box and entry/exit come from `workflows`; the node table carries objective, output,
 handoff, and max visits. The live state comes from the queue.
+
+The native dashboard is implemented in the tracked `dashboard/` package and
+loaded as the OpenCode TUI plugin. It consumes `graph-info`, `graph-map`
+structured runtime (including `runtime.history` and `runtime.historyEpoch`),
+`dispatch/status`, and the graph config directly; it never parses the
+human-readable state string. The activity history is a bounded, session
+(engine-process) ring that resets on restart. The real `DashboardView` is
+captured headlessly at 160x50, 120x40, and 80x24, including an idle state
+with populated History and empty Details. The live boundary proof and
+captures are under `dashboard/proof/` and use the runnable non-strict and
+strict fixtures `dashboard/fixtures/live-boundary.json` and
+`dashboard/fixtures/live-boundary-strict.json`.
 
 ## 9. Config and the verifier
 
@@ -376,7 +405,6 @@ is strict; unknown fields are faults. Config version is the string `"3"`.
         "helper": "builder",
         "objective": "Implement the dispatched work.",
         "output": "implementation.md",
-        "session": "resume",
         "maxVisits": 20,
         "handoff": {
           "mode": "unconditional",
@@ -389,7 +417,6 @@ is strict; unknown fields are faults. Config version is the string `"3"`.
         "helper": "reviewer",
         "objective": "Review the implementation against the dispatched prompt.",
         "output": "review.md",
-        "session": "fresh",
         "maxVisits": 20,
         "handoff": {
           "mode": "conditional",
@@ -402,7 +429,8 @@ is strict; unknown fields are faults. Config version is the string `"3"`.
             {
               "label": "fail",
               "to": "implement",
-              "description": "The work is unmet; name exactly what must change."
+              "description": "The work is unmet; name exactly what must change.",
+              "resume": true
             }
           ]
         }
@@ -412,7 +440,6 @@ is strict; unknown fields are faults. Config version is the string `"3"`.
         "helper": "builder",
         "objective": "Finalize the work and write the final report.",
         "output": "final.md",
-        "session": "fresh",
         "handoff": {
           "mode": "terminal"
         }
@@ -460,7 +487,7 @@ session ids differ on every visit, and the resumed brief carries the
 reviewer's output — no second workflow is added to the product graph); and
 the complete user pipeline — an interactive agent authors a graph, reloads
 it, dispatches a prompt, waits or backgrounds it, receives the product and
-its cost, cancels work, and renders the read-only graph view/artifact.
+its cost, cancels work, and exposes the read-only graph artifact/runtime.
 
 ## 12. Out of scope
 

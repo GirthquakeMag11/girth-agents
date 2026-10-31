@@ -45,7 +45,6 @@
         "helper": "builder",
         "objective": "Implement the dispatched work.",
         "output": "implementation.md",
-        "session": "resume",
         "maxVisits": 20,
         "handoff": {
           "mode": "unconditional",
@@ -58,7 +57,6 @@
         "helper": "reviewer",
         "objective": "Review the implementation against the dispatched prompt.",
         "output": "review.md",
-        "session": "fresh",
         "maxVisits": 20,
         "handoff": {
           "mode": "conditional",
@@ -71,7 +69,8 @@
             {
               "label": "fail",
               "to": "implement",
-              "description": "The work is unmet; name exactly what must change."
+              "description": "The work is unmet; name exactly what must change.",
+              "resume": true
             }
           ]
         }
@@ -81,7 +80,6 @@
         "helper": "builder",
         "objective": "Finalize the work and write the final report.",
         "output": "final.md",
-        "session": "fresh",
         "handoff": {
           "mode": "terminal"
         }

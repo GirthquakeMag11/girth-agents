@@ -2,7 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { loadConfig, validateConfig, outputPathFor, configSummary } from "../config.mjs";
+import {
+  loadConfig,
+  validateConfig,
+  outputPathFor,
+  configSummary,
+  graphInfoResponse,
+  allowedWorkflows,
+  workflowsForNode,
+} from "../config.mjs";
 
 const EXAMPLE = JSON.parse(
   await readFile(new URL("../example-graph.json", import.meta.url), "utf8"),
@@ -127,10 +135,71 @@ test("config: a workflow is a referenced subsection with a reachable entry and e
   assert.ok(faults.includes("graph.workflow-unreachable"), JSON.stringify(faults));
 });
 
-test("config: session modes are fresh or resume", () => {
+test("config: resume belongs to a return handoff, not a node", () => {
   const doc = structuredClone(EXAMPLE);
-  doc.graph.nodes[0].session = "sometimes";
-  assert.ok(codes(validateConfig(doc)).includes("schema.session"));
-  assert.equal(EXAMPLE.graph.nodes[0].session, "resume");
-  assert.equal(EXAMPLE.graph.nodes[1].session, "fresh");
+  doc.graph.nodes[0].session = "resume";
+  assert.ok(codes(validateConfig(doc)).includes("schema.unknown-field"));
+
+  const bad = structuredClone(EXAMPLE);
+  bad.graph.nodes[1].handoff.labels.find((label) => label.label === "fail").resume = "sometimes";
+  assert.ok(codes(validateConfig(bad)).includes("schema.boolean"));
+
+  const fail = EXAMPLE.graph.nodes[1].handoff.labels.find((label) => label.label === "fail");
+  assert.equal(fail.resume, true);
+  assert.equal(EXAMPLE.graph.nodes[0].session, undefined);
+});
+
+test("config: workflow connections and strict are validated", () => {
+  const doc = structuredClone(EXAMPLE);
+  doc.graph.workflows.push({
+    id: "review-only",
+    entry: "review",
+    exit: "review",
+    nodes: ["review"],
+  });
+  doc.graph.workflows[0].connections = ["review-only"];
+  doc.graph.workflows[0].strict = true;
+  assert.deepEqual(validateConfig(doc), []);
+
+  const unknown = structuredClone(doc);
+  unknown.graph.workflows[0].connections = ["missing"];
+  assert.ok(codes(validateConfig(unknown)).includes("graph.unknown-connection"));
+
+  const self = structuredClone(doc);
+  self.graph.workflows[0].connections = ["build-review"];
+  assert.ok(codes(validateConfig(self)).includes("graph.self-connection"));
+
+  const duplicate = structuredClone(doc);
+  duplicate.graph.workflows[0].connections = ["review-only", "review-only"];
+  assert.ok(codes(validateConfig(duplicate)).includes("graph.duplicate-connection"));
+
+  const badStrict = structuredClone(doc);
+  badStrict.graph.workflows[0].strict = "yes";
+  assert.ok(codes(validateConfig(badStrict)).includes("schema.boolean"));
+});
+
+test("config: workflow connections are transitive and node memberships are explicit", () => {
+  const graph = {
+    workflows: [
+      { id: "a", entry: "n1", exit: "n1", nodes: ["n1"], connections: ["b"] },
+      { id: "b", entry: "n1", exit: "n2", nodes: ["n1", "n2"], connections: ["c"] },
+      { id: "c", entry: "n2", exit: "n2", nodes: ["n2"] },
+    ],
+    nodes: [
+      { id: "n1" },
+      { id: "n2" },
+    ],
+  };
+  assert.deepEqual([...allowedWorkflows(graph, "a")].sort(), ["a", "b", "c"]);
+  assert.deepEqual(workflowsForNode(graph, "n1"), ["a", "b"]);
+  assert.deepEqual(workflowsForNode(graph, "n2"), ["b", "c"]);
+});
+
+test("config: graph_info carries engine version and validity", () => {
+  const info = graphInfoResponse(EXAMPLE, "/tmp/graph.json", "1.3.0");
+  assert.equal(info.ok, true);
+  assert.equal(info.version, "1.3.0");
+  assert.equal(info.valid, true);
+  assert.equal(info.configPath, "/tmp/graph.json");
+  assert.equal(info.graph.workflows[0].id, "build-review");
 });

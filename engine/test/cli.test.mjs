@@ -16,7 +16,7 @@ function runEngine(args) {
 test("cli: --version prints the version and exits 0", async () => {
   const { code, stdout, stderr } = await runEngine(["--version"]);
   assert.equal(code, 0);
-  assert.equal(stdout, "girth-agents v1.2.0\n");
+  assert.equal(stdout, "girth-agents v1.3.0\n");
   assert.equal(stderr, "");
 });
 

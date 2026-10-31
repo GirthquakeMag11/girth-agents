@@ -1,4 +1,4 @@
-# The engine — v1.2
+# The engine — v1.3
 
 One ordinary program that dispatches a prompt into a graph of agent nodes.
 A node's helper does the work, writes an output file, and pulls exactly one
@@ -11,9 +11,11 @@ subsections of that graph, not separate graphs.
 The full contract is `SPEC.md` at the repository root. Deferred work is
 tracked in `ROADMAP.md`.
 
-The current milestone is dogfood: use the engine to develop the engine.
-Freeze the engine during a dogfood cycle, change the graph, and treat the
-graph map as the contract.
+The workflow-boundary/native-dashboard slice is v1.3. The native dashboard
+is implemented and live-proofed; dogfood can resume after the ticket 009
+review. The v1.2 freeze is lifted for this slice; engine semantics changed
+for workflow dispatch, connections, strict boundaries, structured runtime,
+and route-scoped session resume.
 
 ## Run
 
@@ -27,7 +29,7 @@ The config path is the only argument that boots the engine. Two flags answer
 without a config file or a running OpenCode service:
 
 ```sh
-node /path/to/girth-agents/engine/engine.mjs --version   # girth-agents v1.2.0
+node /path/to/girth-agents/engine/engine.mjs --version   # girth-agents v1.3.0
 node /path/to/girth-agents/engine/engine.mjs --help      # usage block
 ```
 
@@ -37,17 +39,18 @@ Both print to stdout and exit 0. With no config path the engine prints
 The engine:
 
 - validates the config and refuses to boot with named faults;
-- writes `.opencode/plugins/engine-handoff/` (the one tool provider,
-  including the `/graph` command), `.opencode/skills/{graph-authoring,dispatching}/SKILL.md`,
-  and `.opencode/agents/graph-view.md` into the workspace; it removes the
-  old engine-installed `.opencode/commands/graph.md`;
+- writes `.opencode/plugins/engine-handoff/` (the one tool provider) and
+  `.opencode/skills/{graph-authoring,dispatching}/SKILL.md` into the
+  workspace; it removes the old engine-installed `/graph` command and
+  `graph-view` agent;
 - writes `GRAPH.md` — the current graph as a Mermaid map, workflow table,
   and node table — and regenerates it on every valid reload;
 - preflights the plugin against the live OpenCode server;
 - speaks JSON-lines on stdin/stdout (notices), with logs on stderr.
 
-The `GRAPH.md` artifact is the graph as a thing. `/graph` is the same view
-inside the chat.
+The `GRAPH.md` artifact is the graph as a thing. The native dashboard in
+`DASHBOARD-SPEC.md` is the interactive view; the interim `/graph` chat
+command and `graph-view` agent are removed.
 
 The OpenCode server must already be running. The engine attaches to the
 registration at `~/.local/state/opencode/service.json` (or
@@ -70,28 +73,16 @@ completion notices carry the dispatch's cost and token usage.
 
 ## The graph view
 
-Type `/graph` in an interactive session. It takes no arguments and has no
-subcommands. The plugin command runs `engine/graph-view.mjs` for the exact
-text, switches the session to the read-only `graph-view` agent for one
-reply, then restores the previous agent. That agent cannot dispatch work.
-The CLI asks the running engine for the map; if the engine is down, it
-renders the same map from the config and says so. It prints, verbatim:
-
-- a Mermaid map with the workflow box, entry/exit, node ids, helpers, and
-  `↻ resume` / `✦ fresh` session markers;
-- a workflow table;
-- a node table with objective, output, session, handoff, and max visits;
-- the legend and the one-line live state.
-
-No narrative, no graph id, no subcommands. The same content is in
-`GRAPH.md`, so the graph can stay open beside the chat independently of the
-agent.
+`GRAPH.md` is written on boot and every valid reload. It contains the
+Mermaid map, workflow table, node table, and legend. The native dashboard
+reads the graph config and the engine's structured runtime state; it does
+not use the old chat command or `graph-view` agent.
 
 ## The interactive agent
 
 New sessions in the workspace see the plugin tools:
 
-- `dispatch({ node, prompt, wait?, timeoutMs? })`
+- `dispatch({ node?, workflow?, prompt, wait?, timeoutMs? })`
 - `dispatch_wait({ dispatchId, timeoutMs? })`
 - `dispatch_status({ dispatchId })`
 - `dispatch_cancel({ dispatchId })`
@@ -104,7 +95,7 @@ id immediately. `dispatch_cancel` removes a queued dispatch or interrupts
 the active one. The two installed skills are the guidance:
 
 - **graph-authoring** — the config path, schema, validation, and reload.
-- **dispatching** — start at any node, wait or background, cancel, report.
+- **dispatching** — start at a node or workflow, wait or background, cancel, report.
 
 A session that existed before the engine installed the plugin/skills may
 need a new session to see them.
@@ -118,13 +109,17 @@ handoff is `terminal`, `unconditional` (label `next`), or `conditional`
 must carry `maxVisits` (1–100; the shipped graph uses 20).
 
 The graph may carry `workflows`: labelled subsections with an `entry`, an
-`exit`, and a node list. They are views for reasoning, not containers; the
-engine routes by handoffs, not by workflow.
+`exit`, a node list, optional `connections`, and optional `strict`. They
+are views for reasoning; the engine routes by handoffs. A workflow
+dispatch starts at its entry and carries its main workflow boundary. A
+handoff outside the main workflow and its transitive connections defects
+when the main workflow is `strict: true`; otherwise it is allowed.
 
-A node may carry `session: "fresh"` (the default) or `"resume"`. The
-implementation node in the sample uses `resume`: the same builder session
-comes back on a fail loop with the reviewer's output in its context. The
-reviewer is always `fresh`: a new session on every review pass.
+Session retention is a handoff decision. A non-terminal handoff may set
+`"resume": true`; false or omitted starts a new session. It is honored only
+when the handoff target is the node that supplied the current input. The
+sample's review `fail` handoff returns to `implement` and resumes the
+builder session; the reviewer itself starts fresh on every visit.
 
 ## Live proof
 
@@ -137,8 +132,8 @@ node live-proof.mjs
 It creates a scratch workspace under `/tmp/opencode`, starts the engine, and
 proves:
 
-1. one graph boots, `GRAPH.md` and the read-only `/graph` command are
-   generated, and the CLI map leaves the engine idle;
+1. one graph boots and `GRAPH.md` is generated without the interim
+   `/graph` command or `graph-view` agent;
 2. a stdio dispatch runs the build-review graph to its terminal and reports
    cost and tokens;
 3. a second dispatch queues behind the active one and both complete;
@@ -149,9 +144,28 @@ proves:
    engine and `GRAPH.md` swap it.
 
 It uses the real OpenCode service and the real handoff plugin. It spends a
-small amount on the helper models. The builder-resume/reviewer-fresh
+small amount on the helper models. The resume-return/reviewer-fresh
 regression is covered by the offline executor test, not by a second
 workflow in the product graph.
+
+## Dashboard live proof
+
+From the repository root:
+
+```sh
+node dashboard/proof/live.mjs 2>&1 | tee dashboard/proof/live-proof.log
+```
+
+It starts separate engines for the runnable non-strict and strict boundary
+fixtures, proves queued workflow/main/node behavior, active main and
+connected containers, the non-strict escape, the strict `workflow.escape`
+defect, and a live config reload through the dashboard adapter. It writes
+`dashboard/proof/live-proof.json` and `dashboard/proof/live-snapshot.json`.
+
+The native panel itself is captured from the real `DashboardView` with the
+OpenTUI test renderer. See `dashboard/proof/README.md` for the build and
+capture commands and the 160x50 and 80x24 artifacts under
+`dashboard/proof/captures/`.
 
 ## Tests
 

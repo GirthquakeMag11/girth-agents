@@ -1,0 +1,67 @@
+{
+  "startedAt": "2026-10-30T11:55:11.194Z",
+  "rows": [
+    {
+      "name": "queued workflow mains and a node dispatch queue without containers",
+      "at": "2026-10-30T11:55:11.779Z",
+      "queue": [
+        {
+          "node": "a1",
+          "workflow": "A"
+        },
+        {
+          "node": "b1",
+          "workflow": "B"
+        },
+        {
+          "node": "o",
+          "workflow": null
+        }
+      ]
+    },
+    {
+      "name": "active main workflow container at a1",
+      "at": "2026-10-30T11:55:11.895Z",
+      "active": "a1"
+    },
+    {
+      "name": "active connected workflow container at b1 and Details B membership",
+      "at": "2026-10-30T11:55:14.934Z",
+      "active": "b1",
+      "containers": [
+        {
+          "workflowId": "A",
+          "kind": "main",
+          "state": "active",
+          "primary": true
+        },
+        {
+          "workflowId": "B",
+          "kind": "connected",
+          "state": "active",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "name": "non-strict escape warning node",
+      "at": "2026-10-30T11:55:16.710Z",
+      "active": "o",
+      "escapes": [
+        "o"
+      ]
+    },
+    {
+      "name": "dashboard adapter reloads changed graph structure without a TUI restart",
+      "at": "2026-10-30T11:55:21.803Z",
+      "workflow": "A2"
+    },
+    {
+      "name": "strict escape is an engine defect visible in structured runtime",
+      "at": "2026-10-30T11:55:32.400Z",
+      "defect": "workflow.escape",
+      "active": "b1"
+    }
+  ],
+  "finishedAt": "2026-10-30T11:55:32.400Z"
+}
