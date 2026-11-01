@@ -8,6 +8,14 @@ tokens, supports node-or-workflow dispatch with transitive workflow
 connections and strict boundaries, and exposes structured runtime state
 for the native dashboard.
 
+> **Design correction (2026-10-31).** The current implementation uses
+> generated per-label handoff tools, focused dispatch results, background
+> notifications, `$dispatcher` return, and optional outputs with a single
+> aggregate JSON config using `agents`. The remaining target is one
+> configuration file per node plus one Markdown document per graph agent type.
+> The file layout and schemas are open. See
+> `SUBAGENTS-AND-DISPATCH-INTERACTION-DESIGN.md`.
+
 This document tracks deferred work. It is not a wish list: each item has a
 target version and an acceptance condition. Check an item only when its
 acceptance condition has been demonstrated, and prefer live proof over a
@@ -51,7 +59,7 @@ These rules apply when dogfood resumes:
 **Priority order:** sandbox and tool-surface enforcement first, then
 handoff atomicity and durability, then model/cost resilience, then
 operations, then reach. v1 is usable, but the trust boundary is still
-cooperative helpers.
+cooperative graph agents.
 
 ### Dogfood log — first real task (v1.2.0)
 
@@ -86,7 +94,8 @@ and README update. Dispatched through the product `build-review` graph.
 ## Shipped in v1
 
 - [x] One JSON graph config with strict validation and named faults.
-- [x] Helpers, nodes, outputs, terminal/unconditional/conditional handoffs.
+- [x] Graph agents, nodes, outputs, terminal/unconditional/conditional
+  handoffs.
 - [x] Any node can be a dispatch entry point; every node must reach a
   terminal; every cycle carries `maxVisits` 1–100 (the shipped graph uses
   20; 100 is the engine backstop).
@@ -101,13 +110,13 @@ and README update. Dispatched through the product `build-review` graph.
   pause/resume.
 - [x] Live config reload with named faults; the old graph stays on a bad
   edit.
-- [x] Interactive tools: `dispatch`, `dispatch_wait`, `dispatch_status`,
-  `dispatch_cancel`, `reload`, `graph_info`, `graph_map`.
+- [x] Interactive tools (v1 legacy surface): `dispatch`, `dispatch_wait`,
+  `dispatch_status`, `dispatch_cancel`, `reload`, `graph_info`, `graph_map`.
 - [x] Interactive skills: graph-authoring, dispatching.
 - [x] 56 offline tests and a live proof covering stdio dispatch, queue,
   interactive dispatch/wait, config authoring/reload, cancellation, cost,
-  and the read-only graph artifact/runtime; background dispatch (wait:false then
-  dispatch_wait) was exercised in a separate live probe.
+  and the read-only graph artifact/runtime; background dispatch (legacy
+  wait:false then dispatch_wait) was exercised in a separate live probe.
 
 ## Shipped after v1 (v1.1 graph-model slice)
 
@@ -142,18 +151,19 @@ and README update. Dispatched through the product `build-review` graph.
 - [x] **Remove the interim graph view.** The `graph-view` primary agent and
   `/graph` command are no longer generated; the native dashboard is the
   replacement surface.
-- [x] **Native dashboard.** `DASHBOARD-SPEC.md` and the
-  `DASHBOARD-MOTION-HISTORY-SPEC.md` amendment are implemented by tickets
-  005–014: native OpenTUI widgets, graph as configured, workflow
-  containers, static containers, a shape-only running-node border sweep,
-  one-shot connector runners, split Details/History, responsive layout, and
+- [x] **Native dashboard.** `DASHBOARD-SPEC.md`, including the merged motion
+  and activity-history requirements, is implemented and independently
+  reviewed: native OpenTUI widgets, graph as configured, workflow containers,
+  static containers, a shape-only running-node border sweep, one-shot
+  connector runners, split Details/History, responsive layout, and
   live/renderer proof. The proof artifacts live in `dashboard/proof/`.
 
 ## v1.2 — One graph and a read-only view
 
 - [x] **One graph only.** The top-level `graphs` array and graph id are
-  gone. The config is `{ version: "3", helpers, graph }`; workflows remain
-  labelled subsections. `dispatch({ node, prompt })`, `graph_info()`, and
+  gone. The v1.2/v1.3 config is `{ version: "3", agents, graph }`; the
+  short-lived legacy key names are gone. Workflows remain labelled
+  subsections. `dispatch({ node, prompt })`, `graph_info()`, and
   `graph_map()` carry no graph id. Multiple separate graphs are not
   planned.
 - Historical: the v1.2 `/graph` command and `graph-view` agent were removed
@@ -170,27 +180,27 @@ and README update. Dispatched through the product `build-review` graph.
 
 ## v1.1 — Hardening
 
-Target: safe enough for daily use with untrusted or prompt-injected helper
+Target: safe enough for daily use with untrusted or prompt-injected graph agent
 work, and strong enough that a second engine or a reconnect cannot
 double-route.
 
 ### Safety and trust boundary
 
-- [ ] **H1.1 Helper sandbox.**
-  - What: run helpers in a separate UID/container (or equivalent); mount
+- [ ] **H1.1 Graph-agent sandbox.**
+  - What: run graph agents in a separate UID/container (or equivalent); mount
     the plugin and config read-only outside the writable workspace; no
     access to `service.json`, engine state, or the acknowledgement token.
-  - Acceptance: a live hostile-helper probe cannot read the service file,
+  - Acceptance: a live hostile-graph-agent probe cannot read the service file,
     forge a handoff, create an engine session, or rewrite the plugin; the
     engine reports the attempt as a defect; the sandbox is documented as
     an operating requirement.
-  - Why now: the v1 trust boundary assumes cooperative helpers.
+  - Why now: the v1 trust boundary assumes cooperative graph agents.
 
 - [ ] **H1.2 Session tool-surface assertion.**
   - What: after session creation, assert the snapshot is exactly the
-    handoff lever plus the helper's allowed actions; fail the node before
-    prompting on a mismatch. Use the event/context snapshot or a plugin
-    context hook.
+    generated handoff tools for the active node plus the graph agent's
+    configured tools; fail the node before prompting on a mismatch. Use the
+    event/context snapshot or a plugin context hook.
   - Acceptance: a live session with an extra visible tool is rejected
     before any prompt; an allow-only list is never treated as deny-rest.
 
@@ -205,7 +215,7 @@ double-route.
   - What: pinned plugin version, per-boot (or per-run) token, endpoint and
     token rotation, read-only plugin source, documented hot-reload and
     upgrade behavior.
-  - Acceptance: a helper cannot rewrite the plugin; a restarted engine
+  - Acceptance: a graph agent cannot rewrite the plugin; a restarted engine
     rewrites the endpoint and the next session uses it; a stale plugin is
     refused.
 
@@ -254,9 +264,9 @@ double-route.
   - Acceptance: a dispatch over its budget stops and reports the spend; the
     live proof reports totals.
 
-- [ ] **H1.11 Per-node model/helper overrides.**
-  - What: allow a node to override the helper model/agent/permissions
-    without cloning the helper; verify the override.
+- [ ] **H1.11 Per-node model/graph-agent overrides.**
+  - What: allow a node to override the graph agent's model, OpenCode agent,
+    and permissions without cloning the graph agent; verify the override.
   - Acceptance: a node uses its override and the verifier rejects an
     unknown model/agent.
 
@@ -283,7 +293,7 @@ double-route.
     remains the authority.
 
 - [ ] **H1.15 Sandbox regression suite.**
-  - What: hostile-helper probes for secrets, plugin rewrite, session
+  - What: hostile-graph-agent probes for secrets, plugin rewrite, session
     creation, forged handoff, and cross-run access.
   - Acceptance: every probe is blocked or defected in the sandbox.
 
@@ -352,8 +362,8 @@ can be installed and run without the author in the loop.
     author.
 
 - [ ] **O1.10 Permission UX.**
-  - What: interactive tools request/allow cleanly; helper sessions remain
-    deny-rest; no wildcard denials that hide the lever.
+  - What: interactive tools request/allow cleanly; graph agent sessions remain
+    deny-rest; no wildcard denials that hide the generated handoff tools.
   - Acceptance: a first-time interactive session can use the tools after
     the documented allow step.
 

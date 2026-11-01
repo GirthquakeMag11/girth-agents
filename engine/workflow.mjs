@@ -1,5 +1,27 @@
 import { findNode, workflowById, workflowsForNode, allowedWorkflows } from "./config.mjs";
 
+export function validateDispatchOptions(body) {
+  const { background, resume, dispatchId, workflow } = body ?? {};
+  if (background !== undefined && typeof background !== "boolean") {
+    throw new Error("dispatch.invalid-background: background must be a boolean");
+  }
+  if (resume !== undefined && typeof resume !== "boolean") {
+    throw new Error("dispatch.invalid-resume: resume must be a boolean");
+  }
+  if (dispatchId !== undefined && (typeof dispatchId !== "string" || dispatchId.trim() === "")) {
+    throw new Error("dispatch.invalid-dispatch-id: dispatchId must be a non-empty string");
+  }
+  if (resume === true && typeof workflow === "string" && workflow.trim() !== "") {
+    throw new Error("dispatch.invalid-resume: resume cannot be used with a workflow target");
+  }
+  if (resume === true && background === true) {
+    throw new Error("dispatch.invalid-resume: a return is foreground");
+  }
+  if (dispatchId !== undefined && resume !== true) {
+    throw new Error("dispatch.invalid-resume: dispatchId requires resume: true");
+  }
+}
+
 export function resolveDispatchTarget(graph, body) {
   const { node, workflow, prompt } = body ?? {};
   if (typeof prompt !== "string" || prompt.trim() === "") {

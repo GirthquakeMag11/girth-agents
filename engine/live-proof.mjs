@@ -4,8 +4,9 @@
 //   2. a stdio dispatch runs the graph to a terminal and reports usage;
 //   3. a second dispatch queues behind the active one and both complete;
 //   4. the interactive agent dispatches through the plugin tool and waits;
-//   5. a queued dispatch and an active dispatch can be cancelled;
-//   6. the interactive agent edits the graph, reloads it, and the engine
+//   5. a background dispatch notifies the interactive session;
+//   6. a queued dispatch and an active dispatch can be cancelled;
+//   7. the interactive agent edits the graph, reloads it, and the engine
 //      and GRAPH.md swap it.
 // It uses the real OpenCode service and the real handoff plugin.
 
@@ -149,7 +150,7 @@ async function main() {
 
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
-  await cp(join(here, "example-graph.json"), join(workspace, "graph.json"));
+  await cp(join(here, "graph.json"), join(workspace, "graph.json"));
   await mkdir(join(workspace, ".opencode", "agents"), { recursive: true });
   await mkdir(join(workspace, ".opencode", "commands"), { recursive: true });
   await writeFile(
@@ -240,7 +241,6 @@ async function main() {
       JSON.stringify({
         node: "implement",
         prompt: "Write a one-paragraph design note for a hello() function. Keep it short.",
-        wait: true,
       }),
       "Report the completion status, the terminal node, the output path, and the usage. Do not do the work yourself.",
     ].join("\n"),
@@ -254,6 +254,52 @@ async function main() {
   );
   assert.equal(interactiveCompletion.terminal, "done");
   console.log("PASS  the interactive agent dispatched through the tool and waited for the product");
+
+  const beforeBackground = events.length;
+  const backgroundSession = await driver.createSession({
+    directory: workspace,
+    title: "v1-live-background",
+    agent: "build",
+    model,
+    permissions: [{ action: "*", resource: "*", effect: "allow" }],
+  });
+  const backgroundInfo = await driver.prompt(
+    backgroundSession.id,
+    [
+      "You are the user's interactive agent. Read .opencode/skills/dispatching/SKILL.md.",
+      "Use the `dispatch` tool exactly once with:",
+      JSON.stringify({
+        node: "implement",
+        prompt: "Write a one-sentence design note for a background hello() function.",
+        background: true,
+      }),
+      "Report the dispatch id and stop. Do not wait, poll, or do the work yourself.",
+    ].join("\n"),
+    { budgetMs: 120000 },
+  );
+  assert.equal(backgroundInfo.outcome, "succeeded");
+  const backgroundCompletion = await waitFor(
+    () =>
+      events
+        .slice(beforeBackground)
+        .find((event) => event.kind === "completion" && event.status === "completed"),
+    180000,
+    "background dispatch completion",
+  );
+  let notification = null;
+  const notificationDeadline = Date.now() + 60000;
+  while (Date.now() < notificationDeadline) {
+    const messages = await driver.messages(backgroundSession.id);
+    const raw = JSON.stringify(messages);
+    if (raw.includes("<graph-dispatch") && raw.includes(backgroundCompletion.dispatchId)) {
+      notification = messages;
+      break;
+    }
+    await sleep(250);
+  }
+  assert.ok(notification, "background dispatch synthetic notification");
+  await driver.deleteSession(backgroundSession.id).catch(() => {});
+  console.log("PASS  a background dispatch notified the interactive session with a synthetic message");
 
   send({ kind: "pause" });
   await waitFor(() => events.find((event) => event.kind === "paused"), 10000, "paused");

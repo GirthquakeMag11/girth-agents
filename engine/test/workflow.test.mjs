@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveDispatchTarget, workflowBoundary, workflowEscape } from "../workflow.mjs";
+import { resolveDispatchTarget, validateDispatchOptions, workflowBoundary, workflowEscape } from "../workflow.mjs";
 import { validateConfig } from "../config.mjs";
 
 const graph = {
@@ -23,6 +23,34 @@ test("workflow: a node target records no workflow", () => {
     node: "n3",
     workflow: null,
   });
+});
+
+test("workflow: dispatch options validate background, resume, and dispatchId", () => {
+  assert.doesNotThrow(() => validateDispatchOptions({ background: true, resume: false }));
+  assert.throws(
+    () => validateDispatchOptions({ background: "yes" }),
+    /dispatch\.invalid-background/,
+  );
+  assert.throws(
+    () => validateDispatchOptions({ resume: "yes" }),
+    /dispatch\.invalid-resume/,
+  );
+  assert.throws(
+    () => validateDispatchOptions({ dispatchId: "" }),
+    /dispatch\.invalid-dispatch-id/,
+  );
+  assert.throws(
+    () => validateDispatchOptions({ workflow: "a", resume: true }),
+    /dispatch\.invalid-resume/,
+  );
+  assert.throws(
+    () => validateDispatchOptions({ dispatchId: "d-1" }),
+    /dispatch\.invalid-resume/,
+  );
+  assert.throws(
+    () => validateDispatchOptions({ resume: true, background: true }),
+    /dispatch\.invalid-resume/,
+  );
 });
 
 test("workflow: exactly one target is required", () => {
@@ -60,7 +88,7 @@ test("workflow: boundary is transitive, main-aware, and strict-aware", () => {
 
 const strictDoc = {
   version: "3",
-  helpers: [
+  agents: [
     {
       id: "builder",
       model: "openrouter/~deepseek/deepseek-flash-latest",
@@ -88,7 +116,7 @@ const strictDoc = {
     nodes: [
       {
         id: "a1",
-        helper: "builder",
+        agent: "builder",
         objective: "choose",
         output: "a1.md",
         handoff: {
@@ -102,11 +130,11 @@ const strictDoc = {
           ],
         },
       },
-      { id: "a2", helper: "builder", objective: "finish", output: "a2.md", handoff: { mode: "terminal" } },
-      { id: "b1", helper: "builder", objective: "b", output: "b1.md", handoff: { mode: "terminal" } },
-      { id: "c1", helper: "builder", objective: "c", output: "c1.md", handoff: { mode: "terminal" } },
-      { id: "d1", helper: "builder", objective: "d", output: "d1.md", handoff: { mode: "terminal" } },
-      { id: "o", helper: "builder", objective: "outside", output: "o.md", handoff: { mode: "terminal" } },
+      { id: "a2", agent: "builder", objective: "finish", output: "a2.md", handoff: { mode: "terminal" } },
+      { id: "b1", agent: "builder", objective: "b", output: "b1.md", handoff: { mode: "terminal" } },
+      { id: "c1", agent: "builder", objective: "c", output: "c1.md", handoff: { mode: "terminal" } },
+      { id: "d1", agent: "builder", objective: "d", output: "d1.md", handoff: { mode: "terminal" } },
+      { id: "o", agent: "builder", objective: "outside", output: "o.md", handoff: { mode: "terminal" } },
     ],
   },
 };

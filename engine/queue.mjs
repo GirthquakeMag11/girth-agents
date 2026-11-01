@@ -73,7 +73,7 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
         record.state = "cancelled";
       } else {
         const result = await run(record);
-        record.result = result ?? null;
+        record.result = record.result ?? result ?? null;
         if (record.cancelled) record.state = "cancelled";
         else if (record.defect) record.state = "defect";
         else record.state = "completed";
@@ -94,13 +94,27 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     }
   }
 
-  function enqueue({ node, prompt, workflow = null }) {
+  function enqueue({
+    node,
+    prompt,
+    workflow = null,
+    dispatchingSessionID = null,
+    resumeSessionId = null,
+    resumeMessage = null,
+    resumeBudgetMs = null,
+    resumeOriginDispatchId = null,
+  }) {
     const id = `d-${++state.nextId}`;
     const record = {
       id,
       node,
       workflow,
       prompt,
+      dispatchingSessionID,
+      resumeSessionId,
+      resumeMessage,
+      resumeBudgetMs,
+      resumeOriginDispatchId,
       state: "queued",
       createdAt: new Date().toISOString(),
       visits: {},
@@ -133,16 +147,92 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     return state.records.get(id) ? snapshot(state.records.get(id)) : null;
   }
 
-  async function cancel(id, { interrupt = async () => {} } = {}) {
+  function findRetainedOrigin({ node = null, dispatchId = null, dispatchingSessionID = null } = {}) {
+    const matches = [];
+    for (const record of state.records.values()) {
+      if (record.state !== "completed" || !record.retainedOrigin) continue;
+      if (node && record.retainedOrigin.node !== node) continue;
+      if (dispatchId && record.id !== dispatchId) continue;
+      if (dispatchingSessionID && record.dispatchingSessionID !== dispatchingSessionID) continue;
+      matches.push({
+        dispatchId: record.id,
+        dispatchingSessionID: record.dispatchingSessionID ?? null,
+        ...record.retainedOrigin,
+      });
+    }
+    return matches;
+  }
+
+  function originState(dispatchId) {
+    return state.records.get(dispatchId)?.originState ?? null;
+  }
+
+  function findStaleOrigin({ node = null, dispatchingSessionID = null, dispatchId = null } = {}) {
+    for (const record of state.records.values()) {
+      if (record.originState !== "consumed" && record.originState !== "discarded") continue;
+      if (node && record.node !== node) continue;
+      if (dispatchId && record.id !== dispatchId) continue;
+      if (dispatchingSessionID && record.dispatchingSessionID !== dispatchingSessionID) continue;
+      return {
+        dispatchId: record.id,
+        node: record.node,
+        dispatchingSessionID: record.dispatchingSessionID ?? null,
+        originState: record.originState,
+      };
+    }
+    return null;
+  }
+
+  function consumeRetainedOrigin(dispatchId) {
+    const record = state.records.get(dispatchId);
+    if (!record?.retainedOrigin) return null;
+    const origin = {
+      dispatchId: record.id,
+      dispatchingSessionID: record.dispatchingSessionID ?? null,
+      ...record.retainedOrigin,
+    };
+    record.retainedOrigin = null;
+    record.originState = "consumed";
+    return origin;
+  }
+
+  async function cancel(id, { interrupt = async () => {}, deleteSession = async () => {} } = {}) {
     const record = state.records.get(id);
     if (!record) return null;
-    if (TERMINAL.has(record.state)) return snapshot(record);
+    if (TERMINAL.has(record.state)) {
+      if (record.retainedOrigin) {
+        const sessionId = record.retainedOrigin.sessionId;
+        record.retainedOrigin = null;
+        record.originState = "discarded";
+        try {
+          await deleteSession(sessionId);
+        } catch {
+          // a discarded origin is removed from engine state even if the session is gone
+        }
+      }
+      return snapshot(record);
+    }
 
     record.cancelled = true;
+
+    const discardResumeOrigin = async () => {
+      if (record.resumeSessionId) {
+        try {
+          await deleteSession(record.resumeSessionId);
+        } catch {
+          // an already-gone session is still removed from engine state
+        }
+      }
+      if (record.resumeOriginDispatchId) {
+        const source = state.records.get(record.resumeOriginDispatchId);
+        if (source) source.originState = "discarded";
+      }
+    };
 
     if (record.state === "queued") {
       const index = state.queue.indexOf(record);
       if (index !== -1) state.queue.splice(index, 1);
+      await discardResumeOrigin();
       record.state = "cancelled";
       record.defect = null;
       record.finishedAt = new Date().toISOString();
@@ -166,6 +256,17 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
         // the session is already stopping; the cancelled state still wins
       }
     }
+    if (record.retainedOrigin) {
+      const sessionId = record.retainedOrigin.sessionId;
+      record.retainedOrigin = null;
+      record.originState = "discarded";
+      try {
+        await deleteSession(sessionId);
+      } catch {
+        // an already-gone origin session is still removed from engine state
+      }
+    }
+    await discardResumeOrigin();
     return snapshot(record);
   }
 
@@ -202,6 +303,10 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     wait,
     status,
     cancel,
+    findRetainedOrigin,
+    consumeRetainedOrigin,
+    originState,
+    findStaleOrigin,
     pause,
     resume,
     waitIfPaused,

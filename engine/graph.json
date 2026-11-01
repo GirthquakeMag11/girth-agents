@@ -1,6 +1,6 @@
 {
   "version": "3",
-  "helpers": [
+  "agents": [
     {
       "id": "builder",
       "model": "openrouter/~deepseek/deepseek-flash-latest",
@@ -42,7 +42,7 @@
     "nodes": [
       {
         "id": "implement",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Implement the dispatched work.",
         "output": "implementation.md",
         "maxVisits": 20,
@@ -54,7 +54,7 @@
       },
       {
         "id": "review",
-        "helper": "reviewer",
+        "agent": "reviewer",
         "objective": "Review the implementation against the dispatched prompt.",
         "output": "review.md",
         "maxVisits": 20,
@@ -77,7 +77,7 @@
       },
       {
         "id": "done",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Finalize the work and write the final report.",
         "output": "final.md",
         "handoff": {

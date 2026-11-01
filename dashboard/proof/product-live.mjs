@@ -31,7 +31,7 @@ function waitFor(predicate, timeoutMs, label) {
 async function main() {
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
-  await cp(join(repo, "engine", "example-graph.json"), join(workspace, "graph.json"));
+  await cp(join(repo, "engine", "graph.json"), join(workspace, "graph.json"));
 
   const events = [];
   child = spawn(process.execPath, [join(repo, "engine", "engine.mjs"), "graph.json"], {
@@ -77,7 +77,7 @@ async function main() {
 
   const dispatched = await control("/tool/dispatch", {
     workflow: "build-review",
-    prompt: "Execute the node objective exactly. Write the declared output file, then call the handoff tool exactly once with label next.",
+    prompt: "Execute the node objective exactly. Write the declared output file, then call the `next` tool exactly once with a message.",
   });
   const deadline = Date.now() + 30000;
   let map;

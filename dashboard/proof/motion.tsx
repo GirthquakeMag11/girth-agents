@@ -26,12 +26,12 @@ const theme = {
 const repo = process.cwd();
 const captures = join(repo, "dashboard", "proof", "captures");
 await mkdir(captures, { recursive: true });
-const product = JSON.parse(await readFile(join(repo, "engine", "example-graph.json"), "utf8"));
+const product = JSON.parse(await readFile(join(repo, "engine", "graph.json"), "utf8"));
 const baseHistory = [{ seq: 1, at: "2026-10-30T14:00:00.000Z", kind: "queued", dispatchId: "d-1", workflow: "build-review", node: "implement" }];
 
 const productData = {
   config: product,
-  info: { ok: true, version: "1.3.0", valid: true, configPath: "engine/example-graph.json" },
+  info: { ok: true, version: "1.3.0", valid: true, configPath: "engine/graph.json" },
   runtime: {
     active: {
       dispatchId: "d-1",
@@ -90,7 +90,7 @@ const selfGraph = {
     nodes: [
       {
         id: "a",
-        helper: "builder",
+        agent: "builder",
         objective: "Self-handoff demo.",
         output: "a.md",
         handoff: { mode: "conditional", labels: [{ label: "again", to: "a" }] },

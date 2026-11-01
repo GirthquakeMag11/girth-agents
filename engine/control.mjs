@@ -13,13 +13,13 @@ export class ControlError extends Error {
   }
 }
 
-function readBody(req) {
+function readBody(req, maxBytes = MAX_BODY) {
   return new Promise((resolve, reject) => {
     let body = "";
     req.setEncoding("utf8");
     req.on("data", (chunk) => {
       body += chunk;
-      if (body.length > MAX_BODY) {
+      if (body.length > maxBytes) {
         reject(new ControlError(413, "request body too large"));
         req.destroy();
       }
@@ -42,6 +42,8 @@ function send(res, status, body) {
 
 const ROUTES = {
   "/handoff": "handoff",
+  "/tool/handoff-preflight": "handoffPreflight",
+  "/tool/handoff-tools": "handoffTools",
   "/tool/dispatch": "dispatch",
   "/tool/dispatch/wait": "dispatchWait",
   "/tool/dispatch/status": "dispatchStatus",
@@ -67,7 +69,7 @@ export function startControlServer({ token, handlers, host = "127.0.0.1", port =
       return;
     }
     try {
-      const body = await readBody(req);
+      const body = await readBody(req, req.url === "/handoff" ? Number.POSITIVE_INFINITY : MAX_BODY);
       const result = await handlers[handlerName](body);
       send(res, result?.status ?? 200, result?.body ?? { ok: true });
     } catch (e) {

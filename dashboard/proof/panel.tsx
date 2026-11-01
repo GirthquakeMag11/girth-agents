@@ -30,7 +30,7 @@ const theme = {
 };
 
 const repo = process.cwd();
-const config = JSON.parse(await readFile(join(repo, "engine", "example-graph.json"), "utf8"));
+const config = JSON.parse(await readFile(join(repo, "engine", "graph.json"), "utf8"));
 const baseHistory = [
   { seq: 1, at: "2026-10-30T13:59:58.000Z", kind: "queued", dispatchId: "d-1", workflow: "build-review", node: "implement" },
   { seq: 2, at: "2026-10-30T13:59:59.000Z", kind: "dispatched", dispatchId: "d-1", workflow: "build-review", node: "implement" },
@@ -85,7 +85,7 @@ const idleRuntime = {
   historyEpoch: "proof-boot",
 };
 
-const info = { ok: true, version: "1.3.0", valid: true, configPath: "engine/example-graph.json" };
+const info = { ok: true, version: "1.3.0", valid: true, configPath: "engine/graph.json" };
 const cases = [
   {
     name: "history-active-160x50",

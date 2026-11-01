@@ -6,14 +6,18 @@
 import { randomBytes } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { loadConfig, handoffTarget, configSummary, graphInfoResponse } from "./config.mjs";
-import { resolveDispatchTarget, workflowEscape } from "./workflow.mjs";
+import { DISPATCHER_TARGET, loadConfig, handoffTarget, handoffLabels, handoffToolsStale, configSummary, graphInfoResponse } from "./config.mjs";
+import { handoffLabelsMatch, handoffMessageError, handoffPreflightError, handoffToolState, handoffVisibilityFailure } from "./visibility.mjs";
+import { resumeHistoryEvent, selectResumeOrigin } from "./resume.mjs";
+import { claimHandoff, handoffOutput } from "./handoff.mjs";
+import { resolveDispatchTarget, validateDispatchOptions, workflowEscape } from "./workflow.mjs";
 import { createDispatchQueue } from "./queue.mjs";
 import { runDispatch, checkOutput, DispatchDefect, emptyUsage } from "./executor.mjs";
 import { createDriver } from "./driver.mjs";
 import { startControlServer, ControlError } from "./control.mjs";
 import { installPlugin, installSkills, removeCommands, removeAgent, preflightPlugin } from "./plugin.mjs";
 import { renderGraphMapResponse, renderGraphArtifact } from "./map.mjs";
+import { dispatchStatusBody, renderDispatchDisplay } from "./display.mjs";
 import { getActivityHistory, workflowForEvent } from "./history.mjs";
 import { encode, decode } from "./stdio.mjs";
 
@@ -52,6 +56,10 @@ let queue = null;
 let control = null;
 let lastEvent = null;
 let lastDefect = null;
+let handoffPreflight = null;
+let handoffPreflightWaiters = [];
+let bootHandoffLabels = [];
+let configRevision = 0;
 const history = getActivityHistory();
 let stopping = false;
 let heartbeat = null;
@@ -84,15 +92,109 @@ function graphSummary() {
   return configSummary(config, configPath).graph;
 }
 
+function onHandoffPreflight(body) {
+  const labels = Array.isArray(body?.labels)
+    ? body.labels.filter((label) => typeof label === "string" && label.trim() !== "")
+    : [];
+  const collisions = Array.isArray(body?.collisions)
+    ? body.collisions.filter((label) => typeof label === "string" && label.trim() !== "")
+    : [];
+  handoffPreflight = {
+    labels,
+    collisions,
+    catalogAvailable: body?.catalogAvailable !== false,
+    at: new Date().toISOString(),
+  };
+  if (
+    typeof body?.sessionID === "string" &&
+    queue?.active?.sessionId === body.sessionID &&
+    collisions.length > 0
+  ) {
+    queue.active.handoffDefect = new DispatchDefect(
+      "handoff.tool-collision",
+      `handoff tool collision: ${collisions.join(", ")}`,
+    );
+  }
+  for (const resolve of handoffPreflightWaiters.splice(0)) resolve();
+  return { body: { ok: true } };
+}
+
+function onHandoffTools(body) {
+  const active = queue?.active;
+  try {
+    return {
+      body: {
+        ok: true,
+        ...handoffToolState({
+          active,
+          sessionID: body?.sessionID,
+          revision: configRevision,
+        }),
+      },
+    };
+  } catch (e) {
+    handoffVisibilityFailure(active, e, DispatchDefect);
+    throw e;
+  }
+}
+
+async function waitForHandoffPreflight(timeoutMs = 5000) {
+  if (handoffPreflight) return handoffPreflight;
+  await Promise.race([
+    new Promise((resolve) => handoffPreflightWaiters.push(resolve)),
+    sleep(timeoutMs),
+  ]);
+  return handoffPreflight;
+}
+
 async function onDispatch(body) {
+  const preflight = await waitForHandoffPreflight();
+  const preflightFault = handoffPreflightError(preflight);
+  if (preflightFault) {
+    throw new ControlError(409, `${preflightFault.code}: ${preflightFault.message}`);
+  }
+  if (!handoffLabelsMatch(preflight.labels, bootHandoffLabels)) {
+    throw new ControlError(
+      409,
+      "handoff.tools-stale: the plugin label set does not match the boot config",
+    );
+  }
   let target;
   try {
+    validateDispatchOptions(body);
     target = resolveDispatchTarget(config.graph, body);
   } catch (e) {
     throw new ControlError(400, e.message);
   }
-  const record = queue.enqueue({ node: target.node, prompt: body.prompt, workflow: target.workflow });
-  return { body: { ok: true, dispatchId: record.id, state: record.state, node: target.node, workflow: target.workflow } };
+
+  if (body.resume === true) {
+    const selected = selectResumeOrigin(queue, body);
+    if (selected.error) {
+      throw new ControlError(409, `${selected.error.code}: ${selected.error.message}`);
+    }
+    const origin = selected.origin;
+    event("handoff", resumeHistoryEvent(origin));
+    const resumed = queue.enqueue({
+      node: origin.node,
+      prompt: body.prompt,
+      workflow: origin.workflow ?? null,
+      dispatchingSessionID: body.sessionID,
+      resumeSessionId: origin.sessionId,
+      resumeMessage: body.prompt,
+      resumeBudgetMs: origin.remainingBudgetMs,
+      resumeOriginDispatchId: origin.dispatchId,
+    });
+    return { body: dispatchStatusBody(queue.status(resumed.id)) };
+  }
+
+  const record = queue.enqueue({
+    node: target.node,
+    prompt: body.prompt,
+    workflow: target.workflow,
+    dispatchingSessionID: body.sessionID,
+  });
+  const snapshot = queue.status(record.id);
+  return { body: dispatchStatusBody(snapshot) };
 }
 
 async function onDispatchStatus(body) {
@@ -100,7 +202,7 @@ async function onDispatchStatus(body) {
   if (typeof id !== "string" || id.trim() === "") throw new ControlError(400, "dispatch status needs a dispatch id");
   const status = queue.status(id);
   if (!status) throw new ControlError(404, `unknown dispatch '${id}'`);
-  return { body: { ok: true, ...status } };
+  return { body: dispatchStatusBody(status) };
 }
 
 async function onDispatchWait(body) {
@@ -109,7 +211,7 @@ async function onDispatchWait(body) {
   const timeoutMs = typeof body?.timeoutMs === "number" ? body.timeoutMs : 300000;
   const result = await queue.wait(id, timeoutMs);
   if (!result) throw new ControlError(404, `unknown dispatch '${id}'`);
-  return { body: { ok: true, ...result } };
+  return { body: { ok: true, ...result, display: renderDispatchDisplay(result) } };
 }
 
 async function onDispatchCancel(body) {
@@ -119,6 +221,10 @@ async function onDispatchCancel(body) {
     interrupt: async (sessionId) => {
       const live = await getDriver();
       await live.interrupt(sessionId);
+    },
+    deleteSession: async (sessionId) => {
+      const live = await getDriver();
+      await live.deleteSession(sessionId);
     },
   });
   if (!result) throw new ControlError(404, `unknown dispatch '${id}'`);
@@ -135,54 +241,72 @@ async function onHandoff(body) {
   if (!node) throw new ControlError(403, "the active node is not ready for a handoff");
   if (node.handoff.mode === "terminal") throw new ControlError(422, "this terminal node takes no handoff");
 
-  if (active.handoff) {
-    active.handoffDefect = new DispatchDefect("handoff.multiple", `node '${node.id}' handed off more than once`);
+  if (claimHandoff(active, node, DispatchDefect)) {
     throw new ControlError(409, "handoff already accepted");
   }
-
+  try {
   const label = body.label;
   if (typeof label !== "string" || label.trim() === "") throw new ControlError(422, "handoff needs a non-empty label");
+  const message = body.message;
+  const messageFault = handoffMessageError(message);
+  if (messageFault) throw new ControlError(422, `${messageFault}: invalid handoff message`);
   const target = handoffTarget(node, label);
   if (!target) {
     const allowed = node.handoff.mode === "unconditional" ? "next" : node.handoff.labels.map((entry) => entry.label).join(", ");
-    throw new ControlError(422, `label '${label}' is not declared for node '${node.id}' (allowed: ${allowed})`);
+    throw new ControlError(422, `handoff.unknown-tool: label '${label}' is not declared for node '${node.id}' (allowed: ${allowed})`);
   }
 
-  const escape = workflowEscape(config.graph, active.workflow, target);
-  if (escape) {
-    active.handoffDefect = new DispatchDefect(
-      escape.code,
-      `handoff '${label}' from '${node.id}' to '${target}': ${escape.message}`,
-    );
-    throw new ControlError(422, active.handoffDefect.message);
+  if (target !== DISPATCHER_TARGET) {
+    const escape = workflowEscape(config.graph, active.workflow, target);
+    if (escape) {
+      active.handoffDefect = new DispatchDefect(
+        escape.code,
+        `handoff '${label}' from '${node.id}' to '${target}': ${escape.message}`,
+      );
+      throw new ControlError(422, active.handoffDefect.message);
+    }
   }
 
-  let output;
-  try {
-    output = await checkOutput(active.outputPath);
-  } catch (e) {
-    if (e instanceof DispatchDefect) throw new ControlError(422, e.message);
-    throw e;
+  let output = null;
+  if (active.outputPath) {
+    try {
+      output = await handoffOutput(active, checkOutput);
+    } catch (e) {
+      if (e instanceof DispatchDefect) throw new ControlError(422, e.message);
+      throw e;
+    }
   }
 
   active.handoff = {
     label,
+    message,
     callID: body.callID ?? null,
-    outputHash: output.hash,
-    outputPath: active.outputPath,
+    outputHash: output?.hash ?? null,
+    outputPath: output?.path ?? null,
     at: new Date().toISOString(),
   };
   return { body: { ok: true, label } };
+  } finally {
+    active.handoffPending = false;
+  }
 }
 
 async function onReload() {
   if (queue.active) throw new ControlError(409, "reload rejected: a dispatch is active");
   const loaded = await loadConfig(configPath);
+  if (queue.active) throw new ControlError(409, "reload rejected: a dispatch is active");
   if (loaded.faults.length > 0) {
     event("reloaded", { configPath, valid: false, faults: loaded.faults });
     return { body: { ok: true, valid: false, faults: loaded.faults } };
   }
+  const stale = handoffToolsStale(bootHandoffLabels, handoffLabels(loaded.doc.graph));
+  if (stale) {
+    event("reloaded", { configPath, valid: false, faults: [stale] });
+    return { body: { ok: true, valid: false, faults: [stale] } };
+  }
+  if (queue.active) throw new ControlError(409, "reload rejected: a dispatch is active");
   config = loaded.doc;
+  configRevision += 1;
   const artifact = await writeGraphArtifact();
   event("reloaded", { configPath, valid: true, faults: [], artifact });
   return { body: { ok: true, valid: true, faults: [], graph: graphSummary(), artifact } };
@@ -224,6 +348,8 @@ async function boot() {
     process.exit(2);
   }
   config = loaded.doc;
+  bootHandoffLabels = handoffLabels(config.graph);
+  configRevision = 1;
   const artifact = await writeGraphArtifact();
 
   const token = randomBytes(16).toString("hex");
@@ -231,6 +357,8 @@ async function boot() {
     token,
     handlers: {
       handoff: onHandoff,
+      handoffPreflight: onHandoffPreflight,
+      handoffTools: onHandoffTools,
       dispatch: onDispatch,
       dispatchStatus: onDispatchStatus,
       dispatchWait: onDispatchWait,
@@ -245,6 +373,7 @@ async function boot() {
     cwd,
     url: control.url,
     token,
+    labels: handoffLabels(config.graph),
   });
   await installSkills({ cwd });
   await removeCommands({ cwd });

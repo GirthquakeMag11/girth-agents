@@ -1,6 +1,6 @@
 {
   "version": "3",
-  "helpers": [
+  "agents": [
     {
       "id": "builder",
       "model": "openrouter/~deepseek/deepseek-flash-latest",
@@ -10,7 +10,7 @@
         "edit",
         "shell"
       ],
-      "craft": "Execute the node objective. Write the declared output file with a short result, then call the handoff tool exactly once with the declared label."
+      "craft": "Execute the node objective. Write the declared output file with a short result, then call the generated handoff tool exactly once with a message."
     }
   ],
   "graph": {
@@ -43,8 +43,8 @@
     "nodes": [
       {
         "id": "a1",
-        "helper": "builder",
-        "objective": "Write work/a1.md containing exactly: strict main. Then hand off with label next.",
+        "agent": "builder",
+        "objective": "Write work/a1.md containing exactly: strict main. Then call the `next` tool with a message.",
         "output": "a1.md",
         "maxVisits": 2,
         "handoff": {
@@ -55,8 +55,8 @@
       },
       {
         "id": "b1",
-        "helper": "builder",
-        "objective": "Write work/b1.md containing exactly: strict connected. Then hand off with label next.",
+        "agent": "builder",
+        "objective": "Write work/b1.md containing exactly: strict connected. Then call the `next` tool with a message.",
         "output": "b1.md",
         "maxVisits": 2,
         "handoff": {
@@ -67,7 +67,7 @@
       },
       {
         "id": "o",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Write work/o.md containing exactly: strict escape.",
         "output": "o.md",
         "maxVisits": 2,

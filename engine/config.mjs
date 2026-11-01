@@ -7,6 +7,28 @@ import { isAbsolute, resolve } from "node:path";
 
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
 
+// Labels become OpenCode tool names. Keep them to the same safe alphabet the
+// generated plugin can emit without normalization.
+const HANDOFF_LABEL = /^[A-Za-z][A-Za-z0-9_-]*$/;
+
+// The dispatching agent is a handoff target, not a graph node.
+export const DISPATCHER_TARGET = "$dispatcher";
+
+// The engine owns these names. Do not add OpenCode built-ins here: the plugin
+// checks the live tool catalog at setup instead.
+export const ENGINE_TOOL_NAMES = new Set([
+  "dispatch",
+  "dispatch_status",
+  "dispatch_cancel",
+  // Retired as a control tool in the dispatch slice, but reserved so a graph
+  // label cannot recreate a model-facing tool with that name.
+  "dispatch_wait",
+  "reload",
+  "graph_info",
+  "graph_map",
+  "handoff",
+]);
+
 // The engine's backstop, not the workflow's policy. A graph may set any
 // maxVisits up to this; the shipped build-review graph uses 20.
 export const MAX_VISITS = 100;
@@ -62,38 +84,38 @@ function relativePath(value, at, faults, { required = true } = {}) {
   }
 }
 
-function validateHelper(helper, at, faults) {
-  if (!isObject(helper)) {
-    faults.push(fault("schema.helper", `${at}: must be an object`));
+function validateGraphAgent(graphAgent, at, faults) {
+  if (!isObject(graphAgent)) {
+    faults.push(fault("schema.agent", `${at}: must be an object`));
     return;
   }
-  strict(helper, ["id", "model", "agent", "permissions", "craft"], at, faults);
-  string(helper.id, `${at}.id`, faults);
-  string(helper.model, `${at}.model`, faults);
-  if (helper.model !== undefined && typeof helper.model === "string") {
-    const slash = helper.model.indexOf("/");
-    if (slash <= 0 || slash === helper.model.length - 1) {
-      faults.push(fault("schema.helper-model", `${at}.model: must be 'provider/model'`));
+  strict(graphAgent, ["id", "model", "agent", "permissions", "craft"], at, faults);
+  string(graphAgent.id, `${at}.id`, faults);
+  string(graphAgent.model, `${at}.model`, faults);
+  if (graphAgent.model !== undefined && typeof graphAgent.model === "string") {
+    const slash = graphAgent.model.indexOf("/");
+    if (slash <= 0 || slash === graphAgent.model.length - 1) {
+      faults.push(fault("schema.agent-model", `${at}.model: must be 'provider/model'`));
     }
   }
-  if (helper.agent !== undefined) string(helper.agent, `${at}.agent`, faults);
-  if (!Array.isArray(helper.permissions) || helper.permissions.length === 0) {
-    faults.push(fault("schema.helper-permissions", `${at}.permissions: must be a non-empty array of action names`));
+  if (graphAgent.agent !== undefined) string(graphAgent.agent, `${at}.agent`, faults);
+  if (!Array.isArray(graphAgent.permissions) || graphAgent.permissions.length === 0) {
+    faults.push(fault("schema.agent-permissions", `${at}.permissions: must be a non-empty array of action names`));
   } else {
     const seen = new Set();
-    for (const [i, action] of helper.permissions.entries()) {
+    for (const [i, action] of graphAgent.permissions.entries()) {
       if (typeof action !== "string" || action.trim() === "") {
-        faults.push(fault("schema.helper-permissions", `${at}.permissions[${i}]: must be a non-empty string`));
+        faults.push(fault("schema.agent-permissions", `${at}.permissions[${i}]: must be a non-empty string`));
       } else if (action === "*") {
-        faults.push(fault("schema.helper-permissions", `${at}.permissions[${i}]: '*' is not allowed; list the actions`));
+        faults.push(fault("schema.agent-permissions", `${at}.permissions[${i}]: '*' is not allowed; list the actions`));
       } else if (seen.has(action)) {
-        faults.push(fault("schema.helper-permissions", `${at}.permissions[${i}]: duplicate action '${action}'`));
+        faults.push(fault("schema.agent-permissions", `${at}.permissions[${i}]: duplicate action '${action}'`));
       } else {
         seen.add(action);
       }
     }
   }
-  if (helper.craft !== undefined) string(helper.craft, `${at}.craft`, faults);
+  if (graphAgent.craft !== undefined) string(graphAgent.craft, `${at}.craft`, faults);
 }
 
 function validateHandoff(handoff, at, nodeIds, faults) {
@@ -112,8 +134,16 @@ function validateHandoff(handoff, at, nodeIds, faults) {
   if (handoff.mode === "unconditional") {
     strict(handoff, ["mode", "to", "description", "resume"], at, faults);
     string(handoff.to, `${at}.to`, faults);
-    if (handoff.to !== undefined && typeof handoff.to === "string" && !nodeIds.has(handoff.to)) {
+    if (
+      handoff.to !== undefined &&
+      typeof handoff.to === "string" &&
+      handoff.to !== DISPATCHER_TARGET &&
+      !nodeIds.has(handoff.to)
+    ) {
       faults.push(fault("graph.dangling-handoff", `${at}.to: names no node '${handoff.to}'`));
+    }
+    if (handoff.to === DISPATCHER_TARGET && handoff.resume === true) {
+      faults.push(fault("graph.dispatcher-resume", `${at}.resume: a dispatcher target cannot resume`));
     }
     if (handoff.description !== undefined) string(handoff.description, `${at}.description`, faults);
     boolean(handoff.resume, `${at}.resume`, faults);
@@ -138,11 +168,30 @@ function validateHandoff(handoff, at, nodeIds, faults) {
     string(label.description, `${labelAt}.description`, faults);
     boolean(label.resume, `${labelAt}.resume`, faults);
     if (typeof label.label === "string" && label.label.trim() !== "") {
+      if (!HANDOFF_LABEL.test(label.label)) {
+        faults.push(
+          fault(
+            "schema.label-format",
+            `${labelAt}.label: must match ${HANDOFF_LABEL.source}`,
+          ),
+        );
+      }
+      if (ENGINE_TOOL_NAMES.has(label.label)) {
+        faults.push(
+          fault(
+            "graph.reserved-label",
+            `${labelAt}.label: '${label.label}' collides with an engine control tool`,
+          ),
+        );
+      }
       if (labels.has(label.label)) faults.push(fault("graph.duplicate-label", `${labelAt}.label: duplicate '${label.label}'`));
       labels.add(label.label);
     }
-    if (typeof label.to === "string" && !nodeIds.has(label.to)) {
+    if (typeof label.to === "string" && label.to !== DISPATCHER_TARGET && !nodeIds.has(label.to)) {
       faults.push(fault("graph.dangling-handoff", `${labelAt}.to: names no node '${label.to}'`));
+    }
+    if (label.to === DISPATCHER_TARGET && label.resume === true) {
+      faults.push(fault("graph.dispatcher-resume", `${labelAt}.resume: a dispatcher target cannot resume`));
     }
   }
 }
@@ -302,7 +351,7 @@ function validateWorkflows(workflows, at, byId, nodeIds, faults) {
   }
 }
 
-function validateGraph(graph, at, helperIds, faults) {
+function validateGraph(graph, at, graphAgentIds, faults) {
   if (!isObject(graph)) {
     faults.push(fault("schema.graph", `${at}: must be an object`));
     return;
@@ -320,6 +369,9 @@ function validateGraph(graph, at, helperIds, faults) {
   for (const [i, node] of graph.nodes.entries()) {
     if (!isObject(node)) continue;
     if (typeof node.id === "string" && node.id.trim() !== "") {
+      if (node.id === DISPATCHER_TARGET) {
+        faults.push(fault("graph.reserved-node-id", `${at}.nodes[${i}].id: '${DISPATCHER_TARGET}' is reserved`));
+      }
       if (nodeIds.has(node.id)) faults.push(fault("graph.duplicate-node", `${at}.nodes[${i}].id: duplicate '${node.id}'`));
       nodeIds.add(node.id);
     }
@@ -331,14 +383,14 @@ function validateGraph(graph, at, helperIds, faults) {
       faults.push(fault("schema.node", `${nodeAt}: must be an object`));
       continue;
     }
-    strict(node, ["id", "helper", "objective", "output", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
+    strict(node, ["id", "agent", "objective", "output", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
     string(node.id, `${nodeAt}.id`, faults);
-    string(node.helper, `${nodeAt}.helper`, faults);
-    if (node.helper !== undefined && typeof node.helper === "string" && !helperIds.has(node.helper)) {
-      faults.push(fault("graph.unknown-helper", `${nodeAt}.helper: names no helper '${node.helper}'`));
+    string(node.agent, `${nodeAt}.agent`, faults);
+    if (node.agent !== undefined && typeof node.agent === "string" && !graphAgentIds.has(node.agent)) {
+      faults.push(fault("graph.unknown-agent", `${nodeAt}.agent: names no agent '${node.agent}'`));
     }
     string(node.objective, `${nodeAt}.objective`, faults);
-    relativePath(node.output, `${nodeAt}.output`, faults);
+    relativePath(node.output, `${nodeAt}.output`, faults, { required: false });
     integer(node.budgetMs, `${nodeAt}.budgetMs`, faults, { min: 1 });
     integer(node.maxVisits, `${nodeAt}.maxVisits`, faults, { min: 1 });
     if (node.maxVisits !== undefined && Number.isInteger(node.maxVisits) && node.maxVisits > MAX_VISITS) {
@@ -352,7 +404,15 @@ function validateGraph(graph, at, helperIds, faults) {
   }
 
   const byId = new Map(graph.nodes.filter(isObject).map((node) => [node.id, node]));
-  const terminalIds = new Set(graph.nodes.filter((node) => node?.handoff?.mode === "terminal").map((node) => node.id));
+  const terminalIds = new Set(
+    graph.nodes
+      .filter(
+        (node) =>
+          node?.handoff?.mode === "terminal" ||
+          edgesOf(node).includes(DISPATCHER_TARGET),
+      )
+      .map((node) => node.id),
+  );
   if (terminalIds.size === 0) faults.push(fault("graph.no-terminal", `${at}: no terminal node`));
 
   for (const node of byId.values()) {
@@ -378,18 +438,18 @@ function validateGraph(graph, at, helperIds, faults) {
 export function validateConfig(doc) {
   const faults = [];
   if (!isObject(doc)) return [fault("schema.config", "config must be an object")];
-  strict(doc, ["version", "helpers", "graph"], "config", faults);
+  strict(doc, ["version", "agents", "graph"], "config", faults);
   if (doc.version !== "3") faults.push(fault("schema.version", "config.version: must be the string '3'"));
 
-  const helperIds = new Set();
-  if (!Array.isArray(doc.helpers) || doc.helpers.length === 0) {
-    faults.push(fault("schema.helpers", "config.helpers: must be a non-empty array"));
+  const graphAgentIds = new Set();
+  if (!Array.isArray(doc.agents) || doc.agents.length === 0) {
+    faults.push(fault("schema.agents", "config.agents: must be a non-empty array"));
   } else {
-    for (const [i, helper] of doc.helpers.entries()) {
-      validateHelper(helper, `config.helpers[${i}]`, faults);
-      if (isObject(helper) && typeof helper.id === "string" && helper.id.trim() !== "") {
-        if (helperIds.has(helper.id)) faults.push(fault("schema.helper-id", `config.helpers[${i}].id: duplicate '${helper.id}'`));
-        helperIds.add(helper.id);
+    for (const [i, graphAgent] of doc.agents.entries()) {
+      validateGraphAgent(graphAgent, `config.agents[${i}]`, faults);
+      if (isObject(graphAgent) && typeof graphAgent.id === "string" && graphAgent.id.trim() !== "") {
+        if (graphAgentIds.has(graphAgent.id)) faults.push(fault("schema.agent-id", `config.agents[${i}].id: duplicate '${graphAgent.id}'`));
+        graphAgentIds.add(graphAgent.id);
       }
     }
   }
@@ -397,7 +457,7 @@ export function validateConfig(doc) {
   if (!isObject(doc.graph)) {
     faults.push(fault("schema.graph", "config.graph: must be an object"));
   } else {
-    validateGraph(doc.graph, "config.graph", helperIds, faults);
+    validateGraph(doc.graph, "config.graph", graphAgentIds, faults);
   }
 
   return faults;
@@ -425,6 +485,7 @@ export function findNode(graph, id) {
 }
 
 export function outputPathFor(graph, node, cwd) {
+  if (!node?.output) return null;
   return resolve(cwd, graph.outputRoot ?? ".", node.output);
 }
 
@@ -448,6 +509,36 @@ export function resumableNodes(graph) {
     }
   }
   return ids;
+}
+
+export function handoffToolsStale(current, next) {
+  const a = [...current].sort();
+  const b = [...next].sort();
+  if (a.length === b.length && a.every((label, index) => label === b[index])) return null;
+  return {
+    code: "handoff.tools-stale",
+    message:
+      `reload changed the handoff label set (${a.join(", ") || "none"} -> ${b.join(", ") || "none"}); ` +
+      "restart the engine to regenerate the handoff tools",
+  };
+}
+
+export function nodeHandoffLabels(node) {
+  if (node?.handoff?.mode === "unconditional") return ["next"];
+  if (node?.handoff?.mode === "conditional") {
+    return (node.handoff.labels ?? [])
+      .map((entry) => entry?.label)
+      .filter((label) => typeof label === "string");
+  }
+  return [];
+}
+
+export function handoffLabels(graph) {
+  const labels = new Set();
+  for (const node of graph?.nodes ?? []) {
+    for (const label of nodeHandoffLabels(node)) labels.add(label);
+  }
+  return [...labels].sort();
 }
 
 export function handoffTarget(node, label) {
@@ -494,9 +585,9 @@ export function graphSummary(graph) {
     workflows: graph.workflows ?? [],
     nodes: graph.nodes.map((node) => ({
       id: node.id,
-      helper: node.helper,
+      agent: node.agent,
       objective: node.objective,
-      output: node.output,
+      output: node.output ?? null,
       maxVisits: node.maxVisits ?? null,
       handoff:
         node.handoff.mode === "conditional"
@@ -514,12 +605,12 @@ export function configSummary(doc, path) {
   return {
     configPath: path,
     graph: graphSummary(doc.graph),
-    helpers: doc.helpers.map((helper) => ({
-      id: helper.id,
-      model: helper.model,
-      agent: helper.agent ?? "build",
-      permissions: helper.permissions,
-      craft: helper.craft ?? null,
+    agents: doc.agents.map((graphAgent) => ({
+      id: graphAgent.id,
+      model: graphAgent.model,
+      agent: graphAgent.agent ?? "build",
+      permissions: graphAgent.permissions,
+      craft: graphAgent.craft ?? null,
     })),
   };
 }

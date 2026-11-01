@@ -6,8 +6,24 @@
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { composeBrief } from "./brief.mjs";
-import { MAX_VISITS, findNode, handoffTarget, handoffResume, resumableNodes, outputPathFor } from "./config.mjs";
+import { DISPATCHER_TARGET, MAX_VISITS, findNode, handoffTarget, handoffResume, resumableNodes, outputPathFor } from "./config.mjs";
 import { permissionsFor } from "./driver.mjs";
+
+const RESPONSE_CAP_BYTES = 16 * 1024;
+
+function truncateUtf8(text, maxBytes) {
+  const buffer = Buffer.from(text, "utf8");
+  if (buffer.length <= maxBytes) return { response: text, responseTruncated: false };
+  for (let end = maxBytes; end > 0; end -= 1) {
+    try {
+      const response = new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, end));
+      return { response, responseTruncated: true };
+    } catch {
+      // back up over a split multibyte sequence
+    }
+  }
+  return { response: "", responseTruncated: true };
+}
 
 export class DispatchDefect extends Error {
   constructor(code, message) {
@@ -65,7 +81,7 @@ export function checkHandoffOrder(messages, handoff) {
   if (index === -1) {
     for (let i = parts.length - 1; i >= 0; i -= 1) {
       const { part } = parts[i];
-      if (part.name === "handoff" && part.state?.input?.label === handoff.label) {
+      if (part.name === handoff.label) {
         index = i;
         break;
       }
@@ -160,7 +176,7 @@ async function sessionInfo(driver, sessionId) {
   }
 }
 
-async function runNode({ driver, graph, node, helper, record, cwd, previousOutput, onEvent, sessions, resume = false, resumable = false }) {
+async function runNode({ driver, graph, node, graphAgent, record, cwd, previousOutput, previousMessage, onEvent, sessions, resume = false, resumable = false, budgetMs = null }) {
   if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
 
   const outputAbs = outputPathFor(graph, node, cwd);
@@ -170,7 +186,9 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
   record.output = null;
   record.handoff = null;
   record.handoffDefect = null;
+  record.handoffPending = false;
   record.sessionId = null;
+  let keepForDispatcher = false;
 
   let sessionId;
   let resumed = false;
@@ -189,11 +207,11 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
     const session = await driver.createSession({
       directory: cwd,
       title: `${record.id}/${node.id}`,
-      agent: helper.agent ?? "build",
-      model: helper.model,
+      agent: graphAgent.agent ?? "build",
+      model: graphAgent.model,
       permissions: permissionsFor({
         handoff: node.handoff.mode !== "terminal",
-        allow: helper.permissions,
+        allow: graphAgent.permissions,
       }),
     });
     sessionId = session.id;
@@ -213,17 +231,20 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
   });
 
   const brief = composeBrief({
-    helper,
+    graphAgent,
     node,
     prompt: record.prompt,
     previousOutput,
+    previousMessage,
     outputAbs,
   });
 
+  const budget = budgetMs ?? node.budgetMs ?? 600000;
+  const promptStartedAt = Date.now();
   let info;
   try {
     if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
-    info = await driver.prompt(sessionId, brief, { budgetMs: node.budgetMs ?? 600000 });
+    info = await driver.prompt(sessionId, brief, { budgetMs: budget });
   } catch (e) {
     if (!resume && !resumable && process.env.ENGINE_KEEP_SESSIONS !== "1") {
       await driver.deleteSession(sessionId);
@@ -243,7 +264,7 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
     }
 
     if (node.handoff.mode === "terminal") {
-      const output = await checkOutput(outputAbs);
+      const output = outputAbs ? await checkOutput(outputAbs) : null;
       record.output = output;
       onEvent("step", {
         dispatchId: record.id,
@@ -253,7 +274,11 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
         usage: delta,
         at: new Date().toISOString(),
       });
-      return { outputPath: outputAbs, handoff: null };
+      return {
+        outputPath: outputAbs,
+        handoff: null,
+        budgetRemainingMs: Math.max(0, budget - (Date.now() - promptStartedAt)),
+      };
     }
 
     if (!record.handoff) {
@@ -263,12 +288,15 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
       );
     }
 
-    const output = await checkOutput(outputAbs);
-    if (output.hash !== record.handoff.outputHash) {
-      throw new DispatchDefect(
-        "output.changed",
-        `node '${node.id}' output changed after the handoff was accepted`,
-      );
+    let output = null;
+    if (outputAbs) {
+      output = await checkOutput(outputAbs);
+      if (output.hash !== record.handoff.outputHash) {
+        throw new DispatchDefect(
+          "output.changed",
+          `node '${node.id}' output changed after the handoff was accepted`,
+        );
+      }
     }
 
     const messages = await driver.messages(sessionId);
@@ -278,6 +306,9 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
     }
 
     record.output = output;
+    keepForDispatcher =
+      !record.cancelled &&
+      handoffTarget(node, record.handoff.label) === DISPATCHER_TARGET;
     onEvent("step", {
       dispatchId: record.id,
       node: node.id,
@@ -289,9 +320,13 @@ async function runNode({ driver, graph, node, helper, record, cwd, previousOutpu
       usage: delta,
       at: new Date().toISOString(),
     });
-    return { outputPath: outputAbs, handoff: record.handoff };
+    return {
+      outputPath: outputAbs,
+      handoff: record.handoff,
+      budgetRemainingMs: Math.max(0, budget - (Date.now() - promptStartedAt)),
+    };
   } finally {
-    if (!resume && !resumable && process.env.ENGINE_KEEP_SESSIONS !== "1") {
+    if (!resume && !resumable && !keepForDispatcher && process.env.ENGINE_KEEP_SESSIONS !== "1") {
       await driver.deleteSession(sessionId);
     }
   }
@@ -303,12 +338,18 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
 
   let current = record.node;
   let previousOutput = null;
+  let previousMessage = null;
   let upstream = null;
   const visits = record.visits ?? {};
   const maxSteps = graph.maxSteps ?? 100;
   const sessions = new Map();
   const resumable = resumableNodes(graph);
   let resume = false;
+  if (record.resumeSessionId) {
+    sessions.set(record.node, record.resumeSessionId);
+    resume = true;
+    previousMessage = record.resumeMessage ?? null;
+  }
   record.usage = record.usage ?? emptyUsage();
 
   try {
@@ -331,22 +372,26 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
     record.node = current;
     record.visits = { ...visits };
 
-    const helper = config.helpers.find((entry) => entry.id === node.helper);
-    if (!helper) throw new DispatchDefect("unknown-helper", `node '${node.id}' names no helper '${node.helper}'`);
+    const graphAgent = config.agents.find((entry) => entry.id === node.agent);
+    if (!graphAgent) throw new DispatchDefect("unknown-agent", `node '${node.id}' names no graph agent '${node.agent}'`);
 
     const result = await runNode({
       driver,
       graph,
       node,
-      helper,
+      graphAgent,
       record,
       cwd,
       previousOutput,
+      previousMessage,
       onEvent,
       sessions,
       resume,
       resumable: resumable.has(node.id),
+      budgetMs: step === 0 && record.resumeSessionId ? record.resumeBudgetMs : null,
     });
+
+    if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
 
     if (node.handoff.mode === "terminal") {
       record.terminal = current;
@@ -356,9 +401,46 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
     const target = handoffTarget(node, result.handoff.label);
     if (!target) {
       throw new DispatchDefect(
-        "handoff.unknown-label",
+        "handoff.unknown-tool",
         `node '${node.id}' accepted handoff '${result.handoff.label}' with no target`,
       );
+    }
+
+    if (target === DISPATCHER_TARGET) {
+      const message = result.handoff.message ?? "";
+      const { response, responseTruncated } = truncateUtf8(message, RESPONSE_CAP_BYTES);
+      record.handoff = {
+        from: current,
+        label: result.handoff.label,
+        to: DISPATCHER_TARGET,
+        message,
+      };
+      record.result = { response, responseTruncated };
+      record.retainedOrigin = {
+        node: current,
+        sessionId: record.sessionId,
+        workflow: record.workflow ?? null,
+        label: result.handoff.label,
+        message,
+        remainingBudgetMs: result.budgetRemainingMs ?? null,
+        at: new Date().toISOString(),
+      };
+      record.originState = "retained";
+      onEvent("handoff", {
+        dispatchId: record.id,
+        from: current,
+        label: result.handoff.label,
+        to: DISPATCHER_TARGET,
+        at: new Date().toISOString(),
+      });
+      return {
+        dispatcher: true,
+        handoff: record.handoff,
+        result: record.result,
+        visits: { ...visits },
+        output: result.outputPath,
+        usage: record.usage,
+      };
     }
 
     record.handoff = { from: current, label: result.handoff.label, to: target };
@@ -378,6 +460,7 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
       );
     }
     previousOutput = result.outputPath;
+    previousMessage = result.handoff.message ?? null;
     upstream = current;
     current = target;
     resume = wantsResume;
@@ -385,9 +468,15 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
 
   throw new DispatchDefect("step-overflow", `the graph exceeded ${maxSteps} steps`);
   } finally {
+    if (record.cancelled && record.retainedOrigin) {
+      await driver.deleteSession(record.retainedOrigin.sessionId).catch(() => {});
+      record.retainedOrigin = null;
+      record.originState = "discarded";
+    }
     if (process.env.ENGINE_KEEP_SESSIONS !== "1") {
+      const retained = record.retainedOrigin?.sessionId;
       for (const sessionId of sessions.values()) {
-        await driver.deleteSession(sessionId).catch(() => {});
+        if (sessionId !== retained) await driver.deleteSession(sessionId).catch(() => {});
       }
     }
   }

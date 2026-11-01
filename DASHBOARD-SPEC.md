@@ -1,168 +1,118 @@
 # Graph dashboard — TUI specification
 
-**Status:** accepted design direction; implementation specification under independent review  
-**Version:** 1  
-**Related:** `SPEC.md` (engine contract), `THREADS.md` (design record)
+**Status:** living implementation specification.  
+**Version:** 2 — merged motion and activity history.  
+**Related:** `SPEC.md` (engine contract), `THREADS.md` (design record).
 
-> **Motion/history amendment (2026-10-30):** `DASHBOARD-MOTION-HISTORY-SPEC.md`
-> supersedes this document's motion section, its single full-height
-> right-side Details layout, and acceptance criterion 5. Where they conflict,
-> the amendment wins.
+## 1. Purpose and principles
 
-## 1. Purpose
+The dashboard is a full-screen, read-only OpenCode TUI view of the graph as
+configured and as it is currently behaving. It opens over the current session;
+`esc` returns to the same chat, session, and agent.
 
-The dashboard is a full-screen, read-only view of the graph as it is
-configured and as it is currently behaving. It exists so the user can open
-one surface, see the graph's structure, current work, and workflow
-engagement at a glance, and return to the same chat without changing
-context.
-
-The dashboard is part of the OpenCode TUI. It is not a chat message, not a
-separate web application, and not a styled character canvas. It is built
-from OpenCode's native terminal widgets and inherits the active theme.
-
-The v1 view is optimized for understanding. The user configures the graph
-and starts work through the interactive agent. The dashboard observes and
-explains; it does not edit or dispatch.
-
-## 2. Product principles
-
-- **UX before UI.** The view exists to reduce the effort of understanding
-  and the decoherence between the user's model, the agent's model, and the
-  project state.
-- **The graph is the subject.** The view represents the graph as
-  configured: all nodes, all handoffs, and all workflow memberships. It
-  does not privilege the first workflow.
+- **The graph is the subject.** Show all configured nodes, handoffs, and
+  workflow memberships. Do not privilege the first workflow.
 - **Structure and behavior share one view.** Nodes and edges show the
-  configuration; state, work, and workflow engagement show what is
-  happening now.
-- **Native widgets.** Node cards, workflow containers, panes, headers,
-  and status elements are OpenTUI components styled with semantic theme
-  tokens. A pre-rendered character grid with per-cell colors is not an
-  acceptable implementation.
-- **Read-only by construction.** The view cannot modify the graph, edit the
-  config, dispatch work, or change the session. Those actions belong to the
-  interactive agent.
-- **No context switch.** The overlay opens over the current session and
-  Escape returns to the same chat, session, and agent.
+  configuration; state, work, and engagement show what is happening now.
+- **Native widgets.** Use OpenTUI components and semantic theme tokens. A
+  pre-rendered character grid with per-cell colors is not acceptable.
+- **Read-only by construction.** The dashboard cannot edit the graph, dispatch
+  work, cancel work, or change the session.
+- **No context switch.** Opening and closing the panel does not change the chat,
+  session, or agent.
 
-## 3. Scope
+## 2. Scope
 
-### In scope
+In scope:
 
-- Full-screen OpenCode TUI panel opened from the command palette and/or a
-  key combination.
-- Read-only graph structure: nodes, handoffs, workflows, connections.
-- Live behavior: active and queued dispatches, visits, sessions, cost,
-  tokens, defects, and recent state.
-- Workflow engagement: main workflow, connected workflows, queued
-  workflow, and escape indication.
-- Live-work Details: contract, objective, workflow memberships, run state,
-  and output for the active dispatch(es); empty when no work is active.
-- Theme-driven visual hierarchy, active emphasis, inactive desaturation,
-  a shape-only moving border accent for running nodes, and static workflow
-  containers.
-- Responsive layout using the panel's available dimensions.
+- full-screen `session.panel` opened from the palette or a key binding;
+- configured nodes, handoffs, workflows, connections, and strict policy;
+- active and queued dispatches, visits, sessions, cost, tokens, defects, and
+  recent state;
+- main/connected/queued workflow engagement and escape indication;
+- active-work Details, empty when no work is active;
+- a bounded activity History pane or one-line strip;
+- static workflow containers, a running-node border sweep, and a one-shot
+  connector runner;
+- responsive layout from the panel dimensions.
 
-### Out of scope
+Out of scope:
 
-- Editing the graph, draft preview, Validate/Apply actions.
-- Starting or cancelling dispatches from the dashboard.
-- Product/agent tabs, scoped chat, or a local web workbench.
-- A table-only fallback as the primary graph representation.
-- Multiple graphs or a graph selector.
-- General-purpose graph layout for arbitrarily large graphs beyond a
-  reasoned vertical layout with clipping/overflow behavior.
+- editing, draft/apply, dispatch controls, or scoped chat;
+- a table-only primary graph view;
+- multiple graphs or a graph selector;
+- a general graph-layout engine for arbitrarily large graphs;
+- run archive, persisted history, or per-session history filtering;
+- reduced-motion preference.
 
-## 4. Surface and interaction
+## 3. Surface and interaction
 
-- **Surface:** the OpenCode TUI `session.panel` slot, opened with
+- **Surface:** OpenCode TUI `session.panel`, opened with
   `presentation: "fullscreen"`.
 - **Open:** command palette entry and/or key combination.
-- **Close:** `esc` closes the panel and returns to the same chat, session,
-  and agent. It does not change tabs.
-- **Refresh:** graph structure refreshes after an applied graph change;
-  runtime state refreshes while the panel is open.
-- **Focus:** the panel is read-only. It may support selecting a node to
-  inspect, but no control may mutate the graph or start work.
-- **Chrome:** header, body, and footer are native flex layouts that fill
-  the available panel area. Text is clipped or collapsed deliberately at
+- **Close:** `esc` closes the panel and returns to the same chat, session, and
+  agent.
+- **Refresh:** structure refreshes after a valid graph reload; runtime state
+  refreshes while the panel is open.
+- **Focus:** read-only. Node selection may be added later only with an explicit
+  visible focus ring; v1 has no node selection.
+- **Chrome:** native flex layout. Text truncates or collapses deliberately at
   narrow sizes; it must not wrap into a broken frame.
 
-## 5. Terms and state model
+## 4. State model
 
-### Graph and workflows
+### 4.1 Graph and workflows
 
-There is one graph per engine config. A workflow is a labelled view of a
-subset of the graph and is not a container. A node dispatch has no
-workflow boundary. A workflow dispatch defines a boundary consisting of
-the main workflow and its transitive connections. A node may belong to
-zero, one, or many workflows. Workflows may declare directed
-`connections` to other workflows.
+There is one graph per engine configuration. A workflow is a labelled view of
+a subset of the graph, not a container. A node dispatch has no workflow
+boundary. A workflow dispatch defines a boundary consisting of the main
+workflow and its transitive `connections`. A node may belong to zero, one, or
+many workflows.
 
-### Dispatch intent
+### 4.2 Dispatch intent
 
-- A **workflow dispatch** starts at the workflow's entry and records the
-  workflow as the dispatch's **main workflow**.
+- A **workflow dispatch** starts at the workflow entry and records that
+  workflow as the **main workflow**.
 - A **node dispatch** starts at a named node and records no workflow.
 - Exactly one of `node` or `workflow` is supplied.
 
-### Engaged workflows
+### 4.3 Engaged workflows
 
-For a workflow dispatch, the **allowed set** is the main workflow plus all
-workflows reachable through the transitive `connections` graph.
+For a workflow dispatch, the **allowed set** is the main workflow plus every
+workflow reachable through transitive `connections`.
 
-- The **main workflow** is engaged for the life of the dispatch, including
-  queued time and handoffs.
-- A **connected workflow** is engaged only while the active node belongs to
-  it.
-- If the active node belongs to the main workflow, the main workflow takes
-  precedence; all connected containers are suppressed while the active node
-  is in main.
-- If the active node leaves the main workflow and every allowed connected
-  workflow, the dispatch has **escaped**.
-- If the main workflow is `strict: true`, an attempted handoff outside the
-  allowed set is a loud engine defect. Otherwise it is allowed and shown as
-  an escape.
+- The **main workflow** is engaged for the dispatch lifetime, including queued
+  time and handoffs.
+- A **connected workflow** is engaged only while the active node belongs to it.
+- If the active node is in the main workflow, main takes precedence and
+  connected containers are suppressed.
+- If the active node leaves main and every allowed connected workflow, the
+  dispatch has **escaped**.
+- If main is `strict: true`, a handoff outside the allowed set is an engine
+  `workflow.escape` defect. Otherwise it is allowed and shown as an escape.
 
-A node dispatch never engages a workflow and never draws a workflow
-container.
+A node dispatch never engages a workflow and never draws a workflow container.
+A queued workflow dispatch shows its main container in queued style; no
+connected container appears until an active node enters one.
 
-### Queued workflow
+### 4.4 Shared nodes
 
-A queued workflow dispatch still has a main workflow. The main container is
-shown in a waiting/queued style. No connected container is shown until an
-active node enters one.
+Draw a node once. The Graph shows only engaged containers and only the engaged
+workflow context for a node. Details lists all of the active node's workflow
+memberships.
 
-### Shared nodes
+### 4.5 Details and plural active work
 
-A node is drawn once. The Graph shows only engaged workflow containers and
-only the engaged workflow context for a node. Details lists the active
-node's workflow memberships.
-
-### Details and plural active work
-
-- The display model accepts a list of active dispatches, even though the v1
-  engine runs one dispatch at a time. The extension point is the list, not a
-  single fixed active slot.
-- Details shows one entry per active dispatch, in the display model's active
-  order. With one active dispatch it shows one entry; with several it shows
-  several live entries.
-- With no active dispatch, the Details pane is empty (only its pane title
-  remains). Queued work is shown by waiting containers and the Run console,
-  not as a Details entry.
+- The display model accepts a list of active dispatches even though the v1
+  engine runs one at a time.
+- Details shows one entry per active dispatch, in active-list order.
+- With no active dispatch, the Details body is empty; only the pane title
+  remains. Queued work is shown by waiting containers and the Run console.
 - v1 has no node-selection keybinding and no idle/default Details node.
-  Arbitrary idle-node browsing, if wanted later, requires an explicit visible
-  selection with a focus ring.
 
-### Canonical engagement fixture
+### 4.6 Canonical fixtures
 
-The implementation must test this fixture, independent of the live engine.
-
-### Display fixture
-
-Main workflow A is **non-strict** for the display cases. The engine-strict
-case is separate.
+The pure engagement model must be tested against this display fixture:
 
 | Workflow | Entry | Exit | Nodes | Connections | Strict |
 |---|---|---|---|---|---|
@@ -171,45 +121,30 @@ case is separate.
 | C (connected) | y | o2 | y, o2 | none | false |
 | D (unconnected) | d1 | d1 | d1 | none | false |
 
-Shared nodes: `x` is in A+B; `y` is in B+C. Node `z` is A only; `o` is in no
-workflow; `d1` is D only.
-
-Expected display:
+Shared nodes: `x` is in A+B; `y` is in B+C. Node `z` is A only; `o` belongs to
+no workflow; `d1` is D only.
 
 | Case | Containers | Details entries |
 |---|---|---|
 | Node dispatch at `x` | none | empty |
-| Workflow A queued at `a1` | A, queued style | empty |
+| Workflow A queued at `a1` | A, queued | empty |
 | A active at `z` | A | `z`: A active |
-| A active at `x` | A only (main precedence) | `x`: A active; B inactive |
-| A active at `y` | A, B, and C | `y`: B and C active |
-| A active at `o` | A plus escape warning | `o`: no active memberships |
-| A active at `d1` | A plus escape warning | `d1`: D inactive |
-| Two active: A at `z`, B at `y` (B is a workflow dispatch) | A and B, offset/overlapping, no duplicate nodes | `z`: A active; `y`: B active, C inactive |
+| A active at `x` | A only | `x`: A active; B inactive |
+| A active at `y` | A, B, C | `y`: B and C active |
+| A active at `o` | A plus escape | `o`: no active memberships |
+| A active at `d1` | A plus escape | `d1`: D inactive |
+| Two active: A at `z`, B at `y` | A and B, offset/overlapping, no duplicate nodes | `z`: A active; `y`: B active, C inactive |
 
-### Strict fixture
+The strict fixture makes A `strict: true`: a handoff to `o` or `d1` is an
+engine `workflow.escape` defect. The layout crossing fixture has workflow E
+(`e1,e3`) interleaved with F (`e2,e4`); a closed container must not claim a
+non-member. Use rails/brackets or a contiguous-layout guarantee.
 
-Main workflow A has `strict: true`. A handoff from any allowed node to `o`
-or `d1` is an engine defect `workflow.escape`. The pure display model does
-not test the defect row; the engine test does.
+The display fixture is a model fixture, not a runnable engine config. Runnable
+boundary fixtures are `dashboard/fixtures/live-boundary.json` and
+`dashboard/fixtures/live-boundary-strict.json`.
 
-### Crossing fixture
-
-Workflow E contains nodes `e1, e3`; workflow F contains `e2, e4`; the
-layout interleaves them. A bounding rectangle would falsely include
-non-members. The layout must use rails/brackets or a contiguous-layout
-guarantee in this case; it must not draw a closed container that claims
-non-members.
-
-The pure engagement model must be unit-tested against the display fixture.
-The layout model must be unit-tested against the crossing fixture. Strict
-behavior is tested by the engine. The display fixture is a model fixture,
-not a runnable engine config; ticket 009 defines the valid non-strict and
-strict temporary engine graphs.
-
-## 6. Layout
-
-The dashboard has these regions:
+## 5. Layout
 
 ```text
 ┌─ Header ──────────────────────────────────────────────────────────────┐
@@ -227,282 +162,412 @@ The dashboard has these regions:
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Header:** graph identity, number of workflows/nodes, engine validity
-  and live/idle state, version, `read-only`, `esc to close`.
-- **Outline:** all workflows, all nodes, engagement/state badges, shared
-  membership indicators, graph summary. It is navigation/context, not a
-  duplicate graph canvas.
-- **Graph:** the configured graph. Nodes are native cards; handoffs are
-  native connectors. Workflow containers enclose engaged workflow node
-  sets. This pane is labelled **Graph**.
-- **Details:** one entry per active dispatch. Each entry contains the hidden
-  literal detail: helper, handoff resume behavior, objective/brief, output,
-  max visits, handoffs, workflow memberships, run state. The pane is empty
-  when no dispatch is active.
-- **History:** a newest-first activity timeline for the engine process.
-  Details sits above it at split sizes; collapsed layouts use a one-line
-  History strip. See `DASHBOARD-MOTION-HISTORY-SPEC.md` for exact behavior.
-- **Run console:** read-only active/queued dispatch information, cost,
-  tokens, defects, and recent state. No start-node selector, prompt field,
-  or dispatch control.
-- **Footer:** `active` / `queued` / `defect` counts, elapsed, cost/tokens,
-  `read-only`, and `esc to close`.
+- **Header:** graph identity, workflow/node counts, validity, live/idle state,
+  version, `read-only`, `esc to close`.
+- **Outline:** all workflows and nodes, engagement/state badges, shared-node
+  indicators, graph summary.
+- **Graph:** configured graph; native node cards, connectors, and engaged
+  workflow containers. Labelled **Graph**.
+- **Details:** one entry per active dispatch: graph agent, handoff resume
+  behavior, objective/brief, output, max visits, handoffs, workflow
+  memberships, run state, output path. Empty when idle.
+- **History:** newest-first recent activity for the engine process. Split mode
+  gives it a pane under Details; collapsed modes use a one-line strip.
+- **Run console:** read-only active/queued work, cost, tokens, defects, recent
+  state. No start-node selector, prompt field, or dispatch control.
+- **Footer:** active/queued/defect counts, elapsed, cost/tokens, `read-only`,
+  `esc to close`.
 
-## 7. Visual system
+Details is top-right and History is bottom-right. The Run console remains a
+separate full-width region above the footer.
 
-### Theme
+## 6. Visual system
 
-All colors come from the active OpenCode theme's semantic tokens. The
-dashboard inherits gruvbox or any other active theme. No hardcoded hex
-colors, no raw ANSI escape codes, and no unthemed default text outside the
-theme's normal text tokens.
+### 6.1 Theme and mapping
 
-### A mapping
-
-Color carries state and handoff meaning:
+All colors come from the active OpenCode theme. No hardcoded hex colors, raw
+ANSI, or unthemed default text.
 
 - **Node state:** running, queued, idle, terminal.
-- **Node emphasis:** active nodes are bright and visually leading;
-  inactive nodes are still and comparatively desaturated.
-- **Handoff edges:** `next` is neutral; `pass` uses success; `fail` uses
-  error. Other labels use a neutral/muted edge style.
-- **Workflow containers:** categorical theme hue per workflow; the main
-  container is visually primary. Queued main uses the warning surface.
-- **Details active entry:** the active entry and active containers use accent
-  or categorical emphasis.
-- **Escape:** a small, noticeable warning treatment on the active node and
-  a Details explanation.
-- **Workflow membership:** quiet badges or container membership. The Graph
-  does not list every workflow a node belongs to; Details carries the full
-  list.
+- **Emphasis:** active nodes are bright; inactive nodes are still and
+  desaturated.
+- **Handoff edges:** `next` neutral; `pass` success; `fail` error; other labels
+  neutral/muted.
+- **Containers:** categorical theme hue per workflow; main is visually primary;
+  queued main uses warning.
+- **Details:** active entry and active containers use accent/categorical
+  emphasis.
+- **Escape:** small warning on the active node and a Details explanation.
+- **Membership:** quiet badges; Graph does not list every membership; Details
+  carries the full list.
 
-Icons and labels reinforce color. Meaning must not depend on color alone.
+Icons and labels reinforce color; meaning must not depend on color alone.
 
-### Node cards
+### 6.2 Node cards
 
-A node is a native bordered card, not a row in a character grid. It shows:
+A native bordered card shows node id, state marker/label, and a compact
+graph-agent cue where space allows. Contract details move to Details. Inactive
+cards use muted/faint tokens; active cards use state color and a raised surface.
 
-- node id
-- state icon/marker and state
-- a compact helper cue where space allows
+### 6.3 Links
 
-Detailed contract, objective, visits, and output move to Details. Inactive
-cards use muted/faint theme tokens; active cards use the state color and a
-raised surface where appropriate.
+Native connectors with clean corners and arrows. Every handoff label is a
+small native chip attached to its connector; labels are not omitted or left
+floating. Chip and connector use the handoff color. A return handoff with
+`resume: true` carries a resume marker on its chip and in Details; there is no
+free-standing node `resume`/`fresh` label. Cross-workflow movement is visible
+through containers and node positions, not extra prose.
 
-### Links
+`$dispatcher` is a completion target, not a graph node. It is shown in the
+node contract, result, and history, and is intentionally excluded from the
+connector layout so it cannot create a phantom node or route.
 
-Links are native connectors with clean corners and arrows. Every handoff
-label is rendered as a small native chip attached to its connector with a
-short tick or line; labels are not omitted and do not float in open space.
-The chip and connector use the handoff color. Nodes have no session mode.
-A return handoff with `resume: true` carries a resume marker on its chip
-and in Details; there is no free-standing node `resume`/`fresh` label.
-Cross-workflow movement is visible through the workflow containers and the
-node positions, not through extra prose.
-
-### Workflow containers
+### 6.4 Workflow containers
 
 - Main workflow: always present for a workflow dispatch; active or queued.
 - Connected workflow: present only while the active node is inside it, and
-  only when no main precedence applies.
+  only when main precedence does not suppress it.
 - Inactive workflows: no container.
-- Containers use a thin native border and a compact label.
-- Overlapping/shared workflows in future concurrency use nested/offset
-  containers or dedicated rails with distinct categorical colors. Shared
-  nodes are never duplicated.
+- Thin native border and compact label.
+- Overlapping/shared workflows use nested/offset containers or rails with
+  distinct categorical colors. Never duplicate a shared node.
 - A node dispatch draws no container.
 
-### Details
+### 6.5 Details
 
-Each Details entry corresponds to an active dispatch. It contains all
-workflow memberships for that node, active memberships first. Active
-memberships are saturated and use the workflow color; inactive memberships
-are desaturated/muted. Contract, objective, run state, and output remain
-literal and readable. With no active dispatch, the pane body is empty.
+Each details entry is an active dispatch. List all workflow memberships,
+active first; active memberships are saturated in the workflow color, inactive
+memberships muted. Contract, objective, run state, and output are literal and
+readable. With no active dispatch, the pane body is empty. Multiple active
+entries are separated by a thin native divider.
 
-### Motion
+## 7. Motion
 
-Workflow containers are static. Running node cards keep their border,
-surface, text, and layout fixed; a two-cell heavier segment moves slowly
-along the top border in the same running accent hue. A new handoff may play
-a one-shot token along the actual connector. Inactive and queued content is
-still. See `DASHBOARD-MOTION-HISTORY-SPEC.md` §7 for the exact contract.
+### 7.1 Containers
 
-## 8. Component architecture
+Workflow containers are completely static. Their border, title, label, and
+ticks never pulse, blink, fade, or move. Color conveys state; motion does not.
 
-The dashboard is implemented in a tracked `dashboard/` package and loaded
-as the OpenCode TUI plugin. Live source is `dashboard/src/`; fixtures are
-`dashboard/fixtures/`; tests are `dashboard/test/`. The
-`.opencode/plugins/graph-dashboard` path must point at or install that
-tracked package; the ignored `.opencode` tree is not the source of truth.
-The old ignored `tui.tsx`/`render.mjs` must be removed.
+### 7.2 Running-node border sweep
 
-The dashboard is implemented in the OpenCode TUI plugin, natively:
+The running card's border color, background, title, graph-agent text, state
+marker, content, and layout remain fixed. Motion is a two-cell heavy horizontal
+segment (`━━`) traveling along the top border:
 
-- `Dashboard` — flex layout and data orchestration.
-- `Header` — graph/workflow identity and status chips.
-- `Outline` — workflows/nodes/navigation.
-- `GraphPane` — configured graph, node cards, connectors.
-- `WorkflowContainer` — main/connected/queued boundary.
-- `NodeCard` — native node card and state styling.
-- `Connector` — native link/arrow/corner rendering.
-- `Details` — active-work entries, contract and membership sections.
-- `RunConsole` — read-only current state and recent events.
-- `StatusBar` — counts, cost/tokens, read-only, close hint.
+- one row high, on the top border, starting at `card.x + 1`;
+- moves right one cell at a time and wraps; never enters the rounded corners;
+- 250ms per cell; period `250 * max(1, card.width - 3)`ms; offset
+  `floor(elapsedMs / 250) % max(1, card.width - 3)`;
+- for a 34-cell card: 31 positions, 7750ms loop;
+- bounded native positioned component/segment, not a character buffer or
+  per-cell style grid;
+- stops immediately when the node is no longer running; queued, idle, and
+  terminal nodes have no sweep;
+- never changes card width, height, padding, text, or position;
+- no sweep below 6 cells.
 
-The implementation must not use a monolithic pre-rendered string grid with
-per-cell color spans. Layout, borders, padding, surfaces, and focus are
-owned by OpenTUI components. Character text may be used inside a connector
-or label, but not as the entire dashboard rendering medium.
+With multiple active dispatches, each running node may have its own sweep.
 
-### Native layout model
+### 7.3 Connector runner
 
-The Graph pane is a positioned native container. A pure layout model
-computes native component rectangles; it does not allocate a character
-buffer or a coordinate-indexed style array.
+When a new `handoff` entry appears in `runtime.history`, one accent token
+travels along the actual connector from its `from` node to its `to` node.
 
-- One native `NodeCard` is rendered per configured node.
-- Native `WorkflowContainer` boxes are positioned behind the node cards
-  with lower z-index. They enclose the bounding rectangle of the workflow's
-  node cards **only when that rectangle contains no non-members**. The
-  layout model must guarantee contiguous ranges for closed containers.
-- When a workflow's nodes are interleaved with non-members, use a native
-  rail/bracket attached to the member cards instead of a closed box. A
-  closed box must never imply false membership.
-- Shared nodes are not children of containers; they exist once in the node
-  layer. Multiple containers/rails may reference the same node.
-- Containers that overlap use offset insets, distinct categorical colors,
-  and distinct labels. They must not duplicate a node.
-- Connectors are bounded native text elements: a short orthogonal segment
-  or arrow between two node cards. They are positioned by the layout
-  model. A connector may use box-drawing glyphs; it may not render the
-  whole graph as a text drawing.
-- Responsive sizing changes the layout model's available rectangle and
-  component visibility; it does not switch back to a character grid.
+**Trigger:** on mount, store `historyEpoch` and the maximum `seq` (or 0); do
+not animate existing entries. If the epoch changes, reset the watermark and
+animate nothing. Otherwise animate entries with `kind === "handoff"` and
+`seq > watermark`: one new handoff animates once; several animate only the
+highest `seq`, replacing earlier tokens. Advance the watermark to the maximum
+`seq` in the new history. A truncated but monotonic history with the same epoch
+behaves unchanged.
 
-### Anti-canvas check
+**Geometry:** each layout route exposes an ordered `runnerPath` from source
+card edge to target card edge, including corners. Interpolate by segment
+length. Self-handoffs are legal but produce no token and do not crash. Back and
+forward label chips stay off the path; the token follows line cells only.
 
-Ticket 006 must include an executable static check at
-`dashboard/test/no-canvas.test.mjs`, run by
-`node --test dashboard/test/*.test.mjs`. It scans **`dashboard/src/` only**
-(excluding fixtures and tests) and fails on `renderFrame`, `canvas`,
-`styles[row][col]`, `paint`, `hline`, `vline`, a graph-level `box(` helper,
-a row-per-line string grid, or `render.mjs`. Known-bad fixtures live outside
-the scanned root and prove each pattern fails. The check is part of the
-review gate, not a comment in the spec.
+**Style:** one-cell `◆`; 900ms; removed at end; stays on the route; does not
+overlay label chips; does not change layout. Token color by handoff label:
+`next` muted, `pass` success, `fail` error, other faint. The connector itself
+does not change color or weight. The first active node gets only the border
+sweep, not a handoff token.
 
-## 9. Data contract
+## 8. History
+
+History is a recent activity timeline, not a run archive.
+
+### 8.1 Scope and retention
+
+- Scoped to the engine process and workspace, shared by all OpenCode sessions
+  connected to that engine.
+- Resets when the engine restarts.
+- Newest 100 entries; entry 101 drops the oldest.
+- `seq` is monotonic for the engine boot, starts at 1, and is never reused.
+
+### 8.2 Row grammar
+
+Each row is one line, newest first:
+
+```text
+HH:MM:SS  <dispatchId or —>  <event summary>
+```
+
+| Engine entry | Summary |
+|---|---|
+| `queued` with workflow | `queued · <workflow> · <node>` |
+| `queued` without workflow | `queued · node <node>` |
+| `dispatched` | `dispatched · <node>` |
+| `step`, phase `begin` | `<node> · begin` |
+| `step`, phase `end` | `<node> · end · <outcome or —> · <label or —>` |
+| `handoff` | `<from> → <to> · <label>` |
+| `completion`, `completed` | `completed · <terminal or —>` |
+| `completion`, `cancelled` | `cancelled · <terminal or —>` |
+| `defect` | `defect · <code or —>` |
+| `reloaded` | `graph reloaded · valid` or `graph reloaded · invalid` |
+
+Rules:
+
+- Missing `dispatchId` displays `—`.
+- Missing `node`, `from`, `to`, `label`, `outcome`, `terminal`, or `code`
+  displays `—`.
+- A dispatch defect emits one `defect` row; the following `completion` with
+  status `defect` is suppressed. An orphan defect completion is projected as
+  a `defect` row.
+- Engine-level defects with no `dispatchId` use
+  `HH:MM:SS  —  defect · <code>`.
+- Completed and cancelled dispatches get one completion row.
+- Empty History displays exactly `No activity yet.`
+- The strip displays `History · <newest row>`; empty displays
+  `History · No activity yet.`
+- Rows may truncate deliberately; they never wrap accidentally.
+- Rows may use static handoff/state colors. New rows do not flash, blink, or
+  change existing contrast.
+
+### 8.3 Timestamps
+
+Display local wall-clock `HH:MM:SS` from `at`. The formatter is pure with an
+optional fixed timezone for tests/captures; normal display uses local time.
+Capture runs set `TZ=UTC` and fixed fixture timestamps.
+
+### 8.4 Engine runtime history
+
+`graph-map.runtime.history` is a chronological array, oldest to newest, and is
+the sole source for History and the connector runner.
+
+Every entry is a new object with exactly these 15 keys:
+
+```js
+{
+  seq: 1,
+  at: "2026-10-30T20:00:00.000Z",
+  kind: "handoff",
+  dispatchId: "d-1",
+  workflow: "build-review",
+  node: null,
+  phase: null,
+  outcome: null,
+  label: "fail",
+  from: "review",
+  to: "implement",
+  status: null,
+  terminal: null,
+  code: null,
+  valid: null
+}
+```
+
+Allowed `kind` values: `queued`, `dispatched`, `step`, `handoff`,
+`completion`, `defect`, `reloaded`. Fields not applicable are `null`; `valid`
+is boolean for `reloaded` and `null` otherwise.
+
+Projection rules:
+
+- History is an allowlisted projection, not a copy of a raw event or
+  `lastEvent`.
+- `at`: use the raw ISO `at`, else stamp capture time.
+- `workflow`: enrich from the dispatch record; `null` for engine-level
+  defects/reloads or unknown records.
+- `step` end carries `outcome`, `label`, no session id.
+- `handoff` carries `from`, `to`, `label`.
+- `completion` carries `status`, `terminal`, and a defect `code` when present.
+  A `defect` completion is suppressed only when a dispatch defect was already
+  recorded; an orphan is projected as `defect`.
+- `defect` carries `code` only; no message.
+- `reloaded` carries `valid` only.
+- `queued`/`dispatched` carry `node` and `workflow` where available.
+- Exclude `heartbeat`, `ready`, `version`, `paused`, `resumed`, and every
+  non-activity event.
+- Never copy prompt, output/file content, session id, upstream path, session
+  mode, usage, tokens, defect message, reload faults, or config path.
+
+`runtime.historyEpoch` is a unique string per engine boot, outside the 15
+entry keys. `runtime.history` is the newest 100 entries. `lastEvent` and
+`lastDefect` remain for compatibility. The dashboard adapter defaults missing
+or malformed history to `[]`, passes the epoch through, and defaults a missing
+epoch to `""`. History is not written to disk.
+
+## 9. Responsive behavior
+
+Supported minimum is **60×20**. Below that the panel may clip but must not
+crash; History is guaranteed at 60×20 and above.
+
+Mode flags:
+
+- `split = width >= 120 && height >= 36`
+- `detailsPane = split`
+- `historyPane = split`
+- `showOutline = width >= 90`
+- `detailsStrip = !split && width >= 90`
+- `historyStrip = !split`
+- History is never hidden at a supported size.
+
+Widths:
+
+- Outline: 26 at ≥160; 22 at 120–159; 20 at 90–119; hidden below 90.
+- Details in split: 42 at ≥160; 34 at 120–159.
+- History width equals the right-column width in split.
+- Graph width:
+  `width - 2 - gaps - outlineWidth - detailsWidth - 4`, where `gaps` is one
+  less than the number of visible body columns and Graph always counts.
+- Expected graph widths: 160×50 84; 120×40 56; 120×36 56; 120×35 91;
+  160×30 127; 119×50 92; 100×30 73; 90×24 63; 80×24 74; 60×20 54.
+
+Height split (split mode): let `H` be the available right-column pane height
+after body padding.
+
+- reserve one row between Details and History;
+- `historyHeight = max(8, floor((H - 1) * 0.4))`;
+- `detailsHeight = H - 1 - historyHeight`;
+- both include native borders;
+- at 120×36, H=24: History 9, Details 14;
+- at 120×35, H=23: strip mode;
+- at 120×40, H=28: History 10, Details 17;
+- at 160×50, H=37: History 14, Details 22.
+
+Stack:
+
+```text
+split:  Header -> body [Outline, Graph, right column{Details, History}] -> Run console -> Footer
+strip:  Header -> DetailsStrip (width >= 90 only) -> body [Outline?, Graph]
+        -> HistoryStrip -> Run console -> Footer
+```
+
+- `DetailsStrip`: height 2 including bottom border, one content row; first
+  active entry's node, state, graph agent, and memberships; idle shows only
+  the `Details` label.
+- `HistoryStrip`: exactly one row, no border, above the Run console; newest
+  event only.
+- In strip mode the Graph keeps the remaining body height. History takes body
+  height only.
+
+Run console heights: >40 → 8 rows; 30–40 → 7; 24–29 → 6; below 24 → 3. History
+never takes rows from it.
+
+Size matrix:
+
+| Size | Outline | Details | History | Run console |
+|---|---|---|---|---|
+| 160×50 | 26 | split, 22 | split, 14 | 8 |
+| 120×40 | 22 | split, 17 | split, 10 | 7 |
+| 120×36 | 22 | split, 14 | split, 9 | 7 |
+| 120×35 | 22 | strip, 2 | strip, 1 | 7 |
+| 160×30 | 26 | strip, 2 | strip, 1 | 7 |
+| 119×50 | 20 | strip, 2 | strip, 1 | 8 |
+| 100×30 | 20 | strip, 2 | strip, 1 | 7 |
+| 90×24 | 20 | strip, 2 | strip, 1 | 6 |
+| 80×24 | hidden | hidden | strip, 1 | 6 |
+| 60×20 | hidden | hidden | strip, 1 | 3 |
+
+No accidental wrapping. Long History rows truncate. The Graph remains the
+primary readable pane. Header and footer stay fixed.
+
+## 10. Data contract
 
 The dashboard reads:
 
-- Graph config: nodes, helpers, handoffs, workflows, connections, strict.
-- Engine `graph-info` for the config path, graph/workflow metadata,
-  `version` (the engine version string), and `valid` (whether the loaded
-  config is valid). The header displays the engine version; the config
-  schema version is not the display version.
-- Engine `graph-map` for structured runtime: `runtime.active`,
-  `runtime.queue`, `runtime.lastDefect`, `runtime.lastEvent`,
-  `runtime.history`, and `runtime.historyEpoch`.
-- `dispatch/status` for active and queued dispatch details, including
-  `node`, `workflow`, state, visits, usage, output, and defect.
+- graph config: nodes, graph agents, handoffs, workflows, connections, strict;
+- `graph-info`: config path, graph/workflow metadata, engine `version`,
+  `valid`; the header shows the engine version, not the config schema version;
+- `graph-map.runtime`: `active`, `queue`, `lastDefect`, `lastEvent`, `history`,
+  `historyEpoch`;
+- `dispatch/status` for active/queued details: node, workflow, state, visits,
+  usage, output, defect.
 
-The dashboard must not parse the human-readable `graph-map.state` string
-to discover active or queued dispatches. Structured runtime fields are the
-contract.
+Do not parse `graph-map.state` to discover active or queued dispatches;
+structured runtime fields are the contract. A workflow dispatch carries its
+main `workflow`; a node dispatch has `workflow: null`. The engine is
+authoritative for strict boundary errors; the view computes main/connected/
+escaped display from the active node and the config.
 
-A workflow dispatch's status includes its main `workflow`; a node dispatch
-has `workflow: null`.
+## 11. Component architecture and anti-canvas
 
-The engine is authoritative for strict boundary errors. The view computes
-the display of main/connected/escaped state from the active node and the
-configuration.
+The dashboard is a tracked `dashboard/` package loaded as the OpenCode TUI
+plugin. Live source is `dashboard/src/`; fixtures are `dashboard/fixtures/`;
+tests are `dashboard/test/`. The ignored `.opencode` tree is not the source of
+truth.
 
-## 10. Responsive behavior
+Components: `Dashboard`, `Header`, `Outline`, `GraphPane`,
+`WorkflowContainer`, `NodeCard`, `Connector`, `Details`, `HistoryPane`,
+`HistoryStrip`, `ConnectorRunner`, `RunConsole`, `StatusBar`.
 
-The dashboard fills the panel and uses flex layout. It must not depend on a
-fixed 120×40 or 225×67 character grid. The motion/history amendment defines
-the split Details/History right column and the never-hidden History strip.
+The Graph pane is a positioned native container. A pure layout model computes
+native component rectangles; it does not allocate a character buffer or
+coordinate-indexed style array.
 
-- Wide: Outline, Graph, Details, and Run console visible.
-- Medium: Details may narrow; node cards remain readable.
-- Narrow: Details and/or Outline collapse before the Graph becomes
-  unreadable; the Graph remains the primary pane.
-- Height: the Graph and Run console share available space; the header and
-  footer remain fixed. Secondary content may clip or scroll deliberately;
-  the frame must not wrap accidentally.
+- One `NodeCard` per configured node.
+- Workflow boxes sit behind cards. A closed box is allowed only when its
+  rectangle contains no non-members; otherwise use a rail/bracket.
+- Shared nodes exist once. Multiple containers/rails may reference the same
+  node. Overlapping containers use offset insets, distinct colors, and labels.
+- Connectors are bounded native text elements positioned by the layout model.
+- Responsive sizing changes available rectangles and visibility, never back to
+  a character grid.
 
-### Size matrix
+Anti-canvas check: `dashboard/test/no-canvas.test.mjs` scans `dashboard/src/`
+only (not fixtures/tests) and fails on `renderFrame`, `canvas`,
+`styles[row][col]`, `paint`, `hline`, `vline`, a graph-level `box(` helper, a
+row-per-line string grid, or `render.mjs`. Known-bad fixtures live outside the
+scanned root and prove each pattern fails.
 
-| Size | Required behavior |
-|---|---|
-| 160×50 | Outline, Graph, split Details/History, Run console visible |
-| 120×40 | Full layout; right column split Details/History; Details may narrow |
-| 120×36 | Split boundary: Details/History panes visible |
-| 120×35 | Details strip and one-line History strip; Graph, Run console, header, footer visible |
-| 100×30 | Details strip and one-line History strip; Outline narrows |
-| 80×24 | Outline and Details hidden; Graph, one-line History strip, Run console, header, footer visible |
-| 60×20 | Graph, one-line History strip, header/footer; Run console deliberately clipped |
+## 12. Tests and acceptance
 
-The right column splits at width ≥120 and height ≥36; below that height the
-Details/History strips are used. History is never hidden at supported sizes.
-The Graph remains the primary readable pane at every size. No accidental
-row wrapping is allowed. Resizing the terminal reflows the layout without
-requiring a restart.
+The work is complete when:
 
-## 11. Acceptance criteria
+1. The dashboard uses native OpenTUI components and theme tokens; no
+   character-canvas renderer or per-cell tinting.
+2. The Graph pane shows the configured graph, not only the first workflow.
+3. All nodes appear once; edges reflect handoffs; inactive nodes are still and
+   desaturated; active nodes are prominent.
+4. A running node has only the shape-only top-border sweep; containers are
+   static; inactive/queued nodes are still.
+5. A workflow dispatch draws its main container; a node dispatch draws none; a
+   queued workflow draws a waiting main container.
+6. Connected containers appear only while the active node is inside them; main
+   precedence suppresses duplicates; escapes show a warning, and strict mode
+   produces an engine defect.
+7. Details lists all memberships per active entry, active first, saturated
+   active and muted inactive; it is empty when idle; queued work is not a
+   Details entry.
+8. History has the specified row grammar, engine-process/workspace scope,
+   100-entry cap, structured 15-key projection, and one-line strip; it is
+   never hidden at supported sizes.
+9. The connector runner animates a new handoff once, never replays history at
+   mount or after a seq reset, and self-handoffs produce no token.
+10. The responsive matrix, split formula, strips, and unchanged console heights
+    pass; no accidental wrapping; `esc` returns to the same chat/session/agent.
+11. The dashboard consumes structured runtime and never parses the
+    human-readable state string; graph reload updates structure without a TUI
+    restart.
+12. Engine/dashboard suites pass; anti-canvas is green; the real
+    `DashboardView` captures active-split, idle-split, 120×40, and 80×24 states
+    with frozen clocks and `TZ=UTC`.
 
-The work is complete when a reviewer can verify:
+## 13. Deferred
 
-1. The dashboard is built from native OpenTUI components and theme tokens;
-   no character-canvas renderer or per-cell tinting is used for the
-   dashboard.
-2. The middle pane is labelled **Graph** and shows the configured graph,
-   not only the first workflow.
-3. All configured nodes are represented once; edges reflect handoffs.
-4. Active nodes are visually prominent; inactive nodes are still and
-   desaturated.
-5. A running node has a shape-only top-border sweep; inactive and queued
-   nodes are still, and workflow containers are static.
-6. A workflow-targeted dispatch draws the main workflow container; a node
-   dispatch draws none.
-7. A queued workflow draws a waiting main container.
-8. A connected workflow container appears only while the active node is
-   inside it; main precedence suppresses duplicate connected containers.
-9. An escape outside main and connected workflows shows a small warning;
-   strict mode produces an engine defect.
-10. Details lists all memberships for each active entry, active first, with
-    saturated active and desaturated inactive states; it is empty when no
-    dispatch is active.
-11. `esc` closes the panel and returns to the same chat/session/agent.
-12. The layout responds to terminal size without the broken frame/wrap
-    failure.
-13. The previous `graph-view` agent and `/graph` command are not
-    reintroduced.
-14. The engine/config/API tests and the dashboard checks pass.
-15. Node cards show id, state, and a compact helper cue; Outline
-    lists all workflows and nodes with engagement/shared indicators;
-    Header shows graph identity, validity, engine state, and version;
-    Footer shows counts, elapsed, cost/tokens, read-only, and close hint.
-16. Details shows each active node's helper, handoff resume behavior,
-    objective, output, max visits, handoffs, all workflow memberships, run
-    state, and output path.
-17. The Run console shows active and queued dispatches, defects, cost, and
-    tokens, and never shows dispatch controls.
-18. The dashboard consumes structured runtime data and does not parse the
-    human-readable state string.
-19. The canonical engagement fixture and pure engagement tests pass.
-20. A graph reload while the panel is open updates the structure without a
-    TUI restart; a strict escape defect is visible in the Run console or
-    footer.
-21. The responsive size matrix passes at 160×50, 120×40, 100×30, 80×24,
-    and 60×20.
-
-## 12. Deferred
-
-- Concurrent and parallel workflow execution beyond the displayed data
-  model.
-- Editing, draft/apply, and dispatch controls in the dashboard.
-- A table view as a first-class alternative.
-- A general graph layout engine for arbitrarily large graphs.
-- Entropy/coherence mechanisms outside the graph view.
+- Run archive / completed-dispatch list.
+- Persisted activity history or per-OpenCode-session filtering.
+- Node selection or pointer/keyboard browsing.
+- Dispatch controls, editing, or scoped chat.
+- Parallel workflow execution beyond the display model.
+- Reduced-motion preference.
+- A general layout engine for arbitrarily large graphs.

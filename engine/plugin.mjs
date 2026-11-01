@@ -9,17 +9,20 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-function renderPlugin({ url, token }) {
+function renderPlugin({ url, token, labels = [] }) {
   return `import { Plugin } from "@opencode/plugin";
 
 const ENGINE_URL = ${JSON.stringify(url)};
 const TOKEN = ${JSON.stringify(token)};
+const HANDOFF_LABELS = ${JSON.stringify(labels)};
+const OWNED = Symbol("engine-handoff.owned");
 
 // One tool surface for both sides:
-// - handoff: the helper's lever inside a node.
-// - dispatch/dispatch_wait/dispatch_status/dispatch_cancel/reload/graph_info/graph_map:
-//   the interactive agent's control surface. Helper sessions are created with
-//   permissions that hide the control tools; the interactive session sees them.
+// - one generated handoff tool per declared label inside a node.
+// - dispatch/dispatch_status/dispatch_cancel/reload/graph_info/graph_map:
+//   the interactive agent's control surface. Graph agent sessions are created
+//   with permissions that hide the control tools; the interactive session sees
+//   them.
 export default Plugin.define({
   id: "engine-handoff",
   async setup(ctx) {
@@ -51,42 +54,60 @@ export default Plugin.define({
       return json ?? {};
     };
 
-    await ctx.tool.transform((editor) => {
-      editor.add({
-        name: "handoff",
-        description:
-          "Finish this node and hand off to exactly one next node. Call exactly once, after the required output file exists. The label must be one declared in your brief.",
-        input: {
-          type: "object",
-          properties: { label: { type: "string", description: "The declared handoff label." } },
-          required: ["label"],
-          additionalProperties: false,
-        },
-        options: { codemode: false, permission: "handoff" },
-        async execute(input, context) {
-          await call("/handoff", {
-            label: input.label,
-            sessionID: context.sessionID,
-            callID: context.toolCallID ?? context.id,
-            messageID: context.messageID,
-            agent: context.agent,
-          }, context, "handoff");
-          return { content: "handoff accepted: " + input.label };
-        },
-      });
+    const report = async (path, body) => {
+      try {
+        await fetch(ENGINE_URL + path, {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-engine-token": TOKEN },
+          body: JSON.stringify(body),
+        });
+      } catch {
+        // The engine fails dispatch preflight closed if this report is missing.
+      }
+    };
 
+    const waitForTerminal = async (dispatchId) => {
+      for (;;) {
+        const res = await fetch(ENGINE_URL + "/tool/dispatch/wait", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-engine-token": TOKEN },
+          body: JSON.stringify({ dispatchId, timeoutMs: 300000 }),
+        });
+        if (!res.ok) throw new Error("engine returned " + res.status);
+        const result = await res.json();
+        if (["completed", "defect", "cancelled"].includes(result.state)) return result;
+      }
+    };
+
+    let catalogAvailable = true;
+    let collisions = [];
+    let generatedLabels = [];
+    const handoffDescription = "Finish this node and hand off with a message. Call exactly once.";
+    const handoffInput = {
+      type: "object",
+      properties: {
+        message: { type: "string", description: "The handoff message." },
+      },
+      required: ["message"],
+      additionalProperties: false,
+    };
+    const sameDefinition = (tool) =>
+      JSON.stringify(tool?.description) === JSON.stringify(handoffDescription) &&
+      JSON.stringify(tool?.input) === JSON.stringify(handoffInput);
+    await ctx.tool.transform((editor) => {
       editor.add({
         name: "dispatch",
         description:
-          "Dispatch a prompt into the graph at exactly one of a node or a workflow. A workflow dispatch starts at its entry and engages the workflow boundary; a node dispatch engages no workflow. wait=true blocks for the result; wait=false returns a dispatch id immediately.",
+          "Dispatch a prompt into the graph at exactly one of a node or a workflow. A workflow dispatch starts at its entry and engages the workflow boundary; a node dispatch engages no workflow. Foreground blocks; background returns a dispatch id immediately.",
         input: {
           type: "object",
           properties: {
             node: { type: "string", description: "Start at this node. Do not combine with workflow." },
             workflow: { type: "string", description: "Start this workflow at its entry. Do not combine with node." },
             prompt: { type: "string" },
-            wait: { type: "boolean" },
-            timeoutMs: { type: "number" },
+            background: { type: "boolean" },
+            resume: { type: "boolean" },
+            dispatchId: { type: "string" },
           },
           required: ["prompt"],
           additionalProperties: false,
@@ -97,46 +118,61 @@ export default Plugin.define({
             node: input.node,
             workflow: input.workflow,
             prompt: input.prompt,
+            background: input.background === true,
+            resume: input.resume === true,
+            dispatchId: input.dispatchId,
+            sessionID: context.sessionID,
           }, context, "dispatch");
-          let result = started;
-          if (input.wait) {
+          if (input.background === true) {
+            void (async () => {
+              try {
+                const result = await waitForTerminal(started.dispatchId);
+                const display = result.display ?? JSON.stringify(result);
+                await ctx.session.synthetic({
+                  sessionID: context.sessionID,
+                  description: "graph dispatch " + started.dispatchId,
+                  text: \`<graph-dispatch dispatchID="\${started.dispatchId}" state="\${result.state}">\\n\${display}\\n</graph-dispatch>\`,
+                  metadata: {
+                    source: "graph-dispatch",
+                    dispatchId: started.dispatchId,
+                    state: result.state,
+                    node: result.node ?? started.node,
+                    workflow: result.workflow ?? started.workflow ?? null,
+                    label: result.handoff?.label ?? null,
+                  },
+                });
+              } catch (error) {
+                console.error("dispatch.notification-failed", {
+                  dispatchId: started.dispatchId,
+                  error: error?.message ?? String(error),
+                });
+              }
+            })();
+            return { content: started.display ?? JSON.stringify(started) };
+          }
+          let result = await call("/tool/dispatch/wait", {
+            dispatchId: started.dispatchId,
+            timeoutMs: 300000,
+          }, context, "dispatch");
+          while (!["completed", "defect", "cancelled"].includes(result.state)) {
             result = await call("/tool/dispatch/wait", {
               dispatchId: started.dispatchId,
-              timeoutMs: input.timeoutMs ?? 300000,
-            }, context, "dispatch_wait");
+              timeoutMs: 300000,
+            }, context, "dispatch");
           }
-          return { content: JSON.stringify(result) };
-        },
-      });
-
-      editor.add({
-        name: "dispatch_wait",
-        description: "Wait for a dispatched graph run and return its completion or defect.",
-        input: {
-          type: "object",
-          properties: {
-            dispatchId: { type: "string" },
-            timeoutMs: { type: "number" },
-          },
-          required: ["dispatchId"],
-          additionalProperties: false,
-        },
-        options: { codemode: false, permission: "dispatch_wait" },
-        async execute(input, context) {
-          const result = await call("/tool/dispatch/wait", {
-            dispatchId: input.dispatchId,
-            timeoutMs: input.timeoutMs ?? 300000,
-          }, context, "dispatch_wait");
-          return { content: JSON.stringify(result) };
+          return { content: result.display ?? JSON.stringify(result) };
         },
       });
 
       editor.add({
         name: "dispatch_status",
-        description: "Read the live state of a dispatched graph run.",
+        description: "Read the live state of a dispatched graph run as a focused display; raw: true returns the structured snapshot.",
         input: {
           type: "object",
-          properties: { dispatchId: { type: "string" } },
+          properties: {
+            dispatchId: { type: "string" },
+            raw: { type: "boolean" },
+          },
           required: ["dispatchId"],
           additionalProperties: false,
         },
@@ -144,8 +180,14 @@ export default Plugin.define({
         async execute(input, context) {
           const result = await call("/tool/dispatch/status", {
             dispatchId: input.dispatchId,
+            raw: input.raw === true,
           }, context, "dispatch_status");
-          return { content: JSON.stringify(result) };
+          return {
+            content:
+              input.raw === true
+                ? JSON.stringify(result)
+                : (result.display ?? JSON.stringify(result)),
+          };
         },
       });
 
@@ -180,7 +222,7 @@ export default Plugin.define({
 
       editor.add({
         name: "graph_info",
-        description: "Return the config path and the one graph's workflows, nodes, and helpers.",
+        description: "Return the config path and the one graph's workflows, nodes, and graph agents.",
         input: { type: "object", properties: {}, additionalProperties: false },
         options: { codemode: false, permission: "graph_info" },
         async execute(input, context) {
@@ -200,17 +242,101 @@ export default Plugin.define({
           return { content: JSON.stringify(result) };
         },
       });
+
+      try {
+        const existing = new Set(editor.list().map((tool) => tool.id ?? tool.name));
+        collisions = HANDOFF_LABELS.filter((label) => existing.has(label));
+      } catch {
+        catalogAvailable = false;
+        collisions = [...HANDOFF_LABELS];
+      }
+      generatedLabels = HANDOFF_LABELS.filter((label) => !collisions.includes(label));
+
+      for (const label of generatedLabels) {
+        const execute = async (input, context) => {
+          await call("/handoff", {
+            label,
+            message: input.message,
+            sessionID: context.sessionID,
+            callID: context.toolCallID ?? context.id,
+            messageID: context.messageID,
+            agent: context.agent,
+          }, context, "handoff");
+          return { content: "handoff accepted: " + label };
+        };
+        const definition = {
+          name: label,
+          description: handoffDescription,
+          input: handoffInput,
+          options: { codemode: false, permission: "handoff" },
+          execute,
+        };
+        definition[OWNED] = label;
+        editor.add(definition);
+      }
+    });
+
+    const knownCollisions = new Set(collisions);
+    await report("/tool/handoff-preflight", {
+      labels: HANDOFF_LABELS,
+      collisions: [...knownCollisions],
+      catalogAvailable,
+    });
+
+    await ctx.session.hook("context", async (event) => {
+      if (!event?.tools) return;
+      let labels = [];
+      try {
+        const res = await fetch(ENGINE_URL + "/tool/handoff-tools", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-engine-token": TOKEN },
+          body: JSON.stringify({ sessionID: event.sessionID }),
+          signal: AbortSignal.timeout(1000),
+        });
+        if (!res.ok) throw new Error("engine returned " + res.status);
+        const json = await res.json();
+        labels = Array.isArray(json?.labels) ? json.labels : [];
+      } catch {
+        labels = [];
+      }
+      const allowed = new Set(labels);
+      let registered = null;
+      try {
+        registered = new Map((await ctx.tool.list()).map((tool) => [tool.id ?? tool.name, tool]));
+      } catch {
+        registered = null;
+      }
+      for (const label of generatedLabels) {
+        const tool = event.tools[label];
+        if (!tool) continue;
+        const current = registered?.get(label);
+        const collision =
+          allowed.has(label) &&
+          (!current || current[OWNED] !== label || !sameDefinition(tool));
+        if (!allowed.has(label) || collision) {
+          delete event.tools[label];
+          if (collision) {
+            knownCollisions.add(label);
+            await report("/tool/handoff-preflight", {
+              labels: HANDOFF_LABELS,
+              collisions: [...knownCollisions],
+              catalogAvailable: true,
+              sessionID: event.sessionID,
+            });
+          }
+        }
+      }
     });
   },
 });
 `;
 }
 
-export async function installPlugin({ cwd, url, token }) {
+export async function installPlugin({ cwd, url, token, labels = [] }) {
   const dir = join(cwd, ".opencode", "plugins", "engine-handoff");
   await mkdir(dir, { recursive: true });
   const path = join(dir, "index.ts");
-  await writeFile(path, renderPlugin({ url, token }), "utf8");
+  await writeFile(path, renderPlugin({ url, token, labels }), "utf8");
   return path;
 }
 

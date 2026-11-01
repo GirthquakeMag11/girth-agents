@@ -1,12 +1,25 @@
+const DISPATCHER_TARGET = "$dispatcher";
+
 function asList(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
   return value ? [value] : [];
+}
+
+export function outputPath(config, node) {
+  if (!node?.output) return null;
+  const root = config.graph.outputRoot ?? ".";
+  return root === "." ? node.output : `${root}/${node.output}`;
+}
+
+export function detailsOutput(config, node) {
+  return outputPath(config, node) ?? "—";
 }
 
 export function edgeList(nodes) {
   const edges = [];
   for (const node of nodes) {
     if (node.handoff.mode === "unconditional") {
+      if (node.handoff.to === DISPATCHER_TARGET) continue;
       edges.push({
         from: node.id,
         to: node.handoff.to,
@@ -16,6 +29,7 @@ export function edgeList(nodes) {
       });
     } else if (node.handoff.mode === "conditional") {
       for (const entry of node.handoff.labels) {
+        if (entry.to === DISPATCHER_TARGET) continue;
         edges.push({
           from: node.id,
           to: entry.to,

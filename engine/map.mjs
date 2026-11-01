@@ -1,3 +1,5 @@
+import { DISPATCHER_TARGET } from "./config.mjs";
+
 // The graph view: a deterministic Mermaid map, a workflow table, and a node
 // table, generated from the config. The agent prints these verbatim; it does
 // not author or summarize the graph. Workflows are labelled views over the
@@ -12,6 +14,7 @@ function tableText(value) {
 }
 
 function relativeOutput(graph, node) {
+  if (!node.output) return "—";
   const root = graph.outputRoot ?? ".";
   return root === "." ? node.output : `${root}/${node.output}`;
 }
@@ -32,7 +35,7 @@ function handoffText(node) {
 }
 
 function nodeLabel(node, workflow) {
-  const bits = [`${node.id} · ${node.helper}`];
+  const bits = [`${node.id} · ${node.agent}`];
   if (workflow && workflow.entry === node.id) bits.push("entry");
   if (workflow && workflow.exit === node.id) bits.push("exit");
   if (node.handoff?.mode === "terminal") bits.push("terminal");
@@ -40,7 +43,7 @@ function nodeLabel(node, workflow) {
 }
 
 export const MAP_LEGEND =
-  "resume = this route reuses the target session · stadium/dashed = terminal · box = workflow view · workflow table carries connections/strict";
+  "resume = this route reuses the target session · stadium/dashed = terminal · dispatcher = completion target · box = workflow view · workflow table carries connections/strict";
 
 export function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
   const nodes = graph.nodes ?? [];
@@ -78,16 +81,25 @@ export function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
     lines.push(`  ${shape}`);
   }
 
+  const hasDispatcher = nodes.some((node) => {
+    if (node.handoff?.mode === "unconditional") return node.handoff.to === DISPATCHER_TARGET;
+    if (node.handoff?.mode === "conditional") {
+      return (node.handoff.labels ?? []).some((label) => label.to === DISPATCHER_TARGET);
+    }
+    return false;
+  });
+  if (hasDispatcher) lines.push('  dispatcher(["dispatcher"])');
+
   for (const node of nodes) {
     const from = vars.get(node.id);
     const handoff = node.handoff;
     if (!handoff || handoff.mode === "terminal") continue;
     if (handoff.mode === "unconditional") {
-      const to = vars.get(handoff.to);
+      const to = handoff.to === DISPATCHER_TARGET ? "dispatcher" : vars.get(handoff.to);
       if (to) lines.push(`  ${from} -->|${mermaidText("next" + sessionSuffix(handoff.resume))}| ${to}`);
     } else {
       for (const label of handoff.labels ?? []) {
-        const to = vars.get(label.to);
+        const to = label.to === DISPATCHER_TARGET ? "dispatcher" : vars.get(label.to);
         if (to) lines.push(`  ${from} -->|${mermaidText(label.label + sessionSuffix(label.resume))}| ${to}`);
       }
     }
@@ -125,12 +137,12 @@ export function renderWorkflowTable(graph) {
 
 export function renderNodeTable(graph) {
   const lines = [
-    "| Node | Helper | Objective | Output | Handoff | Max visits |",
+    "| Node | Graph agent | Objective | Output | Handoff | Max visits |",
     "|---|---|---|---|---|---|",
   ];
   for (const node of graph.nodes ?? []) {
     lines.push(
-      `| ${tableText(node.id)} | ${tableText(node.helper)} | ${tableText(node.objective)} | ${tableText(relativeOutput(graph, node))} | ${tableText(handoffText(node))} | ${node.maxVisits ?? "—"} |`,
+      `| ${tableText(node.id)} | ${tableText(node.agent)} | ${tableText(node.objective)} | ${tableText(relativeOutput(graph, node))} | ${tableText(handoffText(node))} | ${node.maxVisits ?? "—"} |`,
     );
   }
   return lines.join("\n");

@@ -1,36 +1,44 @@
 ---
 name: graph-authoring
-description: Author or modify the engine's JSON graph config, validate it with reload, and fix named faults.
+description: Author or modify the engine's graph config, validate it with reload, and fix named faults.
 ---
 # Graph authoring
 
-The engine runs agent nodes. A node sends a prompt to an agent, the agent
-writes an output file, and the agent pulls exactly one handoff lever to the
-next node. The graph is a single JSON file.
+> **Design correction (2026-10-31).** The current engine uses one aggregate
+> JSON file with `agents` and one generated handoff tool per declared
+> label, taking `{ message }`. The target is one configuration file per node
+> and one Markdown document per graph agent type. The exact file layout and
+> schemas are open; do not invent them. Until the loader changes, the current
+> JSON schema below is what the engine accepts.
+
+The engine runs agent nodes. A node's graph agent receives a prompt, writes
+any declared output, and calls exactly one generated handoff tool to the next
+target. The current graph is a single JSON file; the target is file-per-node
+plus Markdown graph agents.
 
 ## Start
 
 Call `graph_info()` first. It returns the config path and the one graph's
-workflows, nodes, and helpers. Read the config file. Edit it. Then call
+workflows, nodes, and graph agents. Read the config. Edit it. Then call
 `reload()`. If `reload` returns `valid: false`, read the named faults, fix
 them, and reload again. A reload during an active dispatch is rejected; wait
 for the dispatch to finish.
 
-Do not edit the engine's plugin, skills, or source. Edit only the config
-file.
+Do not edit the engine's plugin, skills, or source. Edit only the graph
+configuration.
 
 ## Schema
 
 ```json
 {
   "version": "3",
-  "helpers": [
+  "agents": [
     {
       "id": "builder",
       "model": "openrouter/~deepseek/deepseek-flash-latest",
       "agent": "build",
       "permissions": ["read", "edit", "shell"],
-      "craft": "Standing instructions for this helper."
+      "craft": "Standing instructions for this graph agent."
     },
     {
       "id": "reviewer",
@@ -54,7 +62,7 @@ file.
     "nodes": [
       {
         "id": "implement",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Implement the dispatched work.",
         "output": "implementation.md",
         "maxVisits": 20,
@@ -66,7 +74,7 @@ file.
       },
       {
         "id": "review",
-        "helper": "reviewer",
+        "agent": "reviewer",
         "objective": "Review the implementation against the dispatched prompt.",
         "output": "review.md",
         "maxVisits": 20,
@@ -80,7 +88,7 @@ file.
       },
       {
         "id": "done",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Finalize the work and write the final report.",
         "output": "final.md",
         "handoff": { "mode": "terminal" }
@@ -95,9 +103,11 @@ file.
 - `version` is the string `"3"`.
 - There is exactly one `graph`. There is no graph id, no graph selector, and
   no "all graphs." A second graph is not part of this schema.
-- A helper has `id`, `model` as `provider/model`, optional `agent`
-  (default `build`), `permissions` as a non-empty array of real action
-  names (`read`, `edit`, `shell`), and optional `craft`.
+- The current implementation's graph agent entry has `id`, `model` as
+  `provider/model`, optional `agent` (the OpenCode agent to run, default
+  `build`), `permissions` as a non-empty array of real action names (`read`,
+  `edit`, `shell`), and optional `craft`. The target graph agent type is a
+  Markdown document; its exact frontmatter/body schema is open.
 - The graph has optional `outputRoot` (default `"."`), optional `maxSteps`,
   optional `workflows`, and `nodes`.
 - A workflow is a labelled subsection: `id`, `entry`, `exit`, and `nodes`.
@@ -105,9 +115,12 @@ file.
   to the graph; a node may be in more than one workflow. The entry/exit
   must be in the workflow's node list. The engine routes by handoffs, not
   by workflow.
-- A node has `id`, `helper`, `objective`, `output` (relative path),
-  optional `budgetMs`, optional `maxVisits` (1–100; use 20 for a repair
-  loop), and `handoff`. Nodes do not have a session mode.
+- The current implementation's node has `id`, an `agent` reference to a graph
+  agent entry, `objective`, `output` (optional relative path), optional
+  `budgetMs`, optional `maxVisits` (1–100; use 20 for a repair loop), and
+  `handoff`. The target node has an `agent` key referencing a graph agent type
+  and an optional `output`. A node may omit `output`; its handoff `{ message }`
+  is the deliverable. Nodes do not have a session mode.
 - Session retention is a **handoff** decision. A non-terminal handoff may
   set `"resume": true`; false or omitted starts a new session. `resume` is
   honored only when the handoff target is the node that supplied the
@@ -115,20 +128,25 @@ file.
   alive for the return and deletes it when the dispatch ends. A
   `resume: true` handoff to any other node is a loud defect.
 - `handoff` is exactly one of:
-  - `{ "mode": "terminal" }` — the node ends after writing its output.
+  - `{ "mode": "terminal" }` — the node ends after writing any declared
+    output.
   - `{ "mode": "unconditional", "to": "<node>", "description": "...",
-    "resume"?: true }` — the agent calls the label `next`.
+    "resume"?: true }` — the engine generates the tool `next`.
   - `{ "mode": "conditional", "labels": [{ "label", "to",
-    "description", "resume"?: true }] }` — the agent calls exactly one
-    label. A label may set `resume: true` only when its target is the node
-    that supplied the current input.
+    "description", "resume"?: true }] }` — the engine generates one tool per
+    label, named exactly the label. The agent calls exactly one generated
+    tool with `{ message }`. A label may set `resume: true` only when its
+    target is the node that supplied the current input.
+- A handoff target may be a node id or `$dispatcher`. A `$dispatcher` label
+  completes the dispatch with its message and cannot set `resume: true`. The
+  same generated handoff interface is used; there is no separate reply/resume
+  tool.
 - No node mixes handoff modes. Every label has one target. There is no
   catch-all.
 - Any node may be a dispatch entry point. A workflow may be dispatched at
-  its entry. Every node must be able to reach
-  a terminal node. Every cycle must carry `maxVisits` on each node in the
-  cycle.
-- `output` must be a relative path with no `..`.
+  its entry. Every node must be able to reach a terminal target. Every cycle
+  must carry `maxVisits` on each node in the cycle.
+- `output` is optional; if declared, it must be a relative path with no `..`.
 - `workflows[].connections` names other workflows and is transitive.
 - `workflows[].strict: true` rejects handoffs outside the main workflow
   and its transitive connections.

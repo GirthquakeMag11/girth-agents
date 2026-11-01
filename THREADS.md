@@ -7,10 +7,18 @@ was in progress, and so a later architectural ruling has the full context.
 When a thread closes, move the decision into `SPEC.md` or `ROADMAP.md` and
 remove it here.
 
-Last updated: 2026-10-30
+Last updated: 2026-10-31
 
 ## Process rules
 
+- **A handoff is a message and a target.** Do not introduce question, answer,
+  final, response, request, or reply message kinds or state. `resume` is the
+  origin-return rule. `dispatchId` identifies a dispatch; it is not a category
+  handle.
+- **Check `INVARIANTS.md` before proposing a new tool or endpoint.** If the
+  behavior is a handoff, use the existing generated handoff interface and
+  `resume: true`. Do not reintroduce reply, answer, request-input, or wait
+  tools.
 - **Record user decisions before proposing or implementing the next step.**
   When the user explains something in detail, write down what was decided
   and what was explained before moving on. Otherwise the user cannot tell
@@ -26,17 +34,60 @@ Last updated: 2026-10-30
 
 ## T1 — Refining the engine through dogfood
 
-**Status:** open; dashboard work is complete. Ready to resume dogfood.  
+**Status:** open; dashboard work is complete. Dogfood is blocked until the
+engine design correction is implemented.
+
 **Question:** does using the engine to develop the engine actually make real
 work easier and more efficient than doing it directly?
+
+### Engine design correction (open)
+
+The current implementation is off-spec and must not be used as the basis for
+the replacement graph:
+
+- graph agents are the only node execution type;
+- one generated handoff tool per declared label, named exactly the label,
+  taking `{ message }`;
+- collision detection is version-agnostic: the engine reserves only its own
+  control tool names at config load; OpenCode built-in and third-party
+  collisions are checked against the live tool catalog at plugin setup and
+  rejected at dispatch preflight. Do not hardcode an OpenCode built-in tool
+  list. The OpenCode update is intentionally held until a break point; the
+  context-hook contract is the version-sensitive integration point to
+  re-verify after that update;
+- a graph agent receives its configured tools plus only its active node's
+  generated handoff tools;
+- the dispatcher return is the same open-ended `dispatch` tool with
+  `resume: true`; there is no separate reply/resume/answer tool;
+- dispatch mirrors the subagent tool: foreground blocks; background returns an
+  id and notifies on completion; there is no `dispatch_wait`;
+- a handoff is a message and a target; there is no question/answer/final/
+  response message kind or pending-question state;
+- a dispatcher handoff completes the dispatch and retains the source node
+  session as the origin for a return message; there is no `input-required`
+  state;
+- configuration is one file per node and one Markdown document per graph agent
+  type; a node's `agent` key references the graph agent type.
+
+The file layout, graph assembly, node schema, graph agent Markdown schema, and
+schema version are open. The handoff-tools feature does not depend on that
+architecture; it is specified in `specs/HANDOFF-TOOLS-SPEC.md` and sliced into
+`tickets/015`–`019`. The dispatcher return path is
+`specs/RETURN-HANDOFF-SPEC.md`, sliced into `tickets/027`–`028`; it is the same
+handoff mechanism and has no message-kind state. OpenCode subagent-card parity
+is also blocked: the
+current TUI selects the card renderer by tool name, special-cases `subagent`,
+and exposes no inline custom tool-card renderer. It needs a core UI change or a
+different integration design. The detailed record is
+`SUBAGENTS-AND-DISPATCH-INTERACTION-DESIGN.md`.
 
 ### Settled
 
 - The engine was frozen at **v1.2.0** (tag `v1.2.0`, commit `c538678`) for
   the dogfood cycle. The freeze is explicitly lifted for the
   workflow-boundary/native-dashboard slice, which is **v1.3.0**. The native
-  dashboard is implemented, live-proofed, and independently reviewed; T1 can
-  resume.
+  dashboard is implemented, live-proofed, and independently reviewed. T1 can
+  resume after the engine design correction above is implemented.
 - The first real task was adding `--version` / `--help` to `engine/engine.mjs`,
   with `engine/test/cli.test.mjs` and README updates.
 - That task ran through the product `build-review` graph:
@@ -75,8 +126,8 @@ record.
 
 ## T3 — UI/UX and graph perception
 
-**Status:** implemented and independently reviewed; tickets 005–014 passed.
-The native dashboard and motion/history sequence is complete.
+**Status:** implemented and independently reviewed. The native dashboard and
+motion/history sequence is complete.
 **Question:** how should the user perceive and reason about the graph in the
 same OpenCode context, with minimal friction and entropy?
 
@@ -160,11 +211,12 @@ same OpenCode context, with minimal friction and entropy?
   first, with Details above it in the split right column and a one-line
   strip at collapsed sizes. It is not a run archive. The run archive is
   roadmapped for a later version.
-- The specification is `DASHBOARD-SPEC.md` plus the motion/history amendment
-  `DASHBOARD-MOTION-HISTORY-SPEC.md`; tickets 005–014 implement them. The
-  live boundary proof, renderer motion proof, and real `DashboardView`
-  captures are under `dashboard/proof/`; the runnable non-strict and strict
-  fixtures are `dashboard/fixtures/live-boundary.json` and
+- The specification is `DASHBOARD-SPEC.md`, now merged with the motion and
+  activity-history requirements; the sequence is implemented and
+  independently reviewed. The live boundary proof, renderer motion proof,
+  and real `DashboardView` captures are under `dashboard/proof/`; the
+  runnable non-strict and strict fixtures are
+  `dashboard/fixtures/live-boundary.json` and
   `dashboard/fixtures/live-boundary-strict.json`.
 - v1 is read-only and exists to show the graph's structure, behavior, and
   current state. It has no graph editing, no Validate/Apply/Run/Dispatch
@@ -216,11 +268,13 @@ same OpenCode context, with minimal friction and entropy?
 
 - One graph per engine config. No graph id, no graph selector, no “all
   graphs.” Workflows are labelled subsections, not containers.
-- The product graph is `build-review` only. `session-check` is not a product
-  workflow; the session-resume/fresh proof is an offline fake-driver test.
-- `implement` resumes its builder session on a fail loop; `review` is fresh
-  every visit.
-- `maxVisits: 20` on implement and review; 100 is the engine backstop.
+- The current product graph is the `build-review` placeholder. The replacement
+  node design is in `SUBAGENTS-AND-DISPATCH-INTERACTION-DESIGN.md`; it is not
+  encoded.
+- Placeholder behavior: `implement` resumes its graph agent session on a fail
+  loop; `review` is fresh every visit. This is not the target graph.
+- `maxVisits: 20` on the placeholder implement and review nodes; 100 is the
+  engine backstop.
 - The interim `graph-view` primary agent and `/graph` command are removed,
   including their engine regeneration path. The native dashboard replaces
   them.

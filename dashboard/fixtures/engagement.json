@@ -56,7 +56,7 @@
     "nodes": [
       {
         "id": "a1",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Start A.",
         "output": "a1.md",
         "handoff": {
@@ -66,7 +66,7 @@
       },
       {
         "id": "a2",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Continue A.",
         "output": "a2.md",
         "handoff": {
@@ -76,7 +76,7 @@
       },
       {
         "id": "x",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Shared A and B.",
         "output": "x.md",
         "handoff": {
@@ -95,7 +95,7 @@
       },
       {
         "id": "z",
-        "helper": "reviewer",
+        "agent": "reviewer",
         "objective": "A only.",
         "output": "z.md",
         "handoff": {
@@ -105,7 +105,7 @@
       },
       {
         "id": "d1",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "D only.",
         "output": "d1.md",
         "handoff": {
@@ -114,7 +114,7 @@
       },
       {
         "id": "y",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Shared B and C.",
         "output": "y.md",
         "handoff": {
@@ -124,7 +124,7 @@
       },
       {
         "id": "o2",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "C exit.",
         "output": "o2.md",
         "handoff": {
@@ -134,7 +134,7 @@
       },
       {
         "id": "o",
-        "helper": "builder",
+        "agent": "builder",
         "objective": "Outside every workflow.",
         "output": "o.md",
         "handoff": {

@@ -9,8 +9,10 @@ import {
   edgeColor,
   edgeList,
   engagementModel,
+  detailsOutput,
   liveDetails,
   nodeState,
+  outputPath,
   topologicalOrder,
   workflowsForNode,
 } from "./model.mjs";
@@ -18,9 +20,9 @@ import {
 export type Theme = any;
 type ConfigNode = {
   id: string;
-  helper: string;
+  agent: string;
   objective: string;
-  output: string;
+  output?: string | null;
   maxVisits?: number | null;
   handoff:
     | { mode: "terminal" }
@@ -117,11 +119,6 @@ type Container =
 type Escape = { dispatchId?: string; node: string; mainWorkflow: string; allowed: string[]; memberships: string[] };
 type Engagement = { containers: Container[]; escapes: Escape[]; activeNodes: string[]; queuedNodes: string[] };
 type Layout = { width: number; height: number; cards: Card[]; routes: Route[]; containers: Container[] };
-
-function outputPath(config: Config, node: ConfigNode) {
-  const root = config.graph.outputRoot ?? ".";
-  return root === "." ? node.output : `${root}/${node.output}`;
-}
 
 function handoffLines(node: ConfigNode) {
   if (node.handoff.mode === "terminal") return ["terminal"];
@@ -416,7 +413,7 @@ function NodeCard(props: {
       </box>
       <box flexDirection="row" justifyContent="space-between" minWidth={0}>
         <text fg={state().color === "running" ? props.theme.text.muted : props.theme.text.faint} wrapMode="none" truncate>
-          {props.node.helper}
+          {props.node.agent}
         </text>
         <text fg={props.theme.text.feedback.warning.base} wrapMode="none" truncate visible={props.escaped}>
           ⚠ escape
@@ -740,7 +737,7 @@ function DetailsPane(props: {
                     {entry.node.id}
                   </text>
                   <text fg={stateColor(props.theme, state().color)} wrapMode="none">
-                    {state().marker} {state().label} · {entry.node.helper}
+                    {state().marker} {state().label} · {entry.node.agent}
                   </text>
                 </box>
                 <box flexDirection="column">
@@ -748,7 +745,7 @@ function DetailsPane(props: {
                     CONTRACT
                   </text>
                   <text fg={props.theme.text.muted} wrapMode="word">
-                    output  {outputPath(props.config(), entry.node)}
+                    output  {detailsOutput(props.config(), entry.node)}
                   </text>
                   <text fg={props.theme.text.muted} wrapMode="none">
                     max     {entry.node.maxVisits ?? "—"} visits
@@ -864,7 +861,7 @@ function DetailsStrip(props: {
         </text>
         <box flexDirection="row" gap={2} visible={Boolean(first())}>
           <text fg={props.theme.text.muted} wrapMode="none" truncate>
-            {first()?.node.id ?? ""} · {state()?.marker ?? ""} {state()?.label ?? ""} · {first()?.node.helper ?? ""}
+            {first()?.node.id ?? ""} · {state()?.marker ?? ""} {state()?.label ?? ""} · {first()?.node.agent ?? ""}
           </text>
           <box flexDirection="row" gap={1}>
             <For each={first()?.memberships ?? []}>

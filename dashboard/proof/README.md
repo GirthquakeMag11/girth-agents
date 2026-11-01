@@ -26,9 +26,9 @@ Artifacts:
 - `live-proof.log` — command output.
 - `live-proof.json` — structured observed rows.
 
-The product graph also has a short live run log at `product-live.log`; its
-snapshot was retired when the panel gained structured History and the
-split right column.
+The product-graph live check is `product-live.mjs`; its snapshot and captured
+log were retired when the panel gained structured History and the split right
+column.
 
 ## Panel captures
 

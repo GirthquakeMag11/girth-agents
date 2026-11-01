@@ -5,20 +5,45 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { installPlugin, installSkills, removeCommands, removeAgent, preflightPlugin } from "../plugin.mjs";
 
-const pluginInput = (dir) => ({
+const pluginInput = (dir, labels = ["next", "pass", "fail"]) => ({
   cwd: dir,
   url: "http://127.0.0.1:1234",
   token: "token-123",
+  labels,
 });
 
-test("plugin: the installed tool surface contains the lever and the control tools", async () => {
+test("plugin: the installed tool surface contains generated labels and the control tools", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-plugin-"));
   try {
     const path = await installPlugin(pluginInput(dir));
     const source = await readFile(path, "utf8");
-    for (const name of ["handoff", "dispatch", "dispatch_wait", "dispatch_status", "dispatch_cancel", "reload", "graph_info", "graph_map"]) {
+    for (const name of ["dispatch", "dispatch_status", "dispatch_cancel", "reload", "graph_info", "graph_map"]) {
       assert.match(source, new RegExp(`name: "${name}"`));
     }
+    assert.doesNotMatch(source, /name: "dispatch_wait"/);
+    assert.match(source, /background: \{ type: "boolean" \}/);
+    assert.match(source, /resume: \{ type: "boolean" \}/);
+    assert.match(source, /dispatchId: \{ type: "string" \}/);
+    assert.match(source, /sessionID: context.sessionID/);
+    assert.match(source, /result\.display/);
+    assert.match(source, /raw: input\.raw === true/);
+    assert.match(source, /ctx\.session\.synthetic/);
+    assert.match(source, /<graph-dispatch/);
+    assert.match(source, /source: "graph-dispatch"/);
+    assert.match(source, /waitForTerminal/);
+    assert.match(source, /while \(!\["completed"/);
+    assert.match(source, /dispatch\.notification-failed/);
+    assert.match(source, /HANDOFF_LABELS = \["next","pass","fail"\]/);
+    assert.match(source, /for \(const label of generatedLabels\)/);
+    assert.match(source, /name: label/);
+    assert.match(source, /required: \["message"\]/);
+    assert.match(source, /tool\/handoff-preflight/);
+    assert.match(source, /ctx\.session\.hook\("context"/);
+    assert.match(source, /\/tool\/handoff-tools/);
+    assert.match(source, /delete event\.tools\[label\]/);
+    assert.match(source, /AbortSignal\.timeout/);
+    assert.match(source, /sameDefinition/);
+    assert.doesNotMatch(source, /name: "handoff"/);
     assert.doesNotMatch(source, /name: "graphs"/);
     assert.doesNotMatch(source, /graph: \{ type: "string" \}/);
     assert.doesNotMatch(source, /required: \["graph"/);
@@ -74,7 +99,8 @@ test("plugin: both interactive skills are installed as SKILL.md", async () => {
     assert.match(authoring, /reload\(\)/);
     assert.doesNotMatch(authoring, /graphs\(\)/);
     assert.match(dispatching, /name: dispatching/);
-    assert.match(dispatching, /dispatch_wait/);
+    assert.match(dispatching, /resume: true/);
+    assert.doesNotMatch(dispatching, /dispatch_wait/);
     assert.doesNotMatch(dispatching, /graphs\(\)/);
   } finally {
     await rm(dir, { recursive: true, force: true });

@@ -19,10 +19,10 @@
       }
     ],
     "nodes": [
-      { "id": "e1", "helper": "builder", "objective": "E one.", "output": "e1.md", "handoff": { "mode": "terminal" } },
-      { "id": "e2", "helper": "builder", "objective": "F one.", "output": "e2.md", "handoff": { "mode": "terminal" } },
-      { "id": "e3", "helper": "builder", "objective": "E two.", "output": "e3.md", "handoff": { "mode": "terminal" } },
-      { "id": "e4", "helper": "builder", "objective": "F two.", "output": "e4.md", "handoff": { "mode": "terminal" } }
+      { "id": "e1", "agent": "builder", "objective": "E one.", "output": "e1.md", "handoff": { "mode": "terminal" } },
+      { "id": "e2", "agent": "builder", "objective": "F one.", "output": "e2.md", "handoff": { "mode": "terminal" } },
+      { "id": "e3", "agent": "builder", "objective": "E two.", "output": "e3.md", "handoff": { "mode": "terminal" } },
+      { "id": "e4", "agent": "builder", "objective": "F two.", "output": "e4.md", "handoff": { "mode": "terminal" } }
     ]
   },
   "order": ["e1", "e2", "e3", "e4"],

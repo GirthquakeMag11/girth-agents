@@ -170,7 +170,7 @@ async function proveNonStrict() {
 
   const dispatched = await live.control("/tool/dispatch", {
     workflow: "A",
-    prompt: "Execute the node objective exactly. Write the declared output file, then call the handoff tool exactly once with label next.",
+    prompt: "Execute the node objective exactly. Write the declared output file, then call the `next` tool exactly once with a message.",
   });
   const main = await live.waitRuntime((runtime) => runtime.active?.node === "a1", 30000, "active main a1");
   assert.deepEqual(containerRows(main, live.config), [
@@ -234,7 +234,7 @@ async function proveStrict() {
   const live = await startEngine(strictWorkspace, join(here, "..", "fixtures", "live-boundary-strict.json"));
   const dispatched = await live.control("/tool/dispatch", {
     workflow: "A",
-    prompt: "Execute the node objective exactly. Write the declared output file, then call the handoff tool exactly once with label next.",
+    prompt: "Execute the node objective exactly. Write the declared output file, then call the `next` tool exactly once with a message.",
   });
   const connected = await live.waitRuntime((runtime) => runtime.active?.node === "b1", 180000, "strict active b1");
   assert.deepEqual(containerRows(connected, live.config), [

@@ -6,7 +6,7 @@ import { loadConfig } from "../config.mjs";
 import { createDispatchQueue } from "../queue.mjs";
 import { renderGraphArtifact, renderGraphMap, renderGraphMapResponse, renderState, renderWorkflowTable } from "../map.mjs";
 
-const loaded = await loadConfig(fileURLToPath(new URL("../example-graph.json", import.meta.url)));
+const loaded = await loadConfig(fileURLToPath(new URL("../graph.json", import.meta.url)));
 const graph = loaded.doc.graph;
 
 test("map: the workflow is a labelled box with entry and exit", () => {
@@ -109,4 +109,31 @@ test("map: the workflow table carries connections and strict policy for multiple
   const table = renderWorkflowTable(graph);
   assert.match(table, /\| A \| a \| b \| a, b \| B \| yes \|/);
   assert.match(table, /\| B \| b \| b \| b \| — \| no \|/);
+});
+
+test("map: a node with no output shows a no-output marker", () => {
+  const without = structuredClone(graph);
+  delete without.nodes[0].output;
+  const map = renderGraphMap(without);
+  assert.match(map.nodeTable, /\| implement \| builder \| Implement the dispatched work\. \| — \|/);
+});
+
+test("map: the artifact carries the no-output marker", () => {
+  const without = structuredClone(loaded.doc);
+  delete without.graph.nodes[0].output;
+  const artifact = renderGraphArtifact(without, "graph.json");
+  assert.match(artifact, /\| implement \| builder \| Implement the dispatched work\. \| — \|/);
+});
+
+test("map: a dispatcher target is rendered as a completion sink", () => {
+  const withDispatcher = structuredClone(graph);
+  withDispatcher.nodes[1].handoff.labels.push({
+    label: "report",
+    to: "$dispatcher",
+    description: "Report.",
+  });
+  const map = renderGraphMap(withDispatcher);
+  assert.match(map.mermaid, /dispatcher\(\["dispatcher"\]\)/);
+  assert.match(map.mermaid, /n1 -->\|report\| dispatcher/);
+  assert.match(map.nodeTable, /report → \$dispatcher/);
 });
