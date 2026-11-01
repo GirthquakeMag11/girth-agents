@@ -33,6 +33,8 @@ kind of message it is, the design is wrong.
 
 - The graph-agent collection is `agents`.
 - A node's reference to a graph-agent entry is `agent`.
+- `skills` is a top-level collection; a graph agent's `skills` field references
+  it. Both are part of the schema.
 - Do not use `helpers`, `graphAgents`, or another alias.
 - The engine-owned tool names are reserved as labels. OpenCode built-ins and
   other plugin tools are checked against the live catalog, never a copied
@@ -47,6 +49,10 @@ kind of message it is, the design is wrong.
   skill after the agent's `craft`.
 - Removing one skill file is not removing skill support. Do not remove the
   `skills` schema field, loader, or brief injection without explicit approval.
+- The shipped graph using zero skills does not make the capability optional. A
+  schema feature is not removed because the current example does not exercise
+  it. Do not infer a feature cut from an empty example or an omitted mention in
+  a rewrite spec.
 
 ## Check before proposing
 
