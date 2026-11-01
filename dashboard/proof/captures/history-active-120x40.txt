@@ -8,7 +8,7 @@
  │ NODES              │ │         ║                                             ║  │ │ CONTRACT                     █ │ 
  │ ◌ implement        │ │         ║  ╭────────────────────────────────╮         ║  │ │ output work/review.md        █ │ 
  │ ● review           │ │         ║  │  implement           ◌ queued  │         ║  │ │ max 20 visits                █ │ 
- │ ■ done             │ │         ║  │  builder                       │◀──────┐ ║  │ │ visits 1/20                  █ │ 
+ │ ○ done             │ │         ║  │  builder                       │◀──────┐ ║  │ │ visits 1/20                  █ │ 
  │                    │ │         ║  ╰────────────────────────────────╯       │ ║  │ │ pass → done                  ▀ │ 
  │ STATE              │ │         ║                   │                       │ ║  │ │ fail → implement · resume      │ 
  │ ● running 1        │ │         ║                   │─ next                 │ ║  │ │                                │ 
@@ -23,7 +23,7 @@
  │                    │ │         ║                   │                         ║  │ │ 14:00:31  d-1  review · begin  │ 
  │                    │ │         ║                   ▼                         ║  │ │ 14:00:31  d-1... review · next │ 
  │                    │ │         ║  ╭────────────────────────────────╮         ║  │ │ 14:00:31  d-1...cceeded · next │ 
- │                    │ │         ║  │  done              ■ terminal  │         ║  │ │ 13:59:59  d-1...lement · begin │ 
+ │                    │ │         ║  │  done                  ○ idle  │         ║  │ │ 13:59:59  d-1...lement · begin │ 
  │                    │ │         ║  │  builder                       │         ║  │ │ 13:59:59  d-1...ed · implement │ 
  │                    │ │         ║  ╰────────────────────────────────╯         ║  │ │ 13:59:58  d-1...ew · implement │ 
  │                    │ │         ║                                             ║  │ │                                │ 

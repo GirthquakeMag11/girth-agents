@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { hydrateRuntime, runtimeFromMap } from "../src/data.mjs";
 import { nodeState } from "../src/model.mjs";
 
-const terminalNode = { id: "review", handoff: { mode: "terminal" } };
+const terminalHandoffNode = { id: "review", handoff: { mode: "terminal" } };
 
 test("runtime: a human-readable state string cannot drive active or queue state", () => {
   const stateString = "Active: d-1 at review. Queue: d-2 at implement.";
@@ -17,8 +17,38 @@ test("runtime: a human-readable state string cannot drive active or queue state"
   assert.equal(runtime.active, null);
   assert.deepEqual(runtime.queue, []);
 
-  assert.equal(nodeState(terminalNode, { state: stateString }, []).color, "terminal");
-  assert.equal(nodeState(terminalNode, null, [{ state: stateString }]).color, "terminal");
+  assert.equal(nodeState(terminalHandoffNode, { state: stateString }, []).color, "idle");
+  assert.equal(nodeState(terminalHandoffNode, null, [{ state: stateString }]).color, "idle");
+});
+
+test("runtime: handoff mode is never a node state", () => {
+  const shapes = [
+    { mode: "terminal" },
+    { mode: "unconditional", to: "$dispatcher" },
+    { mode: "conditional", labels: [{ label: "done", to: "$dispatcher" }] },
+    { mode: "unconditional", to: "next" },
+  ];
+  for (const handoff of shapes) {
+    assert.deepEqual(nodeState({ id: "node", handoff }, [], []), {
+      marker: "○",
+      label: "idle",
+      color: "idle",
+    });
+  }
+});
+
+test("runtime: running and queued still take precedence for a terminal handoff", () => {
+  const node = { id: "done", handoff: { mode: "terminal" } };
+  assert.deepEqual(nodeState(node, [{ node: "done" }], []), {
+    marker: "●",
+    label: "running",
+    color: "running",
+  });
+  assert.deepEqual(nodeState(node, [], [{ node: "done" }]), {
+    marker: "◌",
+    label: "queued",
+    color: "queued",
+  });
 });
 
 test("runtime: dispatch/status hydrates the structured active and queued records", async () => {

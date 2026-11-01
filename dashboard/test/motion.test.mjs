@@ -43,7 +43,6 @@ test("motion: only running cards at least six cells wide sweep", () => {
   assert.equal(nodeSweeps("running", 5), false);
   assert.equal(nodeSweeps("queued", 34), false);
   assert.equal(nodeSweeps("idle", 34), false);
-  assert.equal(nodeSweeps("terminal", 34), false);
 });
 
 test("motion: history cursor does not replay existing handoffs on mount", () => {

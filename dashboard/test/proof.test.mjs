@@ -12,6 +12,10 @@ test("proof captures: active split, idle split, 120 split, and 80 strip exist", 
   assert.match(active, /14:00:31/);
   assert.match(active, /14:00:35/);
   assert.match(active, /● running/);
+  assert.match(active, /review\s+● running/);
+  assert.match(active, /done\s+○ idle/);
+  assert.match(active, /○ idle 1/);
+  assert.doesNotMatch(active, /■ terminal/);
   assert.doesNotMatch(active, /No activity yet\./);
 
   const idle = await read("history-idle-160x50.txt");
@@ -20,12 +24,19 @@ test("proof captures: active split, idle split, 120 split, and 80 strip exist", 
   assert.match(idle, /14:01:21/);
   assert.match(idle, /completed · done/);
   assert.match(idle, /○ idle/);
+  assert.match(idle, /○ done/);
+  assert.match(idle, /done\s+○ idle/);
+  assert.match(idle, /○ idle 3/);
+  assert.doesNotMatch(idle, /■ terminal/);
   assert.doesNotMatch(idle, /No activity yet\./);
 
   const split120 = await read("history-active-120x40.txt");
   assert.match(split120, /╭─Details/);
   assert.match(split120, /╭─History/);
   assert.match(split120, /14:00:31/);
+  assert.match(split120, /done\s+○ idle/);
+  assert.match(split120, /○ idle 1/);
+  assert.doesNotMatch(split120, /■ terminal/);
 
   const strip = await read("history-strip-80x24.txt");
   assert.match(strip, /History · 14:00:31/);
@@ -39,6 +50,8 @@ test("proof captures: motion handoff has a token and self-handoff has none", asy
   const self = await read("motion-self-160x50.txt");
   assert.equal((runner.match(/◆/g) ?? []).length, 1);
   assert.equal((self.match(/◆/g) ?? []).length, 0);
+  assert.match(runner, /done\s+○ idle/);
+  assert.doesNotMatch(runner, /■ terminal/);
 });
 
 test("proof captures: stale single-Details artifacts are gone", async () => {

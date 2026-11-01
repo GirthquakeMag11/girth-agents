@@ -158,7 +158,6 @@ function identity(info: GraphInfo) {
 function stateColor(theme: Theme, color: string) {
   if (color === "running") return theme.text.feedback.success.base;
   if (color === "queued") return theme.text.feedback.warning.base;
-  if (color === "terminal") return theme.text.faint;
   return theme.text.muted;
 }
 

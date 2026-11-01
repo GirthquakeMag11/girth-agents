@@ -8,7 +8,7 @@
  │ NODES                  │ │                       ║                                             ║                │ │ CONTRACT                             █ │ 
  │ ◌ implement            │ │                       ║  ╭────────────────────────────────╮         ║                │ │ output work/review.md                █ │ 
  │ ● review               │ │                       ║  │  implement           ◌ queued  │         ║                │ │ max 20 visits                        █ │ 
- │ ■ done                 │ │                       ║  │  builder                       │◀──────┐ ║                │ │ visits 1/20                          █ │ 
+ │ ○ done                 │ │                       ║  │  builder                       │◀──────┐ ║                │ │ visits 1/20                          █ │ 
  │                        │ │                       ║  ╰────────────────────────────────╯       │ ║                │ │ pass → done                          █ │ 
  │ STATE                  │ │                       ║                   │                       │ ║                │ │ fail → implement · resume            █ │ 
  │ ● running 1            │ │                       ║                   │─ next                 │ ║                │ │                                      █ │ 
@@ -23,7 +23,7 @@
  │                        │ │                       ║                   │                         ║                │ │ d-1 · running · 00:03                  │ 
  │                        │ │                       ║                   ▼                         ║                │ │                                        │ 
  │                        │ │                       ║  ╭────────────────────────────────╮         ║                │ ╰────────────────────────────────────────╯ 
- │                        │ │                       ║  │  done              ■ terminal  │         ║                │                                            
+ │                        │ │                       ║  │  done                  ○ idle  │         ║                │                                            
  │                        │ │                       ║  │  builder                       │         ║                │ ╭─History────────────────────────────────╮ 
  │                        │ │                       ║  ╰────────────────────────────────╯         ║                │ │ 14:00:31  d-1  review · begin          │ 
  │                        │ │                       ║                                             ║                │ │ 14:00:31  d-1  im...nt → review · next │ 

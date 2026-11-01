@@ -157,13 +157,13 @@ source declared one, the exact output path when declared, and the active node's
 generated handoff tools with descriptions. A no-output node has no output
 section; its handoff message is the deliverable.
 
-A terminal node completes with its declared output, or with `output: null` when
-none is declared. A `$dispatcher` handoff completes with `terminal: null`,
-records the handoff message, preserves any declared output record, and returns
-the message as `result.response` capped at 16 KiB of UTF-8. The source session
-is retained as the origin for a return message. A failed or cancelled
-dispatcher handoff does not retain it. `dispatch_cancel` on a retained origin
-discards the origin and deletes the session.
+A node with a terminal handoff completes with its declared output, or with
+`output: null` when none is declared. A `$dispatcher` handoff completes with
+`terminal: null`, records the handoff message, preserves any declared output
+record, and returns the message as `result.response` capped at 16 KiB of
+UTF-8. The source session is retained as the origin for a return message. A
+failed or cancelled dispatcher handoff does not retain it. `dispatch_cancel`
+on a retained origin discards the origin and deletes the session.
 
 Errors are named. Key codes: `handoff.unknown-tool`, `handoff.message-required`,
 `handoff.message-empty`, `handoff.multiple`, `handoff.none`,

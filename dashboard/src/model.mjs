@@ -96,7 +96,6 @@ export function nodeState(node, activeDispatches, queue) {
   const active = asList(activeDispatches);
   if (active.some((entry) => entry?.node === node.id)) return { marker: "●", label: "running", color: "running" };
   if ((queue ?? []).some((entry) => entry?.node === node.id)) return { marker: "◌", label: "queued", color: "queued" };
-  if (node.handoff.mode === "terminal") return { marker: "■", label: "terminal", color: "terminal" };
   return { marker: "○", label: "idle", color: "idle" };
 }
 
