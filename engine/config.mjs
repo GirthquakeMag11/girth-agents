@@ -3,7 +3,8 @@
 // must reach a terminal, and every cycle must carry a visit bound.
 
 import { readFile } from "node:fs/promises";
-import { isAbsolute, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
+import { parseFrontmatter } from "./frontmatter.mjs";
 
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
 
@@ -84,12 +85,21 @@ function relativePath(value, at, faults, { required = true } = {}) {
   }
 }
 
+function pathArray(value, at, faults, code) {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    faults.push(fault(code, `${at}: must be an array of relative paths`));
+    return;
+  }
+  for (const [i, entry] of value.entries()) relativePath(entry, `${at}[${i}]`, faults);
+}
+
 function validateGraphAgent(graphAgent, at, faults) {
   if (!isObject(graphAgent)) {
     faults.push(fault("schema.agent", `${at}: must be an object`));
     return;
   }
-  strict(graphAgent, ["id", "model", "agent", "permissions", "craft"], at, faults);
+  strict(graphAgent, ["id", "model", "agent", "permissions", "craft", "skills"], at, faults);
   string(graphAgent.id, `${at}.id`, faults);
   string(graphAgent.model, `${at}.model`, faults);
   if (graphAgent.model !== undefined && typeof graphAgent.model === "string") {
@@ -116,6 +126,7 @@ function validateGraphAgent(graphAgent, at, faults) {
     }
   }
   if (graphAgent.craft !== undefined) string(graphAgent.craft, `${at}.craft`, faults);
+  pathArray(graphAgent.skills, `${at}.skills`, faults, "schema.agent-skills");
 }
 
 function validateHandoff(handoff, at, nodeIds, faults) {
@@ -438,8 +449,9 @@ function validateGraph(graph, at, graphAgentIds, faults) {
 export function validateConfig(doc) {
   const faults = [];
   if (!isObject(doc)) return [fault("schema.config", "config must be an object")];
-  strict(doc, ["version", "agents", "graph"], "config", faults);
+  strict(doc, ["version", "agents", "graph", "skills"], "config", faults);
   if (doc.version !== "3") faults.push(fault("schema.version", "config.version: must be the string '3'"));
+  pathArray(doc.skills, "config.skills", faults, "schema.skills");
 
   const graphAgentIds = new Set();
   if (!Array.isArray(doc.agents) || doc.agents.length === 0) {
@@ -463,6 +475,70 @@ export function validateConfig(doc) {
   return faults;
 }
 
+async function loadSkillDocs(paths, baseDir) {
+  const byPath = new Map();
+  const ids = new Set();
+  const faults = [];
+  for (const rel of paths ?? []) {
+    let text;
+    try {
+      text = await readFile(resolve(baseDir, rel), "utf8");
+    } catch (e) {
+      faults.push(fault("skill.unreadable", `${rel}: ${e.message}`));
+      continue;
+    }
+    let data;
+    let body;
+    try {
+      ({ data, body } = parseFrontmatter(text));
+    } catch (e) {
+      faults.push(fault("skill.frontmatter", `${rel}: ${e.message}`));
+      continue;
+    }
+    if (typeof data.id !== "string" || data.id.trim() === "") {
+      faults.push(fault("skill.missing-id", `${rel}: frontmatter needs an id`));
+      continue;
+    }
+    const instructions = body.trim();
+    if (instructions === "") {
+      faults.push(fault("skill.instructions", `${rel}: skill '${data.id}' has no instructions`));
+      continue;
+    }
+    if (ids.has(data.id)) {
+      faults.push(fault("skill.duplicate-id", `${rel}: duplicate skill id '${data.id}'`));
+      continue;
+    }
+    ids.add(data.id);
+    byPath.set(rel, { ...data, id: data.id, instructions, path: rel });
+  }
+  return { byPath, faults };
+}
+
+function resolveAgentSkills(doc, byPath, faults) {
+  for (const [index, graphAgent] of doc.agents.entries()) {
+    const refs = graphAgent.skills ?? [];
+    const resolved = [];
+    for (const [refIndex, ref] of refs.entries()) {
+      const skill = byPath.get(ref);
+      if (!skill) {
+        faults.push(
+          fault(
+            "agent.unknown-skill",
+            `config.agents[${index}].skills[${refIndex}]: '${ref}' names no loaded skill`,
+          ),
+        );
+        continue;
+      }
+      resolved.push(skill);
+    }
+    Object.defineProperty(graphAgent, "skillDocs", {
+      value: resolved,
+      enumerable: false,
+      configurable: true,
+    });
+  }
+}
+
 export async function loadConfig(path) {
   let raw;
   try {
@@ -477,6 +553,11 @@ export async function loadConfig(path) {
     return { doc: null, faults: [fault("config.json", `config ${path} is not valid JSON: ${e.message}`)], path };
   }
   const faults = validateConfig(doc);
+  if (faults.length > 0) return { doc: null, faults, path };
+
+  const { byPath, faults: skillFaults } = await loadSkillDocs(doc.skills, dirname(resolve(path)));
+  faults.push(...skillFaults);
+  if (faults.length === 0) resolveAgentSkills(doc, byPath, faults);
   return { doc: faults.length === 0 ? doc : null, faults, path };
 }
 
@@ -611,6 +692,8 @@ export function configSummary(doc, path) {
       agent: graphAgent.agent ?? "build",
       permissions: graphAgent.permissions,
       craft: graphAgent.craft ?? null,
+      skills: (graphAgent.skillDocs ?? []).map((skill) => skill.id),
+      skillPaths: graphAgent.skills ?? [],
     })),
   };
 }

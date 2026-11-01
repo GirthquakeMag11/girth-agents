@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   loadConfig,
@@ -22,12 +24,122 @@ const SHIPPED = JSON.parse(
 );
 const codes = (faults) => faults.map((fault) => fault.code);
 
+async function skillConfig({ skillFiles = {}, manifestSkills = [], agentSkills = [] } = {}) {
+  const dir = await mkdtemp(join(tmpdir(), "engine-skills-"));
+  await mkdir(join(dir, "skills"), { recursive: true });
+  for (const [name, text] of Object.entries(skillFiles)) {
+    await writeFile(join(dir, "skills", name), text);
+  }
+  const doc = {
+    version: "3",
+    ...(manifestSkills.length > 0
+      ? { skills: manifestSkills.map((name) => `skills/${name}`) }
+      : {}),
+    agents: [
+      {
+        id: "builder",
+        model: "provider/model",
+        permissions: ["read"],
+        craft: "Craft.",
+        ...(agentSkills.length > 0
+          ? { skills: agentSkills.map((name) => `skills/${name}`) }
+          : {}),
+      },
+    ],
+    graph: {
+      nodes: [
+        {
+          id: "a",
+          agent: "builder",
+          objective: "A.",
+          handoff: { mode: "terminal" },
+        },
+      ],
+    },
+  };
+  const path = join(dir, "graph.json");
+  await writeFile(path, JSON.stringify(doc, null, 2));
+  return { dir, path, doc };
+}
+
 test("config: the shipped graph verifies clean", async () => {
   const loaded = await loadConfig(fileURLToPath(new URL("../graph.json", import.meta.url)));
   assert.deepEqual(loaded.faults, []);
   assert.equal(loaded.doc.version, "3");
   assert.deepEqual(Object.keys(loaded.doc).sort(), ["agents", "graph", "version"]);
   assert.equal(loaded.doc.graph.workflows[0].id, "build-review");
+});
+
+test("config: skills load from Markdown and resolve onto the graph agent", async () => {
+  const { path } = await skillConfig({
+    skillFiles: {
+      "test-first.md":
+        "---\nid: test-first\nname: Test-first\ndescription: Build it test-first.\n---\n\nWrite the failing test first.\n",
+    },
+    manifestSkills: ["test-first.md"],
+    agentSkills: ["test-first.md"],
+  });
+  const loaded = await loadConfig(path);
+  assert.deepEqual(loaded.faults, []);
+  const agent = loaded.doc.agents[0];
+  assert.deepEqual(agent.skills, ["skills/test-first.md"]);
+  assert.equal(agent.skillDocs.length, 1);
+  assert.equal(agent.skillDocs[0].id, "test-first");
+  assert.match(agent.skillDocs[0].instructions, /Write the failing test first/);
+  assert.deepEqual(Object.keys(agent).sort(), ["craft", "id", "model", "permissions", "skills"]);
+
+  const summary = configSummary(loaded.doc, path);
+  assert.deepEqual(summary.agents[0].skills, ["test-first"]);
+  assert.deepEqual(summary.agents[0].skillPaths, ["skills/test-first.md"]);
+});
+
+test("config: an agent skill reference must name a loaded skill", async () => {
+  const { path } = await skillConfig({
+    skillFiles: { "test-first.md": "---\nid: test-first\n---\n\nWrite it first.\n" },
+    manifestSkills: ["test-first.md"],
+    agentSkills: ["missing.md"],
+  });
+  const loaded = await loadConfig(path);
+  assert.ok(codes(loaded.faults).includes("agent.unknown-skill"));
+  assert.equal(loaded.doc, null);
+});
+
+test("config: duplicate skill ids and missing ids are named", async () => {
+  const duplicate = await skillConfig({
+    skillFiles: {
+      "a.md": "---\nid: dupe\n---\n\nA.\n",
+      "b.md": "---\nid: dupe\n---\n\nB.\n",
+    },
+    manifestSkills: ["a.md", "b.md"],
+    agentSkills: ["a.md"],
+  });
+  assert.ok(codes((await loadConfig(duplicate.path)).faults).includes("skill.duplicate-id"));
+
+  const missing = await skillConfig({
+    skillFiles: { "a.md": "---\nname: No id\n---\n\nA.\n" },
+    manifestSkills: ["a.md"],
+    agentSkills: ["a.md"],
+  });
+  assert.ok(codes((await loadConfig(missing.path)).faults).includes("skill.missing-id"));
+});
+
+test("config: a skill must carry instructions", async () => {
+  const { path } = await skillConfig({
+    skillFiles: { "a.md": "---\nid: empty\n---\n\n   \n" },
+    manifestSkills: ["a.md"],
+    agentSkills: ["a.md"],
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("skill.instructions"));
+});
+
+test("config: skill paths and agent skill references must stay relative", () => {
+  const skills = structuredClone(SHIPPED);
+  skills.skills = ["../escape.md"];
+  assert.ok(codes(validateConfig(skills)).includes("schema.path"));
+
+  const agent = structuredClone(SHIPPED);
+  agent.agents[0].skills = ["../escape.md"];
+  assert.ok(codes(validateConfig(agent)).includes("schema.path"));
 });
 
 test("config: graph_info carries the one graph and the graph agents, with no graph id", () => {

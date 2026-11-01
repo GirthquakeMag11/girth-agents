@@ -29,13 +29,15 @@ One JSON file. Schema version is the string `"3"`.
 ```json
 {
   "version": "3",
+  "skills": ["skills/test-first.md"],
   "agents": [
     {
       "id": "builder",
       "model": "provider/model",
       "agent": "build",
       "permissions": ["read", "edit", "shell"],
-      "craft": "Standing instructions."
+      "craft": "Standing instructions.",
+      "skills": ["skills/test-first.md"]
     }
   ],
   "graph": {
@@ -47,10 +49,18 @@ One JSON file. Schema version is the string `"3"`.
 }
 ```
 
-The top-level key is `agents`. There is no `helpers` key and no `graphAgents`
-key. A node's `agent` field references an entry in `agents` by `id`. An agent
-entry's optional `agent` field names the OpenCode agent to run (default
-`build`).
+The top-level keys are `version`, optional `skills`, `agents`, and `graph`.
+There is no `helpers` key and no `graphAgents` key. A node's `agent` field
+references an entry in `agents` by `id`. An agent entry's optional `agent`
+field names the OpenCode agent to run (default `build`).
+
+An optional top-level `skills` array lists Markdown skill documents relative to
+the config. Each skill document has frontmatter with a unique non-empty `id` and
+a non-empty instruction body. An agent's optional `skills` array references
+those paths. The loader rejects unreadable or malformed skill files, missing or
+duplicate ids, empty instructions, and references to unlisted skills. Each
+resolved skill is appended to the brief as `# Skill: <id>` after the agent's
+`craft` and before the work prompt.
 
 A node has:
 
@@ -141,11 +151,11 @@ verifies:
 - the accepted handoff is declared for the active node;
 - the handoff is the last tool call and no tool finished after acceptance.
 
-The brief contains the graph agent's instructions, dispatch prompt, node
-objective, upstream message, upstream output path when the source declared one,
-the exact output path when declared, and the active node's generated handoff
-tools with descriptions. A no-output node has no output section; its handoff
-message is the deliverable.
+The brief contains the graph agent's `craft`, any attached skill instructions,
+dispatch prompt, node objective, upstream message, upstream output path when the
+source declared one, the exact output path when declared, and the active node's
+generated handoff tools with descriptions. A no-output node has no output
+section; its handoff message is the deliverable.
 
 A terminal node completes with its declared output, or with `output: null` when
 none is declared. A `$dispatcher` handoff completes with `terminal: null`,
@@ -160,7 +170,9 @@ Errors are named. Key codes: `handoff.unknown-tool`, `handoff.message-required`,
 `handoff.not-last`, `handoff.tool-collision`, `handoff.tools-stale`,
 `handoff.visibility-unavailable`, `resume.not-return`, `handoff.ambiguous`,
 `handoff.stale`, `workflow.escape`, `output.missing`, `output.empty`,
-`output.changed`, `output.not-file`, `output.check`.
+`output.changed`, `output.not-file`, `output.check`, `skill.unreadable`,
+`skill.frontmatter`, `skill.missing-id`, `skill.duplicate-id`,
+`skill.instructions`, `agent.unknown-skill`.
 
 ## 5. Dashboard
 

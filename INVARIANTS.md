@@ -38,6 +38,16 @@ kind of message it is, the design is wrong.
   other plugin tools are checked against the live catalog, never a copied
   version list.
 
+## Skills are first-class
+
+- A skill is a Markdown document with a unique `id` and a non-empty instruction
+  body. The top-level `skills` array declares the documents; a graph agent's
+  optional `skills` array references them.
+- The loader resolves and validates skills, and the brief appends each resolved
+  skill after the agent's `craft`.
+- Removing one skill file is not removing skill support. Do not remove the
+  `skills` schema field, loader, or brief injection without explicit approval.
+
 ## Check before proposing
 
 1. Is the behavior sending context or control to an agent?

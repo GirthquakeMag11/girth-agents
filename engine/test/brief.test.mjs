@@ -4,6 +4,25 @@ import { composeBrief } from "../brief.mjs";
 
 const graphAgent = { craft: "The graph agent's craft." };
 
+test("brief: attached skills follow the agent's craft", () => {
+  const brief = composeBrief({
+    graphAgent: {
+      craft: "The graph agent's craft.",
+      skillDocs: [{ id: "test-first", instructions: "Write the failing test first." }],
+    },
+    node: { id: "a", objective: "A", handoff: { mode: "terminal" } },
+    prompt: "p",
+    previousOutput: null,
+    previousMessage: null,
+    outputAbs: null,
+  });
+  const craft = brief.indexOf("# Your craft");
+  const skill = brief.indexOf("# Skill: test-first");
+  const work = brief.indexOf("# Work");
+  assert.ok(craft !== -1 && skill > craft && work > skill);
+  assert.match(brief, /Write the failing test first\./);
+});
+
 test("brief: conditional handoffs list labels and descriptions without target ids", () => {
   const node = {
     id: "review",

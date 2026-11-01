@@ -38,6 +38,9 @@ function handoffSection(node, hasOutput) {
 export function composeBrief({ graphAgent, node, prompt, previousOutput, previousMessage, outputAbs }) {
   const parts = [];
   if (graphAgent.craft) parts.push(`# Your craft\n\n${graphAgent.craft}`);
+  for (const skill of graphAgent.skillDocs ?? []) {
+    parts.push(`# Skill: ${skill.id}\n\n${skill.instructions}`);
+  }
   parts.push(`# Work\n\n${prompt}`);
   parts.push(`# Your objective\n\n${node.objective}`);
 

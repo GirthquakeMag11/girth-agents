@@ -32,13 +32,15 @@ configuration.
 ```json
 {
   "version": "3",
+  "skills": ["skills/test-first.md"],
   "agents": [
     {
       "id": "builder",
       "model": "openrouter/~deepseek/deepseek-flash-latest",
       "agent": "build",
       "permissions": ["read", "edit", "shell"],
-      "craft": "Standing instructions for this graph agent."
+      "craft": "Standing instructions for this graph agent.",
+      "skills": ["skills/test-first.md"]
     },
     {
       "id": "reviewer",
@@ -98,16 +100,33 @@ configuration.
 }
 ```
 
+A skill document is Markdown with frontmatter and a non-empty instruction body:
+
+```markdown
+---
+id: test-first
+name: Test-first at the seams
+description: Build the change test-first.
+---
+Write the failing test first, make it pass, then refactor within the green.
+```
+
 ## Rules
 
 - `version` is the string `"3"`.
+- Optional top-level `skills` names skill document paths relative to the
+  config. Each skill needs a unique `id` and a non-empty instruction body.
+  Graph agents may reference those paths with their own optional `skills`
+  array. Unreadable, malformed, duplicate, empty, or unlisted skills are named
+  faults. The brief appends each resolved skill after the agent's `craft`.
 - There is exactly one `graph`. There is no graph id, no graph selector, and
   no "all graphs." A second graph is not part of this schema.
 - The current implementation's graph agent entry has `id`, `model` as
   `provider/model`, optional `agent` (the OpenCode agent to run, default
   `build`), `permissions` as a non-empty array of real action names (`read`,
-  `edit`, `shell`), and optional `craft`. The target graph agent type is a
-  Markdown document; its exact frontmatter/body schema is open.
+  `edit`, `shell`), optional `craft`, and optional `skills` references. The
+  target graph agent type is a Markdown document; its exact frontmatter/body
+  schema is open.
 - The graph has optional `outputRoot` (default `"."`), optional `maxSteps`,
   optional `workflows`, and `nodes`.
 - A workflow is a labelled subsection: `id`, `entry`, `exit`, and `nodes`.
