@@ -59,6 +59,15 @@ so opening the graph keeps the conversation context instead of replacing it.
 
 Not implemented.
 
+## Graph agent session view
+
+Native OpenCode has a subagent view that lets the user see inside a subagent
+session. Provide the same level of introspection for graph agent sessions,
+likely through the dashboard: inspect the session's messages, tool calls,
+handoffs, and current state, rather than only the node-level summary.
+
+Not implemented.
+
 ## Chat context frame
 
 The right-side context frame in the chat view is almost entirely empty space.
