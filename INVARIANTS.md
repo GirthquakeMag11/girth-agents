@@ -1,44 +1,42 @@
 # Design invariants
 
-Hard rules for the engine design. Check every proposed tool, endpoint, state, or
-abstraction against these before writing it down.
+Hard rules. Check every proposed tool, endpoint, state, or abstraction against
+these before writing it down.
 
-## One handoff mechanism, two forms
+## One handoff mechanism
 
-- There is one handoff mechanism. A node receives input, does its work, and
-  hands off its output. The source of the input does not create a different
-  kind of activation.
-- **Node handoff:** the tool is preconfigured by the node. The agent calls it;
-  the engine resolves the target. The tool name is the label; the input is
-  `{ message }`.
-- **Dispatch:** the interactive agent's handoff tool is open-ended. The
-  interactive agent chooses the target, the message, and whether the target
-  session resumes.
-- The same `dispatch` tool starts a node and sends a message back to the
-  origin. There is no “start new work” versus “return” category.
-- `resume: true` is the return-path mechanism. The engine binds it to the
-  origin of the input the sender received.
-- The dispatching agent is a valid handoff target.
+- A handoff is a message and a target. It is not a message kind.
+- A node handoff tool is preconfigured by the node; the tool name is the label;
+  the input is `{ message }`.
+- `dispatch` is the interactive agent's open-ended handoff tool. The same tool
+  starts a node and sends a message back to a retained origin.
+- `resume: true` returns to the origin of the input the sender received. The
+  engine already knows that origin.
+- `dispatchId` identifies a dispatch. It disambiguates retained origins; it is
+  not a question or answer handle.
+- The dispatcher is a valid handoff target. A `$dispatcher` label completes the
+  dispatch and cannot set `resume: true`.
 - No separate reply, resume, answer, request-input, or wait tool. No separate
-  input endpoint. No `input-required` state for this mechanism.
+  input or question endpoint. No `input-required` state.
 - `dispatch` mirrors the subagent tool: foreground blocks; `background: true`
   returns an id and notifies; there is no model-facing `dispatch_wait`.
 - A second tool for a context-specific handoff variant is a violation.
 
-## A handoff is a message and a target
+## No message-kind taxonomy
 
-- A handoff carries a message and has a target. It is not a message kind.
-- Do not introduce question, answer, final, response, request, or reply
-  categories as separate state, tools, endpoints, or dispatch outcomes.
-- `resume` is not a type. It is the rule that a handoff returns to the node
-  that supplied the current input. The engine already knows that origin.
-- The dispatcher is a target like any other. A node may send it a message;
-  the dispatcher may send a message back with `resume: true`.
-- `dispatchId` identifies a dispatch/message. It disambiguates multiple
-  retained origins; it is not a question handle.
-- If a proposed design needs a label, flag, tool, or state to say whether a
-  message is a question, answer, final response, or reply, the design is
-  wrong.
+Do not introduce question, answer, final, response, request, or reply
+categories as separate state, tools, endpoints, or dispatch outcomes. A handoff
+message is context. If a design needs a flag, label, tool, or state to say what
+kind of message it is, the design is wrong.
+
+## Configuration names
+
+- The graph-agent collection is `agents`.
+- A node's reference to a graph-agent entry is `agent`.
+- Do not use `helpers`, `graphAgents`, or another alias.
+- The engine-owned tool names are reserved as labels. OpenCode built-ins and
+  other plugin tools are checked against the live catalog, never a copied
+  version list.
 
 ## Check before proposing
 
@@ -46,7 +44,7 @@ abstraction against these before writing it down.
 2. Can the existing node handoff tool, or the existing `dispatch` tool with a
    target and `resume`, express it?
 3. Does the engine already know the target from config, the active session, or
-   the retained origin?
+   a retained origin?
 
 If yes to any, do not introduce a new tool or endpoint.
 
