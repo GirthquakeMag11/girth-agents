@@ -51,6 +51,23 @@ runs.
 
 Not implemented.
 
+## Dashboard placement
+
+The graph dashboard currently opens as a full-screen panel. The target is to
+fit it inside the tab of the chat it was opened from, like the subagent view,
+so opening the graph keeps the conversation context instead of replacing it.
+
+Not implemented.
+
+## Chat context frame
+
+The right-side context frame in the chat view is almost entirely empty space.
+The target is a compact visual display of relevant graph activity in that
+frame, analogous to the now-experimental to-do list. It is a glanceable
+activity surface, not a replacement for the full dashboard.
+
+Not implemented.
+
 ## Dispatch card presentation
 
 The focused text display is implemented. OpenCode currently selects its
