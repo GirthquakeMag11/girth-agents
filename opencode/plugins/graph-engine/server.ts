@@ -11,7 +11,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RUNTIME_KEY = Symbol.for("graph-engine.runtime");
-const OWNED = Symbol("graph-engine.owned");
+// Process-global so the marker survives plugin reloads: tools registered by a
+// previous plugin instance still count as owned by graph-engine.
+const OWNED = Symbol.for("graph-engine.owned");
 
 const TERMINAL = new Set(["completed", "defect", "cancelled"]);
 
@@ -29,9 +31,14 @@ function graphConfigPath(ctx, env = process.env) {
 }
 
 async function engineFor(ctx) {
-  const existing = globalThis[RUNTIME_KEY];
-  if (existing) return existing;
   const driver = createPluginDriver(ctx);
+  const existing = globalThis[RUNTIME_KEY];
+  if (existing) {
+    // A later setup brings a fresh server client; rebind it so new dispatches
+    // do not route through a stale plugin instance's ctx.
+    existing.setDriver(driver);
+    return existing;
+  }
   const runtime = await createRuntime({ configPath: graphConfigPath(ctx), driver });
   globalThis[RUNTIME_KEY] = runtime;
   return runtime;
@@ -150,7 +157,12 @@ export default Plugin.define({
           if (input.background === true) {
             void (async () => {
               try {
-                const result = await runtime.wait(started.dispatchId, 300000);
+                let result = await runtime.wait(started.dispatchId, 300000);
+                // The notification must carry a terminal state; a dispatch
+                // that outlives one wait window is waited on again.
+                while (!TERMINAL.has(result.state)) {
+                  result = await runtime.wait(started.dispatchId, 300000);
+                }
                 const display = result.display ?? JSON.stringify(result);
                 await ctx.session.synthetic({
                   sessionID: context.sessionID,
@@ -323,8 +335,10 @@ export default Plugin.define({
     });
 
     // The context hook asks the engine for the active session's allowed labels
-    // and removes undeclared or colliding handoff tools.
-    await ctx.session.hook("context", async (event: any) => {
+    // and removes undeclared or colliding handoff tools. Ownership is judged
+    // against the server-side catalog entry, whose description/input are the
+    // values this plugin registered, not the event-side tool shape.
+    const hookRegistration = await ctx.session.hook("context", async (event: any) => {
       if (!event?.tools) return;
       const { labels: allowed } = runtime.handoffTools({ sessionID: event.sessionID });
       const allowedSet = new Set(allowed);
@@ -340,7 +354,7 @@ export default Plugin.define({
         const current = registered?.get(label);
         const collision =
           allowedSet.has(label) &&
-          (!current || current[OWNED] !== label || !sameDefinition(tool));
+          (!current || current[OWNED] !== label || !sameDefinition(current));
         if (!allowedSet.has(label) || collision) {
           delete event.tools[label];
           if (collision) {
@@ -359,8 +373,9 @@ export default Plugin.define({
     // Plugin cleanup disposes this instance's registrations; it never stops
     // the engine. The engine ends when the OpenCode server process ends.
     return () => {
-      void transformRegistration.dispose();
-      void rpcRegistration.dispose();
+      void transformRegistration?.dispose?.();
+      void rpcRegistration?.dispose?.();
+      void hookRegistration?.dispose?.();
     };
   },
 });

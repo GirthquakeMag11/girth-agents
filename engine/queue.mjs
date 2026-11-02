@@ -4,7 +4,7 @@
 
 const TERMINAL = new Set(["completed", "defect", "cancelled"]);
 
-export function createDispatchQueue({ run, onEvent = () => {} }) {
+export function createDispatchQueue({ run, onEvent = () => {}, maxRecords = 1000 }) {
   const state = {
     paused: false,
     active: null,
@@ -56,6 +56,24 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
       at: record.finishedAt,
     });
     record._resolve(snapshot(record));
+  }
+
+  // The engine lives for the OpenCode server process, so drop fully finished
+  // dispatches past a cap instead of accumulating records (and their session
+  // drivers) forever. Only terminal records that hold no retained, consumed,
+  // or discarded origin are evictable; every resumable origin is kept.
+  function evictable(record) {
+    return TERMINAL.has(record.state) && !record.retainedOrigin && record.originState === undefined;
+  }
+
+  function prune() {
+    if (state.records.size <= maxRecords) return;
+    for (const [id, record] of state.records) {
+      if (evictable(record)) {
+        state.records.delete(id);
+        if (state.records.size <= maxRecords) break;
+      }
+    }
   }
 
   async function pump() {
@@ -129,6 +147,7 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     });
     state.records.set(id, record);
     state.queue.push(record);
+    prune();
     emit("queued", { dispatchId: id, node, workflow, at: record.createdAt });
     pump();
     return record;
@@ -138,6 +157,7 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     const record = state.records.get(id);
     if (!record) return null;
     if (TERMINAL.has(record.state)) return snapshot(record);
+    const delay = Math.max(1, Number.isFinite(timeoutMs) ? timeoutMs : 300000);
     return new Promise((resolve) => {
       let settled = false;
       const timer = setTimeout(
@@ -146,7 +166,7 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
           settled = true;
           resolve({ ...snapshot(record), timedOut: true });
         },
-        Math.max(1, timeoutMs),
+        delay,
       );
       record.done.then((result) => {
         if (settled) return;

@@ -133,8 +133,10 @@ export function createContext(editor, { directory = "/work/project", options = {
         const list = hooks.get(name) ?? [];
         list.push(callback);
         hooks.set(name, list);
-        return async () => {
-          hooks.set(name, (hooks.get(name) ?? []).filter((entry) => entry !== callback));
+        return {
+          dispose: async () => {
+            hooks.set(name, (hooks.get(name) ?? []).filter((entry) => entry !== callback));
+          },
         };
       },
       async synthetic(payload) {

@@ -296,6 +296,9 @@ export async function runDispatch({ driver, config, record, onEvent = () => {}, 
   if (typeof record.directory !== "string" || record.directory.trim() === "") {
     throw new DispatchDefect("no-directory", "the dispatch record has no directory");
   }
+  if (!driver || typeof driver.createSession !== "function") {
+    throw new DispatchDefect("no-driver", "the dispatch has no session driver");
+  }
 
   let current = record.node;
   let previousMessage = null;

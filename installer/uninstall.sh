@@ -34,6 +34,11 @@ if [ ! -f "$MANIFEST" ]; then
   exit 1
 fi
 
+if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
+  echo "uninstall: sha256sum or shasum is required" >&2
+  exit 1
+fi
+
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' 0
 ENTRIES="$TMP/entries"
@@ -102,8 +107,10 @@ while IFS='	' read -r sha path; do
   if [ "$actual" = "$sha" ]; then
     if [ "$DRY" = 0 ]; then
       rm -f "$abs"
+      echo "removed $path"
+    else
+      echo "would remove $path"
     fi
-    echo "removed $path"
     removed=$((removed + 1))
   else
     echo "kept   $path (modified; checksum differs)"
@@ -111,20 +118,24 @@ while IFS='	' read -r sha path; do
   fi
 done < "$ENTRIES"
 
-# Remove the empty installer-owned directories, deepest first. rmdir refuses
-# when a directory is non-empty, so unrelated files are never touched.
+# Remove the empty installer-owned directories, derived from the manifest and
+# deepest first. rmdir refuses when a directory is non-empty, so unrelated
+# files are never touched.
 if [ "$DRY" = 0 ]; then
-  for rel in \
-    plugins/graph-engine/engine \
-    plugins/graph-engine/dashboard/src \
-    plugins/graph-engine/dashboard \
-    plugins/graph-engine \
-    skills/graph-authoring \
-    skills/dispatching; do
+  dirs=""
+  while IFS='	' read -r sha path; do
+    [ -z "$path" ] && continue
+    case "$path" in /*|*..*) continue ;; esac
+    dir=$(dirname "$path")
+    while [ -n "$dir" ] && [ "$dir" != "." ]; do
+      dirs="$dirs
+$dir"
+      dir=$(dirname "$dir")
+    done
+  done < "$ENTRIES"
+  for rel in $(printf '%s' "$dirs" | sort -u | awk -F/ '{ printf "%04d %s\n", NF, $0 }' | sort -rn | cut -d' ' -f2-); do
     rmdir "$CONFIG/$rel" >/dev/null 2>&1 || true
   done
-  rmdir "$CONFIG/plugins" >/dev/null 2>&1 || true
-  rmdir "$CONFIG/skills" >/dev/null 2>&1 || true
 fi
 
 if [ "$PURGE" = 1 ] && [ "$DRY" = 0 ]; then

@@ -53,9 +53,21 @@ export function createPluginDriver(ctx) {
 
       // The experimental wait resolves to idle. It is never the completion
       // authority, so always fall through to the session state, exactly like
-      // the wire driver did.
+      // the wire driver did. Bound it with a clearable timer so a wait that
+      // never settles cannot stall the poll loop below, and so losing the
+      // race to the timer does not leak a timer.
       try {
-        await ctx.session.wait({ sessionID });
+        await new Promise((resolve) => {
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve();
+          };
+          const timer = setTimeout(finish, budgetMs);
+          Promise.resolve(ctx.session.wait({ sessionID })).then(finish, finish);
+        });
       } catch {
         // a failed or absent wait is not a verdict; poll below
       }
@@ -114,8 +126,10 @@ export function createPluginDriver(ctx) {
     forDirectory(directory) {
       return {
         ...base,
+        // Bind only when the caller did not already name a directory; the
+        // executor's explicit `record.directory` stays authoritative.
         createSession(options) {
-          return base.createSession({ ...options, directory });
+          return base.createSession(options.directory != null ? options : { ...options, directory });
         },
       };
     },

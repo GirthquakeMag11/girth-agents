@@ -81,9 +81,9 @@ rm -f "$ARCHIVE" "$CHECKSUM"
 tar -czf "$ARCHIVE" -C "$DIST" "$SLUG-$VERSION"
 
 if command -v sha256sum >/dev/null 2>&1; then
-  (cd "$DIST" && sha256sum "$SLUG-$VERSION.tar.gz" | sed 's#  .*/#  #' > "$SLUG-$VERSION.tar.gz.sha256")
+  (cd "$DIST" && sha256sum "$SLUG-$VERSION.tar.gz" > "$SLUG-$VERSION.tar.gz.sha256")
 else
-  (cd "$DIST" && shasum -a 256 "$SLUG-$VERSION.tar.gz" | sed 's#  .*/#  #' > "$SLUG-$VERSION.tar.gz.sha256")
+  (cd "$DIST" && shasum -a 256 "$SLUG-$VERSION.tar.gz" > "$SLUG-$VERSION.tar.gz.sha256")
 fi
 
 cp "$ROOT/installer/install.sh" "$DIST/install.sh"

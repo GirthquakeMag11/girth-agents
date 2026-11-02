@@ -139,8 +139,9 @@ if [ -z "$CONFIG_DIR" ]; then
   fi
   CONFIG_DIR=$answer
 fi
-CONFIG_DIR=$(CDPATH= cd -- "$CONFIG_DIR" 2>/dev/null && pwd) || {
-  echo "install: config directory does not exist: $CONFIG_DIR" >&2
+config_guess=$CONFIG_DIR
+CONFIG_DIR=$(CDPATH= cd -- "$config_guess" 2>/dev/null && pwd) || {
+  echo "install: config directory does not exist: $config_guess" >&2
   exit 1
 }
 
@@ -168,9 +169,13 @@ fi
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' 0
 mkdir -p "$TMP/src"
-tar -xzf "$ARCHIVE" -C "$TMP/src"
+tar -xzf "$ARCHIVE" -C "$TMP/src" || { echo "install: cannot extract $ARCHIVE" >&2; exit 1; }
 
-top_dirs=$(ls "$TMP/src")
+if [ "$(find "$TMP/src" -type l | wc -l | tr -d ' ')" != "0" ]; then
+  echo "install: the archive contains a symbolic link; refusing" >&2
+  exit 1
+fi
+top_dirs=$(find "$TMP/src" -mindepth 1 -maxdepth 1 | sed "s#^$TMP/src/##")
 top_count=$(printf '%s\n' "$top_dirs" | sed '/^$/d' | wc -l | tr -d ' ')
 if [ "$top_count" != 1 ] || [ ! -d "$TMP/src/$top_dirs" ]; then
   echo "install: the archive must contain exactly one top-level directory" >&2
@@ -226,23 +231,28 @@ if [ "$DRY" = 1 ]; then
   exit 0
 fi
 
-mkdir -p "$CONFIG_DIR/plugins"
-cp -R "$TOP/plugin" "$CONFIG_DIR/plugins/graph-engine"
+fail() {
+  echo "install: $1" >&2
+  exit 1
+}
 
-mkdir -p "$CONFIG_DIR/skills"
-cp -R "$TOP/skills/graph-authoring" "$CONFIG_DIR/skills/graph-authoring"
-cp -R "$TOP/skills/dispatching" "$CONFIG_DIR/skills/dispatching"
+mkdir -p "$CONFIG_DIR/plugins" || fail "cannot create $CONFIG_DIR/plugins"
+cp -R "$TOP/plugin" "$CONFIG_DIR/plugins/graph-engine" || fail "cannot install the plugin package"
 
-mkdir -p "$CONFIG_DIR/graph-engine"
+mkdir -p "$CONFIG_DIR/skills" || fail "cannot create $CONFIG_DIR/skills"
+cp -R "$TOP/skills/graph-authoring" "$CONFIG_DIR/skills/graph-authoring" || fail "cannot install graph-authoring"
+cp -R "$TOP/skills/dispatching" "$CONFIG_DIR/skills/dispatching" || fail "cannot install dispatching"
+
+mkdir -p "$CONFIG_DIR/graph-engine" || fail "cannot create $CONFIG_DIR/graph-engine"
 if [ ! -e "$CONFIG_DIR/graph-engine/graph" ]; then
-  cp -R "$TOP/graph" "$CONFIG_DIR/graph-engine/graph"
+  cp -R "$TOP/graph" "$CONFIG_DIR/graph-engine/graph" || fail "cannot seed the graph"
   seeded="yes"
 else
   seeded="no (existing graph preserved)"
 fi
 
-cp "$TOP/uninstall.sh" "$CONFIG_DIR/graph-engine/uninstall.sh"
-printf '%s\n' "$MANIFEST_LINES" > "$CONFIG_DIR/graph-engine/manifest"
+cp "$TOP/uninstall.sh" "$CONFIG_DIR/graph-engine/uninstall.sh" || fail "cannot install the uninstaller"
+printf '%s\n' "$MANIFEST_LINES" > "$CONFIG_DIR/graph-engine/manifest" || fail "cannot write the manifest"
 
 # 12. Report.
 echo "installed:  Graph Engine v$VERSION into $CONFIG_DIR"

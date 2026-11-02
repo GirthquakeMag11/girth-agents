@@ -335,6 +335,35 @@ test("queue: cancelling a queued return discards the consumed source session", a
   assert.equal(queue.originState("d-1"), "discarded");
 });
 
+test("queue: fully finished records are evicted past the cap while retained origins are kept", async () => {
+  const queue = createDispatchQueue({
+    run: async (record) => {
+      if (record.id === "d-2") {
+        record.retainedOrigin = {
+          node: "a",
+          sessionId: "s-d-2",
+          label: "report",
+          message: "m",
+          at: new Date().toISOString(),
+        };
+        record.originState = "retained";
+      }
+      return {};
+    },
+    maxRecords: 2,
+  });
+  queue.enqueue({ node: "a", prompt: "one" });
+  queue.enqueue({ node: "a", prompt: "two" });
+  await tick();
+  queue.enqueue({ node: "a", prompt: "three" });
+  await tick();
+
+  assert.equal(queue.status("d-1"), null, "a fully finished dispatch is evicted past the cap");
+  assert.ok(queue.status("d-2"), "a retained origin is never evicted");
+  assert.equal(queue.findRetainedOrigin({ node: "a" }).length, 1);
+  assert.ok(queue.status("d-3"));
+});
+
 test("queue: cancel claims a retained origin before awaiting session deletion", async () => {
   const queue = createDispatchQueue({
     run: async (record) => {

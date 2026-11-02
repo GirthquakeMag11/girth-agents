@@ -82,6 +82,14 @@ function fakeDriver({ onPrompt }) {
   };
 }
 
+test("executor: a record without a driver is a named no-driver defect", async () => {
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
+  await assert.rejects(
+    () => runDispatch({ driver: null, config, record, onEvent: () => {} }),
+    (error) => error.kind === "no-driver",
+  );
+});
+
 test("executor: a failed session on the first visit is a named session defect", async () => {
   const driver = fakeDriver({ onPrompt: async () => ({ outcome: "failed" }) });
   const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };

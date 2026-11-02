@@ -462,10 +462,14 @@ file	<sha256>	plugins/graph-engine/server.ts
 file	<sha256>	plugins/graph-engine/tui.tsx
 file	<sha256>	plugins/graph-engine/rpc.ts
 file	<sha256>	plugins/graph-engine/engine/runtime.mjs
-file	<sha256>	plugins/graph-engine/dashboard/src/index.ts
+file	<sha256>	plugins/graph-engine/dashboard/src/view.tsx
 file	<sha256>	skills/graph-authoring/SKILL.md
 file	<sha256>	skills/dispatching/SKILL.md
 ```
+
+The manifest is generated dynamically from the staged tree: it lists every
+staged plugin (`plugins/graph-engine/**`) and skill file, not a hand-curated
+subset.
 
 Rules:
 

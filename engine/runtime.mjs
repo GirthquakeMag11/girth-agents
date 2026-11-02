@@ -12,7 +12,7 @@ import { createDispatchQueue } from "./queue.mjs";
 import { runDispatch, DispatchDefect } from "./executor.mjs";
 import { renderGraphMapResponse } from "./map.mjs";
 import { dispatchStatusBody, renderDispatchDisplay } from "./display.mjs";
-import { getActivityHistory, workflowForEvent } from "./history.mjs";
+import { createActivityHistory, workflowForEvent } from "./history.mjs";
 import { ControlError } from "./errors.mjs";
 import { PROJECT_VERSION } from "./version.mjs";
 
@@ -27,7 +27,8 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
   let handoffPreflightWaiters = [];
   let bootHandoffLabels = [];
   let configRevision = 0;
-  const history = getActivityHistory();
+  let liveDriver = driver;
+  const history = createActivityHistory();
 
   function event(kind, payload = {}) {
     const workflow = workflowForEvent(payload, (id) => (queue ? queue.status(id) : null));
@@ -94,6 +95,9 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
   }
 
   async function dispatch(body, directory) {
+    if (typeof directory !== "string" || directory.trim() === "") {
+      throw new ControlError(400, "dispatch needs a dispatching directory");
+    }
     const preflight = await waitForHandoffPreflight();
     const preflightFault = handoffPreflightError(preflight);
     if (preflightFault) {
@@ -122,7 +126,7 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
         prompt: body.prompt,
         workflow: origin.workflow ?? null,
         dispatchingSessionID: body.sessionID,
-        driver: driver.forDirectory(directory),
+        driver: liveDriver.forDirectory(directory),
         directory,
         resumeSessionId: origin.sessionId,
         resumeMessage: body.prompt,
@@ -137,7 +141,7 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
       prompt: body.prompt,
       workflow: target.workflow,
       dispatchingSessionID: body.sessionID,
-      driver: driver.forDirectory(directory),
+      driver: liveDriver.forDirectory(directory),
       directory,
     });
     return dispatchStatusBody(queue.status(record.id));
@@ -240,6 +244,11 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
 
   return {
     configPath,
+    // A later plugin setup reuses this runtime but brings a fresh server
+    // client; rebind the live driver so new dispatches use the current ctx.
+    setDriver(driver) {
+      liveDriver = driver;
+    },
     get config() {
       return config;
     },

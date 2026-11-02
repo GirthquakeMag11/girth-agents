@@ -13,7 +13,7 @@ export function snapshotToDashboard(snapshot) {
   if (!info || typeof info !== "object" || typeof info.configPath !== "string") {
     throw new Error("graph-engine snapshot has no graph info");
   }
-  if (!runtime || typeof runtime !== "object") {
+  if (!runtime || typeof runtime !== "object" || !Array.isArray(runtime.queue)) {
     throw new Error("graph-engine snapshot has no runtime state");
   }
   return {
