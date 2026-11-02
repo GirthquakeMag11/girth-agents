@@ -96,3 +96,12 @@ Open.
 - programmatic node types;
 - dashboard editing or dispatch controls;
 - background subagent tracking and child-session aggregation.
+
+Product-boundary guardrails (do not reverse without a decision):
+
+- distribution stays a plain archive plus a standalone `install.sh` and a SHA-256
+  checksum; no npm package, registry, or network step;
+- no bundled Node or other runtime, and no Node prerequisite at install time;
+- no in-place upgrade path in the first release;
+- no Windows installer in the first release;
+- no per-project engine or per-project install.
