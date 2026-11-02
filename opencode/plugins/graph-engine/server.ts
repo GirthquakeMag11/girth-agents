@@ -1,0 +1,349 @@
+// The graph engine plugin server part. One process-global engine, created or
+// reused here; the engine's lifetime is the OpenCode server process, never the
+// plugin. Tool calls go directly into the engine — no fetch, URL, or token.
+
+import { Plugin } from "@opencode/plugin";
+import { createPluginDriver } from "./engine/plugin-driver.mjs";
+import { createRuntime } from "./engine/runtime.mjs";
+import { handoffLabels } from "./engine/config.mjs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const RUNTIME_KEY = Symbol.for("graph-engine.runtime");
+const OWNED = Symbol("graph-engine.owned");
+
+const TERMINAL = new Set(["completed", "defect", "cancelled"]);
+
+// The graph config resolves from the plugin's installed location:
+//   $OPENCODE_CONFIG/plugins/graph-engine/../../graph-engine/graph/config.json
+// A plugin option or an environment override wins, which is what keeps the
+// plugin testable without a real install.
+function graphConfigPath(ctx, env = process.env) {
+  const fromOptions = ctx?.options?.graphConfig;
+  if (typeof fromOptions === "string" && fromOptions.trim() !== "") return fromOptions;
+  const fromEnv = env?.GRAPH_ENGINE_CONFIG;
+  if (typeof fromEnv === "string" && fromEnv.trim() !== "") return fromEnv;
+  const pluginDir = dirname(fileURLToPath(import.meta.url));
+  return resolve(pluginDir, "..", "..", "graph-engine", "graph", "config.json");
+}
+
+async function engineFor(ctx) {
+  const existing = globalThis[RUNTIME_KEY];
+  if (existing) return existing;
+  const driver = createPluginDriver(ctx);
+  const runtime = await createRuntime({ configPath: graphConfigPath(ctx), driver });
+  globalThis[RUNTIME_KEY] = runtime;
+  return runtime;
+}
+
+const HANDOFF_DESCRIPTION = "Finish this node and hand off with a message. Call exactly once.";
+const HANDOFF_INPUT = {
+  type: "object",
+  properties: {
+    message: { type: "string", description: "The handoff message." },
+  },
+  required: ["message"],
+  additionalProperties: false,
+};
+const sameDefinition = (tool: any) =>
+  JSON.stringify(tool?.description) === JSON.stringify(HANDOFF_DESCRIPTION) &&
+  JSON.stringify(tool?.input) === JSON.stringify(HANDOFF_INPUT);
+
+function toolSource(context) {
+  return {
+    type: "tool",
+    messageID: context.messageID,
+    id: context.toolCallID ?? context.id,
+  };
+}
+
+export default Plugin.define({
+  id: "graph-engine",
+  async setup(ctx) {
+    const runtime = await engineFor(ctx);
+    const labels = handoffLabels(runtime.config.graph);
+
+    let generatedLabels: string[] = [];
+    let knownCollisions = new Set<string>();
+
+    const transformRegistration = await ctx.tool.transform((editor) => {
+      const handoff = async (label: string, input: any, context: any) => {
+        await ctx.permission.assert({
+          sessionID: context.sessionID,
+          agent: context.agent,
+          action: "handoff",
+          resources: ["*"],
+          save: ["*"],
+          source: toolSource(context),
+        });
+        await runtime.handoff({
+          label,
+          message: input.message,
+          sessionID: context.sessionID,
+          callID: context.toolCallID ?? context.id,
+          messageID: context.messageID,
+          agent: context.agent,
+        });
+        return { content: "handoff accepted: " + label };
+      };
+
+      editor.add({
+        name: "dispatch",
+        description:
+          "Dispatch a prompt into the graph at exactly one of a node or a workflow. A workflow dispatch starts at its entry and engages the workflow boundary; a node dispatch engages no workflow. Foreground blocks; background returns a dispatch id immediately.",
+        input: {
+          type: "object",
+          properties: {
+            node: { type: "string", description: "Start at this node. Do not combine with workflow." },
+            workflow: { type: "string", description: "Start this workflow at its entry. Do not combine with node." },
+            prompt: { type: "string" },
+            background: { type: "boolean" },
+            resume: { type: "boolean" },
+            dispatchId: { type: "string" },
+          },
+          required: ["prompt"],
+          additionalProperties: false,
+        },
+        options: { codemode: false, permission: "dispatch" },
+        async execute(input: any, context: any) {
+          await ctx.permission.assert({
+            sessionID: context.sessionID,
+            agent: context.agent,
+            action: "dispatch",
+            resources: ["*"],
+            save: ["*"],
+            source: toolSource(context),
+          });
+          const session = await ctx.session.get({ sessionID: context.sessionID });
+          const directory = session?.location?.directory;
+          if (typeof directory !== "string" || directory.trim() === "") {
+            throw new Error("dispatch needs the dispatching session's directory");
+          }
+          const started = await runtime.dispatch(
+            {
+              node: input.node,
+              workflow: input.workflow,
+              prompt: input.prompt,
+              background: input.background === true,
+              resume: input.resume === true,
+              dispatchId: input.dispatchId,
+              sessionID: context.sessionID,
+            },
+            directory,
+          );
+          if (input.background === true) {
+            void (async () => {
+              try {
+                const result = await runtime.wait(started.dispatchId, 300000);
+                const display = result.display ?? JSON.stringify(result);
+                await ctx.session.synthetic({
+                  sessionID: context.sessionID,
+                  description: "graph dispatch " + started.dispatchId,
+                  text: `<graph-dispatch dispatchID="${started.dispatchId}" state="${result.state}">\n${display}\n</graph-dispatch>`,
+                  metadata: {
+                    source: "graph-dispatch",
+                    dispatchId: started.dispatchId,
+                    state: result.state,
+                    node: result.node ?? started.node,
+                    workflow: result.workflow ?? started.workflow ?? null,
+                    label: result.handoff?.label ?? null,
+                  },
+                });
+              } catch (error) {
+                console.error("dispatch.notification-failed", {
+                  dispatchId: started.dispatchId,
+                  error: error?.message ?? String(error),
+                });
+              }
+            })();
+            return { content: started.display ?? JSON.stringify(started) };
+          }
+          let result = await runtime.wait(started.dispatchId, 300000);
+          while (!TERMINAL.has(result.state)) {
+            result = await runtime.wait(started.dispatchId, 300000);
+          }
+          return { content: result.display ?? JSON.stringify(result) };
+        },
+      });
+
+      editor.add({
+        name: "dispatch_status",
+        description: "Read the live state of a dispatched graph run as a focused display; raw: true returns the structured snapshot.",
+        input: {
+          type: "object",
+          properties: {
+            dispatchId: { type: "string" },
+            raw: { type: "boolean" },
+          },
+          required: ["dispatchId"],
+          additionalProperties: false,
+        },
+        options: { codemode: false, permission: "dispatch_status" },
+        async execute(input: any, context: any) {
+          await ctx.permission.assert({
+            sessionID: context.sessionID,
+            agent: context.agent,
+            action: "dispatch_status",
+            resources: ["*"],
+            save: ["*"],
+            source: toolSource(context),
+          });
+          const result = await runtime.status(input.dispatchId);
+          return {
+            content: input.raw === true ? JSON.stringify(result) : result.display ?? JSON.stringify(result),
+          };
+        },
+      });
+
+      editor.add({
+        name: "dispatch_cancel",
+        description: "Cancel a queued dispatch, or interrupt and cancel the active dispatch.",
+        input: {
+          type: "object",
+          properties: { dispatchId: { type: "string" } },
+          required: ["dispatchId"],
+          additionalProperties: false,
+        },
+        options: { codemode: false, permission: "dispatch_cancel" },
+        async execute(input: any, context: any) {
+          await ctx.permission.assert({
+            sessionID: context.sessionID,
+            agent: context.agent,
+            action: "dispatch_cancel",
+            resources: ["*"],
+            save: ["*"],
+            source: toolSource(context),
+          });
+          const result = await runtime.cancel(input.dispatchId);
+          return { content: JSON.stringify(result) };
+        },
+      });
+
+      editor.add({
+        name: "reload",
+        description: "Validate and swap the graph config. Returns named faults and keeps the old graph if invalid.",
+        input: { type: "object", properties: {}, additionalProperties: false },
+        options: { codemode: false, permission: "reload" },
+        async execute(input: any, context: any) {
+          await ctx.permission.assert({
+            sessionID: context.sessionID,
+            agent: context.agent,
+            action: "reload",
+            resources: ["*"],
+            save: ["*"],
+            source: toolSource(context),
+          });
+          const result = await runtime.reload();
+          return { content: JSON.stringify(result) };
+        },
+      });
+
+      editor.add({
+        name: "graph_info",
+        description: "Return the config path and the one graph's workflows, nodes, and graph agents.",
+        input: { type: "object", properties: {}, additionalProperties: false },
+        options: { codemode: false, permission: "graph_info" },
+        async execute(input: any, context: any) {
+          await ctx.permission.assert({
+            sessionID: context.sessionID,
+            agent: context.agent,
+            action: "graph_info",
+            resources: ["*"],
+            save: ["*"],
+            source: toolSource(context),
+          });
+          return { content: JSON.stringify(runtime.graphInfo()) };
+        },
+      });
+
+      editor.add({
+        name: "graph_map",
+        description:
+          "Return the graph as a deterministic Mermaid map, workflow table, node table, legend, and live state. This is the graph as a thing; display it verbatim.",
+        input: { type: "object", properties: {}, additionalProperties: false },
+        options: { codemode: false, permission: "graph_map" },
+        async execute(input: any, context: any) {
+          await ctx.permission.assert({
+            sessionID: context.sessionID,
+            agent: context.agent,
+            action: "graph_map",
+            resources: ["*"],
+            save: ["*"],
+            source: toolSource(context),
+          });
+          return { content: JSON.stringify(runtime.graphMap()) };
+        },
+      });
+
+      // One generated handoff tool per declared label. Collisions against the
+      // live catalog are recorded so dispatch fails closed on a clash.
+      try {
+        const existing = new Set(editor.list().map((tool) => tool.id ?? tool.name));
+        knownCollisions = new Set(labels.filter((label) => existing.has(label)));
+      } catch {
+        knownCollisions = new Set(labels);
+      }
+      generatedLabels = labels.filter((label) => !knownCollisions.has(label));
+
+      for (const label of generatedLabels) {
+        const definition: any = {
+          name: label,
+          description: HANDOFF_DESCRIPTION,
+          input: HANDOFF_INPUT,
+          options: { codemode: false, permission: "handoff" },
+          execute: async (input: any, context: any) => handoff(label, input, context),
+        };
+        definition[OWNED] = label;
+        editor.add(definition);
+      }
+    });
+
+    // The dispatch gate. The same report also names any label that collided,
+    // so a dispatch defects instead of silently losing a lever.
+    runtime.reportHandoffPreflight({
+      labels,
+      collisions: [...knownCollisions],
+      catalogAvailable: true,
+    });
+
+    // The context hook asks the engine for the active session's allowed labels
+    // and removes undeclared or colliding handoff tools.
+    await ctx.session.hook("context", async (event: any) => {
+      if (!event?.tools) return;
+      const { labels: allowed } = runtime.handoffTools({ sessionID: event.sessionID });
+      const allowedSet = new Set(allowed);
+      let registered: Map<string, any> | null = null;
+      try {
+        registered = new Map((await ctx.tool.list()).map((tool) => [tool.id ?? tool.name, tool]));
+      } catch {
+        registered = null;
+      }
+      for (const label of generatedLabels) {
+        const tool = event.tools[label];
+        if (!tool) continue;
+        const current = registered?.get(label);
+        const collision =
+          allowedSet.has(label) &&
+          (!current || current[OWNED] !== label || !sameDefinition(tool));
+        if (!allowedSet.has(label) || collision) {
+          delete event.tools[label];
+          if (collision) {
+            knownCollisions.add(label);
+            runtime.reportHandoffPreflight({
+              labels,
+              collisions: [...knownCollisions],
+              catalogAvailable: true,
+              sessionID: event.sessionID,
+            });
+          }
+        }
+      }
+    });
+
+    // Plugin cleanup disposes this instance's registrations; it never stops
+    // the engine. The engine ends when the OpenCode server process ends.
+    return () => {
+      void transformRegistration.dispose();
+    };
+  },
+});

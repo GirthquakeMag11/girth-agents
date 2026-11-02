@@ -2,7 +2,6 @@
 // A record is the live snapshot of one dispatch. Nothing here is durable;
 // a restart loses the active dispatch and the queue.
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const TERMINAL = new Set(["completed", "defect", "cancelled"]);
 
 export function createDispatchQueue({ run, onEvent = () => {} }) {
@@ -139,11 +138,23 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     const record = state.records.get(id);
     if (!record) return null;
     if (TERMINAL.has(record.state)) return snapshot(record);
-    const result = await Promise.race([
-      record.done,
-      sleep(Math.max(1, timeoutMs)).then(() => ({ ...snapshot(record), timedOut: true })),
-    ]);
-    return result;
+    return new Promise((resolve) => {
+      let settled = false;
+      const timer = setTimeout(
+        () => {
+          if (settled) return;
+          settled = true;
+          resolve({ ...snapshot(record), timedOut: true });
+        },
+        Math.max(1, timeoutMs),
+      );
+      record.done.then((result) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(result);
+      });
+    });
   }
 
   function status(id) {
