@@ -1,25 +1,16 @@
 ---
 name: graph-authoring
-description: Author or modify the engine's graph config, validate it with reload, and fix named faults.
+description: The reference for the engine's graph schema and reload contract; load it before authoring or modifying the graph.
 ---
-# Graph authoring
+# Graph authoring reference
 
-The engine runs agent nodes. A non-terminal node's graph agent receives a
-prompt, does its work, and calls exactly one generated handoff tool to the next
-target; a terminal node ends after its session succeeds. The graph is one JSON
-manifest plus the Markdown agent documents it names and the skill documents
-those agents reference.
+The authoritative reference for the one graph's schema, its rules, and the
+`reload()` contract. The graph is one JSON manifest plus the Markdown agent
+documents it names and the skill documents those agents reference.
 
-## Start
-
-Call `graph_info()` first. It returns the config path and the one graph's
-workflows, nodes, and graph agents. Read the config and agent documents. Edit
-them. Then call `reload()`. If `reload` returns `valid: false`, read the named
-faults, fix them, and reload again. A reload during an active dispatch is
-rejected; wait for the dispatch to finish.
-
-Do not edit the engine's plugin, runtime skills, or source. Edit the graph
-config, agent documents, and graph skill documents.
+Call `graph_info()` for the config path and the graph's workflows, nodes, and
+graph agents. Read the config and the agent and skill documents it names, edit
+them, then validate.
 
 ## Schema
 
@@ -154,11 +145,12 @@ Write the failing test first, make it pass, then refactor within the green.
 - `workflows[].strict: true` rejects handoffs outside the main workflow
   and its transitive connections.
 
-## After editing
+## Reload contract
 
 Call `reload()`. Success returns `valid: true` and the graph summary.
-Failure returns `valid: false` and faults; the old graph stays active.
-Fix every fault before dispatching.
+Failure returns `valid: false` and the named faults; the old graph stays
+active. A reload during an active dispatch is rejected; wait for the dispatch
+to finish. Fix every fault before dispatching.
 
 The native dashboard reads the graph and the engine's structured runtime
 state.

@@ -2,7 +2,8 @@
 # Installs Graph Engine into OpenCode's global configuration.
 #
 # The archive is the product. This script verifies its checksum, extracts it,
-# installs the plugin package, skills, and (once) a user-owned graph, writes
+# installs the plugin package, skills, primary agents, and (once) a user-owned
+# graph, writes
 # the uninstaller and a checksum manifest, and touches nothing outside of the
 # configuration directory.
 #
@@ -202,6 +203,8 @@ fail=""
 [ -e "$CONFIG_DIR/plugins/graph-engine" ] && fail="plugins/graph-engine already exists"
 [ -e "$CONFIG_DIR/skills/graph-authoring" ] && fail="skills/graph-authoring already exists"
 [ -e "$CONFIG_DIR/skills/dispatching" ] && fail="skills/dispatching already exists"
+[ -e "$CONFIG_DIR/agents/engineer.md" ] && fail="agents/engineer.md already exists"
+[ -e "$CONFIG_DIR/agents/conductor.md" ] && fail="agents/conductor.md already exists"
 [ -e "$CONFIG_DIR/graph-engine/manifest" ] && fail="graph-engine/manifest already exists"
 if [ -n "$fail" ]; then
   echo "install: refused: $fail" >&2
@@ -211,8 +214,18 @@ fi
 echo "version:    ${VERSION}"
 echo "install root: $CONFIG_DIR"
 
-# 10. Build the manifest from what will be installed.
-( cd "$TOP" && find plugin skills -type f | sort ) > "$TMP/files"
+# 10. Specialize the Engineer agent's permission path for this config
+# directory (it ships as a template), then build the manifest from the
+# resulting bytes.
+if ! sed "s#@CONFIG_DIR@#$CONFIG_DIR#" "$TOP/agents/engineer.md" > "$TOP/agents/engineer.md.new"; then
+  echo "install: cannot specialize engineer.md" >&2
+  exit 1
+fi
+mv "$TOP/agents/engineer.md.new" "$TOP/agents/engineer.md" || {
+  echo "install: cannot finalize engineer.md" >&2
+  exit 1
+}
+( cd "$TOP" && find plugin skills agents -type f | sort ) > "$TMP/files"
 MANIFEST_LINES="# graph-engine manifest v1
 version	$VERSION"
 while IFS= read -r rel; do
@@ -243,6 +256,10 @@ mkdir -p "$CONFIG_DIR/skills" || fail "cannot create $CONFIG_DIR/skills"
 cp -R "$TOP/skills/graph-authoring" "$CONFIG_DIR/skills/graph-authoring" || fail "cannot install graph-authoring"
 cp -R "$TOP/skills/dispatching" "$CONFIG_DIR/skills/dispatching" || fail "cannot install dispatching"
 
+mkdir -p "$CONFIG_DIR/agents" || fail "cannot create $CONFIG_DIR/agents"
+cp "$TOP/agents/engineer.md" "$CONFIG_DIR/agents/engineer.md" || fail "cannot install the Engineer agent"
+cp "$TOP/agents/conductor.md" "$CONFIG_DIR/agents/conductor.md" || fail "cannot install the Conductor agent"
+
 mkdir -p "$CONFIG_DIR/graph-engine" || fail "cannot create $CONFIG_DIR/graph-engine"
 if [ ! -e "$CONFIG_DIR/graph-engine/graph" ]; then
   cp -R "$TOP/graph" "$CONFIG_DIR/graph-engine/graph" || fail "cannot seed the graph"
@@ -259,6 +276,7 @@ echo "installed:  Graph Engine v$VERSION into $CONFIG_DIR"
 echo "graph:      $CONFIG_DIR/graph-engine/graph ($seeded)"
 echo "plugin:     OpenCode loads $CONFIG_DIR/plugins/graph-engine automatically"
 echo "skills:     graph-authoring and dispatching installed globally"
+echo "agents:     Engineer and Conductor installed globally"
 echo "note:       run /reload in OpenCode if it was already running"
 echo "note:       no project files are created"
 

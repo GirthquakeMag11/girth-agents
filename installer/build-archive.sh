@@ -42,7 +42,7 @@ CHECKSUM="$ARCHIVE.sha256"
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE/plugin/engine" "$STAGE/plugin/dashboard/src" \
-  "$STAGE/graph" "$STAGE/skills"
+  "$STAGE/graph" "$STAGE/skills" "$STAGE/agents"
 
 # Plugin server, TUI, and RPC parts plus the self-contained engine and
 # dashboard sources.
@@ -58,11 +58,12 @@ for file in "$ROOT"/engine/*.mjs; do
 done
 cp "$ROOT"/dashboard/src/* "$STAGE/plugin/dashboard/src/"
 
-# Graph template and the two OpenCode skills.
+# Graph template, the two OpenCode skills, and the two primary agents.
 mkdir -p "$STAGE/graph/agents"
 cp "$ROOT"/graph/config.json "$STAGE/graph/"
 cp "$ROOT"/graph/agents/*.md "$STAGE/graph/agents/"
 cp -R "$ROOT"/opencode/skills/* "$STAGE/skills/"
+cp "$ROOT"/opencode/agents/*.md "$STAGE/agents/"
 
 # Metadata the installer reads, plus the in-archive uninstaller.
 cp "$ROOT/product.conf" "$STAGE/"

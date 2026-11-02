@@ -1,21 +1,13 @@
 ---
 name: dispatching
-description: Start work in the graph, wait for it or send it to the background, cancel it, and report the product or defect.
+description: How to dispatch work into the engine's graph, wait for or cancel it, and handle return handoffs and workflow boundaries.
 ---
-# Dispatching
+# Dispatching reference
 
-> **Design correction (2026-10-31).** The current dispatch tool returns a
-> focused display; raw JSON is available only through
-> `dispatch_status({ raw: true })`. The target presentation is a graph dispatch
-> card. A node's dispatcher handoff uses the normal generated handoff tool; the
-> dispatcher sends a message back through `dispatch` with `resume: true`. There
-> is no separate reply/resume/answer tool, no message kind, and no
-> `input-required` state.
-
-A dispatch sends a prompt into the one graph. The engine runs one dispatch
+The mechanics of dispatching into the one graph. The engine runs one dispatch
 at a time; further dispatches wait in a FIFO queue.
 
-## Start
+## Choosing the start
 
 Call `graph_info()` to see the graph's nodes, workflows, and workflow
 connections. Choose exactly one start:
@@ -49,7 +41,7 @@ Or:
 Exactly one of `node` or `workflow` is required.
 
 - The default is foreground: the call blocks like a normal subagent call and
-  returns the focused completion or defect.
+  returns the completion or defect.
 - `background: true` returns a dispatch id immediately. The engine notifies
   this session when the background dispatch completes. Do not add a separate
   foreground wait call.
@@ -57,8 +49,8 @@ Exactly one of `node` or `workflow` is required.
 The dispatch tool returns a focused display. Raw JSON is available only with
 `dispatch_status({ dispatchId, raw: true })`. A completion includes
 `dispatchId`, `state`, `usage`, and the result. A defect includes a `code` and
-`message`; report both, do not hide them. Dispatch status also reports the
-engaged `workflow`, or `null` for a node dispatch.
+`message`. Dispatch status also reports the engaged `workflow`, or `null` for a
+node dispatch.
 
 ## Waiting and checking
 
@@ -102,8 +94,6 @@ A node dispatch has no workflow boundary.
   full instruction in the prompt; the node objective is the node's role.
 - Do not start a second dispatch as a substitute for waiting; queueing is
   intentional and in order.
-- Report the completion's terminal node, or the returned message for a
-  `$dispatcher` handoff, plus `usage` (cost and tokens) so the user can see
-  what the dispatch spent.
-- If the completion is a defect, report the defect code and message. Do not
-  claim the work succeeded.
+- Dispatch status reports the terminal node or, for a `$dispatcher` handoff,
+  the returned message.
+- A defect carries a code and message naming the failure.

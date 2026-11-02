@@ -122,6 +122,8 @@ assert_file "$CONFIG/plugins/graph-engine/engine/runtime.mjs" "the engine is sta
 assert_file "$CONFIG/plugins/graph-engine/tui.tsx" "the dashboard TUI is installed"
 assert_file "$CONFIG/skills/graph-authoring/SKILL.md" "graph-authoring is installed globally"
 assert_file "$CONFIG/skills/dispatching/SKILL.md" "dispatching is installed globally"
+assert_file "$CONFIG/agents/engineer.md" "the Engineer agent is installed globally"
+assert_file "$CONFIG/agents/conductor.md" "the Conductor agent is installed globally"
 assert_file "$CONFIG/graph-engine/graph/config.json" "a user-owned graph is seeded"
 assert_file "$CONFIG/graph-engine/graph/agents/builder.md" "graph agents are seeded"
 assert_file "$CONFIG/graph-engine/manifest" "a manifest is written"
@@ -133,7 +135,7 @@ assert_not_exists "$CONFIG/graph-engine/manifest.unexpected" "no stray files"
 if grep -qE 'graph-engine/graph|uninstall\.sh' "$CONFIG/graph-engine/manifest"; then
   fail "the manifest lists the user-owned graph or the uninstaller"
 else
-  pass "the manifest lists only plugin and skill files"
+  pass "the manifest lists only plugin, skill, and agent files"
 fi
 while IFS='	' read -r kind hash path; do
   [ "$kind" = "file" ] || continue
@@ -145,6 +147,16 @@ while IFS='	' read -r kind hash path; do
   fi
 done < "$CONFIG/graph-engine/manifest"
 
+# The Engineer agent is specialized to this config directory at install time.
+if grep -q '@CONFIG_DIR@' "$CONFIG/agents/engineer.md"; then
+  fail "the installed engineer.md still carries the @CONFIG_DIR@ template"
+else
+  pass "the installed engineer.md has no @CONFIG_DIR@ template"
+fi
+assert_contains "$CONFIG/graph-engine/graph" "$(cat "$CONFIG/agents/engineer.md")" "engineer.md names the resolved graph directory"
+assert_contains "agents/engineer" "$(cat "$CONFIG/graph-engine/manifest")" "the manifest lists the Engineer agent"
+assert_contains "agents/conductor" "$(cat "$CONFIG/graph-engine/manifest")" "the manifest lists the Conductor agent"
+
 # 3. A second install refuses to overwrite the plugin.
 if sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$CONFIG" --yes > "$WORK/reinstall.out" 2>&1; then
   fail "a second install over an existing plugin must refuse"
@@ -152,6 +164,17 @@ else
   pass "a second install refuses when the plugin exists"
 fi
 assert_contains "already exists" "$(cat "$WORK/reinstall.out")" "the refusal names the clash"
+
+# 3b. An existing agent refuses reinstall, like skills and the plugin.
+AGENT="$WORK/agentclash"
+mkdir -p "$AGENT/agents"
+printf '%s\n' "local" > "$AGENT/agents/engineer.md"
+if sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$AGENT" --yes > "$WORK/agentclash.out" 2>&1; then
+  fail "an install over an existing agent must refuse"
+else
+  pass "an install over an existing agent refuses"
+fi
+assert_contains "already exists" "$(cat "$WORK/agentclash.out")" "the agent refusal names the clash"
 
 # 4. A checksum failure aborts before any write.
 FRESH="$WORK/fresh"
@@ -189,6 +212,9 @@ assert_file "$CONFIG/graph-engine/graph/config.json" "uninstall preserves the gr
 assert_contains "modified" "$(cat "$WORK/uninstall.out")" "a modified file is reported"
 assert_not_exists "$CONFIG/plugins/graph-engine/package.json" "unmodified plugin files are removed"
 assert_file "$CONFIG/plugins/graph-engine/server.ts" "a modified file is preserved"
+assert_not_exists "$CONFIG/agents/engineer.md" "the Engineer agent is removed by uninstall"
+assert_not_exists "$CONFIG/agents/conductor.md" "the Conductor agent is removed by uninstall"
+assert_not_exists "$CONFIG/agents" "the empty agents directory is pruned"
 
 # 8. Uninstall is idempotent.
 sh "$CONFIG/graph-engine/uninstall.sh" --yes > "$WORK/uninstall2.out" 2>&1
