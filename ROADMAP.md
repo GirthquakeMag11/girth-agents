@@ -19,18 +19,28 @@ its graph agents carry only standing prompts. Skills are already first-class in
 the schema and loader; the template should eventually reference one or two
 graph skills so the shipped example exercises the capability.
 
-## Graph configuration architecture
+## Nodes as Markdown documents
 
-The current schema is one aggregate JSON manifest with Markdown graph agent
-documents and inline `graph.nodes`.
+Agents, skills, and nodes are all the same shape at the graph-config level:
+properties plus a prompt. Agents are already Markdown documents; nodes should
+join them as their own Markdown documents, one file per node.
 
-The target is:
+Today a node is a JSON object inline in `graph/config.json`; its `agent` key
+references a graph agent's `id`. The target gives each node its own document so
+a node can be edited and versioned independently of the agent embedded in it.
 
-- one configuration file per node;
-- a node's `agent` key references a graph agent's `id`;
-- graph assembly, file layout, node schema, and schema version are open.
+A node is a second layer of context management over its agent. An OpenCode
+agent's versatility across contexts is limited because its base instructions
+are built entirely into its own configuration. A node, existing as a separate
+entity, can and will carry its own prompt, tools, permissions, and other
+properties, which are combined with the agent's. One semi-generic builder agent
+can then be optimized for several more specific roles by the nodes that embed
+it for those roles, each node supplying its own prompt and tools layered over
+the shared agent — instead of needing a distinct agent per role.
 
-The replacement graph cannot be encoded until this is settled. The current
+Graph assembly, the merge rules for node and agent properties (prompts, tools,
+permissions), the node document schema, and the schema version are all still
+open, so the replacement schema is not being encoded yet. The current
 `graph/config.json` remains the placeholder build-review graph.
 
 Not implemented.
