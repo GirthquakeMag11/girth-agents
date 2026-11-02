@@ -12,6 +12,18 @@ import { DashboardView, type Dashboard } from "./dashboard/src/view.tsx";
 
 const PANEL = "graph-dashboard";
 
+// An RPC rejection is an object envelope, not an Error, so deriving a message
+// from it must walk `message`/`error` rather than `String(cause)`, which would
+// render "[object Object]".
+function errorMessage(cause: unknown): string {
+  if (cause instanceof Error) return cause.message;
+  if (cause && typeof cause === "object") {
+    const value = cause as { message?: unknown; error?: unknown };
+    return errorMessage(value.message ?? value.error);
+  }
+  return String(cause);
+}
+
 function DashboardPanel(props: { panel: PanelInput }) {
   const context = usePlugin();
   const theme = context.theme;
@@ -36,7 +48,7 @@ function DashboardPanel(props: { panel: PanelInput }) {
           setError(null);
         }
       } catch (cause) {
-        if (!stopped) setError(cause instanceof Error ? cause.message : String(cause));
+        if (!stopped) setError(errorMessage(cause));
       } finally {
         busy = false;
       }

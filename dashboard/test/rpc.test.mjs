@@ -5,6 +5,7 @@ import { snapshotToDashboard } from "../src/data.mjs";
 
 const tuiSource = await readFile(new URL("../../opencode/plugins/graph-engine/tui.tsx", import.meta.url), "utf8");
 const dataSource = await readFile(new URL("../src/data.mjs", import.meta.url), "utf8");
+const rpcSource = await readFile(new URL("../../opencode/plugins/graph-engine/rpc.ts", import.meta.url), "utf8");
 
 // The shape the server's snapshot RPC returns; the dashboard treats it as the
 // one and only server contact.
@@ -54,6 +55,10 @@ test("rpc: a fake RPC client drives the dashboard through the snapshot only", as
   assert.equal(dashboard.info.configPath, "/config/graph/config.json");
   assert.equal(dashboard.runtime.active.state, "running");
   assert.ok(dashboard.fetchedAt instanceof Date);
+});
+
+test("rpc: the contract declares an events key the SDK requires", () => {
+  assert.match(rpcSource, /events:\s*\{/, "Rpc.define must declare events; Object.entries(contract.events) is unguarded");
 });
 
 test("rpc: the dashboard never reads a project-local plugin file or fetches", () => {

@@ -20,4 +20,8 @@ export const GraphEngine = Rpc.define({
       output: { type: "object", additionalProperties: true },
     },
   },
+  // The SDK walks `Object.entries(contract.events)` during registration
+  // without guarding for its absence, so a contract with no events still
+  // declares an empty `events` map or `ctx.rpc.register` throws.
+  events: {},
 });
