@@ -36,22 +36,13 @@ two numbers are independent.
 
 ## 2. Configuration
 
-One JSON file. Schema version is the string `"3"`.
+The graph is one JSON manifest plus the Markdown agent documents it names and
+the skill documents those agents reference. Schema version is the string `"4"`.
 
 ```json
 {
-  "version": "3",
-  "skills": ["skills/test-first.md"],
-  "agents": [
-    {
-      "id": "builder",
-      "model": "provider/model",
-      "agent": "build",
-      "permissions": ["read", "edit", "shell"],
-      "craft": "Standing instructions.",
-      "skills": ["skills/test-first.md"]
-    }
-  ],
+  "version": "4",
+  "agents": ["agents/builder.md", "agents/reviewer.md"],
   "graph": {
     "outputRoot": "work",
     "maxSteps": 100,
@@ -61,23 +52,62 @@ One JSON file. Schema version is the string `"3"`.
 }
 ```
 
-The top-level keys are `version`, optional `skills`, `agents`, and `graph`.
-There is no `helpers` key and no `graphAgents` key. A node's `agent` field
-references an entry in `agents` by `id`. An agent entry's optional `agent`
-field names the OpenCode agent to run (default `build`).
+The top-level keys are `version`, `agents`, and `graph`. There is no top-level
+`skills`, no `helpers`, and no `graphAgents`. A node's `agent` field references
+an agent document's `id`.
 
-An optional top-level `skills` array lists Markdown skill documents relative to
-the config. Each skill document has frontmatter with a unique non-empty `id` and
-a non-empty instruction body. An agent's optional `skills` array references
-those paths. The loader rejects unreadable or malformed skill files, missing or
-duplicate ids, empty instructions, and references to unlisted skills. Each
-resolved skill is appended to the brief as `# Skill: <id>` after the agent's
-`craft` and before the work prompt.
+An agent is a Markdown document. Its frontmatter carries its properties and its
+body is its prompt:
+
+```markdown
+---
+id: builder
+model: provider/model
+agent: build
+permissions: [read, edit, shell]
+skills: [skills/test-first.md]
+---
+Standing instructions.
+```
+
+An agent document has:
+
+- `id` — required and unique among agent documents;
+- `model` — required, `provider/model`;
+- optional `agent` — the OpenCode agent to run (default `build`);
+- `permissions` — required, non-empty action names;
+- optional `skills` — skill document paths.
+
+The body is the agent's prompt; an empty body means no standing prompt. The
+prompt is not a frontmatter field. Unknown fields are faults.
+
+Agent document paths and agent skill references resolve relative to the graph
+config file. The loader reads every listed agent, follows its skill references,
+deduplicates by resolved path, reads and validates each referenced skill once,
+and attaches the resolved skills before the config is usable. Skill files that
+no agent references are not read.
+
+A skill document is Markdown with frontmatter and a non-empty instruction body:
+
+```markdown
+---
+id: test-first
+name: Test-first at the seams
+description: Build the change test-first.
+---
+Write the failing test first, make it pass, then refactor within the green.
+```
+
+Each skill needs a unique non-empty `id` and a non-empty body. A missing
+referenced skill is `skill.unreadable`; malformed frontmatter, missing ids,
+duplicate ids, and empty instructions are named faults. Each resolved skill is
+appended to the brief as `# Skill: <id>` after the agent's prompt and before
+the work prompt.
 
 A node has:
 
 - `id`
-- `agent` — reference to an `agents` entry
+- `agent` — reference to an agent document's `id`
 - `objective`
 - optional `output` — relative path; omitted means no file artifact
 - optional `budgetMs`
@@ -117,7 +147,8 @@ terminal or dispatcher completion, and every cycle must carry `maxVisits`.
 `reload` validates and swaps a config only while no dispatch is active. A
 reload that changes the unique handoff label set is rejected with
 `handoff.tools-stale`; the old config and generated tools stay in place. Other
-valid changes swap and regenerate `GRAPH.md`.
+valid changes swap, reread agent and skill documents, and regenerate
+`GRAPH.md`.
 
 ## 3. Tools
 
@@ -163,7 +194,7 @@ verifies:
 - the accepted handoff is declared for the active node;
 - the handoff is the last tool call and no tool finished after acceptance.
 
-The brief contains the graph agent's `craft`, any attached skill instructions,
+The brief contains the graph agent's prompt, any attached skill instructions,
 dispatch prompt, node objective, upstream message, upstream output path when the
 source declared one, the exact output path when declared, and the active node's
 generated handoff tools with descriptions. A no-output node has no output
@@ -182,9 +213,10 @@ Errors are named. Key codes: `handoff.unknown-tool`, `handoff.message-required`,
 `handoff.not-last`, `handoff.tool-collision`, `handoff.tools-stale`,
 `handoff.visibility-unavailable`, `resume.not-return`, `handoff.ambiguous`,
 `handoff.stale`, `workflow.escape`, `output.missing`, `output.empty`,
-`output.changed`, `output.not-file`, `output.check`, `skill.unreadable`,
-`skill.frontmatter`, `skill.missing-id`, `skill.duplicate-id`,
-`skill.instructions`, `agent.unknown-skill`.
+`output.changed`, `output.not-file`, `output.check`, `agent.unreadable`,
+`agent.frontmatter`, `agent.missing-id`, `agent.duplicate-id`,
+`skill.unreadable`, `skill.frontmatter`, `skill.missing-id`,
+`skill.duplicate-id`, `skill.instructions`.
 
 ## 5. Dashboard
 

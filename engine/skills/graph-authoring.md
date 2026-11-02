@@ -4,52 +4,28 @@ description: Author or modify the engine's graph config, validate it with reload
 ---
 # Graph authoring
 
-> **Design correction (2026-10-31).** The current engine uses one aggregate
-> JSON file with `agents` and one generated handoff tool per declared
-> label, taking `{ message }`. The target is one configuration file per node
-> and one Markdown document per graph agent type. The exact file layout and
-> schemas are open; do not invent them. Until the loader changes, the current
-> JSON schema below is what the engine accepts.
-
 The engine runs agent nodes. A node's graph agent receives a prompt, writes
 any declared output, and calls exactly one generated handoff tool to the next
-target. The current graph is a single JSON file; the target is file-per-node
-plus Markdown graph agents.
+target. The graph is one JSON manifest plus the Markdown agent documents it
+names and the skill documents those agents reference.
 
 ## Start
 
 Call `graph_info()` first. It returns the config path and the one graph's
-workflows, nodes, and graph agents. Read the config. Edit it. Then call
-`reload()`. If `reload` returns `valid: false`, read the named faults, fix
-them, and reload again. A reload during an active dispatch is rejected; wait
-for the dispatch to finish.
+workflows, nodes, and graph agents. Read the config and agent documents. Edit
+them. Then call `reload()`. If `reload` returns `valid: false`, read the named
+faults, fix them, and reload again. A reload during an active dispatch is
+rejected; wait for the dispatch to finish.
 
-Do not edit the engine's plugin, skills, or source. Edit only the graph
-configuration.
+Do not edit the engine's plugin, runtime skills, or source. Edit the graph
+config, agent documents, and graph skill documents.
 
 ## Schema
 
 ```json
 {
-  "version": "3",
-  "skills": ["skills/test-first.md"],
-  "agents": [
-    {
-      "id": "builder",
-      "model": "openrouter/~deepseek/deepseek-flash-latest",
-      "agent": "build",
-      "permissions": ["read", "edit", "shell"],
-      "craft": "Standing instructions for this graph agent.",
-      "skills": ["skills/test-first.md"]
-    },
-    {
-      "id": "reviewer",
-      "model": "openrouter/~deepseek/deepseek-flash-latest",
-      "agent": "build",
-      "permissions": ["read", "edit", "shell"],
-      "craft": "Review the work and name exactly what must change."
-    }
-  ],
+  "version": "4",
+  "agents": ["agents/builder.md", "agents/reviewer.md"],
   "graph": {
     "outputRoot": "work",
     "maxSteps": 100,
@@ -100,6 +76,20 @@ configuration.
 }
 ```
 
+An agent document is Markdown. Frontmatter carries its properties; the body is
+its prompt:
+
+```markdown
+---
+id: builder
+model: openrouter/~deepseek/deepseek-flash-latest
+agent: build
+permissions: [read, edit, shell]
+skills: [skills/test-first.md]
+---
+Standing instructions for this graph agent.
+```
+
 A skill document is Markdown with frontmatter and a non-empty instruction body:
 
 ```markdown
@@ -113,20 +103,20 @@ Write the failing test first, make it pass, then refactor within the green.
 
 ## Rules
 
-- `version` is the string `"3"`.
-- Optional top-level `skills` names skill document paths relative to the
-  config. Each skill needs a unique `id` and a non-empty instruction body.
-  Graph agents may reference those paths with their own optional `skills`
-  array. Unreadable, malformed, duplicate, empty, or unlisted skills are named
-  faults. The brief appends each resolved skill after the agent's `craft`.
+- `version` is the string `"4"`.
+- `agents` lists Markdown agent document paths relative to the config. Each
+  agent document has required `id`, `model`, and `permissions`, optional
+  `agent` (the OpenCode agent to run, default `build`), and optional `skills`
+  references. The body is the agent's prompt; the prompt is not a frontmatter
+  field. Agent and skill paths resolve relative to the config.
+- A graph agent's optional `skills` array references skill document paths.
+  Each skill needs a unique `id` and a non-empty instruction body. The loader
+  follows those references, deduplicates them, and reads each referenced skill
+  once; unreferenced skill files are not read. Unreadable, malformed,
+  duplicate, or empty skills are named faults. The brief appends each resolved
+  skill after the agent's prompt.
 - There is exactly one `graph`. There is no graph id, no graph selector, and
   no "all graphs." A second graph is not part of this schema.
-- The current implementation's graph agent entry has `id`, `model` as
-  `provider/model`, optional `agent` (the OpenCode agent to run, default
-  `build`), `permissions` as a non-empty array of real action names (`read`,
-  `edit`, `shell`), optional `craft`, and optional `skills` references. The
-  target graph agent type is a Markdown document; its exact frontmatter/body
-  schema is open.
 - The graph has optional `outputRoot` (default `"."`), optional `maxSteps`,
   optional `workflows`, and `nodes`.
 - A workflow is a labelled subsection: `id`, `entry`, `exit`, and `nodes`.
@@ -134,12 +124,11 @@ Write the failing test first, make it pass, then refactor within the green.
   to the graph; a node may be in more than one workflow. The entry/exit
   must be in the workflow's node list. The engine routes by handoffs, not
   by workflow.
-- The current implementation's node has `id`, an `agent` reference to a graph
-  agent entry, `objective`, `output` (optional relative path), optional
-  `budgetMs`, optional `maxVisits` (1–100; use 20 for a repair loop), and
-  `handoff`. The target node has an `agent` key referencing a graph agent type
-  and an optional `output`. A node may omit `output`; its handoff `{ message }`
-  is the deliverable. Nodes do not have a session mode.
+- A node has `id`, an `agent` reference to an agent document's `id`,
+  `objective`, `output` (optional relative path), optional `budgetMs`, optional
+  `maxVisits` (1–100; use 20 for a repair loop), and `handoff`. A node may omit
+  `output`; its handoff `{ message }` is the deliverable. Nodes do not have a
+  session mode.
 - Session retention is a **handoff** decision. A non-terminal handoff may
   set `"resume": true`; false or omitted starts a new session. `resume` is
   honored only when the handoff target is the node that supplied the

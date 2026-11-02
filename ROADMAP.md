@@ -26,16 +26,14 @@ Not implemented.
 
 ## Graph configuration architecture
 
-The current schema is one aggregate JSON file with `agents` and inline
-`graph.nodes`.
+The current schema is one aggregate JSON manifest with Markdown graph agent
+documents and inline `graph.nodes`.
 
 The target is:
 
 - one configuration file per node;
-- one Markdown document per graph agent type;
-- a node's `agent` key references the graph agent type;
-- graph assembly, file layout, node schema, graph agent Markdown schema, and
-  schema version are open.
+- a node's `agent` key references a graph agent document;
+- graph assembly, file layout, node schema, and schema version are open.
 
 The replacement graph cannot be encoded until this is settled. The current
 `engine/graph.json` remains the placeholder build-review graph.
