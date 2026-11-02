@@ -5,7 +5,7 @@ import { loadConfig } from "../config.mjs";
 import { createDispatchQueue } from "../queue.mjs";
 import { renderGraphMap, renderGraphMapResponse, renderState, renderWorkflowTable } from "../map.mjs";
 
-const loaded = await loadConfig(fileURLToPath(new URL("../graph.json", import.meta.url)));
+const loaded = await loadConfig(fileURLToPath(new URL("../../graph/config.json", import.meta.url)));
 const graph = loaded.doc.graph;
 
 test("map: the workflow is a labelled box with entry and exit", () => {

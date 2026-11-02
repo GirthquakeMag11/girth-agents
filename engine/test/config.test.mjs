@@ -21,7 +21,7 @@ import {
 } from "../config.mjs";
 import { PROJECT_VERSION } from "../version.mjs";
 
-const shipped = await loadConfig(fileURLToPath(new URL("../graph.json", import.meta.url)));
+const shipped = await loadConfig(fileURLToPath(new URL("../../graph/config.json", import.meta.url)));
 const SHIPPED = shipped.doc;
 const codes = (faults) => faults.map((fault) => fault.code);
 
