@@ -57,8 +57,13 @@ test("rpc: a fake RPC client drives the dashboard through the snapshot only", as
   assert.ok(dashboard.fetchedAt instanceof Date);
 });
 
-test("rpc: the contract declares an events key the SDK requires", () => {
+test("rpc: the contract declares the fields the SDK requires", () => {
   assert.match(rpcSource, /events:\s*\{/, "Rpc.define must declare events; Object.entries(contract.events) is unguarded");
+  assert.match(rpcSource, /snapshot:\s*\{\s*\n?\s*input:/, "snapshot must declare an input schema; the SDK validates input unconditionally");
+});
+
+test("rpc: the dashboard passes an explicit input object to snapshot", () => {
+  assert.match(tuiSource, /\.snapshot\(\{\s*\}\)/, "a no-arg snapshot() sends an absent input no schema accepts");
 });
 
 test("rpc: the dashboard never reads a project-local plugin file or fetches", () => {

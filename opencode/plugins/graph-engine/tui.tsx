@@ -42,7 +42,7 @@ function DashboardPanel(props: { panel: PanelInput }) {
       if (busy) return;
       busy = true;
       try {
-        const snapshot = await context.client.rpc(GraphEngine).snapshot();
+        const snapshot = await context.client.rpc(GraphEngine).snapshot({});
         if (!stopped) {
           setDashboard(snapshotToDashboard(snapshot) as Dashboard);
           setError(null);

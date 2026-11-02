@@ -7,8 +7,14 @@ import { Rpc } from "@opencode/plugin/rpc";
 export const GraphEngine = Rpc.define({
   id: "graph-engine",
   methods: {
+    // The SDK walks every method's input and output validators and the
+    // contract's events map unconditionally, so each piece must be declared
+    // in full. A no-argument method still takes an empty object: the client
+    // serializes `snapshot()` as an absent input, which no input schema
+    // accepts, so the caller passes `{}`.
     snapshot: {
-      output: { type: "object", additionalProperties: true },
+      input: { type: "object", properties: {}, required: [], additionalProperties: true },
+      output: { type: "object", properties: {}, required: [], additionalProperties: true },
     },
     dispatchStatus: {
       input: {
@@ -17,11 +23,8 @@ export const GraphEngine = Rpc.define({
         required: ["dispatchId"],
         additionalProperties: false,
       },
-      output: { type: "object", additionalProperties: true },
+      output: { type: "object", properties: {}, required: [], additionalProperties: true },
     },
   },
-  // The SDK walks `Object.entries(contract.events)` during registration
-  // without guarding for its absence, so a contract with no events still
-  // declares an empty `events` map or `ctx.rpc.register` throws.
   events: {},
 });
