@@ -1,9 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { runDispatch } from "../executor.mjs";
 import { createDispatchQueue } from "../queue.mjs";
 
@@ -14,29 +13,23 @@ function usage(cost, input = 0, output = 0) {
 }
 
 const config = {
-  version: "4",
+  version: "5",
   agents: [
     { id: "builder", model: "test/model", agent: "build", permissions: ["read"] },
     { id: "reviewer", model: "test/model", agent: "build", permissions: ["read"] },
   ],
   graph: {
-    outputRoot: "work",
     maxSteps: 20,
     nodes: [
       {
         id: "a",
         agent: "builder",
         objective: "Do the node.",
-        output: "a.md",
         handoff: { mode: "terminal" },
       },
     ],
   },
 };
-
-function outputFromBrief(brief) {
-  return /Write your result to this exact path:\n\n`([^`]+)`/.exec(brief)?.[1] ?? null;
-}
 
 function fakeDriver({ onPrompt }) {
   const sessions = new Map();
@@ -133,7 +126,6 @@ test("executor: a failed resumed visit keeps the resumed session id", async () =
         id: "a",
         agent: "builder",
         objective: "A.",
-        output: "a.md",
         maxVisits: 3,
         handoff: {
           mode: "conditional",
@@ -144,7 +136,6 @@ test("executor: a failed resumed visit keeps the resumed session id", async () =
         id: "b",
         agent: "reviewer",
         objective: "B.",
-        output: "b.md",
         maxVisits: 3,
         handoff: { mode: "unconditional", to: "a", resume: true },
       },
@@ -152,18 +143,12 @@ test("executor: a failed resumed visit keeps the resumed session id", async () =
     let record;
     let calls = 0;
     const driver = fakeDriver({
-      onPrompt: async ({ session, node, brief }) => {
+      onPrompt: async ({ node }) => {
         calls += 1;
         if (node === "a" && calls === 3) return { outcome: "failed" };
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, `pass ${calls}\n`, "utf8");
-        const content = await readFile(output);
         record.handoff = {
           label: node === "a" ? "again" : "next",
           callID: null,
-          outputHash: createHash("sha256").update(content).digest("hex"),
-          outputPath: output,
           at: new Date().toISOString(),
         };
         return { outcome: "succeeded", cost: 0.1, tokens: { input: 1, output: 1 } };
@@ -205,7 +190,6 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
         id: "builder",
         agent: "builder",
         objective: "Build.",
-        output: "builder.md",
         maxVisits: 3,
         handoff: {
           mode: "conditional",
@@ -219,7 +203,6 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
         id: "reviewer",
         agent: "reviewer",
         objective: "Review.",
-        output: "reviewer.md",
         maxVisits: 3,
         handoff: { mode: "unconditional", to: "builder", resume: true },
       },
@@ -227,7 +210,6 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
         id: "done",
         agent: "builder",
         objective: "Finish.",
-        output: "final.md",
         handoff: { mode: "terminal" },
       },
     ];
@@ -235,20 +217,14 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
     let record;
     const visits = new Map();
     const driver = fakeDriver({
-      onPrompt: async ({ session, node, brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, `${node} ${session.id}\n`, "utf8");
+      onPrompt: async ({ session, node }) => {
         if (node !== "done") {
           const count = (visits.get(session.id) ?? 0) + 1;
           visits.set(session.id, count);
           const label = node === "builder" ? (count >= 3 ? "finish" : "again") : "next";
-          const content = await import("node:fs/promises").then((fs) => fs.readFile(output));
           record.handoff = {
             label,
             callID: null,
-            outputHash: createHash("sha256").update(content).digest("hex"),
-            outputPath: output,
             at: new Date().toISOString(),
           };
         }
@@ -290,7 +266,6 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
     assert.equal(new Set(builderBegins.map((step) => step.sessionId)).size, 1, "builder must resume one session");
     assert.equal(new Set(reviewerBegins.map((step) => step.sessionId)).size, 2, "reviewer must be fresh every visit");
     assert.deepEqual(builderBegins.map((step) => step.resumed), [false, true, true]);
-    assert.ok(String(builderBegins[1].upstream ?? "").endsWith("/work/reviewer.md"));
     assert.equal(record.usage.cost, 3);
     assert.equal(record.usage.tokens.input, 60);
     assert.equal(record.usage.tokens.output, 12);
@@ -301,7 +276,6 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
 
 test("executor: a strict workflow escape wins over a failed session outcome", async () => {
   const graph = {
-    outputRoot: "work",
     maxSteps: 10,
     workflows: [{ id: "A", entry: "a", exit: "term", nodes: ["a", "term"], strict: true }],
     nodes: [
@@ -309,10 +283,9 @@ test("executor: a strict workflow escape wins over a failed session outcome", as
         id: "a",
         agent: "builder",
         objective: "choose",
-        output: "a.md",
         handoff: { mode: "unconditional", to: "term" },
       },
-      { id: "term", agent: "builder", objective: "finish", output: "term.md", handoff: { mode: "terminal" } },
+      { id: "term", agent: "builder", objective: "finish", handoff: { mode: "terminal" } },
     ],
   };
   const doc = { ...config, graph };
@@ -331,7 +304,6 @@ test("executor: a strict workflow escape wins over a failed session outcome", as
 
 test("executor: a recorded workflow escape wins when the prompt throws", async () => {
   const graph = {
-    outputRoot: "work",
     maxSteps: 10,
     workflows: [{ id: "A", entry: "a", exit: "term", nodes: ["a", "term"], strict: true }],
     nodes: [
@@ -339,10 +311,9 @@ test("executor: a recorded workflow escape wins when the prompt throws", async (
         id: "a",
         agent: "builder",
         objective: "choose",
-        output: "a.md",
         handoff: { mode: "unconditional", to: "term" },
       },
-      { id: "term", agent: "builder", objective: "finish", output: "term.md", handoff: { mode: "terminal" } },
+      { id: "term", agent: "builder", objective: "finish", handoff: { mode: "terminal" } },
     ],
   };
   const doc = { ...config, graph };
@@ -366,28 +337,21 @@ test("executor: resume is rejected when the target is not the input source", asy
   try {
     const graphConfig = structuredClone(config);
     graphConfig.graph.nodes = [
-      { id: "a", agent: "builder", objective: "A.", output: "a.md", handoff: { mode: "unconditional", to: "b" } },
+      { id: "a", agent: "builder", objective: "A.", handoff: { mode: "unconditional", to: "b" } },
       {
         id: "b",
         agent: "builder",
         objective: "B.",
-        output: "b.md",
         handoff: { mode: "unconditional", to: "c", resume: true },
       },
-      { id: "c", agent: "builder", objective: "C.", output: "c.md", handoff: { mode: "terminal" } },
+      { id: "c", agent: "builder", objective: "C.", handoff: { mode: "terminal" } },
     ];
     let record;
     const driver = fakeDriver({
-      onPrompt: async ({ brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "ok\n", "utf8");
-        const content = await readFile(output);
+      onPrompt: async () => {
         record.handoff = {
           label: "next",
           callID: null,
-          outputHash: createHash("sha256").update(content).digest("hex"),
-          outputPath: output,
           at: new Date().toISOString(),
         };
         return { outcome: "succeeded", cost: 0.1, tokens: { input: 1, output: 1 } };
@@ -426,14 +390,12 @@ test("executor: the handoff message is upstream context and history stays conten
         id: "a",
         agent: "builder",
         objective: "A.",
-        output: "a.md",
         handoff: { mode: "unconditional", to: "b" },
       },
       {
         id: "b",
         agent: "reviewer",
         objective: "B.",
-        output: "b.md",
         handoff: { mode: "terminal" },
       },
     ];
@@ -441,19 +403,13 @@ test("executor: the handoff message is upstream context and history stays conten
     let record;
     const events = [];
     const driver = fakeDriver({
-      onPrompt: async ({ session, node, brief }) => {
+      onPrompt: async ({ node, brief }) => {
         briefs.push({ node, brief });
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, `${node}\n`, "utf8");
         if (node === "a") {
-          const content = await readFile(output);
           record.handoff = {
             label: "next",
             message: "The implementation is ready.",
             callID: null,
-            outputHash: createHash("sha256").update(content).digest("hex"),
-            outputPath: output,
             at: new Date().toISOString(),
           };
         }
@@ -486,7 +442,7 @@ test("executor: the handoff message is upstream context and history stays conten
     assert.equal(result.terminal, "b");
     assert.equal(briefs.length, 2);
     assert.match(briefs[1].brief, /The implementation is ready\./);
-    assert.match(briefs[1].brief, /\/a\.md/);
+    assert.doesNotMatch(briefs[1].brief, /# Output/);
     assert.doesNotMatch(briefs[1].brief, /call the `next` tool/);
     const handoffEvent = events.find((event) => event.kind === "handoff");
     assert.equal(handoffEvent.payload.message, undefined);
@@ -496,8 +452,8 @@ test("executor: the handoff message is upstream context and history stays conten
   }
 });
 
-test("executor: a read-only graph agent completes a node with no output", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "engine-no-output-"));
+test("executor: a read-only graph agent completes a terminal node", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-terminal-"));
   try {
     const graphConfig = structuredClone(config);
     graphConfig.graph.nodes = [
@@ -524,8 +480,6 @@ test("executor: a read-only graph agent completes a node with no output", async 
             label: "next",
             message: "The message is the deliverable.",
             callID: null,
-            outputHash: null,
-            outputPath: null,
             at: new Date().toISOString(),
           };
         }
@@ -556,19 +510,18 @@ test("executor: a read-only graph agent completes a node with no output", async 
     });
 
     assert.equal(result.terminal, "b");
-    assert.equal(result.output, null);
-    assert.equal(record.output, null);
+    assert.equal("output" in result, false);
+    assert.equal("output" in record, false);
     assert.equal(briefs.length, 2);
     assert.doesNotMatch(briefs[0].brief, /# Output/);
     assert.doesNotMatch(briefs[0].brief, /Write your result/);
     assert.match(briefs[1].brief, /The message is the deliverable\./);
-    assert.doesNotMatch(briefs[1].brief, /\/a\.md/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
 });
 
-test("executor: a dispatcher handoff completes with the message and keeps its output", async () => {
+test("executor: a dispatcher handoff completes with the message", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-dispatcher-"));
   try {
     const graphConfig = structuredClone(config);
@@ -577,7 +530,6 @@ test("executor: a dispatcher handoff completes with the message and keeps its ou
         id: "a",
         agent: "builder",
         objective: "A.",
-        output: "a.md",
         handoff: {
           mode: "conditional",
           labels: [{ label: "report", to: "$dispatcher", description: "Report." }],
@@ -587,17 +539,11 @@ test("executor: a dispatcher handoff completes with the message and keeps its ou
     const message = "The outcome is ready.";
     let record;
     const driver = fakeDriver({
-      onPrompt: async ({ brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "done\n", "utf8");
-        const content = await readFile(output);
+      onPrompt: async () => {
         record.handoff = {
           label: "report",
           message,
           callID: null,
-          outputHash: createHash("sha256").update(content).digest("hex"),
-          outputPath: output,
           at: new Date().toISOString(),
         };
         return { outcome: "succeeded", cost: 0.1, tokens: { input: 1, output: 1 } };
@@ -631,8 +577,8 @@ test("executor: a dispatcher handoff completes with the message and keeps its ou
     assert.equal(result.result.responseTruncated, false);
     assert.equal(result.handoff.to, "$dispatcher");
     assert.equal(result.handoff.message, message);
+    assert.equal("output" in result, false);
     assert.equal(record.terminal, undefined);
-    assert.equal(record.output.path, join(dir, "work", "a.md"));
     assert.equal(record.result.response, message);
     assert.equal(record.retainedOrigin.node, "a");
     assert.equal(record.retainedOrigin.sessionId, "s1");
@@ -652,7 +598,6 @@ test("executor: a dispatcher response is capped at 16 KiB", async () => {
         id: "a",
         agent: "builder",
         objective: "A.",
-        output: "a.md",
         handoff: {
           mode: "conditional",
           labels: [{ label: "report", to: "$dispatcher", description: "Report." }],
@@ -662,17 +607,11 @@ test("executor: a dispatcher response is capped at 16 KiB", async () => {
     const message = "abc" + "😀".repeat(5000);
     let record;
     const driver = fakeDriver({
-      onPrompt: async ({ brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "done\n", "utf8");
-        const content = await readFile(output);
+      onPrompt: async () => {
         record.handoff = {
           label: "report",
           message,
           callID: null,
-          outputHash: createHash("sha256").update(content).digest("hex"),
-          outputPath: output,
           at: new Date().toISOString(),
         };
         return { outcome: "succeeded", cost: 0.1, tokens: { input: 1, output: 1 } };
@@ -719,7 +658,6 @@ test("executor: a return resumes the retained session with the message", async (
         id: "a",
         agent: "builder",
         objective: "A.",
-        output: "a.md",
         handoff: { mode: "terminal" },
       },
     ];
@@ -727,9 +665,6 @@ test("executor: a return resumes the retained session with the message", async (
     const driver = fakeDriver({
       onPrompt: async ({ session, brief, options }) => {
         seen = { session, brief, options };
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "done\n", "utf8");
         return { outcome: "succeeded", cost: 0.1, tokens: { input: 1, output: 1 } };
       },
     });
@@ -756,76 +691,13 @@ test("executor: a return resumes the retained session with the message", async (
     assert.equal(seen.options.budgetMs, 5000);
     assert.match(seen.brief, /The message back\./);
     assert.equal(driver.created.length, 1);
-    assert.equal(record.output.path, join(dir, "work", "a.md"));
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
 });
 
-test("executor: a declared output that is missing, empty, or changed defects", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "engine-output-errors-"));
-  try {
-    const missingConfig = structuredClone(config);
-    missingConfig.graph.nodes = [
-      { id: "a", agent: "builder", objective: "A.", output: "a.md", handoff: { mode: "terminal" } },
-    ];
-    const missingDriver = fakeDriver({
-      onPrompt: async () => ({ outcome: "succeeded", cost: 0, tokens: { input: 0, output: 0 } }),
-    });
-    await assert.rejects(
-      () => runDispatch({ driver: missingDriver, config: missingConfig, record: { id: "d-1", node: "a", prompt: "p", visits: {} }, cwd: dir, onEvent: () => {} }),
-      (error) => error.kind === "output.missing",
-    );
-
-    const emptyDriver = fakeDriver({
-      onPrompt: async ({ brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "", "utf8");
-        return { outcome: "succeeded", cost: 0, tokens: { input: 0, output: 0 } };
-      },
-    });
-    await assert.rejects(
-      () => runDispatch({ driver: emptyDriver, config: missingConfig, record: { id: "d-1", node: "a", prompt: "p", visits: {} }, cwd: dir, onEvent: () => {} }),
-      (error) => error.kind === "output.empty",
-    );
-
-    const changedConfig = structuredClone(config);
-    changedConfig.graph.nodes = [
-      { id: "a", agent: "builder", objective: "A.", output: "a.md", handoff: { mode: "unconditional", to: "b" } },
-      { id: "b", agent: "reviewer", objective: "B.", output: "b.md", handoff: { mode: "terminal" } },
-    ];
-    let record;
-    const changedDriver = fakeDriver({
-      onPrompt: async ({ brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "original\n", "utf8");
-        const original = await readFile(output);
-        record.handoff = {
-          label: "next",
-          message: "m",
-          callID: null,
-          outputHash: createHash("sha256").update(original).digest("hex"),
-          outputPath: output,
-          at: new Date().toISOString(),
-        };
-        await writeFile(output, "changed\n", "utf8");
-        return { outcome: "succeeded", cost: 0, tokens: { input: 0, output: 0 } };
-      },
-    });
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
-    await assert.rejects(
-      () => runDispatch({ driver: changedDriver, config: changedConfig, record, cwd: dir, onEvent: () => {} }),
-      (error) => error.kind === "output.changed",
-    );
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-});
-
-test("executor: a no-output dispatch snapshot carries output null", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "engine-no-output-queue-"));
+test("executor: a dispatch snapshot has no output field", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-snapshot-"));
   try {
     const graphConfig = structuredClone(config);
     graphConfig.graph.nodes = [
@@ -841,7 +713,7 @@ test("executor: a no-output dispatch snapshot carries output null", async () => 
     const record = queue.enqueue({ node: "a", prompt: "p" });
     const result = await queue.wait(record.id, 1000);
     assert.equal(result.state, "completed");
-    assert.equal(result.output, null);
+    assert.equal("output" in result, false);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -856,7 +728,6 @@ test("executor: a dispatcher handoff that later defects is not retained", async 
         id: "a",
         agent: "builder",
         objective: "A.",
-        output: "a.md",
         handoff: {
           mode: "conditional",
           labels: [{ label: "report", to: "$dispatcher", description: "Report." }],
@@ -865,17 +736,11 @@ test("executor: a dispatcher handoff that later defects is not retained", async 
     ];
     let record;
     const driver = fakeDriver({
-      onPrompt: async ({ brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "done\n", "utf8");
-        const content = await readFile(output);
+      onPrompt: async () => {
         record.handoff = {
           label: "report",
           message: "The outcome.",
           callID: "h",
-          outputHash: createHash("sha256").update(content).digest("hex"),
-          outputPath: output,
           at: new Date().toISOString(),
         };
         return { outcome: "succeeded", cost: 0, tokens: { input: 0, output: 0 } };
@@ -928,7 +793,6 @@ test("executor: cancelling after dispatcher acceptance does not retain the origi
         id: "a",
         agent: "builder",
         objective: "A.",
-        output: "a.md",
         handoff: {
           mode: "conditional",
           labels: [{ label: "report", to: "$dispatcher", description: "Report." }],
@@ -937,17 +801,11 @@ test("executor: cancelling after dispatcher acceptance does not retain the origi
     ];
     let record;
     const driver = fakeDriver({
-      onPrompt: async ({ brief }) => {
-        const output = outputFromBrief(brief);
-        await mkdir(dirname(output), { recursive: true });
-        await writeFile(output, "done\n", "utf8");
-        const content = await readFile(output);
+      onPrompt: async () => {
         record.handoff = {
           label: "report",
           message: "The outcome.",
           callID: "h",
-          outputHash: createHash("sha256").update(content).digest("hex"),
-          outputPath: output,
           at: new Date().toISOString(),
         };
         record.cancelled = true;

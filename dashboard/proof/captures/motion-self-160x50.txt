@@ -6,22 +6,22 @@
  │ ● self                 │ │                                                                                      │ │ ● running · builder                    │ 
  │                        │ │                       ╔═self════════════════════════════════════════╗                │ │                                        │ 
  │ NODES                  │ │                       ║                                             ║                │ │ CONTRACT                               │ 
- │ ● a                    │ │                       ║  ╭━━──────────────────────────────╮         ║                │ │ output work/a.md                       │ 
- │                        │ │                       ║  │  a                  ● running  │         ║                │ │ max — visits                           │ 
- │ STATE                  │ │                       ║  │  builder                       │again ─┐ ║                │ │ visits 0/—                             │ 
- │ ● running 1            │ │                       ║  ╰────────────────────────────────╯       │ ║                │ │ again → a                              │ 
- │ ◌ queued 0             │ │                       ║                                             ║                │ │                                        │ 
- │ ○ idle 0               │ │                       ╚═════════════════════════════════════════════╝                │ │ BRIEF                                  │ 
- │                        │ │                                                                                      │ │ Self-handoff demo.                     │ 
- │ GRAPH                  │ │                                                                                      │ │                                        │ 
- │ 1wf · 1n · 1 links     │ │                                                                                      │ │ WORKFLOWS                              │ 
- │                        │ │                                                                                      │ │ ● self                                 │ 
+ │ ● a                    │ │                       ║  ╭━━──────────────────────────────╮         ║                │ │ max — visits                           │ 
+ │                        │ │                       ║  │  a                  ● running  │         ║                │ │ visits 0/—                             │ 
+ │ STATE                  │ │                       ║  │  builder                       │again ─┐ ║                │ │ again → a                              │ 
+ │ ● running 1            │ │                       ║  ╰────────────────────────────────╯       │ ║                │ │                                        │ 
+ │ ◌ queued 0             │ │                       ║                                             ║                │ │ BRIEF                                  │ 
+ │ ○ idle 0               │ │                       ╚═════════════════════════════════════════════╝                │ │ Self-handoff demo.                     │ 
+ │                        │ │                                                                                      │ │                                        │ 
+ │ GRAPH                  │ │                                                                                      │ │ WORKFLOWS                              │ 
+ │ 1wf · 1n · 1 links     │ │                                                                                      │ │ ● self                                 │ 
  │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ │ RUN                                    │ 
- │                        │ │                                                                                      │ │ d-1 · running · 767:31                 │ 
+ │                        │ │                                                                                      │ │ d-1 · running · 767:32                 │ 
  │                        │ │                                                                                      │ │                                        │ 
- │                        │ │                                                                                      │ │ OUTPUT                                 │ 
- │                        │ │                                                                                      │ │ —                                      │ 
+ │                        │ │                                                                                      │ │                                        │ 
+ │                        │ │                                                                                      │ │                                        │ 
+ │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ ╰────────────────────────────────────────╯ 
  │                        │ │                                                                                      │                                            
  │                        │ │                                                                                      │ ╭─History────────────────────────────────╮ 
@@ -41,10 +41,10 @@
                                                                                                                                                                 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   RUN CONSOLE                                                                                                                                                   
-  active   ● d-1 a · running · 767:31                                                                                                                           
+  active   ● d-1 a · running · 767:32                                                                                                                           
   queue    empty                                                                                                                                                
   cost     $0.1000 · 2 tokens                                                                                                                                   
   defect   none                                                                                                                                                 
   event    —                                                                                                                                                    
   updated  06:00:02                                                                                                                                             
-  1 active · 0 queued · 0 defects · elapsed 767:31 · updated 06:00:02                                            $0.1000 · 2 tokens · read-only · esc to close  
+  1 active · 0 queued · 0 defects · elapsed 767:32 · updated 06:00:02                                            $0.1000 · 2 tokens · read-only · esc to close  

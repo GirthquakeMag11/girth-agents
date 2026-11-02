@@ -4,10 +4,10 @@ description: Author or modify the engine's graph config, validate it with reload
 ---
 # Graph authoring
 
-The engine runs agent nodes. A node's graph agent receives a prompt, writes
-any declared output, and calls exactly one generated handoff tool to the next
-target. The graph is one JSON manifest plus the Markdown agent documents it
-names and the skill documents those agents reference.
+The engine runs agent nodes. A node's graph agent receives a prompt, does its
+work, and calls exactly one generated handoff tool to the next target. The
+graph is one JSON manifest plus the Markdown agent documents it names and the
+skill documents those agents reference.
 
 ## Start
 
@@ -24,10 +24,9 @@ config, agent documents, and graph skill documents.
 
 ```json
 {
-  "version": "4",
+  "version": "5",
   "agents": ["agents/builder.md", "agents/reviewer.md"],
   "graph": {
-    "outputRoot": "work",
     "maxSteps": 100,
     "workflows": [
       {
@@ -42,7 +41,6 @@ config, agent documents, and graph skill documents.
         "id": "implement",
         "agent": "builder",
         "objective": "Implement the dispatched work.",
-        "output": "implementation.md",
         "maxVisits": 20,
         "handoff": {
           "mode": "unconditional",
@@ -54,7 +52,6 @@ config, agent documents, and graph skill documents.
         "id": "review",
         "agent": "reviewer",
         "objective": "Review the implementation against the dispatched prompt.",
-        "output": "review.md",
         "maxVisits": 20,
         "handoff": {
           "mode": "conditional",
@@ -67,8 +64,7 @@ config, agent documents, and graph skill documents.
       {
         "id": "done",
         "agent": "builder",
-        "objective": "Finalize the work and write the final report.",
-        "output": "final.md",
+        "objective": "Finalize the work.",
         "handoff": { "mode": "terminal" }
       }
     ]
@@ -103,7 +99,7 @@ Write the failing test first, make it pass, then refactor within the green.
 
 ## Rules
 
-- `version` is the string `"4"`.
+- `version` is the string `"5"`.
 - `agents` lists Markdown agent document paths relative to the config. Each
   agent document has required `id`, `model`, and `permissions`, optional
   `agent` (the OpenCode agent to run, default `build`), and optional `skills`
@@ -117,18 +113,17 @@ Write the failing test first, make it pass, then refactor within the green.
   skill after the agent's prompt.
 - There is exactly one `graph`. There is no graph id, no graph selector, and
   no "all graphs." A second graph is not part of this schema.
-- The graph has optional `outputRoot` (default `"."`), optional `maxSteps`,
-  optional `workflows`, and `nodes`.
+- The graph has optional `maxSteps`, optional `workflows`, and `nodes`.
 - A workflow is a labelled subsection: `id`, `entry`, `exit`, and `nodes`.
   It is a view for reasoning, not a container. The nodes and edges belong
   to the graph; a node may be in more than one workflow. The entry/exit
   must be in the workflow's node list. The engine routes by handoffs, not
   by workflow.
 - A node has `id`, an `agent` reference to an agent document's `id`,
-  `objective`, `output` (optional relative path), optional `budgetMs`, optional
-  `maxVisits` (1–100; use 20 for a repair loop), and `handoff`. A node may omit
-  `output`; its handoff `{ message }` is the deliverable. Nodes do not have a
-  session mode.
+  `objective`, optional `budgetMs`, optional `maxVisits` (1–100; use 20 for a
+  repair loop), and `handoff`. The handoff message is the only context the
+  engine carries to the next node. A node's work product is not an engine
+  field. Nodes do not have a session mode.
 - Session retention is a **handoff** decision. A non-terminal handoff may
   set `"resume": true`; false or omitted starts a new session. `resume` is
   honored only when the handoff target is the node that supplied the
@@ -136,8 +131,7 @@ Write the failing test first, make it pass, then refactor within the green.
   alive for the return and deletes it when the dispatch ends. A
   `resume: true` handoff to any other node is a loud defect.
 - `handoff` is exactly one of:
-  - `{ "mode": "terminal" }` — the node ends after writing any declared
-    output.
+  - `{ "mode": "terminal" }` — the node ends after its session succeeds.
   - `{ "mode": "unconditional", "to": "<node>", "description": "...",
     "resume"?: true }` — the engine generates the tool `next`.
   - `{ "mode": "conditional", "labels": [{ "label", "to",
@@ -154,7 +148,6 @@ Write the failing test first, make it pass, then refactor within the green.
 - Any node may be a dispatch entry point. A workflow may be dispatched at
   its entry. Every node must be able to reach a terminal target. Every cycle
   must carry `maxVisits` on each node in the cycle.
-- `output` is optional; if declared, it must be a relative path with no `..`.
 - `workflows[].connections` names other workflows and is transitive.
 - `workflows[].strict: true` rejects handoffs outside the main workflow
   and its transitive connections.

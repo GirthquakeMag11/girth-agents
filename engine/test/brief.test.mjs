@@ -12,9 +12,7 @@ test("brief: attached skills follow the agent's prompt", () => {
     },
     node: { id: "a", objective: "A", handoff: { mode: "terminal" } },
     prompt: "p",
-    previousOutput: null,
     previousMessage: null,
-    outputAbs: null,
   });
   const prompt = brief.indexOf("# Your instructions");
   const skill = brief.indexOf("# Skill: test-first");
@@ -39,19 +37,17 @@ test("brief: conditional handoffs list labels and descriptions without target id
     graphAgent,
     node,
     prompt: "The dispatched prompt.",
-    previousOutput: "/tmp/prev.md",
-    outputAbs: "/tmp/work/review.md",
+    previousMessage: "The previous review found one issue.",
   });
   assert.match(brief, /The graph agent's prompt/);
   assert.match(brief, /The dispatched prompt/);
-  assert.match(brief, /\/tmp\/prev\.md/);
-  assert.match(brief, /\/tmp\/work\/review\.md/);
+  assert.match(brief, /The previous review found one issue\./);
   assert.match(brief, /`pass`/);
   assert.match(brief, /`fail`/);
   assert.match(brief, /with a message/);
-  assert.match(brief, /The previous node's verified output/);
   assert.doesNotMatch(brief, /to: \"done\"|to: \"implement\"/);
   assert.doesNotMatch(brief, /`handoff`/);
+  assert.doesNotMatch(brief, /# Output/);
 });
 
 test("brief: the upstream handoff message is context", () => {
@@ -63,15 +59,14 @@ test("brief: the upstream handoff message is context", () => {
       handoff: { mode: "terminal" },
     },
     prompt: "p",
-    previousOutput: "/tmp/a.md",
     previousMessage: "The review found one issue.",
-    outputAbs: "/tmp/b.md",
   });
   assert.match(brief, /The review found one issue\./);
-  assert.match(brief, /\/tmp\/a\.md/);
+  assert.doesNotMatch(brief, /# Output/);
+  assert.doesNotMatch(brief, /verified output/);
 });
 
-test("brief: no output omits the file requirement", () => {
+test("brief: no output section or file requirement", () => {
   const brief = composeBrief({
     graphAgent,
     node: {
@@ -83,9 +78,7 @@ test("brief: no output omits the file requirement", () => {
       },
     },
     prompt: "p",
-    previousOutput: null,
     previousMessage: null,
-    outputAbs: null,
   });
   assert.doesNotMatch(brief, /# Output/);
   assert.doesNotMatch(brief, /Write your result/);
@@ -96,9 +89,7 @@ test("brief: no output omits the file requirement", () => {
     graphAgent,
     node: { id: "z", objective: "Z", handoff: { mode: "terminal" } },
     prompt: "p",
-    previousOutput: null,
     previousMessage: null,
-    outputAbs: null,
   });
   assert.match(terminal, /End your turn/);
   assert.doesNotMatch(terminal, /Write the output/);
@@ -109,8 +100,7 @@ test("brief: unconditional uses next; terminal forbids the tool", () => {
     graphAgent,
     node: { id: "a", objective: "A", handoff: { mode: "unconditional", to: "b", description: "Ready." } },
     prompt: "p",
-    previousOutput: null,
-    outputAbs: "/tmp/a.md",
+    previousMessage: null,
   });
   assert.match(unconditional, /call the `next` tool/);
   assert.match(unconditional, /Ready\./);
@@ -119,8 +109,7 @@ test("brief: unconditional uses next; terminal forbids the tool", () => {
     graphAgent,
     node: { id: "z", objective: "Z", handoff: { mode: "terminal" } },
     prompt: "p",
-    previousOutput: "/tmp/a.md",
-    outputAbs: "/tmp/z.md",
+    previousMessage: "The previous message.",
   });
   assert.match(terminal, /Do not call a handoff tool/);
   assert.doesNotMatch(terminal, /call the `next` tool/);

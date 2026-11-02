@@ -1,10 +1,9 @@
 {
-  "version": "4",
+  "version": "5",
   "agents": [
     "agents/builder.md"
   ],
   "graph": {
-    "outputRoot": "work",
     "maxSteps": 10,
     "workflows": [
       {
@@ -34,8 +33,7 @@
       {
         "id": "a1",
         "agent": "builder",
-        "objective": "Write work/a1.md containing exactly: strict main. Then call the `next` tool with a message.",
-        "output": "a1.md",
+        "objective": "Complete the strict main node work. Then call the `next` tool with a message.",
         "maxVisits": 2,
         "handoff": {
           "mode": "unconditional",
@@ -46,8 +44,7 @@
       {
         "id": "b1",
         "agent": "builder",
-        "objective": "Write work/b1.md containing exactly: strict connected. Then call the `next` tool with a message.",
-        "output": "b1.md",
+        "objective": "Complete the strict connected node work. Then call the `next` tool with a message.",
         "maxVisits": 2,
         "handoff": {
           "mode": "unconditional",
@@ -58,8 +55,7 @@
       {
         "id": "o",
         "agent": "builder",
-        "objective": "Write work/o.md containing exactly: strict escape.",
-        "output": "o.md",
+        "objective": "Complete the strict escape node work.",
         "maxVisits": 2,
         "handoff": {
           "mode": "terminal"

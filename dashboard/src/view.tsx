@@ -9,10 +9,8 @@ import {
   edgeColor,
   edgeList,
   engagementModel,
-  detailsOutput,
   liveDetails,
   nodeState,
-  outputPath,
   topologicalOrder,
   workflowsForNode,
 } from "./model.mjs";
@@ -22,7 +20,6 @@ type ConfigNode = {
   id: string;
   agent: string;
   objective: string;
-  output?: string | null;
   maxVisits?: number | null;
   handoff:
     | { mode: "terminal" }
@@ -30,7 +27,7 @@ type ConfigNode = {
     | { mode: "conditional"; labels: Array<{ label: string; to: string; resume?: boolean }> };
 };
 type Workflow = { id: string; entry: string; exit: string; nodes: string[]; connections?: string[]; strict?: boolean };
-type Config = { graph: { outputRoot?: string; workflows?: Workflow[]; nodes: ConfigNode[] } };
+type Config = { graph: { workflows?: Workflow[]; nodes: ConfigNode[] } };
 type GraphInfo = { ok: boolean; version: string; schemaVersion?: string; valid: boolean; configPath: string };
 type DispatchStatus = {
   dispatchId: string;
@@ -39,7 +36,6 @@ type DispatchStatus = {
   state: string;
   visits?: Record<string, number>;
   usage?: { cost: number; tokens: { input: number; output: number } };
-  output?: { path?: string } | null;
   startedAt?: string | null;
   defect?: { code?: string; message?: string } | null;
 };
@@ -743,9 +739,6 @@ function DetailsPane(props: {
                   <text fg={props.theme.text.faint} wrapMode="none">
                     CONTRACT
                   </text>
-                  <text fg={props.theme.text.muted} wrapMode="word">
-                    output  {detailsOutput(props.config(), entry.node)}
-                  </text>
                   <text fg={props.theme.text.muted} wrapMode="none">
                     max     {entry.node.maxVisits ?? "—"} visits
                   </text>
@@ -803,14 +796,6 @@ function DetailsPane(props: {
                   </text>
                   <text fg={props.theme.text.muted} wrapMode="word">
                     {entry.dispatch.dispatchId} · {entry.dispatch.state} · {elapsed(entry.dispatch)}
-                  </text>
-                </box>
-                <box flexDirection="column">
-                  <text fg={props.theme.text.faint} wrapMode="none">
-                    OUTPUT
-                  </text>
-                  <text fg={props.theme.text.muted} wrapMode="word">
-                    {entry.dispatch.output?.path ?? "—"}
                   </text>
                 </box>
               </box>

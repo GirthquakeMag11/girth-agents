@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { parseFrontmatter } from "./frontmatter.mjs";
 
-export const SCHEMA_VERSION = "4";
+export const SCHEMA_VERSION = "5";
 
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
 
@@ -381,8 +381,7 @@ function validateGraph(graph, at, graphAgentIds, faults) {
     faults.push(fault("schema.graph", `${at}: must be an object`));
     return;
   }
-  strict(graph, ["outputRoot", "maxSteps", "workflows", "nodes"], at, faults);
-  if (graph.outputRoot !== undefined) relativePath(graph.outputRoot, `${at}.outputRoot`, faults);
+  strict(graph, ["maxSteps", "workflows", "nodes"], at, faults);
   integer(graph.maxSteps, `${at}.maxSteps`, faults, { min: 1 });
 
   if (!Array.isArray(graph.nodes) || graph.nodes.length === 0) {
@@ -408,14 +407,13 @@ function validateGraph(graph, at, graphAgentIds, faults) {
       faults.push(fault("schema.node", `${nodeAt}: must be an object`));
       continue;
     }
-    strict(node, ["id", "agent", "objective", "output", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
+    strict(node, ["id", "agent", "objective", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
     string(node.id, `${nodeAt}.id`, faults);
     string(node.agent, `${nodeAt}.agent`, faults);
     if (node.agent !== undefined && typeof node.agent === "string" && !graphAgentIds.has(node.agent)) {
       faults.push(fault("graph.unknown-agent", `${nodeAt}.agent: names no agent '${node.agent}'`));
     }
     string(node.objective, `${nodeAt}.objective`, faults);
-    relativePath(node.output, `${nodeAt}.output`, faults, { required: false });
     integer(node.budgetMs, `${nodeAt}.budgetMs`, faults, { min: 1 });
     integer(node.maxVisits, `${nodeAt}.maxVisits`, faults, { min: 1 });
     if (node.maxVisits !== undefined && Number.isInteger(node.maxVisits) && node.maxVisits > MAX_VISITS) {
@@ -636,11 +634,6 @@ export function findNode(graph, id) {
   return graph?.nodes?.find((node) => node.id === id) ?? null;
 }
 
-export function outputPathFor(graph, node, cwd) {
-  if (!node?.output) return null;
-  return resolve(cwd, graph.outputRoot ?? ".", node.output);
-}
-
 export function handoffResume(node, label) {
   if (!node?.handoff) return false;
   if (node.handoff.mode === "unconditional") return node.handoff.resume === true;
@@ -733,13 +726,11 @@ export function allowedWorkflows(graph, workflowId) {
 export function graphSummary(graph) {
   return {
     maxSteps: graph.maxSteps ?? 100,
-    outputRoot: graph.outputRoot ?? ".",
     workflows: graph.workflows ?? [],
     nodes: graph.nodes.map((node) => ({
       id: node.id,
       agent: node.agent,
       objective: node.objective,
-      output: node.output ?? null,
       maxVisits: node.maxVisits ?? null,
       handoff:
         node.handoff.mode === "conditional"

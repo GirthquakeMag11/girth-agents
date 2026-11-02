@@ -87,14 +87,12 @@ if (!productFrame.includes("◆")) throw new Error("handoff runner token is not 
 
 const selfGraph = {
   graph: {
-    outputRoot: "work",
     workflows: [{ id: "self", entry: "a", exit: "a", nodes: ["a"], connections: [], strict: false }],
     nodes: [
       {
         id: "a",
         agent: "builder",
         objective: "Self-handoff demo.",
-        output: "a.md",
         handoff: { mode: "conditional", labels: [{ label: "again", to: "a" }] },
       },
     ],

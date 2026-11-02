@@ -93,12 +93,12 @@ async function startEngine(directory, configFile) {
   const url = /const ENGINE_URL = "([^"]+)"/.exec(pluginSource)?.[1];
   const token = /const TOKEN = "([^"]+)"/.exec(pluginSource)?.[1];
   assert.ok(url && token, "the engine endpoint must be installed");
-  const control = async (path, body = {}) => {
+  const control = async (path, body = {}, timeoutMs = 10000) => {
     const res = await fetch(url + path, {
       method: "POST",
       headers: { "content-type": "application/json", "x-engine-token": token },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(`${path} ${res.status}: ${json?.error ?? JSON.stringify(json)}`);
@@ -174,7 +174,7 @@ async function proveNonStrict() {
 
   const dispatched = await live.control("/tool/dispatch", {
     workflow: "A",
-    prompt: "Execute the node objective exactly. Write the declared output file, then call the `next` tool exactly once with a message.",
+    prompt: "Execute the node objective exactly, then call the `next` tool exactly once with a message.",
   });
   const main = await live.waitRuntime((runtime) => runtime.active?.node === "a1", 30000, "active main a1");
   assert.deepEqual(containerRows(main, live.config), [
@@ -212,7 +212,11 @@ async function proveNonStrict() {
   ]);
   record("non-strict escape warning node", { active: escape.active?.node, escapes: escapeModel.escapes.map((entry) => entry.node) });
 
-  const completed = await live.control("/tool/dispatch/wait", { dispatchId: dispatched.dispatchId, timeoutMs: 180000 });
+  const completed = await live.control(
+    "/tool/dispatch/wait",
+    { dispatchId: dispatched.dispatchId, timeoutMs: 180000 },
+    200000,
+  );
   assert.equal(completed.state, "completed");
   assert.equal(completed.terminal, "o");
   assert.ok(completed.usage?.cost >= 0);
@@ -238,14 +242,18 @@ async function proveStrict() {
   const live = await startEngine(strictWorkspace, join(here, "..", "fixtures", "live-boundary-strict.json"));
   const dispatched = await live.control("/tool/dispatch", {
     workflow: "A",
-    prompt: "Execute the node objective exactly. Write the declared output file, then call the `next` tool exactly once with a message.",
+    prompt: "Execute the node objective exactly, then call the `next` tool exactly once with a message.",
   });
   const connected = await live.waitRuntime((runtime) => runtime.active?.node === "b1", 180000, "strict active b1");
   assert.deepEqual(containerRows(connected, live.config), [
     { workflowId: "A", kind: "main", state: "active", primary: true },
     { workflowId: "B", kind: "connected", state: "active", primary: false },
   ]);
-  const result = await live.control("/tool/dispatch/wait", { dispatchId: dispatched.dispatchId, timeoutMs: 180000 });
+  const result = await live.control(
+    "/tool/dispatch/wait",
+    { dispatchId: dispatched.dispatchId, timeoutMs: 180000 },
+    200000,
+  );
   assert.equal(result.state, "defect");
   assert.equal(result.defect?.code, "workflow.escape");
   const map = await live.control("/tool/graph-map");

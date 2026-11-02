@@ -100,5 +100,4 @@ Open.
 - triggers, watches, and schedules;
 - programmatic node types;
 - dashboard editing or dispatch controls;
-- background subagent tracking and child-session aggregation;
-- per-dispatch output isolation.
+- background subagent tracking and child-session aggregation.

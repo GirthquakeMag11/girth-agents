@@ -37,6 +37,10 @@ test("shell: Details is driven only by live active entries", () => {
   assert.doesNotMatch(view, /first queued|else review/i);
 });
 
+test("shell: Details has no output contract", () => {
+  assert.doesNotMatch(view, /detailsOutput|outputPath|outputRoot|OUTPUT/);
+});
+
 test("shell: History is rendered in a pane and a one-line strip", () => {
   assert.match(view, /function HistoryPane/);
   assert.match(view, /function HistoryStrip/);

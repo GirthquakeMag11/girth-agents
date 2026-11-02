@@ -1,11 +1,10 @@
 {
-  "version": "4",
+  "version": "5",
   "agents": [
     "agents/builder.md",
     "agents/reviewer.md"
   ],
   "graph": {
-    "outputRoot": "work",
     "maxSteps": 100,
     "workflows": [
       {
@@ -24,7 +23,6 @@
         "id": "implement",
         "agent": "builder",
         "objective": "Implement the dispatched work.",
-        "output": "implementation.md",
         "maxVisits": 20,
         "handoff": {
           "mode": "unconditional",
@@ -36,7 +34,6 @@
         "id": "review",
         "agent": "reviewer",
         "objective": "Review the implementation against the dispatched prompt.",
-        "output": "review.md",
         "maxVisits": 20,
         "handoff": {
           "mode": "conditional",
@@ -58,8 +55,7 @@
       {
         "id": "done",
         "agent": "builder",
-        "objective": "Finalize the work and write the final report.",
-        "output": "final.md",
+        "objective": "Finalize the work.",
         "handoff": {
           "mode": "terminal"
         }

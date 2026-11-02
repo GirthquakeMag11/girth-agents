@@ -9,10 +9,10 @@ import { join, resolve } from "node:path";
 import { DISPATCHER_TARGET, loadConfig, handoffTarget, handoffLabels, handoffToolsStale, configSummary, graphInfoResponse } from "./config.mjs";
 import { handoffLabelsMatch, handoffMessageError, handoffPreflightError, handoffToolState, handoffVisibilityFailure } from "./visibility.mjs";
 import { resumeHistoryEvent, selectResumeOrigin } from "./resume.mjs";
-import { claimHandoff, handoffOutput } from "./handoff.mjs";
+import { claimHandoff } from "./handoff.mjs";
 import { resolveDispatchTarget, validateDispatchOptions, workflowEscape } from "./workflow.mjs";
 import { createDispatchQueue } from "./queue.mjs";
-import { runDispatch, checkOutput, DispatchDefect, emptyUsage } from "./executor.mjs";
+import { runDispatch, DispatchDefect, emptyUsage } from "./executor.mjs";
 import { createDriver } from "./driver.mjs";
 import { startControlServer, ControlError } from "./control.mjs";
 import { installPlugin, installSkills, removeCommands, removeAgent, preflightPlugin } from "./plugin.mjs";
@@ -267,22 +267,10 @@ async function onHandoff(body) {
     }
   }
 
-  let output = null;
-  if (active.outputPath) {
-    try {
-      output = await handoffOutput(active, checkOutput);
-    } catch (e) {
-      if (e instanceof DispatchDefect) throw new ControlError(422, e.message);
-      throw e;
-    }
-  }
-
   active.handoff = {
     label,
     message,
     callID: body.callID ?? null,
-    outputHash: output?.hash ?? null,
-    outputPath: output?.path ?? null,
     at: new Date().toISOString(),
   };
   return { body: { ok: true, label } };

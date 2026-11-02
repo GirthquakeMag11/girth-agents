@@ -78,7 +78,7 @@ async function main() {
 
   const dispatched = await control("/tool/dispatch", {
     workflow: "build-review",
-    prompt: "Execute the node objective exactly. Write the declared output file, then call the `next` tool exactly once with a message.",
+    prompt: "Execute the node objective exactly, then call the `next` tool exactly once with a message.",
   });
   const deadline = Date.now() + 30000;
   let map;

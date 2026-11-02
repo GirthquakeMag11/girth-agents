@@ -39,7 +39,6 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
       defect: record.defect ?? null,
       handoff: record.handoff ?? null,
       sessionId: record.sessionId ?? null,
-      output: record.output ?? null,
       usage: record.usage ?? { cost: 0, tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } } },
       result: record.result ?? null,
     };

@@ -1,11 +1,10 @@
 {
-  "version": "4",
+  "version": "5",
   "agents": [
     "agents/builder.md",
     "agents/reviewer.md"
   ],
   "graph": {
-    "outputRoot": "work",
     "maxSteps": 20,
     "workflows": [
       {
@@ -35,8 +34,7 @@
       {
         "id": "a1",
         "agent": "builder",
-        "objective": "Write work/a1.md containing exactly: main. Then call the `next` tool with a message.",
-        "output": "a1.md",
+        "objective": "Complete the main node work. Then call the `next` tool with a message.",
         "maxVisits": 2,
         "handoff": {
           "mode": "unconditional",
@@ -47,8 +45,7 @@
       {
         "id": "b1",
         "agent": "builder",
-        "objective": "Write work/b1.md containing exactly: connected. Then call the `next` tool with a message.",
-        "output": "b1.md",
+        "objective": "Complete the connected node work. Then call the `next` tool with a message.",
         "maxVisits": 2,
         "handoff": {
           "mode": "unconditional",
@@ -59,8 +56,7 @@
       {
         "id": "o",
         "agent": "builder",
-        "objective": "Write work/o.md containing exactly: escaped. Then stop.",
-        "output": "o.md",
+        "objective": "Complete the escape node work. Then stop.",
         "maxVisits": 2,
         "handoff": {
           "mode": "terminal"

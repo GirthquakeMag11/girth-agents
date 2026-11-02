@@ -6,17 +6,17 @@
  │ ● build-review     │ │                                                          │ │ ● running · reviewer         █ │ 
  │                    │ │         ╔═build-review════════════════════════════════╗  │ │                              █ │ 
  │ NODES              │ │         ║                                             ║  │ │ CONTRACT                     █ │ 
- │ ◌ implement        │ │         ║  ╭────────────────────────────────╮         ║  │ │ output work/review.md        █ │ 
- │ ● review           │ │         ║  │  implement           ◌ queued  │         ║  │ │ max 20 visits                █ │ 
- │ ○ done             │ │         ║  │  builder                       │◀──────┐ ║  │ │ visits 1/20                  █ │ 
- │                    │ │         ║  ╰────────────────────────────────╯       │ ║  │ │ pass → done                  ▀ │ 
- │ STATE              │ │         ║                   │                       │ ║  │ │ fail → implement · resume      │ 
- │ ● running 1        │ │         ║                   │─ next                 │ ║  │ │                                │ 
- │ ◌ queued 1         │ │         ║                   │               fail ↻ ─│ ║  │ │ BRIEF                          │ 
- │ ○ idle 1           │ │         ║                   ▼                       │ ║  │ │ Review the implementation      │ 
- │                    │ │         ║  ╭━━──────────────────────────────╮       │ ║  │ │ against the dispatched prompt  │ 
+ │ ◌ implement        │ │         ║  ╭────────────────────────────────╮         ║  │ │ max 20 visits                █ │ 
+ │ ● review           │ │         ║  │  implement           ◌ queued  │         ║  │ │ visits 1/20                  █ │ 
+ │ ○ done             │ │         ║  │  builder                       │◀──────┐ ║  │ │ pass → done                  █ │ 
+ │                    │ │         ║  ╰────────────────────────────────╯       │ ║  │ │ fail → implement · resume    █ │ 
+ │ STATE              │ │         ║                   │                       │ ║  │ │                                │ 
+ │ ● running 1        │ │         ║                   │─ next                 │ ║  │ │ BRIEF                          │ 
+ │ ◌ queued 1         │ │         ║                   │               fail ↻ ─│ ║  │ │ Review the implementation      │ 
+ │ ○ idle 1           │ │         ║                   ▼                       │ ║  │ │ against the dispatched prompt  │ 
+ │                    │ │         ║  ╭━━──────────────────────────────╮       │ ║  │ │                                │ 
  │ GRAPH              │ │         ║  │  review             ● running  │       │ ║  │ │                                │ 
- │ 1wf · 3n · 3 links │ │         ║  │  reviewer                      │───────┘ ║  │ │                                │ 
+ │ 1wf · 3n · 3 links │ │         ║  │  reviewer                      │───────┘ ║  │ │ WORKFLOWS                      │ 
  │                    │ │         ║  ╰────────────────────────────────╯         ║  │ ╰────────────────────────────────╯ 
  │                    │ │         ║                   │                         ║  │                                    
  │                    │ │         ║                   │─ pass                   ║  │ ╭─History────────────────────────╮ 

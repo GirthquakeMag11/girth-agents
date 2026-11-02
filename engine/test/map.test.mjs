@@ -25,8 +25,8 @@ test("map: the workflow is a labelled box with entry and exit", () => {
 test("map: the workflow and node tables carry the same config fields", () => {
   const map = renderGraphMap(graph);
   assert.match(map.workflowTable, /\| build-review \| implement \| done \| implement, review, done \| — \| no \|/);
+  assert.match(map.nodeTable, /\| Node \| Graph agent \| Objective \| Handoff \| Max visits \|/);
   assert.match(map.nodeTable, /implement \| builder \| Implement the dispatched work\./);
-  assert.match(map.nodeTable, /work\/implementation\.md/);
   assert.match(map.nodeTable, /pass → done; fail → implement \(resume\)/);
   assert.match(map.legend, /resume = this route reuses/);
 });
@@ -109,20 +109,6 @@ test("map: the workflow table carries connections and strict policy for multiple
   const table = renderWorkflowTable(graph);
   assert.match(table, /\| A \| a \| b \| a, b \| B \| yes \|/);
   assert.match(table, /\| B \| b \| b \| b \| — \| no \|/);
-});
-
-test("map: a node with no output shows a no-output marker", () => {
-  const without = structuredClone(graph);
-  delete without.nodes[0].output;
-  const map = renderGraphMap(without);
-  assert.match(map.nodeTable, /\| implement \| builder \| Implement the dispatched work\. \| — \|/);
-});
-
-test("map: the artifact carries the no-output marker", () => {
-  const without = structuredClone(loaded.doc);
-  delete without.graph.nodes[0].output;
-  const artifact = renderGraphArtifact(without, "graph.json");
-  assert.match(artifact, /\| implement \| builder \| Implement the dispatched work\. \| — \|/);
 });
 
 test("map: a dispatcher target is rendered as a completion sink", () => {

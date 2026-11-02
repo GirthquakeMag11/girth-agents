@@ -29,6 +29,13 @@ categories as separate state, tools, endpoints, or dispatch outcomes. A handoff
 message is context. If a design needs a flag, label, tool, or state to say what
 kind of message it is, the design is wrong.
 
+## Work product is not engine state
+
+The engine owns routing and handoff context. It does not define, locate, verify,
+hash, or display the shape of a node's work product. A graph that wants a file
+artifact asks for it in its prompt or agent instructions; it is not a schema
+field, a dispatch record, or a dashboard field.
+
 ## Configuration names
 
 - The graph config's agent collection is `agents`; it lists Markdown agent

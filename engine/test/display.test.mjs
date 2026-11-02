@@ -13,13 +13,12 @@ const base = {
   terminal: "done",
   visits: { implement: 1, review: 1, done: 1 },
   usage: { cost: 0.0123, tokens: { input: 120, output: 45 } },
-  output: { path: "work/final.md", bytes: 12, hash: "abc" },
   result: null,
 };
 
-test("display: completed output is focused and carries the footer", () => {
+test("display: completed terminal is focused and carries the footer", () => {
   const text = renderDispatchDisplay(base);
-  assert.match(text, /output: work\/final\.md/);
+  assert.doesNotMatch(text, /output:/);
   assert.match(text, /d-1 · completed · terminal done · 3 visits · \$0\.0123 · 120 in \/ 45 out · 2\.5s/);
   assert.doesNotMatch(text, /"state"/);
 });
@@ -75,5 +74,5 @@ test("display: status body carries the display beside the raw snapshot", () => {
   assert.equal(body.state, "completed");
   assert.equal(body.dispatchId, "d-1");
   assert.equal(body.display, renderDispatchDisplay(base));
-  assert.match(body.display, /output: work\/final\.md/);
+  assert.doesNotMatch(body.display, /output:/);
 });

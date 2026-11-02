@@ -19,8 +19,8 @@ The engine writes and regenerates:
 
 The plugin reaches the engine through a loopback HTTP control endpoint with a
 per-boot token. The engine also speaks JSON-lines on stdio for development and
-proof. The workspace is the engine's working directory; config, outputs, and
-generated files resolve against it.
+proof. The workspace is the engine's working directory; config and generated
+files resolve against it.
 
 ### Versioning
 
@@ -37,14 +37,13 @@ two numbers are independent.
 ## 2. Configuration
 
 The graph is one JSON manifest plus the Markdown agent documents it names and
-the skill documents those agents reference. Schema version is the string `"4"`.
+the skill documents those agents reference. Schema version is the string `"5"`.
 
 ```json
 {
-  "version": "4",
+  "version": "5",
   "agents": ["agents/builder.md", "agents/reviewer.md"],
   "graph": {
-    "outputRoot": "work",
     "maxSteps": 100,
     "workflows": [],
     "nodes": []
@@ -109,14 +108,13 @@ A node has:
 - `id`
 - `agent` — reference to an agent document's `id`
 - `objective`
-- optional `output` — relative path; omitted means no file artifact
 - optional `budgetMs`
 - optional `maxVisits` (1–100; the engine hard ceiling is 100)
 - `handoff`
 
 A handoff is exactly one of:
 
-- `terminal` — no handoff tool; the node ends after writing any declared output.
+- `terminal` — no handoff tool; the node ends after its session succeeds.
 - `unconditional` — one target; generated tool `next`.
 - `conditional` — one tool per declared label, named exactly the label.
 
@@ -189,32 +187,28 @@ A dispatch creates or resumes a session, sends one brief, waits for idle, and
 verifies:
 
 - the session outcome is `succeeded`;
-- any declared output exists, is a regular non-empty file, and is unchanged
-  after the accepted handoff;
 - the accepted handoff is declared for the active node;
 - the handoff is the last tool call and no tool finished after acceptance.
 
 The brief contains the graph agent's prompt, any attached skill instructions,
-dispatch prompt, node objective, upstream message, upstream output path when the
-source declared one, the exact output path when declared, and the active node's
-generated handoff tools with descriptions. A no-output node has no output
-section; its handoff message is the deliverable.
+dispatch prompt, node objective, upstream message, and the active node's
+generated handoff tools with descriptions. A node's work product is not part of
+the brief contract; the handoff message is the context carried to the next node.
 
-A node with a terminal handoff completes with its declared output, or with
-`output: null` when none is declared. A `$dispatcher` handoff completes with
-`terminal: null`, records the handoff message, preserves any declared output
-record, and returns the message as `result.response` capped at 16 KiB of
-UTF-8. The source session is retained as the origin for a return message. A
-failed or cancelled dispatcher handoff does not retain it. `dispatch_cancel`
-on a retained origin discards the origin and deletes the session.
+A node with a terminal handoff completes after its session succeeds. The
+completion carries no engine-defined work product. A `$dispatcher` handoff
+completes with `terminal: null`, records the handoff message, and returns the
+message as `result.response` capped at 16 KiB of UTF-8. The source session is
+retained as the origin for a return message. A failed or cancelled dispatcher
+handoff does not retain it. `dispatch_cancel` on a retained origin discards the
+origin and deletes the session.
 
 Errors are named. Key codes: `handoff.unknown-tool`, `handoff.message-required`,
 `handoff.message-empty`, `handoff.multiple`, `handoff.none`,
 `handoff.not-last`, `handoff.tool-collision`, `handoff.tools-stale`,
 `handoff.visibility-unavailable`, `resume.not-return`, `handoff.ambiguous`,
-`handoff.stale`, `workflow.escape`, `output.missing`, `output.empty`,
-`output.changed`, `output.not-file`, `output.check`, `agent.unreadable`,
-`agent.frontmatter`, `agent.missing-id`, `agent.duplicate-id`,
+`handoff.stale`, `workflow.escape`, `agent.unreadable`, `agent.frontmatter`,
+`agent.missing-id`, `agent.duplicate-id`,
 `skill.unreadable`, `skill.frontmatter`, `skill.missing-id`,
 `skill.duplicate-id`, `skill.instructions`.
 

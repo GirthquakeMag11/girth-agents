@@ -1,9 +1,9 @@
 # girth-agents
 
 An engine for a graph of agent nodes. The user's interactive agent dispatches
-work into the graph; each node's graph agent does its work, writes any declared
-output, and hands off a message to exactly one next target. One graph, one
-active dispatch at a time, a FIFO queue behind it.
+work into the graph; each node's graph agent does its work and hands off a
+message to exactly one next target. One graph, one active dispatch at a time, a
+FIFO queue behind it.
 
 ## Run
 

@@ -1,6 +1,5 @@
 {
   "graph": {
-    "outputRoot": "work",
     "workflows": [
       {
         "id": "A",
@@ -58,7 +57,6 @@
         "id": "a1",
         "agent": "builder",
         "objective": "Start A.",
-        "output": "a1.md",
         "handoff": {
           "mode": "unconditional",
           "to": "a2"
@@ -68,7 +66,6 @@
         "id": "a2",
         "agent": "builder",
         "objective": "Continue A.",
-        "output": "a2.md",
         "handoff": {
           "mode": "unconditional",
           "to": "x"
@@ -78,7 +75,6 @@
         "id": "x",
         "agent": "builder",
         "objective": "Shared A and B.",
-        "output": "x.md",
         "handoff": {
           "mode": "conditional",
           "labels": [
@@ -97,7 +93,6 @@
         "id": "z",
         "agent": "reviewer",
         "objective": "A only.",
-        "output": "z.md",
         "handoff": {
           "mode": "unconditional",
           "to": "d1"
@@ -107,7 +102,6 @@
         "id": "d1",
         "agent": "builder",
         "objective": "D only.",
-        "output": "d1.md",
         "handoff": {
           "mode": "terminal"
         }
@@ -116,7 +110,6 @@
         "id": "y",
         "agent": "builder",
         "objective": "Shared B and C.",
-        "output": "y.md",
         "handoff": {
           "mode": "unconditional",
           "to": "o2"
@@ -126,7 +119,6 @@
         "id": "o2",
         "agent": "builder",
         "objective": "C exit.",
-        "output": "o2.md",
         "handoff": {
           "mode": "unconditional",
           "to": "o"
@@ -136,7 +128,6 @@
         "id": "o",
         "agent": "builder",
         "objective": "Outside every workflow.",
-        "output": "o.md",
         "handoff": {
           "mode": "terminal"
         }

@@ -75,8 +75,6 @@ export function renderDispatchDisplay(snapshot) {
   if (response) {
     lines.push(response);
     if (snapshot.result?.responseTruncated) lines.push("(response truncated)");
-  } else if (snapshot.output?.path) {
-    lines.push(`output: ${snapshot.output.path}`);
   }
   lines.push(footer(snapshot));
   return lines.filter(Boolean).join("\n");

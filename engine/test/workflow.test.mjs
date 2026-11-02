@@ -87,7 +87,7 @@ test("workflow: boundary is transitive, main-aware, and strict-aware", () => {
 });
 
 const strictDoc = {
-  version: "4",
+  version: "5",
   agents: [
     {
       id: "builder",
@@ -98,7 +98,6 @@ const strictDoc = {
     },
   ],
   graph: {
-    outputRoot: "work",
     maxSteps: 10,
     workflows: [
       {
@@ -118,7 +117,6 @@ const strictDoc = {
         id: "a1",
         agent: "builder",
         objective: "choose",
-        output: "a1.md",
         handoff: {
           mode: "conditional",
           labels: [
@@ -130,11 +128,11 @@ const strictDoc = {
           ],
         },
       },
-      { id: "a2", agent: "builder", objective: "finish", output: "a2.md", handoff: { mode: "terminal" } },
-      { id: "b1", agent: "builder", objective: "b", output: "b1.md", handoff: { mode: "terminal" } },
-      { id: "c1", agent: "builder", objective: "c", output: "c1.md", handoff: { mode: "terminal" } },
-      { id: "d1", agent: "builder", objective: "d", output: "d1.md", handoff: { mode: "terminal" } },
-      { id: "o", agent: "builder", objective: "outside", output: "o.md", handoff: { mode: "terminal" } },
+      { id: "a2", agent: "builder", objective: "finish", handoff: { mode: "terminal" } },
+      { id: "b1", agent: "builder", objective: "b", handoff: { mode: "terminal" } },
+      { id: "c1", agent: "builder", objective: "c", handoff: { mode: "terminal" } },
+      { id: "d1", agent: "builder", objective: "d", handoff: { mode: "terminal" } },
+      { id: "o", agent: "builder", objective: "outside", handoff: { mode: "terminal" } },
     ],
   },
 };

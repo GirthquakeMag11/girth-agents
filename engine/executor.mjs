@@ -1,12 +1,10 @@
 // The dispatch loop. One node at a time: create or resume a session, send the
-// brief, wait for a handoff acknowledgement, verify the output and the
-// order, then route to the label's target. Any missing or ambiguous piece
-// is a typed defect; no node silently falls through.
+// brief, wait for a handoff acknowledgement, verify the order, then route to
+// the label's target. Any missing or ambiguous piece is a typed defect; no
+// node silently falls through.
 
-import { createHash } from "node:crypto";
-import { readFile, stat } from "node:fs/promises";
 import { composeBrief } from "./brief.mjs";
-import { DISPATCHER_TARGET, MAX_VISITS, findNode, handoffTarget, handoffResume, resumableNodes, outputPathFor } from "./config.mjs";
+import { DISPATCHER_TARGET, MAX_VISITS, findNode, handoffTarget, handoffResume, resumableNodes } from "./config.mjs";
 import { permissionsFor } from "./driver.mjs";
 
 const RESPONSE_CAP_BYTES = 16 * 1024;
@@ -30,24 +28,6 @@ export class DispatchDefect extends Error {
     super(message);
     this.kind = code;
   }
-}
-
-export async function checkOutput(path) {
-  let info;
-  try {
-    info = await stat(path);
-  } catch (e) {
-    if (e?.code === "ENOENT") throw new DispatchDefect("output.missing", `no output at ${path}`);
-    throw new DispatchDefect("output.check", `output check failed at ${path}: ${e.message}`);
-  }
-  if (!info.isFile()) throw new DispatchDefect("output.not-file", `output path is not a regular file: ${path}`);
-  if (info.size === 0) throw new DispatchDefect("output.empty", `output is empty: ${path}`);
-  const content = await readFile(path);
-  return {
-    path,
-    bytes: info.size,
-    hash: createHash("sha256").update(content).digest("hex"),
-  };
 }
 
 function toolParts(messages) {
@@ -176,14 +156,10 @@ async function sessionInfo(driver, sessionId) {
   }
 }
 
-async function runNode({ driver, graph, node, graphAgent, record, cwd, previousOutput, previousMessage, onEvent, sessions, resume = false, resumable = false, budgetMs = null }) {
+async function runNode({ driver, node, graphAgent, record, cwd, previousMessage, onEvent, sessions, resume = false, resumable = false, budgetMs = null }) {
   if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
 
-  const outputAbs = outputPathFor(graph, node, cwd);
   record.nodeDef = node;
-  record.graphDef = graph;
-  record.outputPath = outputAbs;
-  record.output = null;
   record.handoff = null;
   record.handoffDefect = null;
   record.handoffPending = false;
@@ -226,7 +202,6 @@ async function runNode({ driver, graph, node, graphAgent, record, cwd, previousO
     sessionId,
     sessionMode: resume ? "resume" : "fresh",
     resumed,
-    upstream: previousOutput,
     at: new Date().toISOString(),
   });
 
@@ -234,9 +209,7 @@ async function runNode({ driver, graph, node, graphAgent, record, cwd, previousO
     graphAgent,
     node,
     prompt: record.prompt,
-    previousOutput,
     previousMessage,
-    outputAbs,
   });
 
   const budget = budgetMs ?? node.budgetMs ?? 600000;
@@ -264,8 +237,6 @@ async function runNode({ driver, graph, node, graphAgent, record, cwd, previousO
     }
 
     if (node.handoff.mode === "terminal") {
-      const output = outputAbs ? await checkOutput(outputAbs) : null;
-      record.output = output;
       onEvent("step", {
         dispatchId: record.id,
         node: node.id,
@@ -275,7 +246,6 @@ async function runNode({ driver, graph, node, graphAgent, record, cwd, previousO
         at: new Date().toISOString(),
       });
       return {
-        outputPath: outputAbs,
         handoff: null,
         budgetRemainingMs: Math.max(0, budget - (Date.now() - promptStartedAt)),
       };
@@ -288,24 +258,12 @@ async function runNode({ driver, graph, node, graphAgent, record, cwd, previousO
       );
     }
 
-    let output = null;
-    if (outputAbs) {
-      output = await checkOutput(outputAbs);
-      if (output.hash !== record.handoff.outputHash) {
-        throw new DispatchDefect(
-          "output.changed",
-          `node '${node.id}' output changed after the handoff was accepted`,
-        );
-      }
-    }
-
     const messages = await driver.messages(sessionId);
     const order = checkHandoffOrder(messages, record.handoff);
     if (order) {
       throw new DispatchDefect("handoff.not-last", `node '${node.id}': ${order}`);
     }
 
-    record.output = output;
     keepForDispatcher =
       !record.cancelled &&
       handoffTarget(node, record.handoff.label) === DISPATCHER_TARGET;
@@ -321,7 +279,6 @@ async function runNode({ driver, graph, node, graphAgent, record, cwd, previousO
       at: new Date().toISOString(),
     });
     return {
-      outputPath: outputAbs,
       handoff: record.handoff,
       budgetRemainingMs: Math.max(0, budget - (Date.now() - promptStartedAt)),
     };
@@ -337,7 +294,6 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
   if (!graph) throw new DispatchDefect("no-graph", "the config has no graph");
 
   let current = record.node;
-  let previousOutput = null;
   let previousMessage = null;
   let upstream = null;
   const visits = record.visits ?? {};
@@ -377,12 +333,10 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
 
     const result = await runNode({
       driver,
-      graph,
       node,
       graphAgent,
       record,
       cwd,
-      previousOutput,
       previousMessage,
       onEvent,
       sessions,
@@ -395,7 +349,7 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
 
     if (node.handoff.mode === "terminal") {
       record.terminal = current;
-      return { terminal: current, visits: { ...visits }, output: result.outputPath, usage: record.usage };
+      return { terminal: current, visits: { ...visits }, usage: record.usage };
     }
 
     const target = handoffTarget(node, result.handoff.label);
@@ -438,7 +392,6 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
         handoff: record.handoff,
         result: record.result,
         visits: { ...visits },
-        output: result.outputPath,
         usage: record.usage,
       };
     }
@@ -459,7 +412,6 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
         `node '${node.id}' requests resume on '${result.handoff.label}', but target '${target}' is not the node that supplied its input (${upstream ?? "dispatch entry"})`,
       );
     }
-    previousOutput = result.outputPath;
     previousMessage = result.handoff.message ?? null;
     upstream = current;
     current = target;

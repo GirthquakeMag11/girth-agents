@@ -5,16 +5,6 @@ function asList(value) {
   return value ? [value] : [];
 }
 
-export function outputPath(config, node) {
-  if (!node?.output) return null;
-  const root = config.graph.outputRoot ?? ".";
-  return root === "." ? node.output : `${root}/${node.output}`;
-}
-
-export function detailsOutput(config, node) {
-  return outputPath(config, node) ?? "—";
-}
-
 export function edgeList(nodes) {
   const edges = [];
   for (const node of nodes) {

@@ -212,8 +212,6 @@ async function main() {
   assert.equal(first.terminal, "done");
   assert.equal(typeof first.usage?.cost, "number");
   assert.ok(usageTotal(first.usage) > 0, "the completion reports token usage");
-  const final = await readFile(join(workspace, "work", "final.md"), "utf8");
-  assert.ok(final.trim().length > 0);
   console.log("PASS  stdio dispatch reached the terminal and reported cost and tokens");
 
   const beforeQueue = events.length;
@@ -246,7 +244,7 @@ async function main() {
         node: "implement",
         prompt: "Write a one-paragraph design note for a hello() function. Keep it short.",
       }),
-      "Report the completion status, the terminal node, the output path, and the usage. Do not do the work yourself.",
+      "Report the completion status, the terminal node, and the usage. Do not do the work yourself.",
     ].join("\n"),
   );
   assert.equal(dispatched.info.outcome, "succeeded");

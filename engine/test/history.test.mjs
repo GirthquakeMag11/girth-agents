@@ -178,15 +178,13 @@ test("history: forbidden payload fields never reach entries", () => {
     node: "implement",
     phase: "end",
     sessionId: "session-secret",
-    upstream: "/work/secret.md",
     sessionMode: "resume",
     usage: { cost: 99, tokens: { input: 100, output: 200 } },
     prompt: "do not copy",
-    output: { path: "/work/secret.md", hash: "secret" },
     message: "secret failure",
   });
   const text = JSON.stringify(entry);
-  for (const forbidden of ["session-secret", "upstream", "sessionMode", "resume", "cost", "tokens", "prompt", "secret failure"]) {
+  for (const forbidden of ["session-secret", "sessionMode", "resume", "cost", "tokens", "prompt", "secret failure"]) {
     assert.equal(text.includes(forbidden), false, `${forbidden} leaked into history`);
   }
 });

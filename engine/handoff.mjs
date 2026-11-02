@@ -1,8 +1,3 @@
-export async function handoffOutput(active, checkOutput) {
-  if (!active?.outputPath) return null;
-  return checkOutput(active.outputPath);
-}
-
 export function claimHandoff(active, node, Defect) {
   if (active.handoff || active.handoffPending) {
     const defect = new Defect(

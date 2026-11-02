@@ -9,7 +9,6 @@ import {
   validateConfig,
   validateManifest,
   SCHEMA_VERSION,
-  outputPathFor,
   configSummary,
   graphInfoResponse,
   allowedWorkflows,
@@ -283,6 +282,8 @@ test("config: graph_info carries the one graph and the graph agents, with no gra
   assert.equal(summary.configPath, "/tmp/graph.json");
   assert.equal(summary.graph.id, undefined);
   assert.equal(summary.graph.workflows[0].id, "build-review");
+  assert.equal(summary.graph.outputRoot, undefined);
+  assert.equal(summary.graph.nodes[0].output, undefined);
   assert.equal(summary.agents[0].id, "builder");
   assert.match(summary.agents[0].prompt, /Work only within/);
   assert.equal(summary.graphs, undefined);
@@ -447,7 +448,6 @@ test("config: a cycle without maxVisits is unbounded", () => {
       id: "a",
       agent: "builder",
       objective: "a",
-      output: "a.md",
       handoff: {
         mode: "conditional",
         labels: [
@@ -460,10 +460,9 @@ test("config: a cycle without maxVisits is unbounded", () => {
       id: "b",
       agent: "builder",
       objective: "b",
-      output: "b.md",
       handoff: { mode: "unconditional", to: "a", description: "back" },
     },
-    { id: "term", agent: "builder", objective: "end", output: "end.md", handoff: { mode: "terminal" } },
+    { id: "term", agent: "builder", objective: "end", handoff: { mode: "terminal" } },
   ];
   assert.ok(codes(validateConfig(doc)).includes("graph.unbounded-cycle"));
 });
@@ -472,41 +471,30 @@ test("config: no terminal or no path to one is named", () => {
   const doc = structuredClone(SHIPPED);
   const graph = doc.graph;
   graph.nodes = [
-    { id: "a", agent: "builder", objective: "a", output: "a.md", handoff: { mode: "unconditional", to: "b" } },
-    { id: "b", agent: "builder", objective: "b", output: "b.md", handoff: { mode: "unconditional", to: "a" } },
+    { id: "a", agent: "builder", objective: "a", handoff: { mode: "unconditional", to: "b" } },
+    { id: "b", agent: "builder", objective: "b", handoff: { mode: "unconditional", to: "a" } },
   ];
   const faults = codes(validateConfig(doc));
   assert.ok(faults.includes("graph.no-terminal"));
   assert.ok(faults.includes("graph.no-terminal-path"));
 });
 
-test("config: maxVisits above the engine ceiling and escaping output paths are named", () => {
+test("config: maxVisits above the engine ceiling is named", () => {
   const doc = structuredClone(SHIPPED);
   doc.graph.nodes[0].maxVisits = 101;
-  doc.graph.nodes[0].output = "../escape.md";
   const faults = codes(validateConfig(doc));
   assert.ok(faults.includes("schema.maxvisits"));
-  assert.ok(faults.includes("schema.path"));
   assert.equal(SHIPPED.graph.nodes[0].maxVisits, 20);
 });
 
-test("config: output paths resolve under outputRoot", () => {
-  const graph = SHIPPED.graph;
-  const node = graph.nodes[0];
-  assert.equal(outputPathFor(graph, node, "/tmp/work"), "/tmp/work/work/implementation.md");
-});
-
-test("config: output is optional and resolves to null when omitted", () => {
+test("config: schema 4 output fields are rejected", () => {
   const doc = structuredClone(SHIPPED);
-  delete doc.graph.nodes[0].output;
-  assert.deepEqual(validateConfig(doc), []);
-  assert.equal(outputPathFor(doc.graph, doc.graph.nodes[0], "/tmp/work"), null);
-  assert.equal(configSummary(doc, "/tmp/graph.json").graph.nodes[0].output, null);
-  assert.equal(handoffToolsStale(handoffLabels(SHIPPED.graph), handoffLabels(doc.graph)), null);
-
-  const invalid = structuredClone(SHIPPED);
-  invalid.graph.nodes[0].output = "../escape.md";
-  assert.ok(codes(validateConfig(invalid)).includes("schema.path"));
+  doc.version = "4";
+  doc.graph.outputRoot = "work";
+  doc.graph.nodes[0].output = "a.md";
+  const faults = codes(validateConfig(doc));
+  assert.ok(faults.includes("schema.version"));
+  assert.equal(faults.filter((code) => code === "schema.unknown-field").length, 2);
 });
 
 test("config: a workflow is a referenced subsection with a reachable entry and exit", () => {

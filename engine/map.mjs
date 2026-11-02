@@ -13,12 +13,6 @@ function tableText(value) {
   return String(value ?? "").replace(/\|/g, "\\|").replace(/\r?\n/g, " ").trim();
 }
 
-function relativeOutput(graph, node) {
-  if (!node.output) return "—";
-  const root = graph.outputRoot ?? ".";
-  return root === "." ? node.output : `${root}/${node.output}`;
-}
-
 function sessionSuffix(resume) {
   return resume === true ? " (resume)" : "";
 }
@@ -137,12 +131,12 @@ export function renderWorkflowTable(graph) {
 
 export function renderNodeTable(graph) {
   const lines = [
-    "| Node | Graph agent | Objective | Output | Handoff | Max visits |",
-    "|---|---|---|---|---|---|",
+    "| Node | Graph agent | Objective | Handoff | Max visits |",
+    "|---|---|---|---|---|",
   ];
   for (const node of graph.nodes ?? []) {
     lines.push(
-      `| ${tableText(node.id)} | ${tableText(node.agent)} | ${tableText(node.objective)} | ${tableText(relativeOutput(graph, node))} | ${tableText(handoffText(node))} | ${node.maxVisits ?? "—"} |`,
+      `| ${tableText(node.id)} | ${tableText(node.agent)} | ${tableText(node.objective)} | ${tableText(handoffText(node))} | ${node.maxVisits ?? "—"} |`,
     );
   }
   return lines.join("\n");

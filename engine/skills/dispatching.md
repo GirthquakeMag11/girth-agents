@@ -102,9 +102,7 @@ A node dispatch has no workflow boundary.
   full instruction in the prompt; the node objective is the node's role.
 - Do not start a second dispatch as a substitute for waiting; queueing is
   intentional and in order.
-- The engine writes outputs under the graph's `outputRoot`. Report the
-  output paths from the completion.
-- Report the completion's `usage` (cost and tokens) so the user can see
-  what the dispatch spent.
+- Report the completion's terminal node and `usage` (cost and tokens) so the
+  user can see what the dispatch spent.
 - If the completion is a defect, report the defect code and message. Do not
   claim the work succeeded.
