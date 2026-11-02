@@ -1,4 +1,4 @@
-// The live v1.3 proof. It creates a scratch workspace, starts the engine,
+// The live proof. It creates a scratch workspace, starts the engine,
 // and proves the promised surface:
 //   1. one graph boots and GRAPH.md is generated without the interim command;
 //   2. a stdio dispatch runs the graph to a terminal and reports usage;
@@ -146,7 +146,7 @@ function usageTotal(usage) {
 }
 
 async function main() {
-  console.log(`\nV1.3 LIVE PROOF — ${workspace}`);
+  console.log(`\nLIVE PROOF — girth-agents v${PROJECT_VERSION} — ${workspace}`);
   const cli = await run(process.execPath, [enginePath, "--version"]);
   assert.equal(cli.stdout, `girth-agents v${PROJECT_VERSION}\n`);
 
@@ -358,12 +358,12 @@ async function main() {
   assert.match(artifactAfter, /Review the implementation and name one concrete improvement\./);
   console.log("PASS  the interactive agent edited the graph, reloaded it, and GRAPH.md swapped with it");
 
-  console.log("\nV1.3 LIVE PROOF PASS");
+  console.log("\nLIVE PROOF PASS");
 }
 
 main()
   .catch((error) => {
-    console.error("\nV1.3 LIVE PROOF FAIL:", error.message);
+    console.error("\nLIVE PROOF FAIL:", error.message);
     process.exitCode = 1;
   })
   .finally(async () => {
