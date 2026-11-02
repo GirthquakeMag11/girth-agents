@@ -7,6 +7,11 @@ const fixture = JSON.parse(await readFile(new URL("../fixtures/engagement.json",
 const config = fixture;
 const graph = fixture.graph;
 
+test("engagement: the fixture declares no output contract", () => {
+  assert.equal(Object.hasOwn(graph, "outputRoot"), false);
+  assert.ok(graph.nodes.every((node) => !Object.hasOwn(node, "output")));
+});
+
 test("engagement: the fixture orders A contiguously and leaves B crossed", () => {
   const order = topologicalOrder(graph.nodes, edgeList(graph.nodes)).order;
   assert.deepEqual(order, ["a1", "a2", "x", "z", "d1", "y", "o2", "o"]);

@@ -19,5 +19,8 @@ for (const [file, strict] of fixtures) {
     assert.equal(loaded.doc.graph.nodes.find((node) => node.id === "o").handoff.mode, "terminal");
     assert.equal(loaded.doc.agents[0].id, "builder");
     assert.match(loaded.doc.agents[0].prompt, /Execute the node objective/);
+    assert.equal(Object.hasOwn(loaded.doc.graph, "outputRoot"), false);
+    assert.ok(loaded.doc.graph.nodes.every((node) => !Object.hasOwn(node, "output")));
+    assert.ok(loaded.doc.agents.every((agent) => !/declared output/i.test(agent.prompt ?? "")));
   });
 }

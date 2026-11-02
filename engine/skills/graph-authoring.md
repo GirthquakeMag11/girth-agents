@@ -4,10 +4,11 @@ description: Author or modify the engine's graph config, validate it with reload
 ---
 # Graph authoring
 
-The engine runs agent nodes. A node's graph agent receives a prompt, does its
-work, and calls exactly one generated handoff tool to the next target. The
-graph is one JSON manifest plus the Markdown agent documents it names and the
-skill documents those agents reference.
+The engine runs agent nodes. A non-terminal node's graph agent receives a
+prompt, does its work, and calls exactly one generated handoff tool to the next
+target; a terminal node ends after its session succeeds. The graph is one JSON
+manifest plus the Markdown agent documents it names and the skill documents
+those agents reference.
 
 ## Start
 
@@ -121,9 +122,10 @@ Write the failing test first, make it pass, then refactor within the green.
   by workflow.
 - A node has `id`, an `agent` reference to an agent document's `id`,
   `objective`, optional `budgetMs`, optional `maxVisits` (1–100; use 20 for a
-  repair loop), and `handoff`. The handoff message is the only context the
-  engine carries to the next node. A node's work product is not an engine
-  field. Nodes do not have a session mode.
+  repair loop), and `handoff`. The handoff message is the only context carried
+  from one node to the next; the dispatch prompt, agent prompt and skills, and
+  node objective are repeated in every brief. A node's work product is not an
+  engine field. Nodes do not have a session mode.
 - Session retention is a **handoff** decision. A non-terminal handoff may
   set `"resume": true`; false or omitted starts a new session. `resume` is
   honored only when the handoff target is the node that supplied the
@@ -146,8 +148,8 @@ Write the failing test first, make it pass, then refactor within the green.
 - No node mixes handoff modes. Every label has one target. There is no
   catch-all.
 - Any node may be a dispatch entry point. A workflow may be dispatched at
-  its entry. Every node must be able to reach a terminal target. Every cycle
-  must carry `maxVisits` on each node in the cycle.
+  its entry. Every node must be able to reach a terminal node or a `$dispatcher`
+  completion. Every cycle must carry `maxVisits` on each node in the cycle.
 - `workflows[].connections` names other workflows and is transitive.
 - `workflows[].strict: true` rejects handoffs outside the main workflow
   and its transitive connections.

@@ -16,17 +16,17 @@
  │ ○ idle 2               │ │                       ║                   ▼                       │ ║                │ │ dispatched prompt.                     │ 
  │                        │ │                       ║  ╭━━──────────────────────────────╮       │ ║                │ │                                        │ 
  │ GRAPH                  │ │                       ║  │  review             ● running  │       │ ║                │ │ WORKFLOWS                              │ 
- │ 1wf · 3n · 3 links     │ │                       ║  │  reviewer                      │──◆────┘ ║                │ │ ● build-review                         │ 
+ │ 1wf · 3n · 3 links     │ │                       ║  │  reviewer                      │◆──────┘ ║                │ │ ● build-review                         │ 
  │                        │ │                       ║  ╰────────────────────────────────╯         ║                │ │                                        │ 
  │                        │ │                       ║                   │                         ║                │ │ RUN                                    │ 
- │                        │ │                       ║                   │─ pass                   ║                │ │ d-1 · running · 767:31                 │ 
+ │                        │ │                       ║                   │─ pass                   ║                │ │ d-1 · running · 00:02                  │ 
  │                        │ │                       ║                   │                         ║                │ │                                        │ 
  │                        │ │                       ║                   ▼                         ║                │ │                                        │ 
  │                        │ │                       ║  ╭────────────────────────────────╮         ║                │ ╰────────────────────────────────────────╯ 
  │                        │ │                       ║  │  done                  ○ idle  │         ║                │                                            
  │                        │ │                       ║  │  builder                       │         ║                │ ╭─History────────────────────────────────╮ 
- │                        │ │                       ║  ╰────────────────────────────────╯         ║                │ │ 06:00:03  d-1  re...→ implement · fail │ 
- │                        │ │                       ║                                             ║                │ │ 06:00:00  d-1  qu...review · implement │ 
+ │                        │ │                       ║  ╰────────────────────────────────╯         ║                │ │ 14:00:03  d-1  re...→ implement · fail │ 
+ │                        │ │                       ║                                             ║                │ │ 14:00:00  d-1  qu...review · implement │ 
  │                        │ │                       ╚═════════════════════════════════════════════╝                │ │                                        │ 
  │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ │                                        │ 
@@ -41,10 +41,10 @@
                                                                                                                                                                 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   RUN CONSOLE                                                                                                                                                   
-  active   ● d-1 review · running · 767:31                                                                                                                      
+  active   ● d-1 review · running · 00:02                                                                                                                       
   queue    empty                                                                                                                                                
   cost     $0.1000 · 2 tokens                                                                                                                                   
   defect   none                                                                                                                                                 
   event    —                                                                                                                                                    
-  updated  06:00:02                                                                                                                                             
-  1 active · 0 queued · 0 defects · elapsed 767:31 · updated 06:00:02                                            $0.1000 · 2 tokens · read-only · esc to close  
+  updated  14:00:03                                                                                                                                             
+  1 active · 0 queued · 0 defects · elapsed 00:02 · updated 14:00:03                                             $0.1000 · 2 tokens · read-only · esc to close  

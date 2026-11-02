@@ -32,7 +32,7 @@ function handoffSection(node) {
   ].join("\n\n");
 }
 
-export function composeBrief({ graphAgent, node, prompt, previousMessage }) {
+export function composeBrief({ graphAgent, node, prompt, previousMessage, inputSource = "node" }) {
   const parts = [];
   if (graphAgent.prompt) parts.push(`# Your instructions\n\n${graphAgent.prompt}`);
   for (const skill of graphAgent.skillDocs ?? []) {
@@ -42,7 +42,8 @@ export function composeBrief({ graphAgent, node, prompt, previousMessage }) {
   parts.push(`# Your objective\n\n${node.objective}`);
 
   if (previousMessage) {
-    parts.push(`# Input from the previous node\n\n${previousMessage}`);
+    const heading = inputSource === "dispatcher" ? "# Input from the dispatcher" : "# Input from the previous node";
+    parts.push(`${heading}\n\n${previousMessage}`);
   } else {
     parts.push("# Input\n\nThis is the start node; the work above is your input.");
   }

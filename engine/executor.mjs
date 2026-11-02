@@ -210,6 +210,7 @@ async function runNode({ driver, node, graphAgent, record, cwd, previousMessage,
     node,
     prompt: record.prompt,
     previousMessage,
+    inputSource: resume ? "dispatcher" : "node",
   });
 
   const budget = budgetMs ?? node.budgetMs ?? 600000;

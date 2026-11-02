@@ -7,7 +7,7 @@
  │                        │ │                       ╔═self════════════════════════════════════════╗                │ │                                        │ 
  │ NODES                  │ │                       ║                                             ║                │ │ CONTRACT                               │ 
  │ ● a                    │ │                       ║  ╭━━──────────────────────────────╮         ║                │ │ max — visits                           │ 
- │                        │ │                       ║  │  a                  ● running  │         ║                │ │ visits 0/—                             │ 
+ │                        │ │                       ║  │  a                  ● running  │         ║                │ │ visits 1/—                             │ 
  │ STATE                  │ │                       ║  │  builder                       │again ─┐ ║                │ │ again → a                              │ 
  │ ● running 1            │ │                       ║  ╰────────────────────────────────╯       │ ║                │ │                                        │ 
  │ ◌ queued 0             │ │                       ║                                             ║                │ │ BRIEF                                  │ 
@@ -17,7 +17,7 @@
  │ 1wf · 1n · 1 links     │ │                                                                                      │ │ ● self                                 │ 
  │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ │ RUN                                    │ 
- │                        │ │                                                                                      │ │ d-1 · running · 767:32                 │ 
+ │                        │ │                                                                                      │ │ d-2 · running · 00:02                  │ 
  │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ │                                        │ 
@@ -25,8 +25,8 @@
  │                        │ │                                                                                      │ ╰────────────────────────────────────────╯ 
  │                        │ │                                                                                      │                                            
  │                        │ │                                                                                      │ ╭─History────────────────────────────────╮ 
- │                        │ │                                                                                      │ │ 06:00:03  d-2  a → a · again           │ 
- │                        │ │                                                                                      │ │ 06:00:00  d-2  queued · self · a       │ 
+ │                        │ │                                                                                      │ │ 14:00:03  d-2  a → a · again           │ 
+ │                        │ │                                                                                      │ │ 14:00:00  d-2  queued · self · a       │ 
  │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ │                                        │ 
  │                        │ │                                                                                      │ │                                        │ 
@@ -41,10 +41,10 @@
                                                                                                                                                                 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   RUN CONSOLE                                                                                                                                                   
-  active   ● d-1 a · running · 767:32                                                                                                                           
+  active   ● d-2 a · running · 00:02                                                                                                                            
   queue    empty                                                                                                                                                
   cost     $0.1000 · 2 tokens                                                                                                                                   
   defect   none                                                                                                                                                 
   event    —                                                                                                                                                    
-  updated  06:00:02                                                                                                                                             
-  1 active · 0 queued · 0 defects · elapsed 767:32 · updated 06:00:02                                            $0.1000 · 2 tokens · read-only · esc to close  
+  updated  14:00:03                                                                                                                                             
+  1 active · 0 queued · 0 defects · elapsed 00:02 · updated 14:00:03                                             $0.1000 · 2 tokens · read-only · esc to close  

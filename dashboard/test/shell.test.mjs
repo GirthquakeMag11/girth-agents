@@ -4,6 +4,11 @@ import { readFile } from "node:fs/promises";
 
 const tui = await readFile(new URL("../src/tui.tsx", import.meta.url), "utf8");
 const view = await readFile(new URL("../src/view.tsx", import.meta.url), "utf8");
+const model = await readFile(new URL("../src/model.mjs", import.meta.url), "utf8");
+const fixtures = {
+  "engagement.json": await readFile(new URL("../fixtures/engagement.json", import.meta.url), "utf8"),
+  "crossing.json": await readFile(new URL("../fixtures/crossing.json", import.meta.url), "utf8"),
+};
 
 test("shell: escape closes the panel and the palette opens it fullscreen", () => {
   assert.match(tui, /id: "graph-dashboard\.close", bind: "escape"/);
@@ -39,6 +44,14 @@ test("shell: Details is driven only by live active entries", () => {
 
 test("shell: Details has no output contract", () => {
   assert.doesNotMatch(view, /detailsOutput|outputPath|outputRoot|OUTPUT/);
+  assert.doesNotMatch(model, /detailsOutput|outputPath|outputRoot/);
+});
+
+test("shell: fixtures declare no output fields", () => {
+  for (const [name, source] of Object.entries(fixtures)) {
+    assert.doesNotMatch(source, /"output"\s*:/, `${name} must not declare an output field`);
+    assert.doesNotMatch(source, /"outputRoot"\s*:/, `${name} must not declare an outputRoot field`);
+  }
 });
 
 test("shell: History is rendered in a pane and a one-line strip", () => {

@@ -23,6 +23,20 @@ test("display: completed terminal is focused and carries the footer", () => {
   assert.doesNotMatch(text, /"state"/);
 });
 
+test("display: a legacy output field is not rendered", () => {
+  const legacy = {
+    ...base,
+    output: { path: "work/final.md", bytes: 12, hash: "abc" },
+  };
+  const text = renderDispatchDisplay(legacy);
+  assert.doesNotMatch(text, /output:/);
+  assert.doesNotMatch(text, /work\/final\.md/);
+
+  const display = dispatchStatusBody(legacy).display;
+  assert.doesNotMatch(display, /output:/);
+  assert.doesNotMatch(display, /work\/final\.md/);
+});
+
 test("display: a dispatcher response is the content", () => {
   const text = renderDispatchDisplay({
     ...base,

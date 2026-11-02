@@ -212,6 +212,8 @@ async function proveNonStrict() {
   ]);
   record("non-strict escape warning node", { active: escape.active?.node, escapes: escapeModel.escapes.map((entry) => entry.node) });
 
+  // The HTTP client timeout must exceed the 180s wait body. The old 10s
+  // client timeout aborted while the engine was still waiting.
   const completed = await live.control(
     "/tool/dispatch/wait",
     { dispatchId: dispatched.dispatchId, timeoutMs: 180000 },

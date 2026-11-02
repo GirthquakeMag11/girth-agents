@@ -62,7 +62,73 @@ test("brief: the upstream handoff message is context", () => {
     previousMessage: "The review found one issue.",
   });
   assert.match(brief, /The review found one issue\./);
+  assert.match(brief, /# Input from the previous node/);
   assert.doesNotMatch(brief, /# Output/);
+  assert.doesNotMatch(brief, /verified output/);
+});
+
+test("brief: a resumed dispatcher prompt is labelled as dispatcher input", () => {
+  const brief = composeBrief({
+    graphAgent,
+    node: {
+      id: "b",
+      objective: "Continue.",
+      handoff: { mode: "terminal" },
+    },
+    prompt: "p",
+    previousMessage: "The dispatcher resumed this node.",
+    inputSource: "dispatcher",
+  });
+  assert.match(brief, /# Input from the dispatcher/);
+  assert.doesNotMatch(brief, /# Input from the previous node/);
+  assert.match(brief, /The dispatcher resumed this node\./);
+
+  const fromNode = composeBrief({
+    graphAgent,
+    node: {
+      id: "b",
+      objective: "Continue.",
+      handoff: { mode: "terminal" },
+    },
+    prompt: "p",
+    previousMessage: "The previous node handed off.",
+    inputSource: "node",
+  });
+  assert.match(fromNode, /# Input from the previous node/);
+  assert.doesNotMatch(fromNode, /# Input from the dispatcher/);
+
+  const start = composeBrief({
+    graphAgent,
+    node: {
+      id: "b",
+      objective: "Continue.",
+      handoff: { mode: "terminal" },
+    },
+    prompt: "p",
+    previousMessage: null,
+    inputSource: "dispatcher",
+  });
+  assert.match(start, /# Input\n\nThis is the start node/);
+});
+
+test("brief: legacy output inputs are ignored", () => {
+  const brief = composeBrief({
+    graphAgent,
+    node: {
+      id: "a",
+      objective: "A.",
+      output: "a.md",
+      previousOutput: "/tmp/a.md",
+      outputAbs: "/tmp/b.md",
+      handoff: { mode: "terminal" },
+    },
+    prompt: "p",
+    previousMessage: null,
+  });
+  assert.doesNotMatch(brief, /# Output/);
+  assert.doesNotMatch(brief, /Write your result/);
+  assert.doesNotMatch(brief, /\/tmp\/a\.md/);
+  assert.doesNotMatch(brief, /\/tmp\/b\.md/);
   assert.doesNotMatch(brief, /verified output/);
 });
 

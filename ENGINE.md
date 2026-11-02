@@ -183,17 +183,21 @@ invalid.
 
 ## 4. Lifecycle
 
-A dispatch creates or resumes a session, sends one brief, waits for idle, and
-verifies:
+A dispatch runs its nodes one at a time. For each node the executor creates a
+session, or resumes the retained session for a return handoff, sends one brief,
+and waits for idle. It then verifies the session outcome is `succeeded`. A
+non-terminal node must also have an accepted handoff declared for the active
+node, and that handoff must be the last tool call with no tool finishing after
+acceptance. A terminal node has no handoff verification: it ends after its
+session succeeds.
 
-- the session outcome is `succeeded`;
-- the accepted handoff is declared for the active node;
-- the handoff is the last tool call and no tool finished after acceptance.
-
-The brief contains the graph agent's prompt, any attached skill instructions,
-dispatch prompt, node objective, upstream message, and the active node's
+A fresh start node — one with no upstream message — receives no input message;
+its brief states that the dispatch prompt is its input. Every brief contains the
+graph agent's prompt, any attached skill instructions, dispatch prompt, node
+objective, the upstream message when there is one, and the active node's
 generated handoff tools with descriptions. A node's work product is not part of
-the brief contract; the handoff message is the context carried to the next node.
+the brief contract; the handoff message is the only context carried from one
+node to the next.
 
 A node with a terminal handoff completes after its session succeeds. The
 completion carries no engine-defined work product. A `$dispatcher` handoff

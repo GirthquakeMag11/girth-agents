@@ -38,6 +38,7 @@ test("proof captures: active split, idle split, 120 split, and 80 strip exist", 
   assert.match(split120, /14:00:31/);
   assert.match(split120, /done\s+○ idle/);
   assert.match(split120, /○ idle 1/);
+  assert.match(split120, /● build-review/);
   assert.doesNotMatch(split120, /■ terminal/);
 
   const strip = await read("history-strip-80x24.txt");
@@ -45,6 +46,19 @@ test("proof captures: active split, idle split, 120 split, and 80 strip exist", 
   assert.doesNotMatch(strip, /╭─Details/);
   assert.doesNotMatch(strip, /╭─History/);
   assert.match(strip, /RUN CONSOLE/);
+});
+
+test("proof captures: Details-bearing panes show no output contract", async () => {
+  const names = (await readdir(captures)).filter((name) => name.endsWith(".txt"));
+  let detailsCaptures = 0;
+  for (const name of names) {
+    const text = await read(name);
+    if (!text.includes("╭─Details")) continue;
+    detailsCaptures += 1;
+    assert.doesNotMatch(text, /output work\//, `${name} must not show an output directory`);
+    assert.doesNotMatch(text, /OUTPUT/, `${name} must not show an OUTPUT section`);
+  }
+  assert.ok(detailsCaptures > 0, "at least one capture must render Details");
 });
 
 test("proof captures: motion handoff has a token and self-handoff has none", async () => {

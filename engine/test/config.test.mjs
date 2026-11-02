@@ -282,8 +282,8 @@ test("config: graph_info carries the one graph and the graph agents, with no gra
   assert.equal(summary.configPath, "/tmp/graph.json");
   assert.equal(summary.graph.id, undefined);
   assert.equal(summary.graph.workflows[0].id, "build-review");
-  assert.equal(summary.graph.outputRoot, undefined);
-  assert.equal(summary.graph.nodes[0].output, undefined);
+  assert.equal("outputRoot" in summary.graph, false);
+  assert.equal("output" in summary.graph.nodes[0], false);
   assert.equal(summary.agents[0].id, "builder");
   assert.match(summary.agents[0].prompt, /Work only within/);
   assert.equal(summary.graphs, undefined);
@@ -487,14 +487,30 @@ test("config: maxVisits above the engine ceiling is named", () => {
   assert.equal(SHIPPED.graph.nodes[0].maxVisits, 20);
 });
 
-test("config: schema 4 output fields are rejected", () => {
-  const doc = structuredClone(SHIPPED);
-  doc.version = "4";
-  doc.graph.outputRoot = "work";
-  doc.graph.nodes[0].output = "a.md";
-  const faults = codes(validateConfig(doc));
-  assert.ok(faults.includes("schema.version"));
-  assert.equal(faults.filter((code) => code === "schema.unknown-field").length, 2);
+test("config: schema 4 is rejected before the removed output fields are read", async () => {
+  const graph = structuredClone(defaultGraph);
+  graph.outputRoot = "work";
+  graph.nodes[0].output = "a.md";
+  const { path } = await graphConfig({ version: "4", graph });
+  const loaded = await loadConfig(path);
+  assert.equal(loaded.doc, null);
+  assert.deepEqual(codes(loaded.faults), ["schema.version"]);
+});
+
+test("config: schema 5 rejects the removed output fields", async () => {
+  const graph = structuredClone(defaultGraph);
+  graph.outputRoot = "work";
+  graph.nodes[0].output = "a.md";
+  const { path } = await graphConfig({ version: SCHEMA_VERSION, graph });
+  const loaded = await loadConfig(path);
+  assert.equal(loaded.doc, null);
+  assert.deepEqual(codes(loaded.faults), ["schema.unknown-field", "schema.unknown-field"]);
+  const messages = loaded.faults.map((fault) => fault.message);
+  assert.ok(messages.some((message) => message.includes("outputRoot")), messages.join("\n"));
+  assert.ok(
+    messages.some((message) => message.includes("nodes[0]") && message.includes("'output'")),
+    messages.join("\n"),
+  );
 });
 
 test("config: a workflow is a referenced subsection with a reachable entry and exit", () => {
