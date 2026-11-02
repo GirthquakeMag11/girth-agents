@@ -1,4 +1,4 @@
-  graph.json                                     1 workflow · 3 nodes  ● live  valid  v1.3.0  read-only · esc to close  
+  graph.json                                     1 workflow · 3 nodes  ● live  valid  v0.5.0  read-only · esc to close  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
                                                                                                                         
  ╭─Outline────────────╮ ╭─Graph────────────────────────────────────────────────────╮ ╭─Details────────────────────────╮ 

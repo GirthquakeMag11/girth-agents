@@ -16,6 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDashboard } from "../src/data.mjs";
 import { detailsMemberships, engagementModel } from "../src/model.mjs";
+import { PROJECT_VERSION } from "../../engine/version.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..", "..");
@@ -134,7 +135,7 @@ async function proveNonStrict() {
   console.log(`\nDASHBOARD LIVE PROOF — non-strict ${workspace}`);
   const live = await startEngine(workspace, join(here, "..", "fixtures", "live-boundary.json"));
   const info = await live.control("/tool/graph-info");
-  assert.equal(info.version, "1.3.0");
+  assert.equal(info.version, PROJECT_VERSION);
   assert.equal(info.valid, true);
 
   live.send({ kind: "pause" });

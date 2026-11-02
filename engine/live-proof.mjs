@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { createDriver } from "./driver.mjs";
+import { PROJECT_VERSION } from "./version.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const workspace = process.argv[2] ?? `/tmp/opencode/v1-live-${process.pid}`;
@@ -146,7 +147,7 @@ function usageTotal(usage) {
 async function main() {
   console.log(`\nV1.3 LIVE PROOF — ${workspace}`);
   const cli = await run(process.execPath, [enginePath, "--version"]);
-  assert.equal(cli.stdout, "girth-agents v1.3.0\n");
+  assert.equal(cli.stdout, `girth-agents v${PROJECT_VERSION}\n`);
 
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
@@ -192,7 +193,7 @@ async function main() {
     return res.json();
   };
   const info = await control("/tool/graph-info");
-  assert.equal(info.version, "1.3.0");
+  assert.equal(info.version, PROJECT_VERSION);
   assert.equal(info.valid, true);
   const map = await control("/tool/graph-map");
   assert.equal(map.ok, true);

@@ -3,6 +3,7 @@ import { createSignal } from "solid-js";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DashboardView } from "../src/view.tsx";
+import { PROJECT_VERSION } from "../../engine/version.mjs";
 
 const theme = {
   background: { base: "#1d2021", raised: { base: "#282828", high: "#3c3836", max: "#504945" } },
@@ -31,7 +32,7 @@ const baseHistory = [{ seq: 1, at: "2026-10-30T14:00:00.000Z", kind: "queued", d
 
 const productData = {
   config: product,
-  info: { ok: true, version: "1.3.0", valid: true, configPath: "engine/graph.json" },
+  info: { ok: true, version: PROJECT_VERSION, schemaVersion: "3", valid: true, configPath: "engine/graph.json" },
   runtime: {
     active: {
       dispatchId: "d-1",

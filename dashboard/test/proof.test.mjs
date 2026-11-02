@@ -12,6 +12,7 @@ test("proof captures: active split, idle split, 120 split, and 80 strip exist", 
   assert.match(active, /14:00:31/);
   assert.match(active, /14:00:35/);
   assert.match(active, /● running/);
+  assert.match(active, /v0\.5\.0/);
   assert.match(active, /review\s+● running/);
   assert.match(active, /done\s+○ idle/);
   assert.match(active, /○ idle 1/);
@@ -23,6 +24,7 @@ test("proof captures: active split, idle split, 120 split, and 80 strip exist", 
   assert.match(idle, /╭─History/);
   assert.match(idle, /14:01:21/);
   assert.match(idle, /completed · done/);
+  assert.match(idle, /v0\.5\.0/);
   assert.match(idle, /○ idle/);
   assert.match(idle, /○ done/);
   assert.match(idle, /done\s+○ idle/);

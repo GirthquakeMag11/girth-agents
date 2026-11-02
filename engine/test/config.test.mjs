@@ -18,6 +18,7 @@ import {
   handoffTarget,
   DISPATCHER_TARGET,
 } from "../config.mjs";
+import { PROJECT_VERSION } from "../version.mjs";
 
 const SHIPPED = JSON.parse(
   await readFile(new URL("../graph.json", import.meta.url), "utf8"),
@@ -444,10 +445,11 @@ test("config: workflow connections are transitive and node memberships are expli
   assert.deepEqual(workflowsForNode(graph, "n2"), ["b", "c"]);
 });
 
-test("config: graph_info carries engine version and validity", () => {
-  const info = graphInfoResponse(SHIPPED, "/tmp/graph.json", "1.3.0");
+test("config: graph_info carries project and schema versions", () => {
+  const info = graphInfoResponse(SHIPPED, "/tmp/graph.json", PROJECT_VERSION);
   assert.equal(info.ok, true);
-  assert.equal(info.version, "1.3.0");
+  assert.equal(info.version, PROJECT_VERSION);
+  assert.equal(info.schemaVersion, "3");
   assert.equal(info.valid, true);
   assert.equal(info.configPath, "/tmp/graph.json");
   assert.equal(info.graph.workflows[0].id, "build-review");

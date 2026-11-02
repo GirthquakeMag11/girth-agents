@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { PROJECT_VERSION } from "../version.mjs";
 
 const engine = fileURLToPath(new URL("../engine.mjs", import.meta.url));
 
@@ -16,7 +17,7 @@ function runEngine(args) {
 test("cli: --version prints the version and exits 0", async () => {
   const { code, stdout, stderr } = await runEngine(["--version"]);
   assert.equal(code, 0);
-  assert.equal(stdout, "girth-agents v1.3.0\n");
+  assert.equal(stdout, `girth-agents v${PROJECT_VERSION}\n`);
   assert.equal(stderr, "");
 });
 

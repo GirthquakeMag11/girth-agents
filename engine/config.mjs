@@ -679,7 +679,7 @@ export function graphSummary(graph) {
 }
 
 export function graphInfoResponse(doc, path, version) {
-  return { ok: true, version, valid: true, ...configSummary(doc, path) };
+  return { ok: true, version, schemaVersion: doc.version, valid: true, ...configSummary(doc, path) };
 }
 
 export function configSummary(doc, path) {

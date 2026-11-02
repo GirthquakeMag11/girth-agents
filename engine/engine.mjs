@@ -20,15 +20,15 @@ import { renderGraphMapResponse, renderGraphArtifact } from "./map.mjs";
 import { dispatchStatusBody, renderDispatchDisplay } from "./display.mjs";
 import { getActivityHistory, workflowForEvent } from "./history.mjs";
 import { encode, decode } from "./stdio.mjs";
+import { PROJECT_VERSION } from "./version.mjs";
 
 const say = (kind, payload = {}) => process.stdout.write(encode(kind, payload) + "\n");
 const log = (...parts) => process.stderr.write(parts.join(" ") + "\n");
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
-const ENGINE_VERSION = "1.3.0";
 
 const configArg = process.argv[2];
 if (configArg === "--version") {
-  process.stdout.write(`girth-agents v${ENGINE_VERSION}\n`);
+  process.stdout.write(`girth-agents v${PROJECT_VERSION}\n`);
   process.exit(0);
 }
 if (configArg === "--help") {
@@ -313,7 +313,7 @@ async function onReload() {
 }
 
 function onGraphInfo() {
-  return { body: graphInfoResponse(config, configPath, ENGINE_VERSION) };
+  return { body: graphInfoResponse(config, configPath, PROJECT_VERSION) };
 }
 
 function runtimeSnapshot() {

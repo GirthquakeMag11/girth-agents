@@ -22,6 +22,18 @@ per-boot token. The engine also speaks JSON-lines on stdio for development and
 proof. The workspace is the engine's working directory; config, outputs, and
 generated files resolve against it.
 
+### Versioning
+
+The project version covers the engine and dashboard. It means design/readiness:
+`1.0.0` is reserved for the original v1 target, not for the current
+implementation. It is not bumped for individual corrections. The generated
+`engine-handoff` plugin inherits the project version of the engine that created
+it; it is not independently versioned.
+
+The graph schema version in the config is a format version. It increments when
+the on-disk shape changes incompatibly and does not imply design progress. The
+two numbers are independent.
+
 ## 2. Configuration
 
 One JSON file. Schema version is the string `"3"`.

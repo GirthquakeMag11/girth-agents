@@ -31,7 +31,7 @@ type ConfigNode = {
 };
 type Workflow = { id: string; entry: string; exit: string; nodes: string[]; connections?: string[]; strict?: boolean };
 type Config = { graph: { outputRoot?: string; workflows?: Workflow[]; nodes: ConfigNode[] } };
-type GraphInfo = { ok: boolean; version: string; valid: boolean; configPath: string };
+type GraphInfo = { ok: boolean; version: string; schemaVersion?: string; valid: boolean; configPath: string };
 type DispatchStatus = {
   dispatchId: string;
   node: string;
