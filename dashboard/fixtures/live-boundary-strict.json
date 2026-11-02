@@ -1,17 +1,7 @@
 {
-  "version": "3",
+  "version": "4",
   "agents": [
-    {
-      "id": "builder",
-      "model": "openrouter/~deepseek/deepseek-flash-latest",
-      "agent": "build",
-      "permissions": [
-        "read",
-        "edit",
-        "shell"
-      ],
-      "craft": "Execute the node objective. Write the declared output file with a short result, then call the generated handoff tool exactly once with a message."
-    }
+    "agents/builder.md"
   ],
   "graph": {
     "outputRoot": "work",

@@ -87,14 +87,14 @@ test("workflow: boundary is transitive, main-aware, and strict-aware", () => {
 });
 
 const strictDoc = {
-  version: "3",
+  version: "4",
   agents: [
     {
       id: "builder",
       model: "openrouter/~deepseek/deepseek-flash-latest",
       agent: "build",
       permissions: ["read", "edit", "shell"],
-      craft: "Work.",
+      prompt: "Work.",
     },
   ],
   graph: {

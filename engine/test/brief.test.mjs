@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { composeBrief } from "../brief.mjs";
 
-const graphAgent = { craft: "The graph agent's craft." };
+const graphAgent = { prompt: "The graph agent's prompt." };
 
-test("brief: attached skills follow the agent's craft", () => {
+test("brief: attached skills follow the agent's prompt", () => {
   const brief = composeBrief({
     graphAgent: {
-      craft: "The graph agent's craft.",
+      prompt: "The graph agent's prompt.",
       skillDocs: [{ id: "test-first", instructions: "Write the failing test first." }],
     },
     node: { id: "a", objective: "A", handoff: { mode: "terminal" } },
@@ -16,10 +16,10 @@ test("brief: attached skills follow the agent's craft", () => {
     previousMessage: null,
     outputAbs: null,
   });
-  const craft = brief.indexOf("# Your craft");
+  const prompt = brief.indexOf("# Your instructions");
   const skill = brief.indexOf("# Skill: test-first");
   const work = brief.indexOf("# Work");
-  assert.ok(craft !== -1 && skill > craft && work > skill);
+  assert.ok(prompt !== -1 && skill > prompt && work > skill);
   assert.match(brief, /Write the failing test first\./);
 });
 
@@ -42,7 +42,7 @@ test("brief: conditional handoffs list labels and descriptions without target id
     previousOutput: "/tmp/prev.md",
     outputAbs: "/tmp/work/review.md",
   });
-  assert.match(brief, /The graph agent's craft/);
+  assert.match(brief, /The graph agent's prompt/);
   assert.match(brief, /The dispatched prompt/);
   assert.match(brief, /\/tmp\/prev\.md/);
   assert.match(brief, /\/tmp\/work\/review\.md/);

@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DashboardView } from "../src/view.tsx";
 import { PROJECT_VERSION } from "../../engine/version.mjs";
+import { SCHEMA_VERSION } from "../../engine/config.mjs";
 
 process.env.TZ = "UTC";
 
@@ -86,7 +87,7 @@ const idleRuntime = {
   historyEpoch: "proof-boot",
 };
 
-const info = { ok: true, version: PROJECT_VERSION, schemaVersion: "3", valid: true, configPath: "engine/graph.json" };
+const info = { ok: true, version: PROJECT_VERSION, schemaVersion: SCHEMA_VERSION, valid: true, configPath: "engine/graph.json" };
 const cases = [
   {
     name: "history-active-160x50",

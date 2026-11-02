@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { validateConfig } from "../../engine/config.mjs";
+import { fileURLToPath } from "node:url";
+import { loadConfig } from "../../engine/config.mjs";
 
 const fixtures = [
   ["live-boundary.json", false],
@@ -9,12 +9,15 @@ const fixtures = [
 ];
 
 for (const [file, strict] of fixtures) {
-  test(`live fixture: ${file} passes engine validation`, async () => {
-    const doc = JSON.parse(await readFile(new URL(`../fixtures/${file}`, import.meta.url), "utf8"));
-    assert.deepEqual(validateConfig(doc), []);
-    assert.equal(doc.graph.workflows[0].id, "A");
-    assert.equal(doc.graph.workflows[0].strict, strict);
-    assert.deepEqual(doc.graph.workflows[0].connections, ["B"]);
-    assert.equal(doc.graph.nodes.find((node) => node.id === "o").handoff.mode, "terminal");
+  test(`live fixture: ${file} loads from agent documents`, async () => {
+    const loaded = await loadConfig(fileURLToPath(new URL(`../fixtures/${file}`, import.meta.url)));
+    assert.deepEqual(loaded.faults, []);
+    assert.equal(loaded.doc.version, "4");
+    assert.equal(loaded.doc.graph.workflows[0].id, "A");
+    assert.equal(loaded.doc.graph.workflows[0].strict, strict);
+    assert.deepEqual(loaded.doc.graph.workflows[0].connections, ["B"]);
+    assert.equal(loaded.doc.graph.nodes.find((node) => node.id === "o").handoff.mode, "terminal");
+    assert.equal(loaded.doc.agents[0].id, "builder");
+    assert.match(loaded.doc.agents[0].prompt, /Execute the node objective/);
   });
 }

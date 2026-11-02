@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { loadDashboard } from "../src/data.mjs";
 import { detailsMemberships, engagementModel } from "../src/model.mjs";
 import { PROJECT_VERSION } from "../../engine/version.mjs";
+import { SCHEMA_VERSION } from "../../engine/config.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..", "..");
@@ -48,6 +49,7 @@ async function startEngine(directory, configFile) {
   await rm(directory, { recursive: true, force: true });
   await mkdir(directory, { recursive: true });
   await cp(configFile, join(directory, "graph.json"));
+  await cp(join(dirname(configFile), "agents"), join(directory, "agents"), { recursive: true });
   await mkdir(join(directory, ".opencode", "agents"), { recursive: true });
   await mkdir(join(directory, ".opencode", "commands"), { recursive: true });
   await writeFile(
@@ -136,6 +138,7 @@ async function proveNonStrict() {
   const live = await startEngine(workspace, join(here, "..", "fixtures", "live-boundary.json"));
   const info = await live.control("/tool/graph-info");
   assert.equal(info.version, PROJECT_VERSION);
+  assert.equal(info.schemaVersion, SCHEMA_VERSION);
   assert.equal(info.valid, true);
 
   live.send({ kind: "pause" });

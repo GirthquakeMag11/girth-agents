@@ -14,7 +14,7 @@ function usage(cost, input = 0, output = 0) {
 }
 
 const config = {
-  version: "3",
+  version: "4",
   agents: [
     { id: "builder", model: "test/model", agent: "build", permissions: ["read"] },
     { id: "reviewer", model: "test/model", agent: "build", permissions: ["read"] },

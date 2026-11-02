@@ -18,6 +18,7 @@ import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { createDriver } from "./driver.mjs";
 import { PROJECT_VERSION } from "./version.mjs";
+import { SCHEMA_VERSION } from "./config.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const workspace = process.argv[2] ?? `/tmp/opencode/v1-live-${process.pid}`;
@@ -152,6 +153,7 @@ async function main() {
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
   await cp(join(here, "graph.json"), join(workspace, "graph.json"));
+  await cp(join(here, "agents"), join(workspace, "agents"), { recursive: true });
   await mkdir(join(workspace, ".opencode", "agents"), { recursive: true });
   await mkdir(join(workspace, ".opencode", "commands"), { recursive: true });
   await writeFile(
@@ -194,6 +196,7 @@ async function main() {
   };
   const info = await control("/tool/graph-info");
   assert.equal(info.version, PROJECT_VERSION);
+  assert.equal(info.schemaVersion, SCHEMA_VERSION);
   assert.equal(info.valid, true);
   const map = await control("/tool/graph-map");
   assert.equal(map.ok, true);

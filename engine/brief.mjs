@@ -1,4 +1,4 @@
-// The brief is the whole input to a node: the graph agent's standing craft, the
+// The brief is the whole input to a node: the graph agent's standing prompt, the
 // dispatched prompt, the node's objective, the upstream context, the exact
 // output path, and the generated handoff tools the node may use.
 
@@ -37,7 +37,7 @@ function handoffSection(node, hasOutput) {
 
 export function composeBrief({ graphAgent, node, prompt, previousOutput, previousMessage, outputAbs }) {
   const parts = [];
-  if (graphAgent.craft) parts.push(`# Your craft\n\n${graphAgent.craft}`);
+  if (graphAgent.prompt) parts.push(`# Your instructions\n\n${graphAgent.prompt}`);
   for (const skill of graphAgent.skillDocs ?? []) {
     parts.push(`# Skill: ${skill.id}\n\n${skill.instructions}`);
   }

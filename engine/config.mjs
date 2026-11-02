@@ -6,6 +6,8 @@ import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { parseFrontmatter } from "./frontmatter.mjs";
 
+export const SCHEMA_VERSION = "4";
+
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
 
 // Labels become OpenCode tool names. Keep them to the same safe alphabet the
@@ -94,13 +96,7 @@ function pathArray(value, at, faults, code) {
   for (const [i, entry] of value.entries()) relativePath(entry, `${at}[${i}]`, faults);
 }
 
-function validateGraphAgent(graphAgent, at, faults) {
-  if (!isObject(graphAgent)) {
-    faults.push(fault("schema.agent", `${at}: must be an object`));
-    return;
-  }
-  strict(graphAgent, ["id", "model", "agent", "permissions", "craft", "skills"], at, faults);
-  string(graphAgent.id, `${at}.id`, faults);
+function validateAgentProperties(graphAgent, at, faults) {
   string(graphAgent.model, `${at}.model`, faults);
   if (graphAgent.model !== undefined && typeof graphAgent.model === "string") {
     const slash = graphAgent.model.indexOf("/");
@@ -125,8 +121,26 @@ function validateGraphAgent(graphAgent, at, faults) {
       }
     }
   }
-  if (graphAgent.craft !== undefined) string(graphAgent.craft, `${at}.craft`, faults);
   pathArray(graphAgent.skills, `${at}.skills`, faults, "schema.agent-skills");
+}
+
+function validateGraphAgent(graphAgent, at, faults) {
+  if (!isObject(graphAgent)) {
+    faults.push(fault("schema.agent", `${at}: must be an object`));
+    return;
+  }
+  strict(graphAgent, ["id", "model", "agent", "permissions", "prompt", "skills"], at, faults);
+  string(graphAgent.id, `${at}.id`, faults);
+  validateAgentProperties(graphAgent, at, faults);
+  if (graphAgent.prompt !== undefined) string(graphAgent.prompt, `${at}.prompt`, faults);
+}
+
+function validateAgentFrontmatter(data, rel, faults) {
+  strict(data, ["id", "model", "agent", "permissions", "skills"], rel, faults);
+  if (typeof data.id !== "string" || data.id.trim() === "") {
+    faults.push(fault("agent.missing-id", `${rel}: frontmatter needs an id`));
+  }
+  validateAgentProperties(data, rel, faults);
 }
 
 function validateHandoff(handoff, at, nodeIds, faults) {
@@ -446,12 +460,29 @@ function validateGraph(graph, at, graphAgentIds, faults) {
   validateWorkflows(graph.workflows, `${at}.workflows`, byId, nodeIds, faults);
 }
 
+export function validateManifest(doc) {
+  const faults = [];
+  if (!isObject(doc)) return [fault("schema.config", "config must be an object")];
+  strict(doc, ["version", "agents", "graph"], "config", faults);
+  if (doc.version !== SCHEMA_VERSION) {
+    faults.push(fault("schema.version", `config.version: must be the string '${SCHEMA_VERSION}'`));
+  }
+  if (!Array.isArray(doc.agents) || doc.agents.length === 0) {
+    faults.push(fault("schema.agents", "config.agents: must be a non-empty array of agent document paths"));
+  } else {
+    for (const [i, rel] of doc.agents.entries()) relativePath(rel, `config.agents[${i}]`, faults);
+  }
+  if (!isObject(doc.graph)) faults.push(fault("schema.graph", "config.graph: must be an object"));
+  return faults;
+}
+
 export function validateConfig(doc) {
   const faults = [];
   if (!isObject(doc)) return [fault("schema.config", "config must be an object")];
-  strict(doc, ["version", "agents", "graph", "skills"], "config", faults);
-  if (doc.version !== "3") faults.push(fault("schema.version", "config.version: must be the string '3'"));
-  pathArray(doc.skills, "config.skills", faults, "schema.skills");
+  strict(doc, ["version", "agents", "graph"], "config", faults);
+  if (doc.version !== SCHEMA_VERSION) {
+    faults.push(fault("schema.version", `config.version: must be the string '${SCHEMA_VERSION}'`));
+  }
 
   const graphAgentIds = new Set();
   if (!Array.isArray(doc.agents) || doc.agents.length === 0) {
@@ -460,7 +491,7 @@ export function validateConfig(doc) {
     for (const [i, graphAgent] of doc.agents.entries()) {
       validateGraphAgent(graphAgent, `config.agents[${i}]`, faults);
       if (isObject(graphAgent) && typeof graphAgent.id === "string" && graphAgent.id.trim() !== "") {
-        if (graphAgentIds.has(graphAgent.id)) faults.push(fault("schema.agent-id", `config.agents[${i}].id: duplicate '${graphAgent.id}'`));
+        if (graphAgentIds.has(graphAgent.id)) faults.push(fault("agent.duplicate-id", `config.agents[${i}].id: duplicate '${graphAgent.id}'`));
         graphAgentIds.add(graphAgent.id);
       }
     }
@@ -475,14 +506,53 @@ export function validateConfig(doc) {
   return faults;
 }
 
-async function loadSkillDocs(paths, baseDir) {
-  const byPath = new Map();
-  const ids = new Set();
+async function loadAgentDocs(paths, baseDir) {
+  const agents = [];
+  const refs = [];
   const faults = [];
-  for (const rel of paths ?? []) {
+  for (const rel of paths) {
     let text;
     try {
       text = await readFile(resolve(baseDir, rel), "utf8");
+    } catch (e) {
+      faults.push(fault("agent.unreadable", `${rel}: ${e.message}`));
+      continue;
+    }
+    let data;
+    let body;
+    try {
+      ({ data, body } = parseFrontmatter(text));
+    } catch (e) {
+      faults.push(fault("agent.frontmatter", `${rel}: ${e.message}`));
+      continue;
+    }
+    validateAgentFrontmatter(data, rel, faults);
+    const prompt = body.trim();
+    agents.push({
+      id: data.id,
+      model: data.model,
+      ...(data.agent !== undefined ? { agent: data.agent } : {}),
+      permissions: data.permissions,
+      ...(prompt !== "" ? { prompt } : {}),
+      ...(data.skills !== undefined ? { skills: data.skills } : {}),
+    });
+    if (Array.isArray(data.skills)) refs.push(...data.skills);
+  }
+  return { agents, refs, faults };
+}
+
+async function loadSkillDocs(refs, baseDir) {
+  const byResolved = new Map();
+  const seen = new Set();
+  const ids = new Set();
+  const faults = [];
+  for (const rel of refs) {
+    const abs = resolve(baseDir, rel);
+    if (seen.has(abs)) continue;
+    seen.add(abs);
+    let text;
+    try {
+      text = await readFile(abs, "utf8");
     } catch (e) {
       faults.push(fault("skill.unreadable", `${rel}: ${e.message}`));
       continue;
@@ -509,27 +579,21 @@ async function loadSkillDocs(paths, baseDir) {
       continue;
     }
     ids.add(data.id);
-    byPath.set(rel, { ...data, id: data.id, instructions, path: rel });
+    byResolved.set(abs, { ...data, id: data.id, instructions, path: rel });
   }
-  return { byPath, faults };
+  return { byResolved, faults };
 }
 
-function resolveAgentSkills(doc, byPath, faults) {
-  for (const [index, graphAgent] of doc.agents.entries()) {
-    const refs = graphAgent.skills ?? [];
+function attachAgentSkills(agents, byResolved, baseDir) {
+  for (const graphAgent of agents) {
     const resolved = [];
-    for (const [refIndex, ref] of refs.entries()) {
-      const skill = byPath.get(ref);
-      if (!skill) {
-        faults.push(
-          fault(
-            "agent.unknown-skill",
-            `config.agents[${index}].skills[${refIndex}]: '${ref}' names no loaded skill`,
-          ),
-        );
-        continue;
-      }
-      resolved.push(skill);
+    const seen = new Set();
+    for (const ref of graphAgent.skills ?? []) {
+      const abs = resolve(baseDir, ref);
+      if (seen.has(abs)) continue;
+      seen.add(abs);
+      const skill = byResolved.get(abs);
+      if (skill) resolved.push(skill);
     }
     Object.defineProperty(graphAgent, "skillDocs", {
       value: resolved,
@@ -552,13 +616,20 @@ export async function loadConfig(path) {
   } catch (e) {
     return { doc: null, faults: [fault("config.json", `config ${path} is not valid JSON: ${e.message}`)], path };
   }
-  const faults = validateConfig(doc);
-  if (faults.length > 0) return { doc: null, faults, path };
+  const manifestFaults = validateManifest(doc);
+  if (manifestFaults.length > 0) return { doc: null, faults: manifestFaults, path };
 
-  const { byPath, faults: skillFaults } = await loadSkillDocs(doc.skills, dirname(resolve(path)));
-  faults.push(...skillFaults);
-  if (faults.length === 0) resolveAgentSkills(doc, byPath, faults);
-  return { doc: faults.length === 0 ? doc : null, faults, path };
+  const baseDir = dirname(resolve(path));
+  const { agents, refs, faults: agentFaults } = await loadAgentDocs(doc.agents, baseDir);
+  if (agentFaults.length > 0) return { doc: null, faults: agentFaults, path };
+
+  const { byResolved, faults: skillFaults } = await loadSkillDocs(refs, baseDir);
+  if (skillFaults.length > 0) return { doc: null, faults: skillFaults, path };
+
+  attachAgentSkills(agents, byResolved, baseDir);
+  const resolved = { version: doc.version, agents, graph: doc.graph };
+  const faults = validateConfig(resolved);
+  return { doc: faults.length === 0 ? resolved : null, faults, path };
 }
 
 export function findNode(graph, id) {
@@ -691,7 +762,7 @@ export function configSummary(doc, path) {
       model: graphAgent.model,
       agent: graphAgent.agent ?? "build",
       permissions: graphAgent.permissions,
-      craft: graphAgent.craft ?? null,
+      prompt: graphAgent.prompt ?? null,
       skills: (graphAgent.skillDocs ?? []).map((skill) => skill.id),
       skillPaths: graphAgent.skills ?? [],
     })),
