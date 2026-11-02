@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
-import { loadConfig } from "../../engine/config.mjs";
+import { loadConfig, SCHEMA_VERSION } from "../../engine/config.mjs";
 
 const fixtures = [
   ["live-boundary.json", false],
@@ -12,7 +12,7 @@ for (const [file, strict] of fixtures) {
   test(`live fixture: ${file} loads from agent documents`, async () => {
     const loaded = await loadConfig(fileURLToPath(new URL(`../fixtures/${file}`, import.meta.url)));
     assert.deepEqual(loaded.faults, []);
-    assert.equal(loaded.doc.version, "4");
+    assert.equal(loaded.doc.version, SCHEMA_VERSION);
     assert.equal(loaded.doc.graph.workflows[0].id, "A");
     assert.equal(loaded.doc.graph.workflows[0].strict, strict);
     assert.deepEqual(loaded.doc.graph.workflows[0].connections, ["B"]);

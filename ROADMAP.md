@@ -32,7 +32,7 @@ documents and inline `graph.nodes`.
 The target is:
 
 - one configuration file per node;
-- a node's `agent` key references a graph agent document;
+- a node's `agent` key references a graph agent's `id`;
 - graph assembly, file layout, node schema, and schema version are open.
 
 The replacement graph cannot be encoded until this is settled. The current

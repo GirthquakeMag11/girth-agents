@@ -32,6 +32,7 @@ async function main() {
   await rm(workspace, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
   await cp(join(repo, "engine", "graph.json"), join(workspace, "graph.json"));
+  await cp(join(repo, "engine", "agents"), join(workspace, "agents"), { recursive: true });
 
   const events = [];
   child = spawn(process.execPath, [join(repo, "engine", "engine.mjs"), "graph.json"], {

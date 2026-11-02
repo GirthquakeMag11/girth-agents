@@ -96,6 +96,30 @@ test("config: the shipped graph verifies clean", async () => {
   assert.match(SHIPPED.agents[0].prompt, /Work only within/);
 });
 
+test("config: the manifest takes agent paths and rejects inline agents", () => {
+  const manifest = {
+    version: SCHEMA_VERSION,
+    agents: ["agents/builder.md"],
+    graph: defaultGraph,
+  };
+  assert.deepEqual(validateManifest(manifest), []);
+
+  const inline = {
+    version: SCHEMA_VERSION,
+    agents: [{ id: "builder" }],
+    graph: defaultGraph,
+  };
+  assert.ok(codes(validateManifest(inline)).includes("schema.path"));
+
+  const catalog = {
+    version: SCHEMA_VERSION,
+    skills: ["skills/test-first.md"],
+    agents: ["agents/builder.md"],
+    graph: defaultGraph,
+  };
+  assert.ok(codes(validateManifest(catalog)).includes("schema.unknown-field"));
+});
+
 test("config: skills load from Markdown and resolve onto the graph agent", async () => {
   const { path } = await graphConfig({
     agentDocs: {
@@ -157,7 +181,7 @@ test("config: invalid agent properties and unknown frontmatter fields are named"
 
   const unknown = await graphConfig({
     agentDocs: {
-      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions: [read]\ncraft: old\n---\n\nPrompt.\n",
+      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions: [read]\nlegacy: old\n---\n\nPrompt.\n",
     },
   });
   assert.ok(codes((await loadConfig(unknown.path)).faults).includes("schema.unknown-field"));

@@ -21,7 +21,7 @@ import { PROJECT_VERSION } from "./version.mjs";
 import { SCHEMA_VERSION } from "./config.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const workspace = process.argv[2] ?? `/tmp/opencode/v1-live-${process.pid}`;
+const workspace = process.argv[2] ?? `/tmp/opencode/girth-live-${process.pid}`;
 const enginePath = join(here, "engine.mjs");
 const model = "openrouter/~deepseek/deepseek-flash-latest";
 const run = promisify(execFile);
@@ -238,7 +238,7 @@ async function main() {
 
   const beforeInteractive = events.length;
   const dispatched = await interactiveSession(
-    "v1-live-dispatch",
+    "girth-live-dispatch",
     [
       "You are the user's interactive agent. Read .opencode/skills/dispatching/SKILL.md.",
       "Use the `dispatch` tool exactly once with:",
@@ -262,7 +262,7 @@ async function main() {
   const beforeBackground = events.length;
   const backgroundSession = await driver.createSession({
     directory: workspace,
-    title: "v1-live-background",
+    title: "girth-live-background",
     agent: "build",
     model,
     permissions: [{ action: "*", resource: "*", effect: "allow" }],
@@ -335,7 +335,7 @@ async function main() {
 
   const beforeAuthoring = events.length;
   const authored = await interactiveSession(
-    "v1-live-authoring",
+    "girth-live-authoring",
     [
       "You are the user's interactive agent. Read .opencode/skills/graph-authoring/SKILL.md.",
       "Call `graph_info()` to get the config path.",

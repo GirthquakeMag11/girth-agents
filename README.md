@@ -47,8 +47,9 @@ Details, and a bounded History. It cannot edit or dispatch.
 - `INVARIANTS.md` — hard design rules. Check before adding a tool or endpoint.
 - `ROADMAP.md` — open decisions and future work only.
 
-Shipped work is not repeated here; git history is the archive. Graph agent
-documents live in `engine/agents/` and are referenced by `engine/graph.json`.
+Shipped work is not repeated here; git history is the archive. The shipped
+graph's agent documents live in `engine/agents/` and are referenced by
+`engine/graph.json`.
 Graph skill documents are referenced by agent frontmatter. Runtime skills live
 in `engine/skills/` and are copied into `.opencode/skills/` by the engine.
 `GRAPH.md` is generated from the current config.
