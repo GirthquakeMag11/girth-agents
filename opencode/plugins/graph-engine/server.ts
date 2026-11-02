@@ -6,6 +6,7 @@ import { Plugin } from "@opencode/plugin";
 import { createPluginDriver } from "./engine/plugin-driver.mjs";
 import { createRuntime } from "./engine/runtime.mjs";
 import { handoffLabels } from "./engine/config.mjs";
+import { GraphEngine } from "./rpc.ts";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,11 +58,26 @@ function toolSource(context) {
   };
 }
 
+function dashboardSnapshot(runtime: any) {
+  return {
+    ok: true,
+    config: runtime.config,
+    info: runtime.graphInfo(),
+    map: runtime.graphMap(),
+    runtime: runtime.snapshot(),
+  };
+}
+
 export default Plugin.define({
   id: "graph-engine",
   async setup(ctx) {
     const runtime = await engineFor(ctx);
     const labels = handoffLabels(runtime.config.graph);
+
+    const rpcRegistration = await ctx.rpc.register(GraphEngine, {
+      snapshot: async () => dashboardSnapshot(runtime),
+      dispatchStatus: async (input: any) => runtime.status(input.dispatchId),
+    });
 
     let generatedLabels: string[] = [];
     let knownCollisions = new Set<string>();
@@ -344,6 +360,7 @@ export default Plugin.define({
     // the engine. The engine ends when the OpenCode server process ends.
     return () => {
       void transformRegistration.dispose();
+      void rpcRegistration.dispose();
     };
   },
 });

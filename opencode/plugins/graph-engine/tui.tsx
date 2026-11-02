@@ -1,9 +1,14 @@
+// The graph dashboard TUI. It reads everything through the graph-engine RPC
+// snapshot — no HTTP, no project-local plugin file, and no graph config read
+// from disk.
+
 import { Plugin, usePlugin } from "@opencode/plugin/tui";
 import type { PanelInput } from "@opencode/plugin/tui/context";
 import { useTerminalDimensions } from "@opentui/solid";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
-import { loadDashboard } from "./data.mjs";
-import { DashboardView, type Dashboard } from "./view.tsx";
+import { snapshotToDashboard } from "./dashboard/src/data.mjs";
+import { GraphEngine } from "./rpc.ts";
+import { DashboardView, type Dashboard } from "./dashboard/src/view.tsx";
 
 const PANEL = "graph-dashboard";
 
@@ -25,12 +30,9 @@ function DashboardPanel(props: { panel: PanelInput }) {
       if (busy) return;
       busy = true;
       try {
-        const session = context.data.session.get(props.panel.sessionID);
-        const directory = session?.location?.directory;
-        if (!directory) throw new Error("session workspace is unavailable");
-        const data = (await loadDashboard(directory)) as Dashboard;
+        const snapshot = await context.client.rpc(GraphEngine).snapshot();
         if (!stopped) {
-          setDashboard(data);
+          setDashboard(snapshotToDashboard(snapshot) as Dashboard);
           setError(null);
         }
       } catch (cause) {
@@ -59,7 +61,7 @@ function DashboardPanel(props: { panel: PanelInput }) {
 }
 
 export default Plugin.define({
-  id: "graph-dashboard.tui",
+  id: "graph-engine.tui",
   setup(context) {
     context.ui.slot({
       append: "session.panel",

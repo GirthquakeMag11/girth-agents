@@ -24,8 +24,18 @@ const FAKE_PLUGIN_DEFINE = `const Plugin = {
   },
 };`;
 
+const FAKE_RPC_DEFINE = `const Rpc = {
+  define(definition) {
+    if (!definition || typeof definition !== "object") {
+      throw new Error("Rpc.define needs a definition object");
+    }
+    return definition;
+  },
+};`;
+
 const ENGINE_DIR = fileURLToPath(new URL("../../engine", import.meta.url));
 const SERVER_TS = fileURLToPath(new URL("../../opencode/plugins/graph-engine/server.ts", import.meta.url));
+const RPC_TS = fileURLToPath(new URL("../../opencode/plugins/graph-engine/rpc.ts", import.meta.url));
 
 const BUILDER_DOC = `---
 id: builder
@@ -100,6 +110,7 @@ export function createContext(editor, { directory = "/work/project", options = {
   const permissionCalls = [];
   const sessionCreates = [];
   const graphSessions = new Map();
+  const rpcRegistrations = [];
   let nextSession = 0;
   let transformCalls = 0;
 
@@ -174,6 +185,12 @@ export function createContext(editor, { directory = "/work/project", options = {
         return [];
       },
     },
+    rpc: {
+      async register(definition, implementation) {
+        rpcRegistrations.push({ definition, implementation });
+        return { dispose: async () => {}, events: { emit: async () => {} } };
+      },
+    },
   };
 
   return {
@@ -182,6 +199,7 @@ export function createContext(editor, { directory = "/work/project", options = {
     syntheticCalls,
     permissionCalls,
     sessionCreates,
+    rpcRegistrations,
     get transformCalls() {
       return transformCalls;
     },
@@ -206,6 +224,14 @@ export async function loadStaticPlugin({
     await writeFile(join(graphDir, "config.json"), JSON.stringify(graph, null, 2), "utf8");
     await writeFile(join(graphDir, "agents", "builder.md"), BUILDER_DOC, "utf8");
     await symlink(ENGINE_DIR, join(dir, "engine"), "dir");
+
+    const rpcSource = await readFile(RPC_TS, "utf8");
+    const rpcTransformed = rpcSource.replace(
+      /import\s*\{\s*Rpc\s*\}\s*from\s*["']@opencode\/plugin\/rpc["'];?/,
+      FAKE_RPC_DEFINE,
+    );
+    if (rpcTransformed === rpcSource) throw new Error(`rpc.ts does not import @opencode/plugin/rpc: ${RPC_TS}`);
+    await writeFile(join(dir, "rpc.ts"), rpcTransformed, "utf8");
 
     const source = await readFile(SERVER_TS, "utf8");
     const transformed = source.replace(
@@ -235,6 +261,7 @@ export async function loadStaticPlugin({
       syntheticCalls: context.syntheticCalls,
       permissionCalls: context.permissionCalls,
       sessionCreates: context.sessionCreates,
+      rpcRegistrations: context.rpcRegistrations,
       get transformCalls() {
         return context.transformCalls;
       },

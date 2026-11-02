@@ -127,6 +127,32 @@ test("static plugin: a colliding label is not generated", async () => {
   }
 });
 
+test("static plugin: the dashboard RPC exposes snapshot and dispatch status", async () => {
+  const plugin = await loadStaticPlugin({ graph: terminalGraph() });
+  try {
+    await plugin.setup();
+    assert.equal(plugin.rpcRegistrations.length, 1);
+    const { definition, implementation } = plugin.rpcRegistrations[0];
+    assert.equal(definition.id, "graph-engine");
+    assert.ok(implementation.snapshot);
+    assert.ok(implementation.dispatchStatus);
+
+    const snapshot = await implementation.snapshot();
+    assert.equal(snapshot.ok, true);
+    assert.equal(snapshot.config.graph.nodes[0].id, "a");
+    assert.equal(snapshot.info.ok, true);
+    assert.ok(snapshot.runtime);
+    assert.match(snapshot.map.mermaid, /a/);
+
+    await assert.rejects(
+      () => implementation.dispatchStatus({ dispatchId: "d-404" }),
+      /unknown dispatch/,
+    );
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: one process-global engine is reused across setups", async () => {
   const key = Symbol.for("graph-engine.runtime");
   const first = await loadStaticPlugin({ graph: terminalGraph() });

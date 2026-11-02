@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runtimeFromMap } from "../src/data.mjs";
+import { snapshotToDashboard } from "../src/data.mjs";
 import { historyEmptyText, historyRow, historyRows, historyStripText, historyToneKey } from "../src/history.mjs";
 
 const at = "2026-10-30T14:03:22.000Z";
@@ -122,8 +122,10 @@ test("history rows: extra entry keys are ignored and timestamps are deterministi
   assert.equal(historyRow({ ...entry, at: "not-a-date" }, { timeZone: "UTC" }), "—  d-4  queued · build-review · implement");
 });
 
-test("history adapter: history and epoch pass through with safe defaults", () => {
-  const map = {
+test("history: the snapshot passes history and epoch through without reshaping", () => {
+  const dashboard = snapshotToDashboard({
+    config: { graph: { nodes: [] } },
+    info: { configPath: "/graph/config.json" },
     runtime: {
       active: null,
       queue: [],
@@ -132,20 +134,9 @@ test("history adapter: history and epoch pass through with safe defaults", () =>
       history: [{ ...base }],
       historyEpoch: "boot-one",
     },
-  };
-  const runtime = runtimeFromMap(map);
-  assert.deepEqual(runtime.history, [base]);
-  assert.equal(runtime.historyEpoch, "boot-one");
-
-  const missing = runtimeFromMap({ runtime: { active: null, queue: [], lastDefect: null, lastEvent: null } });
-  assert.deepEqual(missing.history, []);
-  assert.equal(missing.historyEpoch, "");
-
-  const malformed = runtimeFromMap({
-    runtime: { active: null, queue: [], history: "Active: no", historyEpoch: 42 },
   });
-  assert.deepEqual(malformed.history, []);
-  assert.equal(malformed.historyEpoch, "");
+  assert.deepEqual(dashboard.runtime.history, [base]);
+  assert.equal(dashboard.runtime.historyEpoch, "boot-one");
 });
 
 

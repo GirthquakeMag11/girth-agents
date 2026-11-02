@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const tui = await readFile(new URL("../src/tui.tsx", import.meta.url), "utf8");
+const tui = await readFile(new URL("../../opencode/plugins/graph-engine/tui.tsx", import.meta.url), "utf8");
 const view = await readFile(new URL("../src/view.tsx", import.meta.url), "utf8");
 const model = await readFile(new URL("../src/model.mjs", import.meta.url), "utf8");
 const fixtures = {
