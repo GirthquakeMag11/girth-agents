@@ -3,7 +3,7 @@
 // the handoff lever and the interactive control tools. The plugin is written
 // into the workspace by the engine, with the engine's loopback URL and token.
 
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PROJECT_VERSION } from "./version.mjs";
@@ -348,26 +348,6 @@ export async function installSkills({ cwd }) {
     const dest = join(cwd, ".opencode", "skills", name, "SKILL.md");
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, await readFile(source, "utf8"), "utf8");
-  }
-}
-
-export async function removeCommands({ cwd }) {
-  const path = join(cwd, ".opencode", "commands", "graph.md");
-  try {
-    const body = await readFile(path, "utf8");
-    if (body.includes("graph-view") || body.includes("graph_map")) await rm(path, { force: true });
-  } catch {
-    // no engine-installed command to remove
-  }
-}
-
-export async function removeAgent({ cwd }) {
-  const path = join(cwd, ".opencode", "agents", "graph-view.md");
-  try {
-    const body = await readFile(path, "utf8");
-    if (body.includes("Read-only graph view") || body.includes("graph_map")) await rm(path, { force: true });
-  } catch {
-    // no engine-installed agent to remove
   }
 }
 

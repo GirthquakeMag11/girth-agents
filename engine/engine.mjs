@@ -4,8 +4,7 @@
 // handoff tool and the interactive agent's tools reach the queue.
 
 import { randomBytes } from "node:crypto";
-import { writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { loadConfig, handoffLabels, handoffToolsStale, configSummary, graphInfoResponse } from "./config.mjs";
 import { handoffLabelsMatch, handoffPreflightError, handoffToolState, handoffVisibilityFailure } from "./visibility.mjs";
 import { resumeHistoryEvent, selectResumeOrigin } from "./resume.mjs";
@@ -15,8 +14,8 @@ import { createDispatchQueue } from "./queue.mjs";
 import { runDispatch, DispatchDefect, emptyUsage } from "./executor.mjs";
 import { createDriver } from "./driver.mjs";
 import { startControlServer, ControlError } from "./control.mjs";
-import { installPlugin, installSkills, removeCommands, removeAgent, preflightPlugin } from "./plugin.mjs";
-import { renderGraphMapResponse, renderGraphArtifact } from "./map.mjs";
+import { installPlugin, installSkills, preflightPlugin } from "./plugin.mjs";
+import { renderGraphMapResponse } from "./map.mjs";
 import { dispatchStatusBody, renderDispatchDisplay } from "./display.mjs";
 import { getActivityHistory, workflowForEvent } from "./history.mjs";
 import { encode, decode } from "./stdio.mjs";
@@ -253,9 +252,8 @@ async function onReload() {
   if (queue.active) throw new ControlError(409, "reload rejected: a dispatch is active");
   config = loaded.doc;
   configRevision += 1;
-  const artifact = await writeGraphArtifact();
-  event("reloaded", { configPath, valid: true, faults: [], artifact });
-  return { body: { ok: true, valid: true, faults: [], graph: graphSummary(), artifact } };
+  event("reloaded", { configPath, valid: true, faults: [] });
+  return { body: { ok: true, valid: true, faults: [], graph: graphSummary() } };
 }
 
 function onGraphInfo() {
@@ -276,17 +274,6 @@ function onGraphMap() {
   return { body: renderGraphMapResponse(config.graph, runtimeSnapshot()) };
 }
 
-async function writeGraphArtifact() {
-  try {
-    const path = join(cwd, "GRAPH.md");
-    await writeFile(path, renderGraphArtifact(config, configPath), "utf8");
-    return path;
-  } catch (e) {
-    log(`engine: could not write GRAPH.md: ${e.message}`);
-    return null;
-  }
-}
-
 async function boot() {
   const loaded = await loadConfig(configPath);
   if (loaded.faults.length > 0) {
@@ -296,7 +283,6 @@ async function boot() {
   config = loaded.doc;
   bootHandoffLabels = handoffLabels(config.graph);
   configRevision = 1;
-  const artifact = await writeGraphArtifact();
 
   const token = randomBytes(16).toString("hex");
   control = await startControlServer({
@@ -322,8 +308,6 @@ async function boot() {
     labels: handoffLabels(config.graph),
   });
   await installSkills({ cwd });
-  await removeCommands({ cwd });
-  await removeAgent({ cwd });
 
   let pluginActive = false;
   try {
@@ -351,7 +335,7 @@ async function boot() {
   });
 
   say("version", { version: 2 });
-  say("ready", { configPath, pluginActive, cwd, artifact, workflows: (config.graph.workflows ?? []).map((wf) => wf.id) });
+  say("ready", { configPath, pluginActive, cwd, workflows: (config.graph.workflows ?? []).map((wf) => wf.id) });
 
   const heartbeatMs = Math.max(1000, Number(process.env.HEARTBEAT_MS || 0) || 5000);
   heartbeat = setInterval(() => {

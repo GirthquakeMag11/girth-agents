@@ -1,13 +1,12 @@
 // The live proof. It creates a scratch workspace, starts the engine,
 // and proves the promised surface:
-//   1. one graph boots and GRAPH.md is generated without the interim command;
+//   1. one graph boots and loads its config;
 //   2. a stdio dispatch runs the graph to a terminal and reports usage;
 //   3. a second dispatch queues behind the active one and both complete;
 //   4. the interactive agent dispatches through the plugin tool and waits;
 //   5. a background dispatch notifies the interactive session;
 //   6. a queued dispatch and an active dispatch can be cancelled;
-//   7. the interactive agent edits the graph, reloads it, and the engine
-//      and GRAPH.md swap it.
+//   7. the interactive agent edits the graph and reloads it.
 // It uses the real OpenCode service and the real handoff plugin.
 
 import assert from "node:assert/strict";
@@ -154,32 +153,9 @@ async function main() {
   await mkdir(workspace, { recursive: true });
   await cp(join(here, "graph.json"), join(workspace, "graph.json"));
   await cp(join(here, "agents"), join(workspace, "agents"), { recursive: true });
-  await mkdir(join(workspace, ".opencode", "agents"), { recursive: true });
-  await mkdir(join(workspace, ".opencode", "commands"), { recursive: true });
-  await writeFile(
-    join(workspace, ".opencode", "agents", "graph-view.md"),
-    "---\ndescription: Read-only graph view.\n---\nCall graph_map.\n",
-    "utf8",
-  );
-  await writeFile(
-    join(workspace, ".opencode", "commands", "graph.md"),
-    "---\nagent: graph-view\n---\nCall graph_map.\n",
-    "utf8",
-  );
-
   driver = await createDriver();
   const ready = await startEngine();
   assert.deepEqual(ready.workflows, ["build-review"]);
-
-  const artifact = await readFile(join(workspace, "GRAPH.md"), "utf8");
-  assert.match(artifact, /^# Graph\n/);
-  assert.doesNotMatch(artifact, /# Graphs/);
-  assert.match(artifact, /workflow · build-review/);
-  assert.match(artifact, /resume = this route reuses/);
-  assert.match(artifact, /fail → implement \(resume\)/);
-
-  await assert.rejects(() => readFile(join(workspace, ".opencode", "commands", "graph.md"), "utf8"));
-  await assert.rejects(() => readFile(join(workspace, ".opencode", "agents", "graph-view.md"), "utf8"));
 
   const pluginSource = await readFile(join(workspace, ".opencode", "plugins", "engine-handoff", "index.ts"), "utf8");
   const url = /const ENGINE_URL = "([^"]+)"/.exec(pluginSource)?.[1];
@@ -205,7 +181,7 @@ async function main() {
   assert.ok(Array.isArray(map.runtime.queue));
   assert.ok("lastDefect" in map.runtime);
   assert.ok("lastEvent" in map.runtime);
-  console.log("PASS  one graph booted, legacy command/agent were removed, and graph-info/runtime are structured");
+  console.log("PASS  one graph booted and graph-info/runtime are structured");
 
   const first = await stdioDispatch("implement", "Write a one-paragraph design note for a hello() function. Keep it short.");
   assert.equal(first.status, "completed");
@@ -352,9 +328,7 @@ async function main() {
   const review = configAfter.graph.nodes.find((node) => node.id === "review");
   assert.equal(review.objective, "Review the implementation and name one concrete improvement.");
   assert.equal(configAfter.graphs, undefined);
-  const artifactAfter = await readFile(join(workspace, "GRAPH.md"), "utf8");
-  assert.match(artifactAfter, /Review the implementation and name one concrete improvement\./);
-  console.log("PASS  the interactive agent edited the graph, reloaded it, and GRAPH.md swapped with it");
+  console.log("PASS  the interactive agent edited the graph and reloaded it");
 
   console.log("\nLIVE PROOF PASS");
 }

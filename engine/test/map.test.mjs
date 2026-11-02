@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "../config.mjs";
 import { createDispatchQueue } from "../queue.mjs";
-import { renderGraphArtifact, renderGraphMap, renderGraphMapResponse, renderState, renderWorkflowTable } from "../map.mjs";
+import { renderGraphMap, renderGraphMapResponse, renderState, renderWorkflowTable } from "../map.mjs";
 
 const loaded = await loadConfig(fileURLToPath(new URL("../graph.json", import.meta.url)));
 const graph = loaded.doc.graph;
@@ -42,16 +41,6 @@ test("map: live state highlights the active node and reports the queue", () => {
   assert.match(map.mermaid, /class n1 active/);
   const state = renderState(runtime);
   assert.equal(state, "Active: d-1 at review. Queue: d-2.");
-});
-
-test("map: the artifact contains the map, workflow table, node table, and legend", () => {
-  const artifact = renderGraphArtifact(loaded.doc, "graph.json");
-  assert.match(artifact, /# Graph/);
-  assert.doesNotMatch(artifact, /# Graphs/);
-  assert.match(artifact, /```mermaid/);
-  assert.match(artifact, /### Workflows/);
-  assert.match(artifact, /### Nodes/);
-  assert.match(artifact, /resume = this route reuses/);
 });
 
 test("map: graph-map response carries structured runtime", () => {

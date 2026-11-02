@@ -160,6 +160,5 @@ Call `reload()`. Success returns `valid: true` and the graph summary.
 Failure returns `valid: false` and faults; the old graph stays active.
 Fix every fault before dispatching.
 
-The same map/table is written to `GRAPH.md` on every valid reload. The
-native dashboard reads the graph and the engine's structured runtime state;
-the interim `/graph` command and `graph-view` agent are removed.
+The native dashboard reads the graph and the engine's structured runtime
+state.

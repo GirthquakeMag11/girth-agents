@@ -50,15 +50,6 @@ async function startEngine(directory, configFile) {
   await mkdir(directory, { recursive: true });
   await cp(configFile, join(directory, "graph.json"));
   await cp(join(dirname(configFile), "agents"), join(directory, "agents"), { recursive: true });
-  await mkdir(join(directory, ".opencode", "agents"), { recursive: true });
-  await mkdir(join(directory, ".opencode", "commands"), { recursive: true });
-  await writeFile(
-    join(directory, ".opencode", "agents", "graph-view.md"),
-    "---\ndescription: Read-only graph view.\n---\nCall graph_map.\n",
-    "utf8",
-  );
-  await writeFile(join(directory, ".opencode", "commands", "graph.md"), "---\nagent: graph-view\n---\n", "utf8");
-
   const events = [];
   child = spawn(process.execPath, [enginePath, "graph.json"], {
     cwd: directory,
@@ -116,9 +107,6 @@ async function startEngine(directory, configFile) {
   };
   const waitEvent = (kind, timeoutMs = 10000) =>
     waitFor(() => events.find((event) => event.kind === kind), timeoutMs, kind);
-
-  await assert.rejects(() => readFile(join(directory, ".opencode", "agents", "graph-view.md"), "utf8"));
-  await assert.rejects(() => readFile(join(directory, ".opencode", "commands", "graph.md"), "utf8"));
 
   return { directory, control, send, waitRuntime, waitEvent, config: JSON.parse(await readFile(join(directory, "graph.json"), "utf8")) };
 }

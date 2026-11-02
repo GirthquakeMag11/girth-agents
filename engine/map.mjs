@@ -173,24 +173,3 @@ export function renderGraphMapResponse(graph, runtime = null) {
     runtime,
   };
 }
-
-export function renderGraphArtifact(config, configPath) {
-  const map = renderGraphMap(config.graph, { runtime: null });
-  const sections = [
-    "# Graph",
-    "",
-    `Generated from \`${configPath}\`.`,
-    "",
-    "```mermaid",
-    map.mermaid,
-    "```",
-    "",
-    MAP_LEGEND,
-    "",
-  ];
-  if (map.workflowTable) {
-    sections.push("### Workflows", "", map.workflowTable, "");
-  }
-  sections.push("### Nodes", "", map.nodeTable, "");
-  return sections.join("\n") + "\n";
-}
