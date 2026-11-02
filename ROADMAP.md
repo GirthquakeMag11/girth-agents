@@ -2,42 +2,22 @@
 
 Open work only. Shipped work is in git history.
 
-## Installer and uninstaller
+## Isolated OpenCode live proof
 
-Distribute the product as a plain archive plus a standalone `install.sh` that
-extracts and installs it into OpenCode's global configuration. No npm,
-registry, or network. The installer is interactive, finds the archive next to
-the script, detects the OpenCode config directory, verifies the archive
-checksum, seeds a user-owned `graph/`, installs the dashboard and
-OpenCode-native assets globally, and writes a manifest plus `uninstall.sh`.
+The in-process live proof (`engine/live-proof.mjs`) and the test suite exercise
+the engine, plugin, RPC, and installer end to end. The remaining proof runs
+against a real OpenCode server with a configured graph model: install the
+archive, start the server with the installed global plugin, dispatch a real
+workflow to a terminal, dispatch from a second location on the same queue,
+read the dashboard snapshot through RPC, and uninstall. It needs model
+credentials and is not part of CI.
 
-The uninstaller removes only manifest-listed files whose checksums still match.
-It leaves the user-owned graph and project state alone unless explicitly
-purged.
+## Graph template skills
 
-Not implemented.
-
-## Engine lifecycle
-
-The engine is currently a separate process started by the user. The product
-goal is engine lifetime tied to the OpenCode background server, not the client
-that launches or connects to it.
-
-Recommended direction:
-
-- engine writes a stable service descriptor with URL, token, pid, workspace,
-  and config path;
-- the plugin becomes static and reads the descriptor instead of embedding a
-  per-boot endpoint;
-- a small OpenCode server plugin supervises the engine child: start, restart
-  with backoff, single-instance lock, shutdown cleanup, and logs.
-
-The main open question is runtime packaging: the OpenCode binary is not a Node
-runtime, so spawning the engine requires either a Node prerequisite, a bundled
-runner, or moving the engine in-process. The in-process version is the cleanest
-long-term shape but a larger refactor of the driver and control transport.
-
-Not implemented.
+The shipped build-review graph template currently references no graph skills;
+its graph agents carry only standing prompts. Skills are already first-class in
+the schema and loader; the template should eventually reference one or two
+graph skills so the shipped example exercises the capability.
 
 ## Graph configuration architecture
 
@@ -51,7 +31,7 @@ The target is:
 - graph assembly, file layout, node schema, and schema version are open.
 
 The replacement graph cannot be encoded until this is settled. The current
-`engine/graph.json` remains the placeholder build-review graph.
+`graph/config.json` remains the placeholder build-review graph.
 
 Not implemented.
 

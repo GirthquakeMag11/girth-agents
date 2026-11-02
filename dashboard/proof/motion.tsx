@@ -33,12 +33,12 @@ const theme = {
 const repo = process.cwd();
 const captures = join(repo, "dashboard", "proof", "captures");
 await mkdir(captures, { recursive: true });
-const product = JSON.parse(await readFile(join(repo, "engine", "graph.json"), "utf8"));
+const product = JSON.parse(await readFile(join(repo, "graph", "config.json"), "utf8"));
 const baseHistory = [{ seq: 1, at: "2026-10-30T14:00:00.000Z", kind: "queued", dispatchId: "d-1", workflow: "build-review", node: "implement" }];
 
 const productData = {
   config: product,
-  info: { ok: true, version: PROJECT_VERSION, schemaVersion: SCHEMA_VERSION, valid: true, configPath: "engine/graph.json" },
+  info: { ok: true, version: PROJECT_VERSION, schemaVersion: SCHEMA_VERSION, valid: true, configPath: "graph/config.json" },
   runtime: {
     active: {
       dispatchId: "d-1",

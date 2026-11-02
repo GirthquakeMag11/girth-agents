@@ -104,7 +104,7 @@ export function createEditor(seedTools = []) {
   };
 }
 
-export function createContext(editor, { directory = "/work/project", options = {} } = {}) {
+export function createContext(editor, { directory = "/work/project", options = {}, onPrompt = null, locations = {} } = {}) {
   const hooks = new Map();
   const syntheticCalls = [];
   const permissionCalls = [];
@@ -145,10 +145,12 @@ export function createContext(editor, { directory = "/work/project", options = {
         const session = {
           id,
           ...input,
+          node: String(input?.title ?? "").split("/").at(-1) ?? null,
           location: { directory: input?.location?.directory ?? directory },
           outcome: null,
           cost: 0,
           tokens: emptyTokens(),
+          messages: [],
         };
         graphSessions.set(id, session);
         sessionCreates.push(input);
@@ -157,15 +159,19 @@ export function createContext(editor, { directory = "/work/project", options = {
       async get({ sessionID }) {
         const tracked = graphSessions.get(sessionID);
         if (tracked) return tracked;
-        return { id: sessionID, location: { directory } };
+        return { id: sessionID, location: { directory: locations[sessionID] ?? directory } };
       },
-      async prompt({ sessionID }) {
+      async prompt({ sessionID, text }) {
         const session = graphSessions.get(sessionID);
-        if (session) session.outcome = "succeeded";
+        if (session) {
+          if (onPrompt) await onPrompt({ session, sessionID, text });
+          session.outcome = "succeeded";
+        }
         return {};
       },
-      async context() {
-        return [];
+      async context({ sessionID }) {
+        const session = graphSessions.get(sessionID);
+        return session ? session.messages : [];
       },
       async wait() {},
       async interrupt() {
@@ -215,6 +221,9 @@ export async function loadStaticPlugin({
   seedTools = [],
   options = {},
   resetEngine = true,
+  agentDocs = {},
+  onPrompt = null,
+  locations = {},
 } = {}) {
   if (resetEngine) delete globalThis[Symbol.for("graph-engine.runtime")];
   const dir = await mkdtemp(join(tmpdir(), "static-plugin-"));
@@ -222,7 +231,14 @@ export async function loadStaticPlugin({
     const graphDir = join(dir, "graph");
     await mkdir(join(graphDir, "agents"), { recursive: true });
     await writeFile(join(graphDir, "config.json"), JSON.stringify(graph, null, 2), "utf8");
-    await writeFile(join(graphDir, "agents", "builder.md"), BUILDER_DOC, "utf8");
+    const docs = { "builder.md": BUILDER_DOC, ...agentDocs };
+    for (const rel of graph.agents ?? ["agents/builder.md"]) {
+      const name = rel.split("/").at(-1);
+      const content = docs[name];
+      if (typeof content !== "string") throw new Error(`no agent doc for ${rel}`);
+      await mkdir(join(graphDir, rel.split("/").slice(0, -1).join("/")), { recursive: true });
+      await writeFile(join(graphDir, rel), content, "utf8");
+    }
     await symlink(ENGINE_DIR, join(dir, "engine"), "dir");
 
     const rpcSource = await readFile(RPC_TS, "utf8");
@@ -243,7 +259,7 @@ export async function loadStaticPlugin({
     await writeFile(modulePath, transformed, "utf8");
 
     const editor = createEditor(seedTools);
-    const context = createContext(editor, { directory });
+    const context = createContext(editor, { directory, onPrompt, locations });
     context.ctx.options = { ...options, graphConfig: join(graphDir, "config.json") };
 
     const module = await import(pathToFileURL(modulePath).href);
