@@ -3,7 +3,7 @@
 // output contract is gone, so acceptance never consults a file.
 
 import { DISPATCHER_TARGET, handoffTarget } from "./config.mjs";
-import { ControlError } from "./control.mjs";
+import { ControlError } from "./errors.mjs";
 import { handoffMessageError } from "./visibility.mjs";
 import { workflowEscape } from "./workflow.mjs";
 
@@ -63,7 +63,7 @@ export function createHandoffHandler({ getQueue, getConfig, Defect }) {
         callID: body.callID ?? null,
         at: new Date().toISOString(),
       };
-      return { body: { ok: true, label } };
+      return { ok: true, label };
     } finally {
       active.handoffPending = false;
     }

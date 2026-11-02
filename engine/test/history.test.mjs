@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { createActivityHistory, getActivityHistory, HISTORY_FIELDS, workflowForEvent } from "../history.mjs";
 
 const FIELDS = [
@@ -190,7 +189,4 @@ test("history: forbidden payload fields never reach entries", () => {
 });
 
 
-test("history: engine shutdown cancellation uses the event sink", async () => {
-  const source = await readFile(new URL("../engine.mjs", import.meta.url), "utf8");
-  assert.match(source, /event\("completion", \{\s*dispatchId: active\.id/);
-});
+

@@ -102,6 +102,8 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     resumeMessage = null,
     resumeBudgetMs = null,
     resumeOriginDispatchId = null,
+    driver = null,
+    directory = null,
   }) {
     const id = `d-${++state.nextId}`;
     const record = {
@@ -114,6 +116,8 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
       resumeMessage,
       resumeBudgetMs,
       resumeOriginDispatchId,
+      driver,
+      directory,
       state: "queued",
       createdAt: new Date().toISOString(),
       visits: {},
@@ -195,9 +199,11 @@ export function createDispatchQueue({ run, onEvent = () => {} }) {
     return origin;
   }
 
-  async function cancel(id, { interrupt = async () => {}, deleteSession = async () => {} } = {}) {
+  async function cancel(id) {
     const record = state.records.get(id);
     if (!record) return null;
+    const interrupt = record.driver?.interrupt ?? (async () => {});
+    const deleteSession = record.driver?.deleteSession ?? (async () => {});
     if (TERMINAL.has(record.state)) {
       if (record.retainedOrigin) {
         const sessionId = record.retainedOrigin.sessionId;

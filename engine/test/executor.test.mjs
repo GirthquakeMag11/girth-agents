@@ -84,9 +84,9 @@ function fakeDriver({ onPrompt }) {
 
 test("executor: a failed session on the first visit is a named session defect", async () => {
   const driver = fakeDriver({ onPrompt: async () => ({ outcome: "failed" }) });
-  const record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
   await assert.rejects(
-    () => runDispatch({ driver, config, record, cwd: "/tmp", onEvent: () => {} }),
+    () => runDispatch({ driver, config, record, onEvent: () => {} }),
     (error) => error.kind === "session-failed" && error.message.includes("s1"),
   );
   assert.deepEqual(driver.deleted, ["s1"]);
@@ -94,9 +94,9 @@ test("executor: a failed session on the first visit is a named session defect", 
 
 test("executor: an interrupted session is named, not an internal error", async () => {
   const driver = fakeDriver({ onPrompt: async () => ({ outcome: "interrupted" }) });
-  const record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
   await assert.rejects(
-    () => runDispatch({ driver, config, record, cwd: "/tmp", onEvent: () => {} }),
+    () => runDispatch({ driver, config, record, onEvent: () => {} }),
     (error) => error.kind === "session-interrupted" && error.message.includes("s1"),
   );
 });
@@ -109,9 +109,9 @@ test("executor: a prompt timeout keeps its session-timeout code and session id",
       throw error;
     },
   });
-  const record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
   await assert.rejects(
-    () => runDispatch({ driver, config, record, cwd: "/tmp", onEvent: () => {} }),
+    () => runDispatch({ driver, config, record, onEvent: () => {} }),
     (error) => error.kind === "session-timeout" && error.message.includes("s1"),
   );
   assert.deepEqual(driver.deleted, ["s1"]);
@@ -168,9 +168,9 @@ test("executor: a failed resumed visit keeps the resumed session id", async () =
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     await assert.rejects(
-      () => runDispatch({ driver, config: graphConfig, record, cwd: dir, onEvent: () => {} }),
+      () => runDispatch({ driver, config: graphConfig, record, onEvent: () => {} }),
       (error) => error.kind === "session-failed" && error.message.includes("s1"),
     );
     assert.equal(record.visits.a, 2);
@@ -246,13 +246,12 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
       },
     ];
 
-    record = { id: "d-1", node: "builder", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "builder", prompt: "p", visits: {}, directory: "/tmp" };
     const steps = [];
     const result = await runDispatch({
       driver,
       config: graphConfig,
       record,
-      cwd: dir,
       onEvent: (kind, payload) => {
         if (kind === "step") steps.push(payload);
       },
@@ -289,7 +288,7 @@ test("executor: a strict workflow escape wins over a failed session outcome", as
     ],
   };
   const doc = { ...config, graph };
-  const record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
   const driver = fakeDriver({
     onPrompt: async () => {
       record.handoffDefect = Object.assign(new Error("workflow escape"), { kind: "workflow.escape" });
@@ -297,7 +296,7 @@ test("executor: a strict workflow escape wins over a failed session outcome", as
     },
   });
   await assert.rejects(
-    () => runDispatch({ driver, config: doc, record, cwd: "/tmp", onEvent: () => {} }),
+    () => runDispatch({ driver, config: doc, record, onEvent: () => {} }),
     (error) => error.kind === "workflow.escape",
   );
 });
@@ -317,7 +316,7 @@ test("executor: a recorded workflow escape wins when the prompt throws", async (
     ],
   };
   const doc = { ...config, graph };
-  const record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
   const driver = fakeDriver({
     onPrompt: async () => {
       record.handoffDefect = Object.assign(new Error("workflow escape"), { kind: "workflow.escape" });
@@ -327,7 +326,7 @@ test("executor: a recorded workflow escape wins when the prompt throws", async (
     },
   });
   await assert.rejects(
-    () => runDispatch({ driver, config: doc, record, cwd: "/tmp", onEvent: () => {} }),
+    () => runDispatch({ driver, config: doc, record, onEvent: () => {} }),
     (error) => error.kind === "workflow.escape",
   );
 });
@@ -371,9 +370,9 @@ test("executor: resume is rejected when the target is not the input source", asy
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     await assert.rejects(
-      () => runDispatch({ driver, config: graphConfig, record, cwd: dir, onEvent: () => {} }),
+      () => runDispatch({ driver, config: graphConfig, record, onEvent: () => {} }),
       (error) => error.kind === "resume.not-return",
     );
   } finally {
@@ -430,12 +429,11 @@ test("executor: the handoff message is upstream context and history stays conten
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     const result = await runDispatch({
       driver,
       config: graphConfig,
       record,
-      cwd: dir,
       onEvent: (kind, payload) => events.push({ kind, payload }),
     });
 
@@ -500,12 +498,11 @@ test("executor: a read-only graph agent completes a terminal node", async () => 
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     const result = await runDispatch({
       driver,
       config: graphConfig,
       record,
-      cwd: dir,
       onEvent: () => {},
     });
 
@@ -563,12 +560,11 @@ test("executor: a dispatcher handoff completes with the message", async () => {
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     const result = await runDispatch({
       driver,
       config: graphConfig,
       record,
-      cwd: dir,
       onEvent: () => {},
     });
 
@@ -631,12 +627,11 @@ test("executor: a dispatcher response is capped at 16 KiB", async () => {
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     const result = await runDispatch({
       driver,
       config: graphConfig,
       record,
-      cwd: dir,
       onEvent: () => {},
     });
 
@@ -674,6 +669,7 @@ test("executor: a return resumes the retained session with the message", async (
       node: "a",
       prompt: "p",
       visits: {},
+      directory: dir,
       resumeSessionId: session.id,
       resumeMessage: "The message back.",
       resumeBudgetMs: 5000,
@@ -682,7 +678,6 @@ test("executor: a return resumes the retained session with the message", async (
       driver,
       config: graphConfig,
       record,
-      cwd: dir,
       onEvent: () => {},
     });
 
@@ -708,9 +703,9 @@ test("executor: a dispatch snapshot has no output field", async () => {
     });
     const queue = createDispatchQueue({
       run: (record) =>
-        runDispatch({ driver, config: graphConfig, record, cwd: dir, onEvent: () => {} }),
+        runDispatch({ driver, config: graphConfig, record, onEvent: () => {} }),
     });
-    const record = queue.enqueue({ node: "a", prompt: "p" });
+    const record = queue.enqueue({ node: "a", prompt: "p", directory: dir });
     const result = await queue.wait(record.id, 1000);
     assert.equal(result.state, "completed");
     assert.equal("output" in result, false);
@@ -772,9 +767,9 @@ test("executor: a dispatcher handoff that later defects is not retained", async 
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     await assert.rejects(
-      () => runDispatch({ driver, config: graphConfig, record, cwd: dir, onEvent: () => {} }),
+      () => runDispatch({ driver, config: graphConfig, record, onEvent: () => {} }),
       (error) => error.kind === "handoff.not-last",
     );
     assert.equal(record.retainedOrigin, undefined);
@@ -826,9 +821,9 @@ test("executor: cancelling after dispatcher acceptance does not retain the origi
         ],
       },
     ];
-    record = { id: "d-1", node: "a", prompt: "p", visits: {} };
+    record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
     await assert.rejects(
-      () => runDispatch({ driver, config: graphConfig, record, cwd: dir, onEvent: () => {} }),
+      () => runDispatch({ driver, config: graphConfig, record, onEvent: () => {} }),
       (error) => error.kind === "cancelled",
     );
     assert.equal(record.retainedOrigin, undefined);

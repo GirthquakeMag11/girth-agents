@@ -113,13 +113,15 @@ test("queue: the active dispatch can be interrupted and reported as cancelled", 
       if (kind === "completion") completions.push(payload);
     },
   });
-  queue.enqueue({ node: "a", prompt: "one" });
+  queue.enqueue({
+    node: "a",
+    prompt: "one",
+    driver: { interrupt: async (sessionId) => { interrupted = sessionId; } },
+  });
   await tick();
   queue.active.sessionId = "s1";
 
-  const cancelling = await queue.cancel("d-1", {
-    interrupt: async (sessionId) => { interrupted = sessionId; },
-  });
+  const cancelling = await queue.cancel("d-1");
   assert.equal(interrupted, "s1");
   assert.equal(cancelling.cancelRequested, true);
   assert.equal(cancelling.state, "running");
@@ -168,7 +170,12 @@ test("queue: a retained origin is discoverable and cancelled with its session", 
     },
   });
 
-  queue.enqueue({ node: "a", prompt: "p" });
+  let deleted = null;
+  queue.enqueue({
+    node: "a",
+    prompt: "p",
+    driver: { deleteSession: async (sessionId) => { deleted = sessionId; } },
+  });
   await tick();
   assert.equal(queue.status("d-1").state, "completed");
   const found = queue.findRetainedOrigin({ node: "a" });
@@ -177,12 +184,7 @@ test("queue: a retained origin is discoverable and cancelled with its session", 
   assert.equal(found[0].sessionId, "s1");
   assert.equal(found[0].message, "The message.");
 
-  let deleted = null;
-  const result = await queue.cancel("d-1", {
-    deleteSession: async (sessionId) => {
-      deleted = sessionId;
-    },
-  });
+  const result = await queue.cancel("d-1");
   assert.equal(result.state, "completed");
   assert.equal(deleted, "s1");
   assert.equal(queue.originState("d-1"), "discarded");
@@ -274,15 +276,19 @@ test("queue: cancelling an active retained origin discards its session", async (
       return {};
     },
   });
-  queue.enqueue({ node: "a", prompt: "p" });
+  const deleted = [];
+  queue.enqueue({
+    node: "a",
+    prompt: "p",
+    driver: {
+      interrupt: async () => {},
+      deleteSession: async (sessionId) => deleted.push(sessionId),
+    },
+  });
   await tick();
   assert.equal(queue.findRetainedOrigin({ node: "a" }).length, 0, "an active origin is not yet retainable");
 
-  const deleted = [];
-  const result = await queue.cancel("d-1", {
-    interrupt: async () => {},
-    deleteSession: async (sessionId) => deleted.push(sessionId),
-  });
+  const result = await queue.cancel("d-1");
   assert.equal(result.state, "running");
   assert.deepEqual(deleted, ["s1"]);
   assert.equal(queue.originState("d-1"), "discarded");
@@ -315,16 +321,15 @@ test("queue: cancelling a queued return discards the consumed source session", a
   assert.equal(queue.status("d-1").state, "completed");
 
   queue.pause();
+  const deleted = [];
   queue.enqueue({
     node: "a",
     prompt: "return",
     resumeSessionId: "s1",
     resumeOriginDispatchId: "d-1",
+    driver: { deleteSession: async (sessionId) => deleted.push(sessionId) },
   });
-  const deleted = [];
-  const result = await queue.cancel("d-2", {
-    deleteSession: async (sessionId) => deleted.push(sessionId),
-  });
+  const result = await queue.cancel("d-2");
   assert.equal(result.state, "cancelled");
   assert.deepEqual(deleted, ["s1"]);
   assert.equal(queue.originState("d-1"), "discarded");
@@ -344,13 +349,16 @@ test("queue: cancel claims a retained origin before awaiting session deletion", 
       return {};
     },
   });
-  queue.enqueue({ node: "a", prompt: "p", dispatchingSessionID: "ses_a" });
+  let release;
+  queue.enqueue({
+    node: "a",
+    prompt: "p",
+    dispatchingSessionID: "ses_a",
+    driver: { deleteSession: () => new Promise((resolve) => (release = resolve)) },
+  });
   await tick();
 
-  let release;
-  const pending = queue.cancel("d-1", {
-    deleteSession: () => new Promise((resolve) => (release = resolve)),
-  });
+  const pending = queue.cancel("d-1");
   assert.equal(queue.findRetainedOrigin({ node: "a" }).length, 0);
   assert.equal(queue.originState("d-1"), "discarded");
   const selected = selectResumeOrigin(queue, { node: "a", sessionID: "ses_a" });

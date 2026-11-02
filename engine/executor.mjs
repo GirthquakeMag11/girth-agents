@@ -156,7 +156,7 @@ async function sessionInfo(driver, sessionId) {
   }
 }
 
-async function runNode({ driver, node, graphAgent, record, cwd, previousMessage, onEvent, sessions, resume = false, resumable = false, budgetMs = null }) {
+async function runNode({ driver, node, graphAgent, record, previousMessage, onEvent, sessions, resume = false, resumable = false, budgetMs = null }) {
   if (record.cancelled) throw new DispatchDefect("cancelled", "dispatch cancelled");
 
   record.nodeDef = node;
@@ -181,7 +181,7 @@ async function runNode({ driver, node, graphAgent, record, cwd, previousMessage,
       if (process.env.ENGINE_KEEP_SESSIONS !== "1") await driver.deleteSession(stale).catch(() => {});
     }
     const session = await driver.createSession({
-      directory: cwd,
+      directory: record.directory,
       title: `${record.id}/${node.id}`,
       agent: graphAgent.agent ?? "build",
       model: graphAgent.model,
@@ -290,9 +290,12 @@ async function runNode({ driver, node, graphAgent, record, cwd, previousMessage,
   }
 }
 
-export async function runDispatch({ driver, config, record, cwd, onEvent = () => {}, waitIfPaused = async () => {} }) {
+export async function runDispatch({ driver, config, record, onEvent = () => {}, waitIfPaused = async () => {} }) {
   const graph = config.graph;
   if (!graph) throw new DispatchDefect("no-graph", "the config has no graph");
+  if (typeof record.directory !== "string" || record.directory.trim() === "") {
+    throw new DispatchDefect("no-directory", "the dispatch record has no directory");
+  }
 
   let current = record.node;
   let previousMessage = null;
@@ -337,7 +340,6 @@ export async function runDispatch({ driver, config, record, cwd, onEvent = () =>
       node,
       graphAgent,
       record,
-      cwd,
       previousMessage,
       onEvent,
       sessions,
