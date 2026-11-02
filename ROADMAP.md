@@ -2,6 +2,21 @@
 
 Open work only. Shipped work is in git history.
 
+## Installer and uninstaller
+
+Distribute the product as a plain archive plus a standalone `install.sh` that
+extracts and installs it into OpenCode's global configuration. No npm,
+registry, or network. The installer is interactive, finds the archive next to
+the script, detects the OpenCode config directory, verifies the archive
+checksum, seeds a user-owned `graph/`, installs the dashboard and
+OpenCode-native assets globally, and writes a manifest plus `uninstall.sh`.
+
+The uninstaller removes only manifest-listed files whose checksums still match.
+It leaves the user-owned graph and project state alone unless explicitly
+purged.
+
+Not implemented.
+
 ## Engine lifecycle
 
 The engine is currently a separate process started by the user. The product
