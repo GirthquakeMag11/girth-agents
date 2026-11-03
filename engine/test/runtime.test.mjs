@@ -22,7 +22,10 @@ const builderDoc = `---
 id: builder
 model: test/model
 agent: build
-permissions: [read]
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
 ---
 Do the node within the dispatched scope.
 `;

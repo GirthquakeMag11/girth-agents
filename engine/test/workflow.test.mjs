@@ -93,7 +93,11 @@ const strictDoc = {
       id: "builder",
       model: "openrouter/~deepseek/deepseek-flash-latest",
       agent: "build",
-      permissions: ["read", "edit", "shell"],
+      permissions: [
+        { action: "read", resource: "*", effect: "allow" },
+        { action: "edit", resource: "*", effect: "allow" },
+        { action: "shell", resource: "*", effect: "allow" },
+      ],
       prompt: "Work.",
     },
   ],

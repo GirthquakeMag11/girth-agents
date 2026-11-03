@@ -15,8 +15,8 @@ function usage(cost, input = 0, output = 0) {
 const config = {
   version: "5",
   agents: [
-    { id: "builder", model: "test/model", agent: "build", permissions: ["read"] },
-    { id: "reviewer", model: "test/model", agent: "build", permissions: ["read"] },
+    { id: "builder", model: "test/model", agent: "build", permissions: [{ action: "read", resource: "*", effect: "allow" }] },
+    { id: "reviewer", model: "test/model", agent: "build", permissions: [{ action: "read", resource: "*", effect: "allow" }] },
   ],
   graph: {
     maxSteps: 20,

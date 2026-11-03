@@ -36,11 +36,23 @@ const defaultGraph = {
   ],
 };
 
+function permissionLines(permissions) {
+  if (permissions.length === 0) return ["permissions: []"];
+  return [
+    "permissions:",
+    ...permissions.flatMap((rule) => [
+      `  - action: ${JSON.stringify(rule.action)}`,
+      `    resource: ${JSON.stringify(rule.resource)}`,
+      `    effect: ${rule.effect}`,
+    ]),
+  ];
+}
+
 function agentDoc({
   id = "builder",
   model = "provider/model",
   agent,
-  permissions = ["read"],
+  permissions = [{ action: "read", resource: "*", effect: "allow" }],
   skills = [],
   subagents = [],
   description,
@@ -52,7 +64,7 @@ function agentDoc({
     `model: ${model}`,
     ...(agent ? [`agent: ${agent}`] : []),
     ...(description !== undefined ? [`description: ${description}`] : []),
-    `permissions: [${permissions.join(", ")}]`,
+    ...permissionLines(permissions),
     ...(skills.length > 0 ? [`skills: [${skills.join(", ")}]`] : []),
     ...(subagents.length > 0 ? [`subagents: [${subagents.join(", ")}]`] : []),
     "---",
@@ -186,7 +198,7 @@ test("config: a duplicate subagents entry is named", async () => {
 test("config: a non-array subagents value is named", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions: [read]\nsubagents: explore\n---\n\nPrompt.\n",
+      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\nsubagents: explore\n---\n\nPrompt.\n",
     },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
@@ -195,7 +207,7 @@ test("config: a non-array subagents value is named", async () => {
 test("config: an empty-string subagents entry is named", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "builder.md": '---\nid: builder\nmodel: provider/model\npermissions: [read]\nsubagents: [""]\n---\n\nPrompt.\n',
+      "builder.md": '---\nid: builder\nmodel: provider/model\npermissions:\n  - action: read\n    resource: "*"\n    effect: allow\nsubagents: [""]\n---\n\nPrompt.\n',
     },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
@@ -211,7 +223,7 @@ test("config: malformed agent frontmatter and a missing id are named", async () 
   assert.ok(codes((await loadConfig(malformed.path)).faults).includes("agent.frontmatter"));
 
   const missing = await graphConfig({
-    agentDocs: { "builder.md": "---\nmodel: provider/model\npermissions: [read]\n---\n\nPrompt.\n" },
+    agentDocs: { "builder.md": "---\nmodel: provider/model\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\n---\n\nPrompt.\n" },
   });
   assert.ok(codes((await loadConfig(missing.path)).faults).includes("agent.missing-id"));
 });
@@ -236,10 +248,41 @@ test("config: invalid agent properties and unknown frontmatter fields are named"
 
   const unknown = await graphConfig({
     agentDocs: {
-      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions: [read]\nlegacy: old\n---\n\nPrompt.\n",
+      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\nlegacy: old\n---\n\nPrompt.\n",
     },
   });
   assert.ok(codes((await loadConfig(unknown.path)).faults).includes("schema.unknown-field"));
+});
+
+test("config: permission rules must be {action, resource, effect} objects", async () => {
+  const stringEntry = await graphConfig({
+    agentDocs: { "builder.md": "---\nid: builder\nmodel: provider/model\npermissions: [read]\n---\n\nPrompt.\n" },
+  });
+  assert.ok(codes((await loadConfig(stringEntry.path)).faults).includes("schema.agent-permissions"));
+
+  const badEffect = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ permissions: [{ action: "read", resource: "*", effect: "yes" }] }) },
+  });
+  assert.ok(codes((await loadConfig(badEffect.path)).faults).includes("schema.agent-permissions"));
+
+  const duplicate = await graphConfig({
+    agentDocs: {
+      "builder.md": agentDoc({
+        permissions: [
+          { action: "read", resource: "*", effect: "allow" },
+          { action: "read", resource: "*", effect: "allow" },
+        ],
+      }),
+    },
+  });
+  assert.ok(codes((await loadConfig(duplicate.path)).faults).includes("schema.agent-permissions"));
+});
+
+test("config: a permission rule with a wildcard action is valid", async () => {
+  const { path } = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ permissions: [{ action: "*", resource: "*", effect: "deny" }] }) },
+  });
+  assert.deepEqual((await loadConfig(path)).faults, []);
 });
 
 test("config: a node must reference a loaded agent", async () => {

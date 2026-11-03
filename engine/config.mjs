@@ -18,6 +18,8 @@ const HANDOFF_LABEL = /^[A-Za-z][A-Za-z0-9_-]*$/;
 // reference can never traverse out of the graph directory.
 const SKILL_ID = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
+const PERMISSION_EFFECTS = new Set(["allow", "ask", "deny"]);
+
 // The dispatching agent is a handoff target, not a graph node.
 export const DISPATCHER_TARGET = "$dispatcher";
 
@@ -103,18 +105,26 @@ function validateAgentProperties(graphAgent, at, faults) {
   }
   if (graphAgent.agent !== undefined) string(graphAgent.agent, `${at}.agent`, faults);
   if (!Array.isArray(graphAgent.permissions) || graphAgent.permissions.length === 0) {
-    faults.push(fault("schema.agent-permissions", `${at}.permissions: must be a non-empty array of action names`));
+    faults.push(fault("schema.agent-permissions", `${at}.permissions: must be a non-empty array of {action, resource, effect} rules`));
   } else {
     const seen = new Set();
-    for (const [i, action] of graphAgent.permissions.entries()) {
-      if (typeof action !== "string" || action.trim() === "") {
-        faults.push(fault("schema.agent-permissions", `${at}.permissions[${i}]: must be a non-empty string`));
-      } else if (action === "*") {
-        faults.push(fault("schema.agent-permissions", `${at}.permissions[${i}]: '*' is not allowed; list the actions`));
-      } else if (seen.has(action)) {
-        faults.push(fault("schema.agent-permissions", `${at}.permissions[${i}]: duplicate action '${action}'`));
+    for (const [i, rule] of graphAgent.permissions.entries()) {
+      const atRule = `${at}.permissions[${i}]`;
+      if (!isObject(rule)) {
+        faults.push(fault("schema.agent-permissions", `${atRule}: must be an {action, resource, effect} rule`));
+        continue;
+      }
+      strict(rule, ["action", "resource", "effect"], atRule, faults);
+      string(rule.action, `${atRule}.action`, faults);
+      string(rule.resource, `${atRule}.resource`, faults);
+      if (typeof rule.effect !== "string" || !PERMISSION_EFFECTS.has(rule.effect)) {
+        faults.push(fault("schema.agent-permissions", `${atRule}.effect: must be one of allow, ask, deny`));
+      }
+      const key = `${rule.action}\u0000${rule.resource}\u0000${rule.effect}`;
+      if (seen.has(key)) {
+        faults.push(fault("schema.agent-permissions", `${atRule}: duplicate rule`));
       } else {
-        seen.add(action);
+        seen.add(key);
       }
     }
   }

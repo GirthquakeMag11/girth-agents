@@ -72,7 +72,16 @@ its prompt:
 id: builder
 model: openrouter/~deepseek/deepseek-flash-latest
 agent: build
-permissions: [read, edit, shell]
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
 skills: [test-first]
 ---
 Standing instructions for this graph agent.
@@ -96,9 +105,12 @@ Write the failing test first, make it pass, then refactor within the green.
 - `agents` lists Markdown agent document paths relative to the config. Each
   agent document has required `id`, `model`, and `permissions`, optional
   `agent` (the OpenCode agent to run, default `build`), and optional `skills`
-  references. The body is the agent's prompt; the prompt is not a frontmatter
-  field. Agent documents resolve relative to the config; skill ids resolve
-  under `skills/`.
+  references. `permissions` is a list of `{ action, resource, effect }` rules
+  (`effect` one of `allow`, `ask`, `deny`); `*` is a valid action or resource,
+  written block-style as `- action:` lines with `*` quoted (`"*"`) — a bare
+  `*` is a YAML alias. The body is the agent's prompt; the prompt is not a
+  frontmatter field. Agent documents resolve relative to the config; skill ids
+  resolve under `skills/`.
 - A graph agent's optional `skills` array references skill documents by id,
   where the id is the skill's filename under `skills/`. The loader follows
   those ids, deduplicates them, and reads each referenced skill once;
