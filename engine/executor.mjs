@@ -187,6 +187,7 @@ async function runNode({ driver, node, graphAgent, record, previousMessage, onEv
       permissions: permissionsFor({
         handoff: node.handoff.mode !== "terminal",
         allow: graphAgent.permissions,
+        subagents: graphAgent.subagents ?? [],
       }),
     });
     sessionId = session.id;

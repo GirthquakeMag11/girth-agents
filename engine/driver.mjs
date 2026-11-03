@@ -14,10 +14,11 @@ export function modelRef(model) {
 // A leading deny is the deny-rest. The agent's rules follow, with the
 // handoff action added by the engine for non-terminal nodes; the rules are
 // already {action, resource, effect}, so nothing is synthesized here.
-export function permissionsFor({ handoff = false, allow = [] } = {}) {
+export function permissionsFor({ handoff = false, allow = [], subagents = [] } = {}) {
   return [
     { action: "*", resource: "*", effect: "deny" },
     ...(handoff ? [{ action: "handoff", resource: "*", effect: "allow" }] : []),
     ...allow,
+    ...subagents.map((id) => ({ action: "subagent", resource: id, effect: "allow" })),
   ];
 }

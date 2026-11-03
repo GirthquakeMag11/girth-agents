@@ -5,12 +5,43 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runDispatch } from "../executor.mjs";
 import { createDispatchQueue } from "../queue.mjs";
+import { permissionsFor } from "../driver.mjs";
 
 const emptyTokens = () => ({ input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } });
 
 function usage(cost, input = 0, output = 0) {
   return { cost, tokens: { ...emptyTokens(), input, output } };
 }
+
+test("executor: subagents become a launch allowlist after the deny-rest", () => {
+  assert.deepEqual(
+    permissionsFor({
+      allow: [{ action: "read", resource: "*", effect: "allow" }],
+      subagents: ["explore"],
+    }),
+    [
+      { action: "*", resource: "*", effect: "deny" },
+      { action: "read", resource: "*", effect: "allow" },
+      { action: "subagent", resource: "explore", effect: "allow" },
+    ],
+  );
+  assert.deepEqual(permissionsFor({ subagents: [] }), [{ action: "*", resource: "*", effect: "deny" }]);
+});
+
+test("executor: a graph agent's subagents reach the session permissions", async () => {
+  const doc = {
+    ...config,
+    agents: [{ ...config.agents[0], subagents: ["explore"] }, config.agents[1]],
+  };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
+  const driver = fakeDriver({
+    onPrompt: async () => ({ outcome: "succeeded", cost: 0, tokens: emptyTokens() }),
+  });
+  await runDispatch({ driver, config: doc, record, onEvent: () => {} });
+  const permissions = driver.createdOptions[0].permissions;
+  assert.deepEqual(permissions[0], { action: "*", resource: "*", effect: "deny" });
+  assert.deepEqual(permissions.at(-1), { action: "subagent", resource: "explore", effect: "allow" });
+});
 
 const config = {
   version: "5",
@@ -34,17 +65,20 @@ const config = {
 function fakeDriver({ onPrompt }) {
   const sessions = new Map();
   const created = [];
+  const createdOptions = [];
   const deleted = [];
   let next = 0;
   return {
     created,
+    createdOptions,
     deleted,
     sessions,
-    async createSession({ title }) {
+    async createSession(options) {
       const id = `s${++next}`;
-      const node = title.split("/").at(-1);
+      const node = options.title.split("/").at(-1);
       sessions.set(id, { id, node, cost: 0, tokens: emptyTokens(), outcome: null });
       created.push(id);
+      createdOptions.push(options);
       return { id };
     },
     async getSession(id) {
