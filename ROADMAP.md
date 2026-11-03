@@ -2,16 +2,6 @@
 
 Open work only. Shipped work is in git history.
 
-## Isolated OpenCode live proof
-
-The in-process live proof (`engine/live-proof.mjs`) and the test suite exercise
-the engine, plugin, RPC, and installer end to end. The remaining proof runs
-against a real OpenCode server with a configured graph model: install the
-archive, start the server with the installed global plugin, dispatch a real
-workflow to a terminal, dispatch from a second location on the same queue,
-read the dashboard snapshot through RPC, and uninstall. It needs model
-credentials and is not part of CI.
-
 ## Graph template skills
 
 The graph's *node* agents (builder, reviewer) still reference no graph skills;
@@ -58,9 +48,10 @@ Not implemented.
 ## Dogfood
 
 Does using the engine to develop the engine make real work easier and more
-efficient than doing it directly? Continue only after deciding what friction
-and review value to measure; there is no controlled comparison and the fail
-loop has not been exercised.
+efficient than doing it directly? A real workflow dispatch reached a terminal
+on the live server; what remains is real use: dispatch from a second location
+on the same queue, read the dashboard snapshot live, and work the fail/repair
+loop. Continue only after deciding what friction and review value to measure.
 
 ## Deferred
 
