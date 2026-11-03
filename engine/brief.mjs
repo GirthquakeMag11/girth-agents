@@ -1,6 +1,8 @@
-// The brief is the whole input to a node: the graph agent's standing prompt, the
-// dispatched prompt, the node's objective, the upstream message, and the
-// generated handoff tools the node may use.
+// The brief is the whole input to a node: the dispatched prompt, the node's
+// objective, the upstream message, the resolved skills, and the generated
+// handoff tools the node may use. The graph agent's body is NOT here — it is
+// injected as the session's system prompt by the plugin (see runtime.mjs
+// sessionSystem); skills stay in the brief.
 
 function handoffSection(node) {
   if (node.handoff.mode === "terminal") {
@@ -34,7 +36,6 @@ function handoffSection(node) {
 
 export function composeBrief({ graphAgent, node, prompt, previousMessage, inputSource = "node" }) {
   const parts = [];
-  if (graphAgent.prompt) parts.push(`# Your instructions\n\n${graphAgent.prompt}`);
   for (const skill of graphAgent.skillDocs ?? []) {
     parts.push(`# Skill: ${skill.id}\n\n${skill.instructions}`);
   }

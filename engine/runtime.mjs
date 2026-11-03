@@ -85,6 +85,18 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
     }
   }
 
+  // The active node session's graph-agent body, or null when the session is
+  // not the engine's current node session. The plugin injects this as the
+  // session's system prompt; skills stay in the brief.
+  function sessionSystem(body) {
+    const active = queue?.active;
+    if (!active || active.sessionId !== body?.sessionID) return null;
+    const node = active.nodeDef;
+    if (!node) return null;
+    const graphAgent = config?.agents?.find((entry) => entry.id === node.agent);
+    return graphAgent?.prompt ?? null;
+  }
+
   async function waitForHandoffPreflight(timeoutMs = 5000) {
     if (handoffPreflight) return handoffPreflight;
     await Promise.race([
@@ -261,6 +273,7 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
     event,
     reportHandoffPreflight,
     handoffTools,
+    sessionSystem,
     handoff,
     dispatch,
     status,

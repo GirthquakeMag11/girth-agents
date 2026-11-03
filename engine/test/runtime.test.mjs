@@ -130,6 +130,42 @@ test("runtime: graph_info and graph_map describe the loaded graph", async () => 
   }
 });
 
+test("runtime: sessionSystem resolves the active node's agent body, and only while active", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-runtime-system-"));
+  try {
+    const configPath = await writeGraph(dir, terminalGraph());
+    let release;
+    let stalled = null;
+    const runtime = await createRuntime({
+      configPath,
+      driver: fakePluginDriver({
+        onPrompt: async ({ session }) => {
+          stalled = session.id;
+          await new Promise((resolve) => (release = resolve));
+          return { outcome: "succeeded" };
+        },
+      }),
+    });
+    runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+
+    runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir);
+    const deadline = Date.now() + 2000;
+    while (Date.now() < deadline && stalled === null) await new Promise((r) => setTimeout(r, 2));
+    assert.ok(stalled, "the dispatch reached the node prompt");
+    const activeId = runtime.queue.active?.id;
+
+    assert.equal(runtime.sessionSystem({ sessionID: stalled }), "Do the node within the dispatched scope.");
+    assert.equal(runtime.sessionSystem({ sessionID: "other" }), null, "an unrelated session has no system");
+    assert.equal(runtime.sessionSystem({ sessionID: "ses" }), null, "the dispatching session is not the node session");
+
+    release({ outcome: "succeeded" });
+    await runtime.wait(activeId, 5000);
+    assert.equal(runtime.sessionSystem({ sessionID: stalled }), null, "no system once the dispatch ends");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("runtime: dispatch is gated on a matching preflight report", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-runtime-preflight-"));
   try {

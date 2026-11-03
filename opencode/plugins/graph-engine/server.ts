@@ -367,6 +367,10 @@ export default Plugin.define({
     // against the server-side catalog entry, whose description/input are the
     // values this plugin registered, not the event-side tool shape.
     const hookRegistration = await ctx.session.hook("context", async (event: any) => {
+      // The graph agent's body is the node session's system prompt; its skills
+      // stay in the brief. Inject only for the engine's active node session.
+      const system = runtime.sessionSystem({ sessionID: event?.sessionID });
+      if (system) event.system.push({ type: "text", text: system });
       if (!event?.tools) return;
       const { labels: allowed } = runtime.handoffTools({ sessionID: event.sessionID });
       const allowedSet = new Set(allowed);

@@ -119,6 +119,41 @@ test("static plugin: the context hook removes undeclared labels", async () => {
   }
 });
 
+test("static plugin: the context hook injects the node agent's body as system", async () => {
+  const runtimeKey = Symbol.for("graph-engine.runtime");
+  const body = "STANDING: build only within the dispatched scope.\n";
+  let release;
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    agentDocs: { "builder.md": `---\nmodel: test/model\nmounts: [graph]\ntools: [read]\n---\n${body}` },
+    onPrompt: () => new Promise((resolve) => (release = resolve)),
+  });
+  try {
+    await plugin.setup();
+    const runtime = globalThis[runtimeKey];
+    runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, "/work/project");
+
+    const deadline = Date.now() + 2000;
+    while (Date.now() < deadline && runtime.queue.active?.sessionId == null) {
+      await new Promise((r) => setTimeout(r, 2));
+    }
+    const active = runtime.queue.active;
+    assert.ok(active?.sessionId, "a node session is active");
+
+    const hook = plugin.lastHook("context");
+    const event = { sessionID: active.sessionId, system: [], tools: {} };
+    await hook(event);
+    assert.deepEqual(event.system, [{ type: "text", text: body.trim() }]);
+
+    release({ outcome: "succeeded" });
+    await runtime.wait(active.id, 2000).catch(() => {});
+  } finally {
+    release?.({ outcome: "succeeded" });
+    delete globalThis[runtimeKey];
+    await plugin.close();
+  }
+});
+
 test("static plugin: a colliding label is not generated", async () => {
   const plugin = await loadStaticPlugin({
     graph: labelledGraph(),

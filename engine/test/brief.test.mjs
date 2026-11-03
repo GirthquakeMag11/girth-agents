@@ -4,7 +4,7 @@ import { composeBrief } from "../brief.mjs";
 
 const graphAgent = { prompt: "The graph agent's prompt." };
 
-test("brief: attached skills follow the agent's prompt", () => {
+test("brief: the agent body is system, not brief; skills still follow", () => {
   const brief = composeBrief({
     graphAgent: {
       prompt: "The graph agent's prompt.",
@@ -14,10 +14,11 @@ test("brief: attached skills follow the agent's prompt", () => {
     prompt: "p",
     previousMessage: null,
   });
-  const prompt = brief.indexOf("# Your instructions");
+  assert.doesNotMatch(brief, /# Your instructions/);
+  assert.doesNotMatch(brief, /The graph agent's prompt/);
   const skill = brief.indexOf("# Skill: test-first");
   const work = brief.indexOf("# Work");
-  assert.ok(prompt !== -1 && skill > prompt && work > skill);
+  assert.ok(skill !== -1 && work > skill);
   assert.match(brief, /Write the failing test first\./);
 });
 
@@ -39,7 +40,6 @@ test("brief: conditional handoffs list labels and descriptions without target id
     prompt: "The dispatched prompt.",
     previousMessage: "The previous review found one issue.",
   });
-  assert.match(brief, /The graph agent's prompt/);
   assert.match(brief, /The dispatched prompt/);
   assert.match(brief, /The previous review found one issue\./);
   assert.match(brief, /`pass`/);
