@@ -47,11 +47,21 @@ Not implemented.
 
 ## Dogfood
 
-Does using the engine to develop the engine make real work easier and more
-efficient than doing it directly? A real workflow dispatch reached a terminal
-on the live server; what remains is real use: dispatch from a second location
-on the same queue, read the dashboard snapshot live, and work the fail/repair
-loop. Continue only after deciding what friction and review value to measure.
+- Engineering is about structure. The product is good if it is easier to
+  understand and control the structure of the graph than to accomplish
+  whatever goal was in mind without it.
+- Conducting is about behavior. The product is good if it is easier to predict
+  and direct the behavior of the graph than to accomplish whatever goal was in
+  mind without it.
+- Both are about friction. The user engineers a certain structure to achieve a
+  certain behavior, and conducts a certain behavior to achieve a certain
+  result. Engineering uses the meta-system to build systems; conducting uses
+  the systems built.
+
+A real workflow dispatch reached a terminal on the live server; what remains
+is real use — dispatch from a second location on the same queue, read the
+dashboard snapshot live, and work the fail/repair loop — scored against the two
+friction bars above.
 
 ## Deferred
 
