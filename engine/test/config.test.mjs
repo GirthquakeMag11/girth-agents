@@ -366,6 +366,13 @@ test("config: a node carries its own tools and permissions rules", async () => {
   assert.ok(codes((await loadConfig(badEffect.path)).faults).includes("schema.node-effect"));
 });
 
+test("config: a node permission list is validated", async () => {
+  const empty = await graphConfig({
+    graph: { nodes: [{ id: "a", agent: "builder", objective: "A.", permissions: [], handoff: { mode: "terminal" } }] },
+  });
+  assert.ok(codes((await loadConfig(empty.path)).faults).includes("schema.node-permissions"));
+});
+
 test("config: a node must reference a loaded agent", async () => {
   const { path } = await graphConfig({
     graph: {

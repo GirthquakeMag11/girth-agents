@@ -43,6 +43,43 @@ test("executor: a graph agent's subagents reach the session permissions", async 
   assert.deepEqual(permissions.at(-1), { action: "subagent", resource: "explore", effect: "allow" });
 });
 
+test("executor: tool acquisition, permission override, and node rules keep their order", async () => {
+  const doc = {
+    version: "5",
+    agents: [
+      {
+        id: "builder",
+        model: "test/model",
+        mounts: ["graph"],
+        tools: ["read"],
+        permissions: [{ action: "read", resource: "*", effect: "deny" }],
+      },
+    ],
+    graph: {
+      nodes: [
+        {
+          id: "a",
+          agent: "builder",
+          objective: "A.",
+          tools: ["shell"],
+          permissions: [{ action: "edit", resource: "src/**", effect: "allow" }],
+          handoff: { mode: "terminal" },
+        },
+      ],
+    },
+  };
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
+  const driver = fakeDriver({ onPrompt: async () => ({ outcome: "succeeded", cost: 0, tokens: emptyTokens() }) });
+  await runDispatch({ driver, config: doc, record, onEvent: () => {} });
+  assert.deepEqual(driver.createdOptions[0].permissions, [
+    { action: "*", resource: "*", effect: "deny" },
+    { action: "read", resource: "*", effect: "allow" },
+    { action: "read", resource: "*", effect: "deny" },
+    { action: "shell", resource: "*", effect: "allow" },
+    { action: "edit", resource: "src/**", effect: "allow" },
+  ]);
+});
+
 const config = {
   version: "5",
   agents: [

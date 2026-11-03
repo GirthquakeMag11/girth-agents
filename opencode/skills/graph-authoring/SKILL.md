@@ -122,7 +122,10 @@ Write the failing test first, make it pass, then refactor within the green.
   by workflow.
 - A node has `id`, an `agent` reference to an agent document's `id`,
   `objective`, optional `budgetMs`, optional `maxVisits` (1–100; use 20 for a
-  repair loop), and `handoff`. The handoff message is the only context carried
+  repair loop), optional `tools` (tool names acquired by name, unioned with the
+  agent's), optional `permissions` (`{ action, resource, effect }` rules
+  appended after the agent's), and `handoff`. The handoff message is the only
+  context carried
   from one node to the next; the dispatch prompt, agent prompt and skills, and
   node objective are repeated in every brief. A node's work product is not an
   engine field. Nodes do not have a session mode.
