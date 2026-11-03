@@ -57,8 +57,7 @@ OpenCode-side artifacts.
 - One agent document schema (properties + prompt) with a field that names
   where the document mounts — graph, primary, subagent, combinable; the field
   name is not settled yet. The materializer carries the vocabulary mapping
-  between the two systems (`body ↔ system`, `description`, the `agent:`
-  runner, `mode`).
+  between the two systems (`body ↔ system`, `description`, `mode`).
 - Layered composition the user controls: identity, operational discipline
   (shared, installable, overridable — the existing skills path), and role.
   This is the decomposition OpenCode's base prompt never made; the graph-engine
