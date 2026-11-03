@@ -57,8 +57,9 @@ field, a dispatch record, or a dashboard field.
 - A skill is a Markdown document with a unique `id` and a non-empty instruction
   body. A graph agent's optional `skills` array references those documents.
 - The loader follows agent skill references, deduplicates and validates the
-  referenced documents, and attaches them to the agent. The brief appends each
-  resolved skill after the agent's prompt.
+  referenced documents, and attaches them to the agent. The brief carries the
+  resolved skills; the agent's body is the node session's system prompt (see
+  body-as-system), never the brief.
 - Unreferenced skill files are not loaded.
 - Removing one skill file is not removing skill support. Do not remove the
   agent `skills` field, the reference-driven loader, or brief injection without

@@ -369,7 +369,10 @@ export default Plugin.define({
     const hookRegistration = await ctx.session.hook("context", async (event: any) => {
       // The graph agent's body is the node session's system prompt; its skills
       // stay in the brief. Inject only for the engine's active node session.
-      const system = runtime.sessionSystem({ sessionID: event?.sessionID });
+      // (The hook fires for every request issued by that session — the agent
+      // loop and any auxiliary generate/compaction — which is intended: the
+      // body is standing context.)
+      const system = runtime.sessionSystem({ sessionID: event.sessionID });
       if (system) event.system.push({ type: "text", text: system });
       if (!event?.tools) return;
       const { labels: allowed } = runtime.handoffTools({ sessionID: event.sessionID });

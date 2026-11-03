@@ -15,7 +15,7 @@ export function modelRef(model) {
     providerID.includes("#") ||
     (variant !== undefined && (variant === "" || variant.includes("#")))
   ) {
-    const err = new Error(`model '${model}' is not a 'provider/model' reference`);
+    const err = new Error(`model '${model}' is not a 'provider/model' or 'provider/model#variant' reference`);
     err.kind = "model-ref";
     throw err;
   }

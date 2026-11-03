@@ -104,16 +104,18 @@ Write the failing test first, make it pass, then refactor within the green.
   the id is the skill's filename under `skills/`. The loader follows those ids,
   deduplicates them, and reads each referenced skill once; unreferenced skill
   files are not read. Unreadable, malformed, or empty skills are named faults.
-  The brief appends each resolved skill after the agent's prompt.
+  The brief carries each resolved skill; the agent's body is the node session's
+  system prompt, not the brief.
 - A node document has required `agent` (a graph agent's id) and `handoff`, and
   optional `objective`, `budgetMs`, `maxVisits` (1–100; use 20 for a repair
   loop), `tools` (tool names acquired by name, unioned with the agent's), and
   `permissions` (`{ action, resource, effect }` rules appended after the
   agent's). The body is the node's own layered prompt, combined with the
   agent's. The handoff message is the only context carried from one node to the
-  next; the dispatch prompt, agent prompt and skills, the node prompt, and the
-  node objective are repeated in every brief. A node's work product is not an
-  engine field. Nodes do not have a session mode.
+  next; the dispatch prompt, the resolved skills, the node prompt, and the node
+  objective are repeated in every brief (the agent's body is the session system
+  prompt). A node's work product is not an engine field. Nodes do not have a
+  session mode.
 - `handoff` is exactly one of:
   - `mode: terminal` — the node ends after its session succeeds.
   - `mode: unconditional` with `to`, `description`, optional `resume` — the
