@@ -42,6 +42,8 @@ function agentDoc({
   agent,
   permissions = ["read"],
   skills = [],
+  subagents = [],
+  description,
   body = "Prompt.",
 } = {}) {
   return [
@@ -49,8 +51,10 @@ function agentDoc({
     `id: ${id}`,
     `model: ${model}`,
     ...(agent ? [`agent: ${agent}`] : []),
+    ...(description !== undefined ? [`description: ${description}`] : []),
     `permissions: [${permissions.join(", ")}]`,
     ...(skills.length > 0 ? [`skills: [${skills.join(", ")}]`] : []),
+    ...(subagents.length > 0 ? [`subagents: [${subagents.join(", ")}]`] : []),
     "---",
     "",
     body,
@@ -143,6 +147,41 @@ test("config: skills load from Markdown and resolve onto the graph agent", async
   assert.equal(summary.agents[0].prompt, "Prompt.");
   assert.deepEqual(summary.agents[0].skills, ["test-first"]);
   assert.deepEqual(summary.agents[0].skillPaths, ["skills/test-first.md"]);
+});
+
+test("config: an agent carries description and subagents through the loader", async () => {
+  const { path } = await graphConfig({
+    agentDocs: {
+      "builder.md": agentDoc({ description: "Builds it.", subagents: ["explore", "general"] }),
+    },
+  });
+  const loaded = await loadConfig(path);
+  assert.deepEqual(loaded.faults, []);
+  const agent = loaded.doc.agents[0];
+  assert.equal(agent.description, "Builds it.");
+  assert.deepEqual(agent.subagents, ["explore", "general"]);
+  assert.deepEqual(
+    Object.keys(agent).sort(),
+    ["description", "id", "model", "permissions", "prompt", "subagents"],
+  );
+
+  const summary = configSummary(loaded.doc, path);
+  assert.equal(summary.agents[0].description, "Builds it.");
+  assert.deepEqual(summary.agents[0].subagents, ["explore", "general"]);
+});
+
+test("config: a non-string subagents entry is named", async () => {
+  const { path } = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ subagents: [123] }) },
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
+});
+
+test("config: a duplicate subagents entry is named", async () => {
+  const { path } = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ subagents: ["explore", "explore"] }) },
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
 });
 
 test("config: a missing agent document is named", async () => {

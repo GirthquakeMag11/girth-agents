@@ -122,6 +122,23 @@ function validateAgentProperties(graphAgent, at, faults) {
     }
   }
   pathArray(graphAgent.skills, `${at}.skills`, faults, "schema.agent-skills");
+  if (graphAgent.description !== undefined) string(graphAgent.description, `${at}.description`, faults);
+  if (graphAgent.subagents !== undefined) {
+    if (!Array.isArray(graphAgent.subagents)) {
+      faults.push(fault("schema.agent-subagents", `${at}.subagents: must be an array of OpenCode agent ids`));
+    } else {
+      const seen = new Set();
+      for (const [i, subagent] of graphAgent.subagents.entries()) {
+        if (typeof subagent !== "string" || subagent.trim() === "") {
+          faults.push(fault("schema.agent-subagents", `${at}.subagents[${i}]: must be a non-empty string`));
+        } else if (seen.has(subagent)) {
+          faults.push(fault("schema.agent-subagents", `${at}.subagents[${i}]: duplicate '${subagent}'`));
+        } else {
+          seen.add(subagent);
+        }
+      }
+    }
+  }
 }
 
 function validateGraphAgent(graphAgent, at, faults) {
@@ -129,14 +146,14 @@ function validateGraphAgent(graphAgent, at, faults) {
     faults.push(fault("schema.agent", `${at}: must be an object`));
     return;
   }
-  strict(graphAgent, ["id", "model", "agent", "permissions", "prompt", "skills"], at, faults);
+  strict(graphAgent, ["id", "model", "agent", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
   string(graphAgent.id, `${at}.id`, faults);
   validateAgentProperties(graphAgent, at, faults);
   if (graphAgent.prompt !== undefined) string(graphAgent.prompt, `${at}.prompt`, faults);
 }
 
 function validateAgentFrontmatter(data, rel, faults) {
-  strict(data, ["id", "model", "agent", "permissions", "skills"], rel, faults);
+  strict(data, ["id", "model", "agent", "permissions", "skills", "description", "subagents"], rel, faults);
   if (typeof data.id !== "string" || data.id.trim() === "") {
     faults.push(fault("agent.missing-id", `${rel}: frontmatter needs an id`));
   }
@@ -530,9 +547,11 @@ async function loadAgentDocs(paths, baseDir) {
       id: data.id,
       model: data.model,
       ...(data.agent !== undefined ? { agent: data.agent } : {}),
+      ...(data.description !== undefined ? { description: data.description } : {}),
       permissions: data.permissions,
       ...(prompt !== "" ? { prompt } : {}),
       ...(data.skills !== undefined ? { skills: data.skills } : {}),
+      ...(data.subagents !== undefined ? { subagents: data.subagents } : {}),
     });
     if (Array.isArray(data.skills)) refs.push(...data.skills);
   }
@@ -752,10 +771,12 @@ export function configSummary(doc, path) {
       id: graphAgent.id,
       model: graphAgent.model,
       agent: graphAgent.agent ?? "build",
+      description: graphAgent.description ?? null,
       permissions: graphAgent.permissions,
       prompt: graphAgent.prompt ?? null,
       skills: (graphAgent.skillDocs ?? []).map((skill) => skill.id),
       skillPaths: graphAgent.skills ?? [],
+      subagents: graphAgent.subagents ?? [],
     })),
   };
 }
