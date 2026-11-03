@@ -289,6 +289,7 @@ export default Plugin.define({
           if (result.valid === true) {
             await ctx.agent.reload();
             await ctx.skill.reload();
+            await reportSubagents();
           }
           return { content: JSON.stringify(result) };
         },
@@ -365,19 +366,23 @@ export default Plugin.define({
     // The subagent gate: a graph agent's `subagents` id that is not in the
     // live agent catalog defects before a node runs. The live list (read after
     // materialization, so mounted agents count) is the authority; never a copy.
-    try {
-      const listed = await ctx.agent.list();
-      const live = new Set((listed?.data ?? []).map((agent) => agent.id));
-      const missing = [];
-      for (const graphAgent of runtime.config.agents ?? []) {
-        for (const subagent of graphAgent.subagents ?? []) {
-          if (!live.has(subagent)) missing.push({ agent: graphAgent.id, subagent });
+    // Re-run on a valid reload so the gate follows the catalog, not a snapshot.
+    const reportSubagents = async () => {
+      try {
+        const listed = await ctx.agent.list();
+        const live = new Set((listed?.data ?? []).map((agent) => agent.id));
+        const missing = [];
+        for (const graphAgent of runtime.config.agents ?? []) {
+          for (const subagent of graphAgent.subagents ?? []) {
+            if (!live.has(subagent)) missing.push({ agent: graphAgent.id, subagent });
+          }
         }
+        runtime.reportSubagentPreflight({ missing, catalogAvailable: true });
+      } catch {
+        runtime.reportSubagentPreflight({ missing: [], catalogAvailable: false });
       }
-      runtime.reportSubagentPreflight({ missing, catalogAvailable: true });
-    } catch {
-      runtime.reportSubagentPreflight({ missing: [], catalogAvailable: false });
-    }
+    };
+    await reportSubagents();
 
     // The context hook asks the engine for the active session's allowed labels
     // and removes undeclared or colliding handoff tools. Ownership is judged

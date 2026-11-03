@@ -195,6 +195,35 @@ test("static plugin: a graph agent's subagents are checked against the live cata
   }
 });
 
+test("static plugin: a valid reload re-checks the subagent catalog", async () => {
+  const context = { sessionID: "ses", agent: "build", messageID: "m1", id: "t1" };
+  const plugin = await loadStaticPlugin({ graph: terminalGraph() });
+  try {
+    await plugin.setup();
+    const first = await toolByName(plugin.editor, "dispatch").execute(
+      { node: "a", prompt: "p", background: false },
+      context,
+    );
+    assert.match(first.content, /d-\d/, "a clean catalog dispatches");
+
+    await writeFile(
+      join(plugin.graphDir, "agents", "builder.md"),
+      "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [ghost]\n---\nDo the node.\n",
+      "utf8",
+    );
+    const reloadResult = JSON.parse((await plugin.editor.get("reload").execute({}, context)).content);
+    assert.equal(reloadResult.valid, true);
+
+    await assert.rejects(
+      () => toolByName(plugin.editor, "dispatch").execute({ node: "a", prompt: "p", background: false }, context),
+      /subagent\.unknown.*builder -> ghost/,
+      "the reload re-reported the missing subagent",
+    );
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: a colliding label is not generated", async () => {
   const plugin = await loadStaticPlugin({
     graph: labelledGraph(),
