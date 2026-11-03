@@ -306,7 +306,7 @@ Your standing role: help the user run the build pipeline.
     assert.deepEqual(update.draft.model, { providerID: "test", id: "model" }, "model is a Model.Ref object");
     assert.equal(update.draft.description, "The user liaison.");
     assert.match(update.draft.system, /Your standing role/);
-    assert.deepEqual(update.draft.permissions, []);
+    assert.deepEqual(update.draft.permissions, [{ action: "*", resource: "*", effect: "deny" }], "a mount is deny-by-default");
     assert.ok(plugin.skillAdds.length === 0, "no skills follow a mount without references");
   } finally {
     await plugin.close();

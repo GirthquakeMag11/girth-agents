@@ -19,14 +19,6 @@ its graph agents carry only standing prompts. Skills are already first-class in
 the schema and loader; the template should eventually reference one or two
 graph skills so the shipped example exercises the capability.
 
-## Mount tools surface
-
-A primary/subagent mount's `tools` acquisitions do not yet surface on the
-OpenCode side: only the `permissions` triples map into `Agent.Info`, while
-`tools` is a session-provisioning concern. Decide how a mounted agent's
-`tools` list becomes its registry permissions; the Engineer/Conductor re-root
-makes this concrete.
-
 ## Re-root the primary agents
 
 The Engineer and Conductor are hand-authored OpenCode Markdown. Re-derive them

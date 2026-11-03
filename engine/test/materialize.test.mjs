@@ -24,7 +24,10 @@ test("materialize: primary and subagent mounts are published, graph mounts are n
   assert.equal(plan.agents[0].system, "Help the user.");
   assert.equal(plan.agents[0].description, "Liaison.");
   assert.deepEqual(plan.agents[1].mode, "subagent");
-  assert.deepEqual(plan.agents[1].permissions, [{ action: "read", resource: "*", effect: "allow" }]);
+  assert.deepEqual(plan.agents[1].permissions, [
+    { action: "*", resource: "*", effect: "deny" },
+    { action: "read", resource: "*", effect: "allow" },
+  ]);
   assert.deepEqual(plan.skills, []);
 });
 
@@ -34,6 +37,40 @@ test("materialize: a dual primary+subagent mount maps to mode 'all', not 'primar
     BASE,
   );
   assert.equal(plan.agents[0].mode, "all");
+});
+
+test("materialize: tools acquire by name, permissions win, subagents are a launch allowlist", () => {
+  const plan = materializationPlan(
+    {
+      agents: [
+        {
+          id: "a",
+          model: "test/model",
+          mounts: ["primary"],
+          prompt: "P.",
+          tools: ["read", "edit"],
+          permissions: [{ action: "read", resource: "*.env", effect: "deny" }],
+          subagents: ["explore"],
+        },
+      ],
+    },
+    BASE,
+  );
+  assert.deepEqual(plan.agents[0].permissions, [
+    { action: "*", resource: "*", effect: "deny" },
+    { action: "read", resource: "*", effect: "allow" },
+    { action: "edit", resource: "*", effect: "allow" },
+    { action: "read", resource: "*.env", effect: "deny" },
+    { action: "subagent", resource: "explore", effect: "allow" },
+  ]);
+});
+
+test("materialize: a mount with no acquisitions is deny-by-default", () => {
+  const plan = materializationPlan(
+    { agents: [{ id: "a", model: "test/model", mounts: ["subagent"], prompt: "P." }] },
+    BASE,
+  );
+  assert.deepEqual(plan.agents[0].permissions, [{ action: "*", resource: "*", effect: "deny" }]);
 });
 
 test("materialize: the model string becomes a Model.Ref object", () => {

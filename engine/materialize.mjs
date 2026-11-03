@@ -14,7 +14,7 @@
 // A graph-only mount is never published — its node sessions are provisioned by
 // the engine directly, and nothing graph-side enters the OpenCode catalog.
 import { resolve } from "node:path";
-import { modelRef } from "./driver.mjs";
+import { modelRef, permissionsFor } from "./driver.mjs";
 
 export function materializationPlan(config, baseDir) {
   const agents = [];
@@ -34,8 +34,16 @@ export function materializationPlan(config, baseDir) {
       system: graphAgent.prompt ?? "",
       model: modelRef(graphAgent.model),
       description: graphAgent.description ?? "",
-      // Self-contained copy: the plan must not alias live engine state.
-      permissions: (graphAgent.permissions ?? []).map((rule) => ({ ...rule })),
+      // Mounts are deny-by-default, exactly like graph node sessions: tools
+      // acquire by name, explicit permission triples win (appended later), and
+      // `subagents` becomes the launch allowlist.
+      permissions: permissionsFor({
+        rules: [
+          ...(graphAgent.tools ?? []).map((name) => ({ action: name, resource: "*", effect: "allow" })),
+          ...(graphAgent.permissions ?? []),
+        ],
+        subagents: graphAgent.subagents ?? [],
+      }),
     });
     for (const skill of graphAgent.skillDocs ?? []) {
       skills.set(skill.id, {
