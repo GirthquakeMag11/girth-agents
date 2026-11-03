@@ -184,6 +184,24 @@ test("config: a duplicate subagents entry is named", async () => {
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
 });
 
+test("config: a non-array subagents value is named", async () => {
+  const { path } = await graphConfig({
+    agentDocs: {
+      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions: [read]\nsubagents: explore\n---\n\nPrompt.\n",
+    },
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
+});
+
+test("config: an empty-string subagents entry is named", async () => {
+  const { path } = await graphConfig({
+    agentDocs: {
+      "builder.md": '---\nid: builder\nmodel: provider/model\npermissions: [read]\nsubagents: [""]\n---\n\nPrompt.\n',
+    },
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
+});
+
 test("config: a missing agent document is named", async () => {
   const { path } = await graphConfig({ agentDocs: {}, agentPaths: ["agents/missing.md"] });
   assert.ok(codes((await loadConfig(path)).faults).includes("agent.unreadable"));
