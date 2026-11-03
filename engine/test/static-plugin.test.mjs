@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { loadStaticPlugin, terminalGraph, labelledGraph } from "./static-plugin-harness.mjs";
 
 const CONTROL_TOOLS = new Set(["dispatch", "dispatch_status", "dispatch_cancel", "reload", "graph_info", "graph_map"]);
@@ -235,6 +237,38 @@ Write the failing test first, make it pass, then refactor.
   }
 });
 
+test("static plugin: a valid reload re-publishes mounts; an invalid one does not", async () => {
+  const plugin = await loadStaticPlugin({ graph: terminalGraph() });
+  const context = { sessionID: "ses_reload", agent: "build", messageID: "m1", id: "t1" };
+  try {
+    await plugin.setup();
+    assert.equal(plugin.agentUpdates.length, 0, "no mounts to publish initially");
+
+    const liaisonDoc = `---
+model: test/model
+mounts: [primary]
+description: The user liaison.
+---
+Help the user run the pipeline.
+`;
+    await writeFile(join(plugin.graphDir, "agents", "liaison.md"), liaisonDoc, "utf8");
+    const valid = JSON.parse((await plugin.editor.get("reload").execute({}, context)).content);
+    assert.equal(valid.valid, true);
+    assert.equal(plugin.agentUpdates.length, 1);
+    assert.equal(plugin.agentUpdates[0].id, "liaison");
+    assert.equal(plugin.agentUpdates[0].draft.mode, "primary");
+
+    // A broken config keeps the old registrations and re-publishes nothing.
+    await writeFile(join(plugin.graphDir, "config.json"), "{ not json", "utf8");
+    const before = plugin.agentUpdates.length;
+    const invalid = JSON.parse((await plugin.editor.get("reload").execute({}, context)).content);
+    assert.equal(invalid.valid, false);
+    assert.equal(plugin.agentUpdates.length, before, "an invalid reload does not re-publish");
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: cleanup disposes registrations but never stops the engine", async () => {
   const key = Symbol.for("graph-engine.runtime");
   const plugin = await loadStaticPlugin({ graph: terminalGraph() });
@@ -242,9 +276,12 @@ test("static plugin: cleanup disposes registrations but never stops the engine",
     const cleanup = await plugin.setup();
     const engine = globalThis[key];
     assert.ok(engine);
+    const mountTokens = [...plugin.mountDisposals];
+    assert.ok(mountTokens.length >= 2, "the agent and skill transforms registered");
     await cleanup();
     assert.equal(globalThis[key], engine, "cleanup leaves the engine running");
     assert.equal(engine.graphInfo().graph.nodes[0].id, "a");
+    assert.ok(mountTokens.every((token) => token.disposed), "cleanup disposes the mount registrations");
   } finally {
     delete globalThis[key];
     await plugin.close();

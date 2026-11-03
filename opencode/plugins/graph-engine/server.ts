@@ -88,22 +88,33 @@ export default Plugin.define({
     });
 
     // Publish primary/subagent mounts and their skills into OpenCode's live
-    // registries. Graph-only agents are never published.
-    const plan = materializationPlan(runtime.config);
-    const agentRegistration = await ctx.agent.transform((editor) => {
-      for (const entry of plan.agents) {
-        editor.update(entry.id, (draft) => {
-          draft.mode = entry.mode;
-          draft.system = entry.system;
-          draft.model = entry.model;
-          draft.description = entry.description;
-          draft.permissions = [...entry.permissions];
-        });
-      }
-    });
-    const skillRegistration = await ctx.skill.transform((editor) => {
-      for (const skill of plan.skills) editor.add(skill);
-    });
+    // registries. Graph-only agents are never published. Re-run on a valid
+    // reload so changed mounts, descriptions, or skills reach the registry.
+    // LIVE SPIKE: confirm update(absent-id) upserts, add()'s {id,name,
+    // description,content} shape, and the semantics of an empty description.
+    const mountRegistrations: Array<{ dispose?: () => void | Promise<void> }> = [];
+    const publishMounts = async () => {
+      const plan = materializationPlan(runtime.config);
+      mountRegistrations.push(
+        await ctx.agent.transform((editor) => {
+          for (const entry of plan.agents) {
+            editor.update(entry.id, (draft) => {
+              draft.mode = entry.mode;
+              draft.system = entry.system;
+              draft.model = entry.model;
+              draft.description = entry.description;
+              draft.permissions = [...entry.permissions];
+            });
+          }
+        }),
+      );
+      mountRegistrations.push(
+        await ctx.skill.transform((editor) => {
+          for (const skill of plan.skills) editor.add(skill);
+        }),
+      );
+    };
+    await publishMounts();
 
     let generatedLabels: string[] = [];
     let knownCollisions = new Set<string>();
@@ -281,6 +292,7 @@ export default Plugin.define({
             source: toolSource(context),
           });
           const result = await runtime.reload();
+          if (result.valid === true) await publishMounts();
           return { content: JSON.stringify(result) };
         },
       });
@@ -395,8 +407,7 @@ export default Plugin.define({
       void transformRegistration?.dispose?.();
       void rpcRegistration?.dispose?.();
       void hookRegistration?.dispose?.();
-      void agentRegistration?.dispose?.();
-      void skillRegistration?.dispose?.();
+      for (const registration of mountRegistrations) void registration?.dispose?.();
     };
   },
 });

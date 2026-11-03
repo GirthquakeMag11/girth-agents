@@ -14,6 +14,8 @@ export function materializationPlan(config) {
   const skills = new Map();
   for (const graphAgent of config.agents ?? []) {
     const mounts = graphAgent.mounts ?? [];
+    // One registry entry per agent; a dual mount collapses to `primary`, and a
+    // subagent launch of such an agent rides on that primary entry.
     const mode = mounts.includes("primary") ? "primary" : mounts.includes("subagent") ? "subagent" : null;
     if (mode === null) continue;
     agents.push({
@@ -22,7 +24,8 @@ export function materializationPlan(config) {
       system: graphAgent.prompt ?? "",
       model: graphAgent.model,
       description: graphAgent.description ?? "",
-      permissions: graphAgent.permissions ?? [],
+      // Self-contained copy: the plan must not alias live engine state.
+      permissions: (graphAgent.permissions ?? []).map((rule) => ({ ...rule })),
     });
     for (const skill of graphAgent.skillDocs ?? []) {
       skills.set(skill.id, {

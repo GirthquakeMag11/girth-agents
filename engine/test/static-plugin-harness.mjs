@@ -138,6 +138,7 @@ export function createContext(editor, { directory = "/work/project", options = {
   const rpcRegistrations = [];
   const agentUpdates = [];
   const skillAdds = [];
+  const mountDisposals = [];
   let nextSession = 0;
   let transformCalls = 0;
 
@@ -230,7 +231,9 @@ export function createContext(editor, { directory = "/work/project", options = {
           },
         };
         await callback(editor);
-        return { dispose: async () => {} };
+        const token = { disposed: false };
+        mountDisposals.push(token);
+        return { dispose: async () => { token.disposed = true; } };
       },
     },
     skill: {
@@ -241,7 +244,9 @@ export function createContext(editor, { directory = "/work/project", options = {
           },
         };
         await callback(editor);
-        return { dispose: async () => {} };
+        const token = { disposed: false };
+        mountDisposals.push(token);
+        return { dispose: async () => { token.disposed = true; } };
       },
     },
     rpc: {
@@ -261,6 +266,7 @@ export function createContext(editor, { directory = "/work/project", options = {
     rpcRegistrations,
     agentUpdates,
     skillAdds,
+    mountDisposals,
     get transformCalls() {
       return transformCalls;
     },
@@ -348,6 +354,7 @@ export async function loadStaticPlugin({
       rpcRegistrations: context.rpcRegistrations,
       agentUpdates: context.agentUpdates,
       skillAdds: context.skillAdds,
+      mountDisposals: context.mountDisposals,
       get transformCalls() {
         return context.transformCalls;
       },
