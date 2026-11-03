@@ -67,6 +67,27 @@ field, a dispatch record, or a dashboard field.
   it. Do not infer a feature cut from an empty example or an omitted mention in
   a rewrite spec.
 
+## Agents mount; they are not cloned
+
+- An agent is one Markdown document: frontmatter properties plus a prompt
+  body. There is no separate graph-agent schema and OpenCode-agent schema.
+- Graph agent, primary agent, and subagent are **mounts** — where the agent is
+  accessible — not distinct kinds. The same document mounts in more than one
+  place.
+- Moving an agent between mounts is a keyword change in one place, not a
+  rewrite, a copy, or a convention the user must relearn per surface.
+- The graph-engine materializes OpenCode's platform artifacts (agent files,
+  skills) from these documents. Users author graph-engine documents; they do
+  not hand-author OpenCode `agent`/`mode` files, reproduce an inherited base
+  prompt, or write a per-agent plugin to express a mount.
+- Agent composition is layered, not monolithic: identity, operational
+  discipline, and role are separate pieces the materializer assembles.
+  Changing one piece must not force the user to re-express the others.
+- OpenCode's native agent mechanics (opaque base-prompt inheritance and
+  replacement, plugin-owned "mode" behavior, strict RPC shapes) are
+  implementation details behind the materializer, never user surface. Do not
+  leak them.
+
 ## Check before proposing
 
 1. Is the behavior sending context or control to an agent?
@@ -74,8 +95,10 @@ field, a dispatch record, or a dashboard field.
    target and `resume`, express it?
 3. Does the engine already know the target from config, the active session, or
    a retained origin?
+4. Would the proposal define a new *kind* of agent instead of a new place to
+   mount the one agent document?
 
-If yes to any, do not introduce a new tool or endpoint.
+If yes to any, do not introduce a new tool, endpoint, or agent kind.
 
 ## Banned active abstractions
 

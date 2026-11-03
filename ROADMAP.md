@@ -45,6 +45,35 @@ open, so the replacement schema is not being encoded yet. The current
 
 Not implemented.
 
+## Agent taxonomy and materialization
+
+The graph has two agent surfaces today: the OpenCode agents the product ships
+(the Engineer and Conductor are hand-authored OpenCode Markdown) and the graph
+agents in the config. The target is one document, three mounts — a single
+agent schema installed as a graph agent, a primary liaison, or a subagent,
+where the mount is a keyword and the graph-engine materializes the
+OpenCode-side artifacts.
+
+- One agent document schema (properties + prompt) with an `access`/surface
+  field (graph, primary, subagent; combinable). The materializer carries the
+  vocabulary mapping between the two systems (`body ↔ system`,
+  `description`, the `agent:` runner, `mode`).
+- Layered composition the user controls: identity, operational discipline
+  (shared, installable, overridable — the existing skills path), and role.
+  This is the decomposition OpenCode's base prompt never made; the graph-engine
+  owns assembly so users never face inherit-vs-replace.
+- The materializer absorbs the platform's sharp edges, catalogued this cycle:
+  opaque base-prompt inherit/replace, plugin-only "mode" behavior,
+  no-`add` agent transform, undocumented `modes/` directory and `tool.hook`,
+  strict RPC schema requirements, silent agent switching.
+- Open fork before any emitter is built: **file-emission** (write mounts into
+  `$OPENCODE_CONFIG`; must resolve the seed-once / checksum / round-trip story)
+  vs **runtime registration** (live, but depends on undocumented surfaces).
+- The Engineer and Conductor are the first mounts to be re-derived from the
+  shared schema rather than hand-authored.
+
+Not implemented.
+
 ## Graph agent subagents
 
 Graph agent configurations should accept an optional `subagents` list of exact
