@@ -176,6 +176,65 @@ test("static plugin: one process-global engine is reused across setups", async (
   }
 });
 
+test("static plugin: a primary mount is published, a graph-only mount is not", async () => {
+  const liaisonDoc = `---
+model: test/model
+mounts: [graph, primary]
+description: The user liaison.
+---
+Your standing role: help the user run the build pipeline.
+`;
+  const plugin = await loadStaticPlugin({ graph: terminalGraph(), agentDocs: { "liaison.md": liaisonDoc } });
+  try {
+    await plugin.setup();
+    assert.equal(plugin.agentUpdates.length, 1, "exactly the primary mount is published");
+    const update = plugin.agentUpdates[0];
+    assert.equal(update.id, "liaison");
+    assert.equal(update.draft.mode, "primary");
+    assert.equal(update.draft.model, "test/model");
+    assert.equal(update.draft.description, "The user liaison.");
+    assert.match(update.draft.system, /Your standing role/);
+    assert.deepEqual(update.draft.permissions, []);
+    assert.ok(plugin.skillAdds.length === 0, "no skills follow a mount without references");
+  } finally {
+    await plugin.close();
+  }
+});
+
+test("static plugin: a referenced skill follows a subagent mount", async () => {
+  const reviewerDoc = `---
+model: test/model
+mounts: [subagent]
+skills: [test-first]
+---
+Review the change.
+`;
+  const skillDoc = `---
+name: Test-first
+description: TDD discipline.
+---
+Write the failing test first, make it pass, then refactor.
+`;
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    agentDocs: { "reviewer.md": reviewerDoc },
+    skillFiles: { "test-first.md": skillDoc },
+  });
+  try {
+    await plugin.setup();
+    assert.equal(plugin.skillAdds.length, 1);
+    const skill = plugin.skillAdds[0];
+    assert.equal(skill.id, "test-first");
+    assert.equal(skill.name, "Test-first");
+    assert.equal(skill.description, "TDD discipline.");
+    assert.match(skill.content, /failing test/);
+    assert.equal(plugin.agentUpdates[0].id, "reviewer");
+    assert.equal(plugin.agentUpdates[0].draft.mode, "subagent");
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: cleanup disposes registrations but never stops the engine", async () => {
   const key = Symbol.for("graph-engine.runtime");
   const plugin = await loadStaticPlugin({ graph: terminalGraph() });

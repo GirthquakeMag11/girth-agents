@@ -136,6 +136,8 @@ export function createContext(editor, { directory = "/work/project", options = {
   const sessionCreates = [];
   const graphSessions = new Map();
   const rpcRegistrations = [];
+  const agentUpdates = [];
+  const skillAdds = [];
   let nextSession = 0;
   let transformCalls = 0;
 
@@ -218,6 +220,30 @@ export function createContext(editor, { directory = "/work/project", options = {
         return [];
       },
     },
+    agent: {
+      async transform(callback) {
+        const editor = {
+          update(id, fn) {
+            const draft = {};
+            fn(draft);
+            agentUpdates.push({ id, draft });
+          },
+        };
+        await callback(editor);
+        return { dispose: async () => {} };
+      },
+    },
+    skill: {
+      async transform(callback) {
+        const editor = {
+          add(skill) {
+            skillAdds.push(skill);
+          },
+        };
+        await callback(editor);
+        return { dispose: async () => {} };
+      },
+    },
     rpc: {
       async register(definition, implementation) {
         rpcRegistrations.push({ definition, implementation });
@@ -233,6 +259,8 @@ export function createContext(editor, { directory = "/work/project", options = {
     permissionCalls,
     sessionCreates,
     rpcRegistrations,
+    agentUpdates,
+    skillAdds,
     get transformCalls() {
       return transformCalls;
     },
@@ -249,6 +277,7 @@ export async function loadStaticPlugin({
   options = {},
   resetEngine = true,
   agentDocs = {},
+  skillFiles = {},
   onPrompt = null,
   locations = {},
 } = {}) {
@@ -273,6 +302,10 @@ export async function loadStaticPlugin({
     }
     for (const node of graph.nodes ?? []) {
       await writeFile(join(graphDir, "nodes", `${node.id}.md`), nodeDoc(node), "utf8");
+    }
+    await mkdir(join(graphDir, "skills"), { recursive: true });
+    for (const [name, content] of Object.entries(skillFiles)) {
+      await writeFile(join(graphDir, "skills", name), content, "utf8");
     }
     await symlink(ENGINE_DIR, join(dir, "engine"), "dir");
 
@@ -313,6 +346,8 @@ export async function loadStaticPlugin({
       permissionCalls: context.permissionCalls,
       sessionCreates: context.sessionCreates,
       rpcRegistrations: context.rpcRegistrations,
+      agentUpdates: context.agentUpdates,
+      skillAdds: context.skillAdds,
       get transformCalls() {
         return context.transformCalls;
       },

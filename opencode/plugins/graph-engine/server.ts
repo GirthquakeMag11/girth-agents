@@ -6,6 +6,7 @@ import { Plugin } from "@opencode/plugin";
 import { createPluginDriver } from "./engine/plugin-driver.mjs";
 import { createRuntime } from "./engine/runtime.mjs";
 import { handoffLabels } from "./engine/config.mjs";
+import { materializationPlan } from "./engine/materialize.mjs";
 import { GraphEngine } from "./rpc.ts";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -84,6 +85,24 @@ export default Plugin.define({
     const rpcRegistration = await ctx.rpc.register(GraphEngine, {
       snapshot: async () => dashboardSnapshot(runtime),
       dispatchStatus: async (input: any) => runtime.status(input.dispatchId),
+    });
+
+    // Publish primary/subagent mounts and their skills into OpenCode's live
+    // registries. Graph-only agents are never published.
+    const plan = materializationPlan(runtime.config);
+    const agentRegistration = await ctx.agent.transform((editor) => {
+      for (const entry of plan.agents) {
+        editor.update(entry.id, (draft) => {
+          draft.mode = entry.mode;
+          draft.system = entry.system;
+          draft.model = entry.model;
+          draft.description = entry.description;
+          draft.permissions = [...entry.permissions];
+        });
+      }
+    });
+    const skillRegistration = await ctx.skill.transform((editor) => {
+      for (const skill of plan.skills) editor.add(skill);
     });
 
     let generatedLabels: string[] = [];
@@ -376,6 +395,8 @@ export default Plugin.define({
       void transformRegistration?.dispose?.();
       void rpcRegistration?.dispose?.();
       void hookRegistration?.dispose?.();
+      void agentRegistration?.dispose?.();
+      void skillRegistration?.dispose?.();
     };
   },
 });
