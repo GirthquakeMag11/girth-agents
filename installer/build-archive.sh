@@ -59,9 +59,10 @@ done
 cp "$ROOT"/dashboard/src/* "$STAGE/plugin/dashboard/src/"
 
 # Graph template, the two OpenCode skills, and the two primary agents.
-mkdir -p "$STAGE/graph/agents"
+mkdir -p "$STAGE/graph/agents" "$STAGE/graph/nodes"
 cp "$ROOT"/graph/config.json "$STAGE/graph/"
 cp "$ROOT"/graph/agents/*.md "$STAGE/graph/agents/"
+cp "$ROOT"/graph/nodes/*.md "$STAGE/graph/nodes/"
 cp -R "$ROOT"/opencode/skills/* "$STAGE/skills/"
 cp "$ROOT"/opencode/agents/*.md "$STAGE/agents/"
 

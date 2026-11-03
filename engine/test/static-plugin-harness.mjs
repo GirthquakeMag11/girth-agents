@@ -48,13 +48,38 @@ Do the node within the dispatched scope.
 
 export function graphConfig(nodes = []) {
   return {
-    version: "5",
-    agents: ["agents/builder.md"],
-    graph: {
-      maxSteps: 10,
-      nodes,
-    },
+    version: "6",
+    maxSteps: 10,
+    nodes,
   };
+}
+
+function nodeDoc(node) {
+  const handoff =
+    node.handoff.mode === "terminal"
+      ? ["handoff:", "  mode: terminal"]
+      : node.handoff.mode === "unconditional"
+        ? ["handoff:", "  mode: unconditional", `  to: ${node.handoff.to}`]
+        : [
+            "handoff:",
+            "  mode: conditional",
+            "  labels:",
+            ...(node.handoff.labels ?? []).flatMap((label) => [
+              `    - label: ${label.label}`,
+              `      to: ${label.to}`,
+              ...(label.description !== undefined ? [`      description: ${label.description}`] : []),
+              ...(label.resume !== undefined ? [`      resume: ${label.resume}`] : []),
+            ]),
+          ];
+  return [
+    "---",
+    `agent: ${node.agent}`,
+    ...(node.objective !== undefined ? [`objective: ${node.objective}`] : []),
+    ...(node.maxVisits !== undefined ? [`maxVisits: ${node.maxVisits}`] : []),
+    ...handoff,
+    "---",
+    "",
+  ].join("\n");
 }
 
 export function terminalGraph() {
@@ -232,14 +257,22 @@ export async function loadStaticPlugin({
   try {
     const graphDir = join(dir, "graph");
     await mkdir(join(graphDir, "agents"), { recursive: true });
-    await writeFile(join(graphDir, "config.json"), JSON.stringify(graph, null, 2), "utf8");
+    await mkdir(join(graphDir, "nodes"), { recursive: true });
+    await writeFile(
+      join(graphDir, "config.json"),
+      JSON.stringify(
+        { version: "6", ...(graph.maxSteps !== undefined ? { maxSteps: graph.maxSteps } : {}), ...(graph.workflows !== undefined ? { workflows: graph.workflows } : {}) },
+        null,
+        2,
+      ),
+      "utf8",
+    );
     const docs = { "builder.md": BUILDER_DOC, ...agentDocs };
-    for (const rel of graph.agents ?? ["agents/builder.md"]) {
-      const name = rel.split("/").at(-1);
-      const content = docs[name];
-      if (typeof content !== "string") throw new Error(`no agent doc for ${rel}`);
-      await mkdir(join(graphDir, rel.split("/").slice(0, -1).join("/")), { recursive: true });
-      await writeFile(join(graphDir, rel), content, "utf8");
+    for (const [name, content] of Object.entries(docs)) {
+      await writeFile(join(graphDir, "agents", name), content, "utf8");
+    }
+    for (const node of graph.nodes ?? []) {
+      await writeFile(join(graphDir, "nodes", `${node.id}.md`), nodeDoc(node), "utf8");
     }
     await symlink(ENGINE_DIR, join(dir, "engine"), "dir");
 

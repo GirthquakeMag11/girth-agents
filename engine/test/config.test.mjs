@@ -24,6 +24,7 @@ import { PROJECT_VERSION } from "../version.mjs";
 const shipped = await loadConfig(fileURLToPath(new URL("../../graph/config.json", import.meta.url)));
 const SHIPPED = shipped.doc;
 const codes = (faults) => faults.map((fault) => fault.code);
+const nodeById = (graph, id) => graph.nodes.find((node) => node.id === id);
 
 const defaultGraph = {
   nodes: [
@@ -49,7 +50,6 @@ function permissionLines(permissions) {
 }
 
 function agentDoc({
-  id = "builder",
   model = "provider/model",
   mounts = ["graph"],
   tools = ["read"],
@@ -61,7 +61,6 @@ function agentDoc({
 } = {}) {
   return [
     "---",
-    `id: ${id}`,
     `model: ${model}`,
     `mounts: [${mounts.join(", ")}]`,
     ...(description !== undefined ? [`description: ${description}`] : []),
@@ -76,9 +75,47 @@ function agentDoc({
   ].join("\n");
 }
 
+function handoffLines(handoff) {
+  if (handoff.mode === "terminal") return ["handoff:", "  mode: terminal"];
+  if (handoff.mode === "unconditional") {
+    return [
+      "handoff:",
+      "  mode: unconditional",
+      `  to: ${handoff.to}`,
+      ...(handoff.description !== undefined ? [`  description: ${handoff.description}`] : []),
+      ...(handoff.resume !== undefined ? [`  resume: ${handoff.resume}`] : []),
+    ];
+  }
+  return [
+    "handoff:",
+    "  mode: conditional",
+    "  labels:",
+    ...(handoff.labels ?? []).flatMap((label) => [
+      `    - label: ${label.label}`,
+      `      to: ${label.to}`,
+      ...(label.description !== undefined ? [`      description: ${label.description}`] : []),
+      ...(label.resume !== undefined ? [`      resume: ${label.resume}`] : []),
+    ]),
+  ];
+}
+
+function nodeDoc(node) {
+  return [
+    "---",
+    `agent: ${node.agent}`,
+    ...(node.objective !== undefined ? [`objective: ${node.objective}`] : []),
+    ...(node.budgetMs !== undefined ? [`budgetMs: ${node.budgetMs}`] : []),
+    ...(node.maxVisits !== undefined ? [`maxVisits: ${node.maxVisits}`] : []),
+    ...(node.tools !== undefined ? [`tools: [${node.tools.join(", ")}]`] : []),
+    ...(node.permissions !== undefined ? permissionLines(node.permissions) : []),
+    ...(node.handoff !== undefined ? handoffLines(node.handoff) : []),
+    "---",
+    node.body ?? "",
+  ].join("\n");
+}
+
 async function graphConfig({
   agentDocs = { "builder.md": agentDoc() },
-  agentPaths,
   skillFiles = {},
   graph = defaultGraph,
   version = SCHEMA_VERSION,
@@ -87,16 +124,20 @@ async function graphConfig({
   const dir = await mkdtemp(join(tmpdir(), "engine-config-"));
   await mkdir(join(dir, "agents"), { recursive: true });
   await mkdir(join(dir, "skills"), { recursive: true });
+  await mkdir(join(dir, "nodes"), { recursive: true });
   for (const [name, text] of Object.entries(agentDocs)) {
     await writeFile(join(dir, "agents", name), text);
   }
   for (const [name, text] of Object.entries(skillFiles)) {
     await writeFile(join(dir, "skills", name), text);
   }
+  for (const node of graph.nodes ?? []) {
+    await writeFile(join(dir, "nodes", `${node.id}.md`), nodeDoc(node));
+  }
   const doc = {
     version,
-    agents: agentPaths ?? Object.keys(agentDocs).map((name) => `agents/${name}`),
-    graph,
+    ...(graph.maxSteps !== undefined ? { maxSteps: graph.maxSteps } : {}),
+    ...(graph.workflows !== undefined ? { workflows: graph.workflows } : {}),
     ...extra,
   };
   const path = join(dir, "graph.json");
@@ -113,28 +154,19 @@ test("config: the shipped graph verifies clean", async () => {
   assert.match(SHIPPED.agents[0].prompt, /Work only within/);
 });
 
-test("config: the manifest takes agent paths and rejects inline agents", () => {
-  const manifest = {
+test("config: the manifest validates the authored shape", () => {
+  assert.deepEqual(validateManifest({ version: SCHEMA_VERSION }), []);
+  assert.deepEqual(validateManifest({ version: SCHEMA_VERSION, maxSteps: 10, workflows: [] }), []);
+
+  const oldShape = {
     version: SCHEMA_VERSION,
     agents: ["agents/builder.md"],
-    graph: defaultGraph,
+    graph: { nodes: [] },
   };
-  assert.deepEqual(validateManifest(manifest), []);
+  assert.ok(codes(validateManifest(oldShape)).includes("schema.unknown-field"));
 
-  const inline = {
-    version: SCHEMA_VERSION,
-    agents: [{ id: "builder" }],
-    graph: defaultGraph,
-  };
-  assert.ok(codes(validateManifest(inline)).includes("schema.path"));
-
-  const catalog = {
-    version: SCHEMA_VERSION,
-    skills: ["skills/test-first.md"],
-    agents: ["agents/builder.md"],
-    graph: defaultGraph,
-  };
-  assert.ok(codes(validateManifest(catalog)).includes("schema.unknown-field"));
+  const badVersion = { version: "3" };
+  assert.ok(codes(validateManifest(badVersion)).includes("schema.version"));
 });
 
 test("config: skills load from Markdown and resolve onto the graph agent", async () => {
@@ -215,30 +247,34 @@ test("config: an empty-string subagents entry is named", async () => {
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
 });
 
-test("config: a missing agent document is named", async () => {
-  const { path } = await graphConfig({ agentDocs: {}, agentPaths: ["agents/missing.md"] });
-  assert.ok(codes((await loadConfig(path)).faults).includes("agent.unreadable"));
+test("config: an empty agents directory is named", async () => {
+  const { path } = await graphConfig({ agentDocs: {} });
+  assert.ok(codes((await loadConfig(path)).faults).includes("schema.agents"));
 });
 
-test("config: malformed agent frontmatter and a missing id are named", async () => {
+test("config: malformed agent frontmatter is named; the id is the filename", async () => {
   const malformed = await graphConfig({ agentDocs: { "builder.md": "# no frontmatter\n" } });
   assert.ok(codes((await loadConfig(malformed.path)).faults).includes("agent.frontmatter"));
 
-  const missing = await graphConfig({
-    agentDocs: { "builder.md": "---\nmodel: provider/model\nmounts: [graph]\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\n---\n\nPrompt.\n" },
+  const noId = await graphConfig({
+    agentDocs: { "builder.md": "---\nmodel: provider/model\nmounts: [graph]\ntools: [read]\n---\n\nPrompt.\n" },
   });
-  assert.ok(codes((await loadConfig(missing.path)).faults).includes("agent.missing-id"));
+  const loaded = await loadConfig(noId.path);
+  assert.deepEqual(loaded.faults, []);
+  assert.equal(loaded.doc.agents[0].id, "builder");
 });
 
-test("config: duplicate agent ids are named", async () => {
+test("config: an agent's id is its filename, not its frontmatter", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "one.md": agentDoc(),
-      "two.md": agentDoc(),
+      "one.md": "---\nid: builder\nmodel: provider/model\nmounts: [graph]\ntools: [read]\n---\n\nOne.\n",
+      "two.md": "---\nid: builder\nmodel: provider/model\nmounts: [graph]\ntools: [read]\n---\n\nTwo.\n",
     },
-    agentPaths: ["agents/one.md", "agents/two.md"],
+    graph: { nodes: [{ id: "a", agent: "one", objective: "A.", handoff: { mode: "terminal" } }] },
   });
-  assert.ok(codes((await loadConfig(path)).faults).includes("agent.duplicate-id"));
+  const loaded = await loadConfig(path);
+  assert.deepEqual(loaded.faults, []);
+  assert.deepEqual(loaded.doc.agents.map((agent) => agent.id), ["one", "two"]);
 });
 
 test("config: invalid agent properties and unknown frontmatter fields are named", async () => {
@@ -430,10 +466,9 @@ test("config: a skill shared by two agents loads once", async () => {
   const { path } = await graphConfig({
     agentDocs: {
       "builder.md": agentDoc({ skills: ["shared"] }),
-      "reviewer.md": agentDoc({ id: "reviewer", skills: ["shared"] }),
+      "reviewer.md": agentDoc({ skills: ["shared"] }),
     },
-    agentPaths: ["agents/builder.md", "agents/reviewer.md"],
-    skillFiles: { "shared.md": "---\nid: shared\n---\n\nShared instructions.\n" },
+    skillFiles: { "shared.md": "---\n---\n\nShared instructions.\n" },
     graph: {
       nodes: [
         { id: "a", agent: "builder", objective: "A.", handoff: { mode: "terminal" } },
@@ -452,10 +487,7 @@ test("config: an unreferenced malformed skill is ignored", async () => {
   assert.deepEqual((await loadConfig(path)).faults, []);
 });
 
-test("config: agent paths stay relative and skill ids reject traversal", async () => {
-  const agentPath = await graphConfig({ agentDocs: {}, agentPaths: ["../escape.md"] });
-  assert.ok(codes((await loadConfig(agentPath.path)).faults).includes("schema.path"));
-
+test("config: skill ids reject traversal", async () => {
   const skillId = await graphConfig({
     agentDocs: { "builder.md": agentDoc({ skills: ["../escape.md"] }) },
   });
@@ -499,13 +531,13 @@ test("config: unknown fields are named", () => {
 
 test("config: a dangling handoff is named", () => {
   const doc = structuredClone(SHIPPED);
-  doc.graph.nodes[0].handoff.to = "nowhere";
+  nodeById(doc.graph, "implement").handoff.to = "nowhere";
   assert.ok(codes(validateConfig(doc)).includes("graph.dangling-handoff"));
 });
 
 test("config: duplicate labels are named", () => {
   const doc = structuredClone(SHIPPED);
-  const labels = doc.graph.nodes[1].handoff.labels;
+  const labels = nodeById(doc.graph, "review").handoff.labels;
   labels.push({ ...labels[0] });
   assert.ok(codes(validateConfig(doc)).includes("graph.duplicate-label"));
 });
@@ -513,7 +545,7 @@ test("config: duplicate labels are named", () => {
 test("config: labels are tool-safe", () => {
   for (const label of ["has.dot", "has:colon", "has/slash", "has space", "1leading", "has@char", "_leading"]) {
     const doc = structuredClone(SHIPPED);
-    doc.graph.nodes[1].handoff.labels[0].label = label;
+    nodeById(doc.graph, "review").handoff.labels[0].label = label;
     assert.ok(
       codes(validateConfig(doc)).includes("schema.label-format"),
       `expected '${label}' to be rejected`,
@@ -524,19 +556,19 @@ test("config: labels are tool-safe", () => {
 test("config: empty labels are named and valid characters are accepted", () => {
   for (const label of ["", "   "]) {
     const doc = structuredClone(SHIPPED);
-    doc.graph.nodes[1].handoff.labels[0].label = label;
+    nodeById(doc.graph, "review").handoff.labels[0].label = label;
     assert.ok(codes(validateConfig(doc)).includes("schema.string"), `expected '${label}' to be rejected`);
   }
 
   const valid = structuredClone(SHIPPED);
-  valid.graph.nodes[1].handoff.labels[0].label = "Pass_2-ok";
+  nodeById(valid.graph, "review").handoff.labels[0].label = "Pass_2-ok";
   assert.deepEqual(validateConfig(valid), []);
 });
 
 test("config: engine control tool names are reserved as labels", () => {
   for (const label of ["dispatch", "dispatch_status", "dispatch_cancel", "dispatch_wait", "reload", "graph_info", "graph_map", "handoff"]) {
     const doc = structuredClone(SHIPPED);
-    doc.graph.nodes[1].handoff.labels[0].label = label;
+    nodeById(doc.graph, "review").handoff.labels[0].label = label;
     assert.ok(
       codes(validateConfig(doc)).includes("graph.reserved-label"),
       `expected '${label}' to be reserved`,
@@ -591,16 +623,16 @@ test("config: handoffLabels returns the unique sorted tool set", () => {
 
 test("config: the dispatcher is a handoff target, not a node", () => {
   const conditional = structuredClone(SHIPPED);
-  conditional.graph.nodes[1].handoff.labels.push({
+  nodeById(conditional.graph, "review").handoff.labels.push({
     label: "report",
     to: DISPATCHER_TARGET,
     description: "Report to the dispatcher.",
   });
   assert.deepEqual(validateConfig(conditional), []);
-  assert.equal(handoffTarget(conditional.graph.nodes[1], "report"), DISPATCHER_TARGET);
+  assert.equal(handoffTarget(nodeById(conditional.graph, "review"), "report"), DISPATCHER_TARGET);
 
   const resumed = structuredClone(conditional);
-  resumed.graph.nodes[1].handoff.labels.find((label) => label.label === "report").resume = true;
+  nodeById(resumed.graph, "review").handoff.labels.find((label) => label.label === "report").resume = true;
   assert.ok(codes(validateConfig(resumed)).includes("graph.dispatcher-resume"));
 
   const only = {
@@ -670,10 +702,10 @@ test("config: no terminal or no path to one is named", () => {
 
 test("config: maxVisits above the engine ceiling is named", () => {
   const doc = structuredClone(SHIPPED);
-  doc.graph.nodes[0].maxVisits = 101;
+  nodeById(doc.graph, "implement").maxVisits = 101;
   const faults = codes(validateConfig(doc));
   assert.ok(faults.includes("schema.maxvisits"));
-  assert.equal(SHIPPED.graph.nodes[0].maxVisits, 20);
+  assert.equal(nodeById(SHIPPED.graph, "implement").maxVisits, 20);
 });
 
 test("config: schema 4 is rejected before the removed output fields are read", async () => {
@@ -686,20 +718,15 @@ test("config: schema 4 is rejected before the removed output fields are read", a
   assert.deepEqual(codes(loaded.faults), ["schema.version"]);
 });
 
-test("config: schema 5 rejects the removed output fields", async () => {
-  const graph = structuredClone(defaultGraph);
-  graph.outputRoot = "work";
-  graph.nodes[0].output = "a.md";
-  const { path } = await graphConfig({ version: SCHEMA_VERSION, graph });
-  const loaded = await loadConfig(path);
-  assert.equal(loaded.doc, null);
-  assert.deepEqual(codes(loaded.faults), ["schema.unknown-field", "schema.unknown-field"]);
-  const messages = loaded.faults.map((fault) => fault.message);
+test("config: removed output fields are named", () => {
+  const doc = structuredClone(SHIPPED);
+  doc.graph.outputRoot = "work";
+  doc.graph.nodes[0].output = "a.md";
+  const faults = validateConfig(doc);
+  assert.ok(faults.some((fault) => fault.code === "schema.unknown-field"), JSON.stringify(faults));
+  const messages = faults.map((fault) => fault.message);
   assert.ok(messages.some((message) => message.includes("outputRoot")), messages.join("\n"));
-  assert.ok(
-    messages.some((message) => message.includes("nodes[0]") && message.includes("'output'")),
-    messages.join("\n"),
-  );
+  assert.ok(messages.some((message) => message.includes("'output'")), messages.join("\n"));
 });
 
 test("config: a workflow is a referenced subsection with a reachable entry and exit", () => {
@@ -720,10 +747,10 @@ test("config: resume belongs to a return handoff, not a node", () => {
   assert.ok(codes(validateConfig(doc)).includes("schema.unknown-field"));
 
   const bad = structuredClone(SHIPPED);
-  bad.graph.nodes[1].handoff.labels.find((label) => label.label === "fail").resume = "sometimes";
+  nodeById(bad.graph, "review").handoff.labels.find((label) => label.label === "fail").resume = "sometimes";
   assert.ok(codes(validateConfig(bad)).includes("schema.boolean"));
 
-  const fail = SHIPPED.graph.nodes[1].handoff.labels.find((label) => label.label === "fail");
+  const fail = nodeById(SHIPPED.graph, "review").handoff.labels.find((label) => label.label === "fail");
   assert.equal(fail.resume, true);
   assert.equal(SHIPPED.graph.nodes[0].session, undefined);
 });

@@ -9,17 +9,13 @@ const emptyTokens = () => ({ input: 0, output: 0, reasoning: 0, cache: { read: 0
 
 function terminalGraph(objective = "Do the node.") {
   return {
-    version: "5",
-    agents: ["agents/builder.md"],
-    graph: {
-      maxSteps: 10,
-      nodes: [{ id: "a", agent: "builder", objective, handoff: { mode: "terminal" } }],
-    },
+    version: "6",
+    maxSteps: 10,
+    nodes: [{ id: "a", agent: "builder", objective, handoff: { mode: "terminal" } }],
   };
 }
 
 const builderDoc = `---
-id: builder
 model: test/model
 mounts: [graph]
 tools: [read]
@@ -27,11 +23,43 @@ tools: [read]
 Do the node within the dispatched scope.
 `;
 
+function nodeDoc(node) {
+  const handoff =
+    node.handoff.mode === "terminal"
+      ? ["handoff:", "  mode: terminal"]
+      : node.handoff.mode === "unconditional"
+        ? ["handoff:", "  mode: unconditional", `  to: ${node.handoff.to}`]
+        : [
+            "handoff:",
+            "  mode: conditional",
+            "  labels:",
+            ...(node.handoff.labels ?? []).flatMap((label) => [`    - label: ${label.label}`, `      to: ${label.to}`]),
+          ];
+  return [
+    "---",
+    `agent: ${node.agent}`,
+    ...(node.objective !== undefined ? [`objective: ${node.objective}`] : []),
+    ...(node.maxVisits !== undefined ? [`maxVisits: ${node.maxVisits}`] : []),
+    ...handoff,
+    "---",
+    "",
+  ].join("\n");
+}
+
 async function writeGraph(dir, graph) {
   await mkdir(join(dir, "agents"), { recursive: true });
+  await mkdir(join(dir, "nodes"), { recursive: true });
   await writeFile(join(dir, "agents", "builder.md"), builderDoc, "utf8");
+  for (const node of graph.nodes ?? []) {
+    await writeFile(join(dir, "nodes", `${node.id}.md`), nodeDoc(node), "utf8");
+  }
+  const doc = {
+    version: graph.version ?? "6",
+    ...(graph.maxSteps !== undefined ? { maxSteps: graph.maxSteps } : {}),
+    ...(graph.workflows !== undefined ? { workflows: graph.workflows } : {}),
+  };
   const configPath = join(dir, "config.json");
-  await writeFile(configPath, JSON.stringify(graph, null, 2), "utf8");
+  await writeFile(configPath, JSON.stringify(doc, null, 2), "utf8");
   return configPath;
 }
 
@@ -70,7 +98,7 @@ function fakePluginDriver({ onPrompt = () => ({}) } = {}) {
 test("runtime: an invalid config fails setup with named faults", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-runtime-invalid-"));
   try {
-    const configPath = await writeGraph(dir, { version: "5", agents: [], graph: { nodes: [] } });
+    const configPath = await writeGraph(dir, { version: "5", nodes: [] });
     await assert.rejects(
       () => createRuntime({ configPath, driver: fakePluginDriver() }),
       (error) => Array.isArray(error.faults) && error.faults.length > 0 && /invalid graph config/.test(error.message),
@@ -88,7 +116,7 @@ test("runtime: graph_info and graph_map describe the loaded graph", async () => 
 
     const info = runtime.graphInfo();
     assert.equal(info.ok, true);
-    assert.equal(info.schemaVersion, "5");
+    assert.equal(info.schemaVersion, "6");
     assert.equal(info.graph.nodes[0].id, "a");
     assert.equal(info.agents[0].id, "builder");
 
@@ -199,7 +227,7 @@ test("runtime: reload applies a description change without changing labels", asy
     assert.equal(runtime.graphInfo().graph.nodes[0].objective, "Before.");
 
     const next = terminalGraph("After.");
-    await writeFile(configPath, JSON.stringify(next, null, 2), "utf8");
+    await writeFile(join(dir, "nodes", "a.md"), nodeDoc(next.nodes[0]), "utf8");
     const result = await runtime.reload();
     assert.equal(result.valid, true);
     assert.equal(runtime.graphInfo().graph.nodes[0].objective, "After.");

@@ -2,11 +2,11 @@
 // structural verifier. Any node may be a dispatch entry point; every node
 // must reach a terminal, and every cycle must carry a visit bound.
 
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { parseFrontmatter } from "./frontmatter.mjs";
 
-export const SCHEMA_VERSION = "5";
+export const SCHEMA_VERSION = "6";
 
 const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
 
@@ -223,10 +223,8 @@ function validateGraphAgent(graphAgent, at, faults) {
 }
 
 function validateAgentFrontmatter(data, rel, faults) {
+  // `id` is tolerated but ignored: the id is the filename.
   strict(data, ["id", "model", "mounts", "tools", "permissions", "skills", "description", "subagents"], rel, faults);
-  if (typeof data.id !== "string" || data.id.trim() === "") {
-    faults.push(fault("agent.missing-id", `${rel}: frontmatter needs an id`));
-  }
   validateAgentProperties(data, rel, faults);
 }
 
@@ -552,16 +550,13 @@ function validateGraph(graph, at, graphAgentIds, faults) {
 export function validateManifest(doc) {
   const faults = [];
   if (!isObject(doc)) return [fault("schema.config", "config must be an object")];
-  strict(doc, ["version", "agents", "graph"], "config", faults);
+  // The authored config is version + maxSteps + workflows; agents, skills, and
+  // nodes are discovered from their directories.
+  strict(doc, ["version", "maxSteps", "workflows"], "config", faults);
   if (doc.version !== SCHEMA_VERSION) {
     faults.push(fault("schema.version", `config.version: must be the string '${SCHEMA_VERSION}'`));
   }
-  if (!Array.isArray(doc.agents) || doc.agents.length === 0) {
-    faults.push(fault("schema.agents", "config.agents: must be a non-empty array of agent document paths"));
-  } else {
-    for (const [i, rel] of doc.agents.entries()) relativePath(rel, `config.agents[${i}]`, faults);
-  }
-  if (!isObject(doc.graph)) faults.push(fault("schema.graph", "config.graph: must be an object"));
+  integer(doc.maxSteps, "config.maxSteps", faults, { min: 1 });
   return faults;
 }
 
@@ -617,8 +612,9 @@ async function loadAgentDocs(paths, baseDir) {
     }
     validateAgentFrontmatter(data, rel, faults);
     const prompt = body.trim();
+    const id = rel.replace(/^agents\//, "").replace(/\.md$/, "");
     agents.push({
-      id: data.id,
+      id,
       model: data.model,
       mounts: data.mounts,
       ...(data.tools !== undefined ? { tools: data.tools } : {}),
@@ -685,6 +681,54 @@ function attachAgentSkills(agents, skills) {
   }
 }
 
+async function discoverDocuments(dirAbs, prefix) {
+  let names;
+  try {
+    names = await readdir(dirAbs);
+  } catch {
+    return [];
+  }
+  return names
+    .filter((name) => name.endsWith(".md"))
+    .sort()
+    .map((name) => `${prefix}/${name}`);
+}
+
+async function loadNodeDocs(baseDir) {
+  const nodes = [];
+  const faults = [];
+  const rels = await discoverDocuments(resolve(baseDir, "nodes"), "nodes");
+  for (const rel of rels) {
+    let text;
+    try {
+      text = await readFile(resolve(baseDir, rel), "utf8");
+    } catch (e) {
+      faults.push(fault("node.unreadable", `${rel}: ${e.message}`));
+      continue;
+    }
+    let data;
+    let body;
+    try {
+      ({ data, body } = parseFrontmatter(text));
+    } catch (e) {
+      faults.push(fault("node.frontmatter", `${rel}: ${e.message}`));
+      continue;
+    }
+    strict(data, ["agent", "objective", "budgetMs", "maxVisits", "handoff", "tools", "permissions"], rel, faults);
+    nodes.push({
+      id: rel.replace(/^nodes\//, "").replace(/\.md$/, ""),
+      ...(data.agent !== undefined ? { agent: data.agent } : {}),
+      ...(data.objective !== undefined ? { objective: data.objective } : {}),
+      ...(data.budgetMs !== undefined ? { budgetMs: data.budgetMs } : {}),
+      ...(data.maxVisits !== undefined ? { maxVisits: data.maxVisits } : {}),
+      ...(data.handoff !== undefined ? { handoff: data.handoff } : {}),
+      ...(data.tools !== undefined ? { tools: data.tools } : {}),
+      ...(data.permissions !== undefined ? { permissions: data.permissions } : {}),
+    });
+  }
+  return { nodes, faults };
+}
+
 export async function loadConfig(path) {
   let raw;
   try {
@@ -702,14 +746,45 @@ export async function loadConfig(path) {
   if (manifestFaults.length > 0) return { doc: null, faults: manifestFaults, path };
 
   const baseDir = dirname(resolve(path));
-  const { agents, skillIds, faults: agentFaults } = await loadAgentDocs(doc.agents, baseDir);
+  const agentRels = await discoverDocuments(resolve(baseDir, "agents"), "agents");
+  if (agentRels.length === 0) {
+    return { doc: null, faults: [fault("schema.agents", "graph/agents: no agent documents found")], path };
+  }
+  const { agents, skillIds, faults: agentFaults } = await loadAgentDocs(agentRels, baseDir);
   if (agentFaults.length > 0) return { doc: null, faults: agentFaults, path };
 
   const { skills, faults: skillFaults } = await loadSkillDocs(skillIds, baseDir);
   if (skillFaults.length > 0) return { doc: null, faults: skillFaults, path };
-
   attachAgentSkills(agents, skills);
-  const resolved = { version: doc.version, agents, graph: doc.graph };
+
+  let { nodes, faults: nodeFaults } = await loadNodeDocs(baseDir);
+  if (nodeFaults.length > 0) return { doc: null, faults: nodeFaults, path };
+  if (nodes.length === 0) {
+    return { doc: null, faults: [fault("schema.nodes", "graph/nodes: no node documents found")], path };
+  }
+
+  // Canonical display order: the first workflow's node list, then the rest.
+  const order = doc.workflows?.[0]?.nodes;
+  if (Array.isArray(order)) {
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const ordered = [];
+    const placed = new Set();
+    for (const id of order) {
+      const node = byId.get(id);
+      if (node && !placed.has(id)) {
+        ordered.push(node);
+        placed.add(id);
+      }
+    }
+    for (const node of nodes) if (!placed.has(node.id)) ordered.push(node);
+    nodes = ordered;
+  }
+
+  const resolved = {
+    version: doc.version,
+    agents,
+    graph: { maxSteps: doc.maxSteps, workflows: doc.workflows, nodes },
+  };
   const faults = validateConfig(resolved);
   return { doc: faults.length === 0 ? resolved : null, faults, path };
 }

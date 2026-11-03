@@ -1,5 +1,4 @@
 ---
-id: reviewer
 model: openrouter/~deepseek/deepseek-flash-latest
 mounts: [graph]
 tools: [read, edit, shell]

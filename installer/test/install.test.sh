@@ -126,6 +126,7 @@ assert_file "$CONFIG/agents/engineer.md" "the Engineer agent is installed global
 assert_file "$CONFIG/agents/conductor.md" "the Conductor agent is installed globally"
 assert_file "$CONFIG/graph-engine/graph/config.json" "a user-owned graph is seeded"
 assert_file "$CONFIG/graph-engine/graph/agents/builder.md" "graph agents are seeded"
+assert_file "$CONFIG/graph-engine/graph/nodes/implement.md" "graph nodes are seeded"
 assert_file "$CONFIG/graph-engine/manifest" "a manifest is written"
 assert_file "$CONFIG/graph-engine/uninstall.sh" "the uninstaller is installed"
 assert_not_exists "$PROJECT/.opencode" "no project files are written"

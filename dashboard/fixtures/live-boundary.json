@@ -1,8 +1,20 @@
 {
-  "version": "5",
+  "version": "6",
   "agents": [
-    "agents/builder.md",
-    "agents/reviewer.md"
+    {
+      "id": "builder",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "mounts": ["graph"],
+      "tools": ["read", "edit", "shell"],
+      "prompt": "Execute the node objective, then call the generated handoff tool exactly once with a message."
+    },
+    {
+      "id": "reviewer",
+      "model": "openrouter/~deepseek/deepseek-flash-latest",
+      "mounts": ["graph"],
+      "tools": ["read", "edit", "shell"],
+      "prompt": "Judge the work, then call the declared handoff label."
+    }
   ],
   "graph": {
     "maxSteps": 20,
@@ -11,21 +23,15 @@
         "id": "A",
         "entry": "a1",
         "exit": "a1",
-        "nodes": [
-          "a1"
-        ],
-        "connections": [
-          "B"
-        ],
+        "nodes": ["a1"],
+        "connections": ["B"],
         "strict": false
       },
       {
         "id": "B",
         "entry": "b1",
         "exit": "b1",
-        "nodes": [
-          "b1"
-        ],
+        "nodes": ["b1"],
         "connections": [],
         "strict": false
       }

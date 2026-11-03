@@ -87,7 +87,7 @@ test("workflow: boundary is transitive, main-aware, and strict-aware", () => {
 });
 
 const strictDoc = {
-  version: "5",
+  version: "6",
   agents: [
     {
       id: "builder",

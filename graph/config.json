@@ -1,65 +1,12 @@
 {
-  "version": "5",
-  "agents": [
-    "agents/builder.md",
-    "agents/reviewer.md"
-  ],
-  "graph": {
-    "maxSteps": 100,
-    "workflows": [
-      {
-        "id": "build-review",
-        "entry": "implement",
-        "exit": "done",
-        "nodes": [
-          "implement",
-          "review",
-          "done"
-        ]
-      }
-    ],
-    "nodes": [
-      {
-        "id": "implement",
-        "agent": "builder",
-        "objective": "Implement the dispatched work.",
-        "maxVisits": 20,
-        "handoff": {
-          "mode": "unconditional",
-          "to": "review",
-          "description": "The implementation is written and ready for review."
-        }
-      },
-      {
-        "id": "review",
-        "agent": "reviewer",
-        "objective": "Review the implementation against the dispatched prompt.",
-        "maxVisits": 20,
-        "handoff": {
-          "mode": "conditional",
-          "labels": [
-            {
-              "label": "pass",
-              "to": "done",
-              "description": "The work meets the objective; finish."
-            },
-            {
-              "label": "fail",
-              "to": "implement",
-              "description": "The work is unmet; name exactly what must change.",
-              "resume": true
-            }
-          ]
-        }
-      },
-      {
-        "id": "done",
-        "agent": "builder",
-        "objective": "Finalize the work.",
-        "handoff": {
-          "mode": "terminal"
-        }
-      }
-    ]
-  }
+  "version": "6",
+  "maxSteps": 100,
+  "workflows": [
+    {
+      "id": "build-review",
+      "entry": "implement",
+      "exit": "done",
+      "nodes": ["implement", "review", "done"]
+    }
+  ]
 }

@@ -20,12 +20,15 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadStaticPlugin } from "./test/static-plugin-harness.mjs";
+import { loadConfig } from "./config.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..");
 const project = await mkdtemp(join(tmpdir(), "engine-live-project-"));
 
-const graph = JSON.parse(await readFile(join(repo, "graph", "config.json"), "utf8"));
+const loaded = await loadConfig(join(repo, "graph", "config.json"));
+if (loaded.faults.length > 0) throw new Error(`shipped graph fails to load: ${loaded.faults.map((f) => f.code).join(", ")}`);
+const graph = { version: "6", maxSteps: loaded.doc.graph.maxSteps, workflows: loaded.doc.graph.workflows, nodes: loaded.doc.graph.nodes };
 const agentDocs = {
   "builder.md": await readFile(join(repo, "graph", "agents", "builder.md"), "utf8"),
   "reviewer.md": await readFile(join(repo, "graph", "agents", "reviewer.md"), "utf8"),
@@ -100,7 +103,7 @@ console.log("PASS  workflow B reached terminal from /work/b via the same engine"
 const snapshot = await rpcImplementation.snapshot();
 assert.equal(snapshot.ok, true);
 assert.equal(snapshot.config.graph.workflows.map((workflow) => workflow.id).join(","), "build-review");
-assert.equal(snapshot.info.schemaVersion, "5");
+assert.equal(snapshot.info.schemaVersion, "6");
 assert.equal(snapshot.runtime.active, null, "the queue is idle after both dispatches");
 assert.match(snapshot.map.mermaid, /implement/);
 const completions = snapshot.runtime.history.filter((entry) => entry.kind === "completion");
