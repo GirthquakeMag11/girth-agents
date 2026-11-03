@@ -96,16 +96,22 @@ Write the failing test first, make it pass, then refactor within the green.
   the plugin materializes. The body is the agent's prompt; the prompt is not a
   frontmatter field.
 - `tools` lists tool names acquired by name — tools are deny-by-default, the
-  same shape as skills. `permissions` is an optional fine-grained list of
-  `{ action, resource, effect }` rules (`effect` one of `allow`, `ask`, `deny`)
-  that refines the baseline; write rules block-style as `- action:` lines with
-  `*` quoted (`"*"`) — a bare `*` is a YAML alias.
+  same shape as skills. On a `primary`/`subagent` mount the same acquisitions
+  become the agent's OpenCode permissions (deny-by-default ruleset); on a
+  `graph` mount they shape the node session's rule set.
+- `permissions` is an optional fine-grained list of `{ action, resource,
+  effect }` rules (`effect` one of `allow`, `ask`, `deny`) that refine the
+  baseline; write rules block-style as `- action:` lines with `*` quoted
+  (`"*"`) — a bare `*` is a YAML alias. On a mount, `@GRAPH_DIR@` in a
+  rule's `resource` expands to the graph's own directory at materialization,
+  so a rule can scope to the graph without knowing the install path.
 - An agent's optional `skills` array references skill documents by id, where
   the id is the skill's filename under `skills/`. The loader follows those ids,
   deduplicates them, and reads each referenced skill once; unreferenced skill
   files are not read. Unreadable, malformed, or empty skills are named faults.
   The brief carries each resolved skill; the agent's body is the node session's
-  system prompt, not the brief.
+  system prompt, not the brief. Referenced skills follow a mount into
+  OpenCode's skill registry.
 - A node document has required `agent` (a graph agent's id) and `handoff`, and
   optional `objective`, `budgetMs`, `maxVisits` (1–100; use 20 for a repair
   loop), `tools` (tool names acquired by name, unioned with the agent's), and

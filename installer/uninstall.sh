@@ -153,6 +153,6 @@ else
   if [ "$removed" = 0 ] && [ "$PURGE" = 0 ]; then
     echo "nothing to remove"
   fi
-  echo "Run /reload in OpenCode to drop the plugin, skills, and agents if it was already running."
+  echo "Run /reload in OpenCode to drop the plugin if it was already running."
 fi
 exit 0

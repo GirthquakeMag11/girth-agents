@@ -150,7 +150,10 @@ test("config: the shipped graph verifies clean", async () => {
   assert.equal(SHIPPED.version, SCHEMA_VERSION);
   assert.deepEqual(Object.keys(SHIPPED).sort(), ["agents", "graph", "version"]);
   assert.equal(SHIPPED.graph.workflows[0].id, "build-review");
-  assert.deepEqual(SHIPPED.agents.map((agent) => agent.id), ["builder", "reviewer"]);
+  assert.deepEqual(
+    SHIPPED.agents.map((agent) => agent.id),
+    ["builder", "conductor", "engineer", "reviewer"],
+  );
   assert.match(SHIPPED.agents[0].prompt, /Work only within/);
 });
 

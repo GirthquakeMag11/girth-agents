@@ -73,6 +73,29 @@ test("materialize: a mount with no acquisitions is deny-by-default", () => {
   assert.deepEqual(plan.agents[0].permissions, [{ action: "*", resource: "*", effect: "deny" }]);
 });
 
+test("materialize: @GRAPH_DIR@ in a permission resource expands to the graph directory", () => {
+  const plan = materializationPlan(
+    {
+      agents: [
+        {
+          id: "engineer",
+          model: "test/model",
+          mounts: ["primary"],
+          prompt: "P.",
+          tools: ["read"],
+          permissions: [{ action: "edit", resource: "@GRAPH_DIR@/**", effect: "allow" }],
+        },
+      ],
+    },
+    "/home/george/.config/opencode/graph-engine/graph",
+  );
+  assert.deepEqual(plan.agents[0].permissions, [
+    { action: "*", resource: "*", effect: "deny" },
+    { action: "read", resource: "*", effect: "allow" },
+    { action: "edit", resource: "/home/george/.config/opencode/graph-engine/graph/**", effect: "allow" },
+  ]);
+});
+
 test("materialize: the model string becomes a Model.Ref object", () => {
   const plan = materializationPlan(
     { agents: [{ id: "a", model: "openrouter/~deepseek/deepseek-flash-latest", mounts: ["primary"], prompt: "P." }] },

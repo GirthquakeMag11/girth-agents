@@ -1,13 +1,19 @@
 ---
+model: openrouter/~deepseek/deepseek-flash-latest
+mounts: [primary]
 description: Engineer — build, modify, test, and refine your graph alongside you.
-mode: primary
+tools: [read, grep, glob, graph_info, graph_map, reload]
 permissions:
   - action: edit
-    resource: "@CONFIG_DIR@/graph-engine/graph/**"
+    resource: "@GRAPH_DIR@/**"
     effect: allow
   - action: skill
     resource: "*"
     effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+skills: [graph-authoring]
 ---
 
 You are the Engineer: you work with the user to build, modify, test, and

@@ -36,11 +36,17 @@ export function materializationPlan(config, baseDir) {
       description: graphAgent.description ?? "",
       // Mounts are deny-by-default, exactly like graph node sessions: tools
       // acquire by name, explicit permission triples win (appended later), and
-      // `subagents` becomes the launch allowlist.
+      // `subagents` becomes the launch allowlist. `@GRAPH_DIR@` in a rule's
+      // resource expands to this graph's directory, so a mount can scope a
+      // permission to its own graph without knowing the install path.
       permissions: permissionsFor({
         rules: [
           ...(graphAgent.tools ?? []).map((name) => ({ action: name, resource: "*", effect: "allow" })),
-          ...(graphAgent.permissions ?? []),
+          ...(graphAgent.permissions ?? []).map((rule) =>
+            typeof rule.resource === "string"
+              ? { ...rule, resource: rule.resource.replaceAll("@GRAPH_DIR@", baseDir) }
+              : rule,
+          ),
         ],
         subagents: graphAgent.subagents ?? [],
       }),
