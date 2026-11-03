@@ -129,7 +129,10 @@ export function createEditor(seedTools = []) {
   };
 }
 
-export function createContext(editor, { directory = "/work/project", options = {}, onPrompt = null, locations = {} } = {}) {
+export function createContext(
+  editor,
+  { directory = "/work/project", options = {}, onPrompt = null, locations = {}, seedAgents = [] } = {},
+) {
   const hooks = new Map();
   const syntheticCalls = [];
   const permissionCalls = [];
@@ -139,6 +142,7 @@ export function createContext(editor, { directory = "/work/project", options = {
   const agentUpdates = [];
   const skillAdds = [];
   const mountDisposals = [];
+  const agentCatalog = new Map(seedAgents.map((agent) => [agent.id, { ...agent }]));
   let agentReload = null;
   let skillReload = null;
   let nextSession = 0;
@@ -226,15 +230,15 @@ export function createContext(editor, { directory = "/work/project", options = {
     agent: {
       // Editor.state: updates accumulate into one object per id (upsert), and a
       // domain-level reload() re-plays the registered transform, mirroring the
-      // SDK's AgentEditor/AgentDomain contract.
+      // SDK's AgentEditor/AgentDomain contract. list() returns the live catalog
+      // in the client shape { location, data }.
       async transform(callback) {
-        const agents = new Map(); // id -> mutated Agent.Info-like object
         const editor = {
           update(id, fn) {
-            const draft = agents.get(id) ?? {};
+            const draft = agentCatalog.get(id) ?? {};
             fn(draft);
             draft.id = id;
-            agents.set(id, draft);
+            agentCatalog.set(id, draft);
             agentUpdates.push({ id, draft });
           },
         };
@@ -249,6 +253,9 @@ export function createContext(editor, { directory = "/work/project", options = {
       },
       async reload() {
         await agentReload?.();
+      },
+      async list() {
+        return { location: { directory }, data: [...agentCatalog.values()] };
       },
     },
     skill: {
@@ -313,6 +320,7 @@ export async function loadStaticPlugin({
   skillFiles = {},
   onPrompt = null,
   locations = {},
+  seedAgents = [],
 } = {}) {
   if (resetEngine) delete globalThis[Symbol.for("graph-engine.runtime")];
   const dir = await mkdtemp(join(tmpdir(), "static-plugin-"));
@@ -360,7 +368,7 @@ export async function loadStaticPlugin({
     await writeFile(modulePath, transformed, "utf8");
 
     const editor = createEditor(seedTools);
-    const context = createContext(editor, { directory, onPrompt, locations });
+    const context = createContext(editor, { directory, onPrompt, locations, seedAgents });
     context.ctx.options = { ...options, graphConfig: join(graphDir, "config.json") };
 
     const module = await import(pathToFileURL(modulePath).href);

@@ -147,6 +147,7 @@ test("runtime: sessionSystem resolves the active node's agent body, and only whi
       }),
     });
     runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+    runtime.reportSubagentPreflight({ missing: [], catalogAvailable: true });
 
     runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir);
     const deadline = Date.now() + 2000;
@@ -178,6 +179,7 @@ test("runtime: dispatch is gated on a matching preflight report", async () => {
     );
 
     runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+    runtime.reportSubagentPreflight({ missing: [], catalogAvailable: true });
     const started = await runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir);
     assert.equal(started.ok, true);
     assert.ok(started.dispatchId);
@@ -190,12 +192,40 @@ test("runtime: dispatch is gated on a matching preflight report", async () => {
   }
 });
 
+test("runtime: dispatch is gated on a missing subagent id", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-runtime-subagent-"));
+  try {
+    const configPath = await writeGraph(dir, terminalGraph());
+    const runtime = await createRuntime({ configPath, driver: fakePluginDriver() });
+    runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+
+    await assert.rejects(
+      () => runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir),
+      /subagent.preflight-unavailable/,
+    );
+
+    runtime.reportSubagentPreflight({ missing: [{ agent: "builder", subagent: "explore" }], catalogAvailable: true });
+    await assert.rejects(
+      () => runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir),
+      /subagent.unknown.*builder -> explore/,
+    );
+
+    runtime.reportSubagentPreflight({ missing: [], catalogAvailable: true });
+    const started = await runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir);
+    assert.equal(started.ok, true);
+    await runtime.wait(started.dispatchId, 1000);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("runtime: a terminal dispatch completes and its snapshot carries no output", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-runtime-terminal-"));
   try {
     const configPath = await writeGraph(dir, terminalGraph());
     const runtime = await createRuntime({ configPath, driver: fakePluginDriver() });
     runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+    runtime.reportSubagentPreflight({ missing: [], catalogAvailable: true });
 
     const started = await runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir);
     const finished = await runtime.wait(started.dispatchId, 1000);
@@ -222,6 +252,7 @@ test("runtime: the record-bound directory is used for graph sessions", async () 
     };
     const runtime = await createRuntime({ configPath, driver });
     runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+    runtime.reportSubagentPreflight({ missing: [], catalogAvailable: true });
 
     await runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, "/work/project");
     assert.deepEqual(seen, ["/work/project"]);
@@ -240,6 +271,7 @@ test("runtime: reload is rejected while a dispatch is active", async () => {
       driver: fakePluginDriver({ onPrompt: () => new Promise((resolve) => (release = resolve)) }),
     });
     runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+    runtime.reportSubagentPreflight({ missing: [], catalogAvailable: true });
 
     await runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir);
     await assert.rejects(() => runtime.reload(), /a dispatch is active/);
@@ -259,6 +291,7 @@ test("runtime: reload applies a description change without changing labels", asy
     const configPath = await writeGraph(dir, terminalGraph("Before."));
     const runtime = await createRuntime({ configPath, driver: fakePluginDriver() });
     runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+    runtime.reportSubagentPreflight({ missing: [], catalogAvailable: true });
 
     assert.equal(runtime.graphInfo().graph.nodes[0].objective, "Before.");
 

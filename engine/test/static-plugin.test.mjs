@@ -154,6 +154,47 @@ test("static plugin: the context hook injects the node agent's body as system", 
   }
 });
 
+test("static plugin: a graph agent's subagents are checked against the live catalog", async () => {
+  const context = { sessionID: "ses", agent: "build", messageID: "m1", id: "t1" };
+
+  const ghostPlugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    agentDocs: { "builder.md": "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [ghost, explore]\n---\nDo the node.\n" },
+    seedAgents: [{ id: "explore" }],
+  });
+  try {
+    await ghostPlugin.setup();
+    const dispatch = toolByName(ghostPlugin.editor, "dispatch");
+    await assert.rejects(
+      () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
+      /subagent\.unknown.*builder -> ghost/,
+    );
+  } finally {
+    await ghostPlugin.close();
+  }
+
+  const validPlugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    agentDocs: { "builder.md": "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [explore]\n---\nDo the node.\n" },
+    seedAgents: [{ id: "explore" }],
+  });
+  try {
+    await validPlugin.setup();
+    const result = await toolByName(validPlugin.editor, "dispatch").execute(
+      { node: "a", prompt: "p", background: false },
+      context,
+    );
+    assert.match(result.content, /d-\d/);
+    assert.deepEqual(validPlugin.sessionCreates[0].permissions.at(-1), {
+      action: "subagent",
+      resource: "explore",
+      effect: "allow",
+    });
+  } finally {
+    await validPlugin.close();
+  }
+});
+
 test("static plugin: a colliding label is not generated", async () => {
   const plugin = await loadStaticPlugin({
     graph: labelledGraph(),

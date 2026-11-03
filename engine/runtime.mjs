@@ -25,6 +25,8 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
   let lastDefect = null;
   let handoffPreflight = null;
   let handoffPreflightWaiters = [];
+  let subagentPreflight = null;
+  let subagentPreflightWaiters = [];
   let bootHandoffLabels = [];
   let configRevision = 0;
   let liveDriver = driver;
@@ -69,6 +71,24 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
     return { ok: true };
   }
 
+  // The subagent catalog preflight mirrors the handoff one: the plugin reports
+  // which graph-agent `subagents` ids are missing from the live agent catalog,
+  // and dispatch fails closed on any before a node runs.
+  function reportSubagentPreflight(body) {
+    subagentPreflight = {
+      missing: Array.isArray(body?.missing)
+        ? body.missing.filter(
+            (entry) =>
+              entry && typeof entry.agent === "string" && typeof entry.subagent === "string",
+          )
+        : [],
+      catalogAvailable: body?.catalogAvailable !== false,
+      at: new Date().toISOString(),
+    };
+    for (const resolve of subagentPreflightWaiters.splice(0)) resolve();
+    return { ok: true };
+  }
+
   function handoffTools(body) {
     try {
       return {
@@ -106,6 +126,28 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
     return handoffPreflight;
   }
 
+  async function waitForSubagentPreflight(timeoutMs = 5000) {
+    if (subagentPreflight) return subagentPreflight;
+    await Promise.race([
+      new Promise((resolve) => subagentPreflightWaiters.push(resolve)),
+      sleep(timeoutMs),
+    ]);
+    return subagentPreflight;
+  }
+
+  function subagentPreflightError(preflight) {
+    if (!preflight || preflight.catalogAvailable === false) {
+      return { code: "subagent.preflight-unavailable", message: "the plugin did not report the agent catalog" };
+    }
+    if (preflight.missing.length > 0) {
+      return {
+        code: "subagent.unknown",
+        message: preflight.missing.map((entry) => `${entry.agent} -> ${entry.subagent}`).join(", "),
+      };
+    }
+    return null;
+  }
+
   async function dispatch(body, directory) {
     if (typeof directory !== "string" || directory.trim() === "") {
       throw new ControlError(400, "dispatch needs a dispatching directory");
@@ -114,6 +156,11 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
     const preflightFault = handoffPreflightError(preflight);
     if (preflightFault) {
       throw new ControlError(409, `${preflightFault.code}: ${preflightFault.message}`);
+    }
+    const agentPreflight = await waitForSubagentPreflight();
+    const agentFault = subagentPreflightError(agentPreflight);
+    if (agentFault) {
+      throw new ControlError(409, `${agentFault.code}: ${agentFault.message}`);
     }
     if (!handoffLabelsMatch(preflight.labels, bootHandoffLabels)) {
       throw new ControlError(409, "handoff.tools-stale: the plugin label set does not match the boot config");
@@ -272,6 +319,7 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
     },
     event,
     reportHandoffPreflight,
+    reportSubagentPreflight,
     handoffTools,
     sessionSystem,
     handoff,

@@ -47,13 +47,11 @@ graph-only agents stayed unregistered. Remaining:
 
 ## Subagent catalog preflight
 
-The `subagents` field is shape-validated and wired into the session launch
-allowlist. What remains is preflight against the live catalog: a named id that
-does not exist should be a named defect before a node runs, checked against
-OpenCode's live agent list (never a copied one), the same discipline as handoff
-labels against the tool catalog.
-
-Not implemented.
+Shipped. The plugin reads the live `ctx.agent.list()` (after materialization,
+so mounted agents count), and reports any graph agent's missing `subagents` id
+to the runtime; dispatch fails closed with `subagent.unknown` naming
+`agent -> subagent` before a node runs, mirroring the handoff-label discipline
+against the tool catalog.
 
 ## Dashboard placement
 
