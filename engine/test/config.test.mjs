@@ -51,6 +51,7 @@ function permissionLines(permissions) {
 function agentDoc({
   id = "builder",
   model = "provider/model",
+  mounts = ["graph"],
   permissions = [{ action: "read", resource: "*", effect: "allow" }],
   skills = [],
   subagents = [],
@@ -61,6 +62,7 @@ function agentDoc({
     "---",
     `id: ${id}`,
     `model: ${model}`,
+    `mounts: [${mounts.join(", ")}]`,
     ...(description !== undefined ? [`description: ${description}`] : []),
     ...permissionLines(permissions),
     ...(skills.length > 0 ? [`skills: [${skills.join(", ")}]`] : []),
@@ -151,7 +153,7 @@ test("config: skills load from Markdown and resolve onto the graph agent", async
   assert.equal(agent.skillDocs.length, 1);
   assert.equal(agent.skillDocs[0].id, "test-first");
   assert.match(agent.skillDocs[0].instructions, /Write the failing test first/);
-  assert.deepEqual(Object.keys(agent).sort(), ["id", "model", "permissions", "prompt", "skills"]);
+  assert.deepEqual(Object.keys(agent).sort(), ["id", "model", "mounts", "permissions", "prompt", "skills"]);
 
   const summary = configSummary(loaded.doc, path);
   assert.equal(summary.agents[0].prompt, "Prompt.");
@@ -171,7 +173,7 @@ test("config: an agent carries description and subagents through the loader", as
   assert.deepEqual(agent.subagents, ["explore", "general"]);
   assert.deepEqual(
     Object.keys(agent).sort(),
-    ["description", "id", "model", "permissions", "prompt", "subagents"],
+    ["description", "id", "model", "mounts", "permissions", "prompt", "subagents"],
   );
 
   const summary = configSummary(loaded.doc, path);
@@ -196,7 +198,7 @@ test("config: a duplicate subagents entry is named", async () => {
 test("config: a non-array subagents value is named", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\nsubagents: explore\n---\n\nPrompt.\n",
+      "builder.md": "---\nid: builder\nmodel: provider/model\nmounts: [graph]\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\nsubagents: explore\n---\n\nPrompt.\n",
     },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
@@ -205,7 +207,7 @@ test("config: a non-array subagents value is named", async () => {
 test("config: an empty-string subagents entry is named", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "builder.md": '---\nid: builder\nmodel: provider/model\npermissions:\n  - action: read\n    resource: "*"\n    effect: allow\nsubagents: [""]\n---\n\nPrompt.\n',
+      "builder.md": '---\nid: builder\nmodel: provider/model\nmounts: [graph]\npermissions:\n  - action: read\n    resource: "*"\n    effect: allow\nsubagents: [""]\n---\n\nPrompt.\n',
     },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.agent-subagents"));
@@ -221,7 +223,7 @@ test("config: malformed agent frontmatter and a missing id are named", async () 
   assert.ok(codes((await loadConfig(malformed.path)).faults).includes("agent.frontmatter"));
 
   const missing = await graphConfig({
-    agentDocs: { "builder.md": "---\nmodel: provider/model\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\n---\n\nPrompt.\n" },
+    agentDocs: { "builder.md": "---\nmodel: provider/model\nmounts: [graph]\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\n---\n\nPrompt.\n" },
   });
   assert.ok(codes((await loadConfig(missing.path)).faults).includes("agent.missing-id"));
 });
@@ -246,7 +248,7 @@ test("config: invalid agent properties and unknown frontmatter fields are named"
 
   const unknown = await graphConfig({
     agentDocs: {
-      "builder.md": "---\nid: builder\nmodel: provider/model\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\nlegacy: old\n---\n\nPrompt.\n",
+      "builder.md": "---\nid: builder\nmodel: provider/model\nmounts: [graph]\npermissions:\n  - action: read\n    resource: \"*\"\n    effect: allow\nlegacy: old\n---\n\nPrompt.\n",
     },
   });
   assert.ok(codes((await loadConfig(unknown.path)).faults).includes("schema.unknown-field"));
@@ -254,7 +256,7 @@ test("config: invalid agent properties and unknown frontmatter fields are named"
 
 test("config: permission rules must be {action, resource, effect} objects", async () => {
   const stringEntry = await graphConfig({
-    agentDocs: { "builder.md": "---\nid: builder\nmodel: provider/model\npermissions: [read]\n---\n\nPrompt.\n" },
+    agentDocs: { "builder.md": "---\nid: builder\nmodel: provider/model\nmounts: [graph]\npermissions: [read]\n---\n\nPrompt.\n" },
   });
   assert.ok(codes((await loadConfig(stringEntry.path)).faults).includes("schema.agent-permissions"));
 
@@ -276,6 +278,26 @@ test("config: permission rules must be {action, resource, effect} objects", asyn
   assert.ok(codes((await loadConfig(duplicate.path)).faults).includes("schema.agent-permissions"));
 });
 
+test("config: mounts is required and validates its values", async () => {
+  const missing = await graphConfig({
+    agentDocs: {
+      "builder.md": '---\nid: builder\nmodel: provider/model\npermissions:\n  - action: read\n    resource: "*"\n    effect: allow\n---\n\nPrompt.\n',
+    },
+  });
+  assert.ok(codes((await loadConfig(missing.path)).faults).includes("schema.agent-mounts"));
+
+  const badValue = await graphConfig({ agentDocs: { "builder.md": agentDoc({ mounts: ["plan"] }) } });
+  assert.ok(codes((await loadConfig(badValue.path)).faults).includes("schema.agent-mounts"));
+
+  const duplicate = await graphConfig({ agentDocs: { "builder.md": agentDoc({ mounts: ["graph", "graph"] }) } });
+  assert.ok(codes((await loadConfig(duplicate.path)).faults).includes("schema.agent-mounts"));
+
+  const combined = await graphConfig({ agentDocs: { "builder.md": agentDoc({ mounts: ["graph", "primary"] }) } });
+  const loaded = await loadConfig(combined.path);
+  assert.deepEqual(loaded.faults, []);
+  assert.deepEqual(loaded.doc.agents[0].mounts, ["graph", "primary"]);
+});
+
 test("config: a permission rule with a wildcard action is valid", async () => {
   const { path } = await graphConfig({
     agentDocs: { "builder.md": agentDoc({ permissions: [{ action: "*", resource: "*", effect: "deny" }] }) },
@@ -286,7 +308,7 @@ test("config: a permission rule with a wildcard action is valid", async () => {
 test("config: the host agent field is rejected as unknown", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "builder.md": '---\nid: builder\nmodel: provider/model\nagent: build\npermissions:\n  - action: read\n    resource: "*"\n    effect: allow\n---\n\nPrompt.\n',
+      "builder.md": '---\nid: builder\nmodel: provider/model\nmounts: [graph]\nagent: build\npermissions:\n  - action: read\n    resource: "*"\n    effect: allow\n---\n\nPrompt.\n',
     },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.unknown-field"));

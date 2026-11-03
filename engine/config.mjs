@@ -20,6 +20,8 @@ const SKILL_ID = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
 const PERMISSION_EFFECTS = new Set(["allow", "ask", "deny"]);
 
+const MOUNTS = new Set(["graph", "primary", "subagent"]);
+
 // The dispatching agent is a handoff target, not a graph node.
 export const DISPATCHER_TARGET = "$dispatcher";
 
@@ -95,8 +97,30 @@ function relativePath(value, at, faults, { required = true } = {}) {
 
 
 
+function validateMounts(value, atMounts, faults) {
+  if (value === undefined) {
+    faults.push(fault("schema.agent-mounts", `${atMounts}: required mounts list is missing`));
+    return;
+  }
+  if (!Array.isArray(value) || value.length === 0) {
+    faults.push(fault("schema.agent-mounts", `${atMounts}: must be a non-empty list of graph, primary, subagent`));
+    return;
+  }
+  const seen = new Set();
+  for (const [i, mount] of value.entries()) {
+    if (typeof mount !== "string" || !MOUNTS.has(mount)) {
+      faults.push(fault("schema.agent-mounts", `${atMounts}[${i}]: must be one of graph, primary, subagent`));
+    } else if (seen.has(mount)) {
+      faults.push(fault("schema.agent-mounts", `${atMounts}[${i}]: duplicate '${mount}'`));
+    } else {
+      seen.add(mount);
+    }
+  }
+}
+
 function validateAgentProperties(graphAgent, at, faults) {
   string(graphAgent.model, `${at}.model`, faults);
+  validateMounts(graphAgent.mounts, `${at}.mounts`, faults);
   if (graphAgent.model !== undefined && typeof graphAgent.model === "string") {
     const slash = graphAgent.model.indexOf("/");
     if (slash <= 0 || slash === graphAgent.model.length - 1) {
@@ -167,14 +191,14 @@ function validateGraphAgent(graphAgent, at, faults) {
     faults.push(fault("schema.agent", `${at}: must be an object`));
     return;
   }
-  strict(graphAgent, ["id", "model", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
+  strict(graphAgent, ["id", "model", "mounts", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
   string(graphAgent.id, `${at}.id`, faults);
   validateAgentProperties(graphAgent, at, faults);
   if (graphAgent.prompt !== undefined) string(graphAgent.prompt, `${at}.prompt`, faults);
 }
 
 function validateAgentFrontmatter(data, rel, faults) {
-  strict(data, ["id", "model", "permissions", "skills", "description", "subagents"], rel, faults);
+  strict(data, ["id", "model", "mounts", "permissions", "skills", "description", "subagents"], rel, faults);
   if (typeof data.id !== "string" || data.id.trim() === "") {
     faults.push(fault("agent.missing-id", `${rel}: frontmatter needs an id`));
   }
@@ -567,6 +591,7 @@ async function loadAgentDocs(paths, baseDir) {
     agents.push({
       id: data.id,
       model: data.model,
+      mounts: data.mounts,
       ...(data.description !== undefined ? { description: data.description } : {}),
       permissions: data.permissions,
       ...(prompt !== "" ? { prompt } : {}),
@@ -780,6 +805,7 @@ export function configSummary(doc, path) {
     agents: doc.agents.map((graphAgent) => ({
       id: graphAgent.id,
       model: graphAgent.model,
+      mounts: graphAgent.mounts,
       description: graphAgent.description ?? null,
       permissions: graphAgent.permissions,
       prompt: graphAgent.prompt ?? null,

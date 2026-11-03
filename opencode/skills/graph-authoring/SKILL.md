@@ -71,6 +71,7 @@ its prompt:
 ---
 id: builder
 model: openrouter/~deepseek/deepseek-flash-latest
+mounts: [graph]
 permissions:
   - action: read
     resource: "*"
@@ -109,6 +110,10 @@ Write the failing test first, make it pass, then refactor within the green.
   `*` is a YAML alias. The body is the agent's prompt; the prompt is not a
   frontmatter field. Agent documents resolve relative to the config; skill ids
   resolve under `skills/`.
+- Each agent document has a required `mounts` list — a non-empty subset of
+  `graph`, `primary`, `subagent`, with no assumed default and no duplicates.
+  `graph` means it runs as a node's agent inside the engine; `primary` and
+  `subagent` name the OpenCode surfaces the plugin materializes.
 - A graph agent's optional `skills` array references skill documents by id,
   where the id is the skill's filename under `skills/`. The loader follows
   those ids, deduplicates them, and reads each referenced skill once;
