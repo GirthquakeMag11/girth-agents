@@ -1,7 +1,6 @@
 ---
 id: reviewer
 model: openrouter/~deepseek/deepseek-flash-latest
-agent: build
 permissions:
   - action: read
     resource: "*"

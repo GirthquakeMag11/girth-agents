@@ -21,7 +21,6 @@ function terminalGraph(objective = "Do the node.") {
 const builderDoc = `---
 id: builder
 model: test/model
-agent: build
 permissions:
   - action: read
     resource: "*"

@@ -183,7 +183,6 @@ async function runNode({ driver, node, graphAgent, record, previousMessage, onEv
     const session = await driver.createSession({
       directory: record.directory,
       title: `${record.id}/${node.id}`,
-      agent: graphAgent.agent ?? "build",
       model: graphAgent.model,
       permissions: permissionsFor({
         handoff: node.handoff.mode !== "terminal",

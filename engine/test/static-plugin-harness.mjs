@@ -40,7 +40,6 @@ const RPC_TS = fileURLToPath(new URL("../../opencode/plugins/graph-engine/rpc.ts
 const BUILDER_DOC = `---
 id: builder
 model: test/model
-agent: build
 permissions:
   - action: read
     resource: "*"

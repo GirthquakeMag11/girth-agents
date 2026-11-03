@@ -21,10 +21,9 @@ function defect(kind, message) {
 // driver used to return, so no field adaptation is needed here.
 export function createPluginDriver(ctx) {
   const base = {
-    async createSession({ directory, title, agent = "build", model, permissions }) {
+    async createSession({ directory, title, model, permissions }) {
       const session = await ctx.session.create({
         title,
-        agent,
         model,
         location: { directory },
         permissions,

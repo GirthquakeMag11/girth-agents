@@ -14,7 +14,7 @@ function fakeSnapshot() {
     ok: true,
     config: {
       version: "5",
-      agents: [{ id: "builder", model: "test/model", agent: "build", permissions: [{ action: "read", resource: "*", effect: "allow" }] }],
+      agents: [{ id: "builder", model: "test/model", permissions: [{ action: "read", resource: "*", effect: "allow" }] }],
       graph: {
         maxSteps: 100,
         nodes: [{ id: "implement", agent: "builder", objective: "Implement.", handoff: { mode: "unconditional", to: "review" } }],

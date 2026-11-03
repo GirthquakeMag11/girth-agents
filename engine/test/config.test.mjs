@@ -51,7 +51,6 @@ function permissionLines(permissions) {
 function agentDoc({
   id = "builder",
   model = "provider/model",
-  agent,
   permissions = [{ action: "read", resource: "*", effect: "allow" }],
   skills = [],
   subagents = [],
@@ -62,7 +61,6 @@ function agentDoc({
     "---",
     `id: ${id}`,
     `model: ${model}`,
-    ...(agent ? [`agent: ${agent}`] : []),
     ...(description !== undefined ? [`description: ${description}`] : []),
     ...permissionLines(permissions),
     ...(skills.length > 0 ? [`skills: [${skills.join(", ")}]`] : []),
@@ -283,6 +281,15 @@ test("config: a permission rule with a wildcard action is valid", async () => {
     agentDocs: { "builder.md": agentDoc({ permissions: [{ action: "*", resource: "*", effect: "deny" }] }) },
   });
   assert.deepEqual((await loadConfig(path)).faults, []);
+});
+
+test("config: the host agent field is rejected as unknown", async () => {
+  const { path } = await graphConfig({
+    agentDocs: {
+      "builder.md": '---\nid: builder\nmodel: provider/model\nagent: build\npermissions:\n  - action: read\n    resource: "*"\n    effect: allow\n---\n\nPrompt.\n',
+    },
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("schema.unknown-field"));
 });
 
 test("config: a node must reference a loaded agent", async () => {

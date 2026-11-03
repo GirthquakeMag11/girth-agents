@@ -71,7 +71,6 @@ its prompt:
 ---
 id: builder
 model: openrouter/~deepseek/deepseek-flash-latest
-agent: build
 permissions:
   - action: read
     resource: "*"
@@ -103,9 +102,8 @@ Write the failing test first, make it pass, then refactor within the green.
 
 - `version` is the string `"5"`.
 - `agents` lists Markdown agent document paths relative to the config. Each
-  agent document has required `id`, `model`, and `permissions`, optional
-  `agent` (the OpenCode agent to run, default `build`), and optional `skills`
-  references. `permissions` is a list of `{ action, resource, effect }` rules
+  agent document has required `id`, `model`, and `permissions`, and optional
+  `skills` references. `permissions` is a list of `{ action, resource, effect }` rules
   (`effect` one of `allow`, `ask`, `deny`); `*` is a valid action or resource,
   written block-style as `- action:` lines with `*` quoted (`"*"`) — a bare
   `*` is a YAML alias. The body is the agent's prompt; the prompt is not a

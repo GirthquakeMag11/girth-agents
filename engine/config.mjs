@@ -103,7 +103,6 @@ function validateAgentProperties(graphAgent, at, faults) {
       faults.push(fault("schema.agent-model", `${at}.model: must be 'provider/model'`));
     }
   }
-  if (graphAgent.agent !== undefined) string(graphAgent.agent, `${at}.agent`, faults);
   if (!Array.isArray(graphAgent.permissions) || graphAgent.permissions.length === 0) {
     faults.push(fault("schema.agent-permissions", `${at}.permissions: must be a non-empty array of {action, resource, effect} rules`));
   } else {
@@ -168,14 +167,14 @@ function validateGraphAgent(graphAgent, at, faults) {
     faults.push(fault("schema.agent", `${at}: must be an object`));
     return;
   }
-  strict(graphAgent, ["id", "model", "agent", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
+  strict(graphAgent, ["id", "model", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
   string(graphAgent.id, `${at}.id`, faults);
   validateAgentProperties(graphAgent, at, faults);
   if (graphAgent.prompt !== undefined) string(graphAgent.prompt, `${at}.prompt`, faults);
 }
 
 function validateAgentFrontmatter(data, rel, faults) {
-  strict(data, ["id", "model", "agent", "permissions", "skills", "description", "subagents"], rel, faults);
+  strict(data, ["id", "model", "permissions", "skills", "description", "subagents"], rel, faults);
   if (typeof data.id !== "string" || data.id.trim() === "") {
     faults.push(fault("agent.missing-id", `${rel}: frontmatter needs an id`));
   }
@@ -568,7 +567,6 @@ async function loadAgentDocs(paths, baseDir) {
     agents.push({
       id: data.id,
       model: data.model,
-      ...(data.agent !== undefined ? { agent: data.agent } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
       permissions: data.permissions,
       ...(prompt !== "" ? { prompt } : {}),
@@ -782,7 +780,6 @@ export function configSummary(doc, path) {
     agents: doc.agents.map((graphAgent) => ({
       id: graphAgent.id,
       model: graphAgent.model,
-      agent: graphAgent.agent ?? "build",
       description: graphAgent.description ?? null,
       permissions: graphAgent.permissions,
       prompt: graphAgent.prompt ?? null,
