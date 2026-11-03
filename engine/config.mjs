@@ -458,7 +458,7 @@ function validateWorkflows(workflows, at, byId, nodeIds, faults) {
   }
 }
 
-function validateGraph(graph, at, graphAgentIds, faults) {
+function validateGraph(graph, at, graphAgents, faults) {
   if (!isObject(graph)) {
     faults.push(fault("schema.graph", `${at}: must be an object`));
     return;
@@ -496,8 +496,13 @@ function validateGraph(graph, at, graphAgentIds, faults) {
     if (node.permissions !== undefined) {
       validatePermissions(node.permissions, `${nodeAt}.permissions`, faults, "schema.node-permissions", "schema.node-effect");
     }
-    if (node.agent !== undefined && typeof node.agent === "string" && !graphAgentIds.has(node.agent)) {
-      faults.push(fault("graph.unknown-agent", `${nodeAt}.agent: names no agent '${node.agent}'`));
+    if (node.agent !== undefined && typeof node.agent === "string") {
+      const declared = graphAgents.get(node.agent);
+      if (!declared) {
+        faults.push(fault("graph.unknown-agent", `${nodeAt}.agent: names no agent '${node.agent}'`));
+      } else if (!(declared.mounts ?? []).includes("graph")) {
+        faults.push(fault("graph.agent-not-graph", `${nodeAt}.agent: '${node.agent}' is not mounted as 'graph'`));
+      }
     }
     string(node.objective, `${nodeAt}.objective`, faults);
     integer(node.budgetMs, `${nodeAt}.budgetMs`, faults, { min: 1 });
@@ -565,15 +570,15 @@ export function validateConfig(doc) {
     faults.push(fault("schema.version", `config.version: must be the string '${SCHEMA_VERSION}'`));
   }
 
-  const graphAgentIds = new Set();
+  const graphAgents = new Map();
   if (!Array.isArray(doc.agents) || doc.agents.length === 0) {
     faults.push(fault("schema.agents", "config.agents: must be a non-empty array"));
   } else {
     for (const [i, graphAgent] of doc.agents.entries()) {
       validateGraphAgent(graphAgent, `config.agents[${i}]`, faults);
       if (isObject(graphAgent) && typeof graphAgent.id === "string" && graphAgent.id.trim() !== "") {
-        if (graphAgentIds.has(graphAgent.id)) faults.push(fault("agent.duplicate-id", `config.agents[${i}].id: duplicate '${graphAgent.id}'`));
-        graphAgentIds.add(graphAgent.id);
+        if (graphAgents.has(graphAgent.id)) faults.push(fault("agent.duplicate-id", `config.agents[${i}].id: duplicate '${graphAgent.id}'`));
+        graphAgents.set(graphAgent.id, graphAgent);
       }
     }
   }
@@ -581,7 +586,7 @@ export function validateConfig(doc) {
   if (!isObject(doc.graph)) {
     faults.push(fault("schema.graph", "config.graph: must be an object"));
   } else {
-    validateGraph(doc.graph, "config.graph", graphAgentIds, faults);
+    validateGraph(doc.graph, "config.graph", graphAgents, faults);
   }
 
   return faults;

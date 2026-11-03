@@ -255,6 +255,11 @@ printf '%s\n' "$MANIFEST_LINES" > "$CONFIG_DIR/graph-engine/manifest" || fail "c
 echo "installed:  Graph Engine v$VERSION into $CONFIG_DIR"
 echo "graph:      $CONFIG_DIR/graph-engine/graph ($seeded)"
 echo "plugin:     OpenCode loads $CONFIG_DIR/plugins/graph-engine automatically"
+if [ "$seeded" = "no (existing graph preserved)" ]; then
+  echo "note:       an existing graph was preserved — the Engineer and Conductor"
+  echo "            are now graph-mounted, so they stay absent until that graph"
+  echo "            includes them"
+fi
 echo "note:       run /reload in OpenCode if it was already running"
 echo "note:       no project files are created"
 

@@ -14,16 +14,11 @@ credentials and is not part of CI.
 
 ## Graph template skills
 
-The shipped build-review graph template currently references no graph skills;
-its graph agents carry only standing prompts. Skills are already first-class in
-the schema and loader; the template should eventually reference one or two
-graph skills so the shipped example exercises the capability.
-
-## Re-root the primary agents
-
-The Engineer and Conductor are hand-authored OpenCode Markdown. Re-derive them
-as mounts of the shared schema (`graph/.../*.md` with `mounts`) rather than
-separate `.opencode/agents/*.md` files.
+The graph's *node* agents (builder, reviewer) still reference no graph skills;
+they carry only standing prompts. The primary mounts already reference
+`graph-authoring` and `dispatching`; the template's graph agents should
+eventually reference one too, so the shipped example exercises a graph-session
+skill.
 
 ## Dashboard placement
 

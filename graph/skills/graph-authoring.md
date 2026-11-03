@@ -102,9 +102,10 @@ Write the failing test first, make it pass, then refactor within the green.
 - `permissions` is an optional fine-grained list of `{ action, resource,
   effect }` rules (`effect` one of `allow`, `ask`, `deny`) that refine the
   baseline; write rules block-style as `- action:` lines with `*` quoted
-  (`"*"`) — a bare `*` is a YAML alias. On a mount, `@GRAPH_DIR@` in a
-  rule's `resource` expands to the graph's own directory at materialization,
-  so a rule can scope to the graph without knowing the install path.
+  (`"*"`) — a bare `*` is a YAML alias. On a `primary`/`subagent` mount,
+  `@GRAPH_DIR@` in a rule's `resource` expands to the graph's own directory
+  at materialization, so a rule can scope to the graph without knowing the
+  install path.
 - An agent's optional `skills` array references skill documents by id, where
   the id is the skill's filename under `skills/`. The loader follows those ids,
   deduplicates them, and reads each referenced skill once; unreferenced skill

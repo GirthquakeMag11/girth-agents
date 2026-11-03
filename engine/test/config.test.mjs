@@ -429,6 +429,19 @@ test("config: a node must reference a loaded agent", async () => {
   assert.ok(codes((await loadConfig(path)).faults).includes("graph.unknown-agent"));
 });
 
+test("config: a node's agent must be mounted as graph", async () => {
+  const { path } = await graphConfig({
+    agentDocs: {
+      "builder.md": agentDoc(),
+      "liaison.md": agentDoc({ mounts: ["primary"], body: "P." }),
+    },
+    graph: {
+      nodes: [{ id: "a", agent: "liaison", objective: "A.", handoff: { mode: "terminal" } }],
+    },
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("graph.agent-not-graph"));
+});
+
 test("config: the top-level skills catalog is rejected", async () => {
   const { path } = await graphConfig({ extra: { skills: ["skills/test-first.md"] } });
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.unknown-field"));
