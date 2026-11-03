@@ -19,39 +19,19 @@ its graph agents carry only standing prompts. Skills are already first-class in
 the schema and loader; the template should eventually reference one or two
 graph skills so the shipped example exercises the capability.
 
-## Agent materialization
+## Mount tools surface
 
-The materializer (`engine/materialize.mjs`) is implemented and source-verified:
-a `primary`/`subagent` mount publishes into OpenCode's live agent registry and
-its referenced skills into the skill registry via `ctx.agent.transform`
-(update-as-upsert) / `ctx.skill.transform` (`add`), never file-emission; a
-`graph` mount never publishes. The SDK conformance spike (against both the
-`dev` and `v2.2.5` OpenCode sources) settled the mapping: body→`system`,
-`"provider/id#variant"`→`Model.Ref` object, `mode` is `primary|subagent|all`
-(dual mounts → `all`), and a skill carries its absolute `path` + `content`.
-Reload re-plays the transforms via `ctx.agent.reload()`/`ctx.skill.reload()`.
-Live-confirmed on an isolated server (private `opencode serve`, isolated
-`XDG_*` roots, real installer): a graph agent with `mounts: [primary]`
-materialized into `/api/agent` with `system` = body, `description`, `model`
-as a `Model.Ref` object, no `allow *` baseline (deny-by-default), and its
-referenced skill followed into `/api/skill` with the absolute `path`, while
-graph-only agents stayed unregistered. Remaining:
+A primary/subagent mount's `tools` acquisitions do not yet surface on the
+OpenCode side: only the `permissions` triples map into `Agent.Info`, while
+`tools` is a session-provisioning concern. Decide how a mounted agent's
+`tools` list becomes its registry permissions; the Engineer/Conductor re-root
+makes this concrete.
 
-- Provision graph node sessions from the document's own content
-  (body-as-system, no host agent), and decide how a primary/subagent mount's
-  `tools` acquisitions surface on the OpenCode side (today only
-  `permissions` triples map; `tools` is a session-provisioning concern — the
-  Engineer/Conductor re-root will make this concrete).
-- Re-derive the Engineer and Conductor as mounts of the shared schema rather
-  than hand-authored OpenCode Markdown.
+## Re-root the primary agents
 
-## Subagent catalog preflight
-
-Shipped. The plugin reads the live `ctx.agent.list()` (after materialization,
-so mounted agents count), and reports any graph agent's missing `subagents` id
-to the runtime; dispatch fails closed with `subagent.unknown` naming
-`agent -> subagent` before a node runs, mirroring the handoff-label discipline
-against the tool catalog.
+The Engineer and Conductor are hand-authored OpenCode Markdown. Re-derive them
+as mounts of the shared schema (`graph/.../*.md` with `mounts`) rather than
+separate `.opencode/agents/*.md` files.
 
 ## Dashboard placement
 
@@ -81,21 +61,19 @@ Not implemented.
 
 ## Dispatch card presentation
 
-The focused text display is implemented. OpenCode currently selects its
-subagent card by tool name and exposes no inline custom tool-card renderer, so
-graph-dispatch card parity needs an OpenCode core change or a different
-integration. Keep this as a design constraint, not a spec promise.
+OpenCode currently selects its subagent card by tool name and exposes no
+inline custom tool-card renderer, so graph-dispatch card parity needs an
+OpenCode core change or a different integration. Keep this as a design
+constraint, not a spec promise.
 
 Not implemented.
 
 ## Dogfood
 
 Does using the engine to develop the engine make real work easier and more
-efficient than doing it directly? The first dogfood run completed, but there is
-no controlled comparison and the fail loop was not exercised. Continue only
-after deciding what friction and review value to measure.
-
-Open.
+efficient than doing it directly? Continue only after deciding what friction
+and review value to measure; there is no controlled comparison and the fail
+loop has not been exercised.
 
 ## Deferred
 
