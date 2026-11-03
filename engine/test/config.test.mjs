@@ -279,6 +279,14 @@ test("config: a skill's id is its filename, not its frontmatter", async () => {
   assert.equal(loaded.doc.agents[0].skillDocs[0].name, "A skill");
 });
 
+test("config: a referenced skill with an unknown frontmatter field is named", async () => {
+  const { path } = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ skills: ["a"] }) },
+    skillFiles: { "a.md": "---\nname: A\nmounts: [graph]\n---\n\nA.\n" },
+  });
+  assert.ok(codes((await loadConfig(path)).faults).includes("schema.unknown-field"));
+});
+
 test("config: a skill must carry instructions", async () => {
   const { path } = await graphConfig({
     agentDocs: { "builder.md": agentDoc({ skills: ["a"] }) },

@@ -535,7 +535,7 @@ export function validateConfig(doc) {
 
 async function loadAgentDocs(paths, baseDir) {
   const agents = [];
-  const refs = [];
+  const skillIds = [];
   const faults = [];
   for (const rel of paths) {
     let text;
@@ -565,9 +565,9 @@ async function loadAgentDocs(paths, baseDir) {
       ...(data.skills !== undefined ? { skills: data.skills } : {}),
       ...(data.subagents !== undefined ? { subagents: data.subagents } : {}),
     });
-    if (Array.isArray(data.skills)) refs.push(...data.skills);
+    if (Array.isArray(data.skills)) skillIds.push(...data.skills);
   }
-  return { agents, refs, faults };
+  return { agents, skillIds, faults };
 }
 
 async function loadSkillDocs(ids, baseDir) {
@@ -591,6 +591,9 @@ async function loadSkillDocs(ids, baseDir) {
       faults.push(fault("skill.frontmatter", `skill '${id}': ${e.message}`));
       continue;
     }
+    // `id` is tolerated for legacy documents but ignored: the id is the
+    // filename. Anything else — including `mounts` — is an unknown field.
+    strict(data, ["id", "name", "description"], `skill '${id}'`, faults);
     const instructions = body.trim();
     if (instructions === "") {
       faults.push(fault("skill.instructions", `skill '${id}' has no instructions`));
@@ -636,10 +639,10 @@ export async function loadConfig(path) {
   if (manifestFaults.length > 0) return { doc: null, faults: manifestFaults, path };
 
   const baseDir = dirname(resolve(path));
-  const { agents, refs, faults: agentFaults } = await loadAgentDocs(doc.agents, baseDir);
+  const { agents, skillIds, faults: agentFaults } = await loadAgentDocs(doc.agents, baseDir);
   if (agentFaults.length > 0) return { doc: null, faults: agentFaults, path };
 
-  const { skills, faults: skillFaults } = await loadSkillDocs(refs, baseDir);
+  const { skills, faults: skillFaults } = await loadSkillDocs(skillIds, baseDir);
   if (skillFaults.length > 0) return { doc: null, faults: skillFaults, path };
 
   attachAgentSkills(agents, skills);

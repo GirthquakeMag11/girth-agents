@@ -97,7 +97,8 @@ Write the failing test first, make it pass, then refactor within the green.
   agent document has required `id`, `model`, and `permissions`, optional
   `agent` (the OpenCode agent to run, default `build`), and optional `skills`
   references. The body is the agent's prompt; the prompt is not a frontmatter
-  field. Agent and skill paths resolve relative to the config.
+  field. Agent documents resolve relative to the config; skill ids resolve
+  under `skills/`.
 - A graph agent's optional `skills` array references skill documents by id,
   where the id is the skill's filename under `skills/`. The loader follows
   those ids, deduplicates them, and reads each referenced skill once;
