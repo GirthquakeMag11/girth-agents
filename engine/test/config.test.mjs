@@ -281,6 +281,14 @@ test("config: invalid agent properties and unknown frontmatter fields are named"
   const model = await graphConfig({ agentDocs: { "builder.md": agentDoc({ model: "nope" }) } });
   assert.ok(codes((await loadConfig(model.path)).faults).includes("schema.agent-model"));
 
+  // Mirror Model.Ref.parse: reject empty id, empty variant, and '#' in the provider.
+  for (const bad of ["provider/#variant", "provider/model#", "provider#x/model", "/model"]) {
+    const doc = await graphConfig({ agentDocs: { "builder.md": agentDoc({ model: bad }) } });
+    assert.ok(codes((await loadConfig(doc.path)).faults).includes("schema.agent-model"), `'${bad}' should be rejected`);
+  }
+  const ok = await graphConfig({ agentDocs: { "builder.md": agentDoc({ model: "provider/model#variant" }) } });
+  assert.deepEqual((await loadConfig(ok.path)).faults, []);
+
   const permissions = await graphConfig({ agentDocs: { "builder.md": agentDoc({ permissions: [] }) } });
   assert.ok(codes((await loadConfig(permissions.path)).faults).includes("schema.agent-permissions"));
 

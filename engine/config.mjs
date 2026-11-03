@@ -155,9 +155,18 @@ function validateAgentProperties(graphAgent, at, faults) {
   string(graphAgent.model, `${at}.model`, faults);
   validateMounts(graphAgent.mounts, `${at}.mounts`, faults);
   if (graphAgent.model !== undefined && typeof graphAgent.model === "string") {
+    // Mirror the SDK's Model.Ref.parse: a provider, a non-empty id, and an
+    // optional non-empty variant. Reject otherwise so a malformed model faults
+    // at load instead of publishing a silently-unresolvable registry ref.
     const slash = graphAgent.model.indexOf("/");
-    if (slash <= 0 || slash === graphAgent.model.length - 1) {
-      faults.push(fault("schema.agent-model", `${at}.model: must be 'provider/model'`));
+    const hash = graphAgent.model.indexOf("#");
+    const provider = slash > 0 ? graphAgent.model.slice(0, slash) : "";
+    const id = slash > 0 ? graphAgent.model.slice(slash + 1, hash === -1 ? undefined : hash) : "";
+    const variant = hash === -1 ? "" : graphAgent.model.slice(hash + 1);
+    const bad =
+      slash <= 0 || id === "" || provider.includes("#") || (hash !== -1 && (variant === "" || variant.includes("#")));
+    if (bad) {
+      faults.push(fault("schema.agent-model", `${at}.model: must be 'provider/model' or 'provider/model#variant'`));
     }
   }
   validateToolNames(graphAgent.tools, `${at}.tools`, faults, "schema.agent-tools");

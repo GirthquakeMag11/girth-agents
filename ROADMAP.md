@@ -21,23 +21,24 @@ graph skills so the shipped example exercises the capability.
 
 ## Agent materialization
 
-The one-document/three-mounts schema is shipped: agents, skills, and nodes are
-Markdown, discovered by directory with id = filename, with `mounts` and the
-deny-by-default `tools`/fine-grained `permissions` layers. What remains is the
-materializer: a `primary`/`subagent` mount is published into OpenCode's live
-agent registry and its referenced skills into the skill registry, while a
-`graph` mount never is — its node sessions are provisioned by the plugin from
-the document's own content (body-as-system, model, permissions), no host agent.
+The materializer (`engine/materialize.mjs`) is implemented and source-verified:
+a `primary`/`subagent` mount publishes into OpenCode's live agent registry and
+its referenced skills into the skill registry via `ctx.agent.transform`
+(update-as-upsert) / `ctx.skill.transform` (`add`), never file-emission; a
+`graph` mount never publishes. The SDK conformance spike (against both the
+`dev` and `v2.2.5` OpenCode sources) settled the mapping: body→`system`,
+`"provider/id#variant"`→`Model.Ref` object, `mode` is `primary|subagent|all`
+(dual mounts → `all`), and a skill carries its absolute `path` + `content`.
+Reload re-plays the transforms via `ctx.agent.reload()`/`ctx.skill.reload()`.
+Remaining:
 
-- Publish primary/subagent mounts via `ctx.agent.transform` (update-as-upsert)
-  and skills via `ctx.skill.transform` (`add`) on graph load/reload, never
-  file-emission.
-- Spike the transform semantics and the graph-session provisioning against the
-  running server, early and gating.
+- Confirm live: the installed server is two schema versions behind (v5 graph,
+  pre-materializer plugin) and the engine is process-global, so surfacing a
+  mount needs a plugin reload plus an engine re-init (server restart) — gate
+  the materializer against the running server, and provision graph node
+  sessions from the document's own content (body-as-system), no host agent.
 - Re-derive the Engineer and Conductor as mounts of the shared schema rather
   than hand-authored OpenCode Markdown.
-
-Not implemented.
 
 ## Subagent catalog preflight
 
