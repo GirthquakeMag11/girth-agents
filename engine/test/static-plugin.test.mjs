@@ -193,7 +193,7 @@ Your standing role: help the user run the build pipeline.
     const update = plugin.agentUpdates[0];
     assert.equal(update.id, "liaison");
     assert.equal(update.draft.mode, "primary");
-    assert.equal(update.draft.model, "test/model");
+    assert.deepEqual(update.draft.model, { providerID: "test", id: "model" }, "model is a Model.Ref object");
     assert.equal(update.draft.description, "The user liaison.");
     assert.match(update.draft.system, /Your standing role/);
     assert.deepEqual(update.draft.permissions, []);
@@ -230,6 +230,7 @@ Write the failing test first, make it pass, then refactor.
     assert.equal(skill.name, "Test-first");
     assert.equal(skill.description, "TDD discipline.");
     assert.match(skill.content, /failing test/);
+    assert.match(skill.path, /skills\/test-first\.md$/, "a skill carries its absolute source path");
     assert.equal(plugin.agentUpdates[0].id, "reviewer");
     assert.equal(plugin.agentUpdates[0].draft.mode, "subagent");
   } finally {

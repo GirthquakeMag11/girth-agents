@@ -2,13 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { materializationPlan } from "../materialize.mjs";
 
+const BASE = "/graph";
+
 test("materialize: primary and subagent mounts are published, graph mounts are not", () => {
   const config = {
     agents: [
       { id: "liaison", model: "test/model", mounts: ["graph", "primary"], prompt: "Help the user.", description: "Liaison.", permissions: [] },
       {
         id: "reviewer",
-        model: "test/model",
+        model: "test/model#v2",
         mounts: ["subagent"],
         prompt: "Review.",
         permissions: [{ action: "read", resource: "*", effect: "allow" }],
@@ -16,17 +18,39 @@ test("materialize: primary and subagent mounts are published, graph mounts are n
       { id: "builder", model: "test/model", mounts: ["graph"], prompt: "Build." },
     ],
   };
-  const plan = materializationPlan(config);
+  const plan = materializationPlan(config, BASE);
   assert.deepEqual(plan.agents.map((agent) => agent.id), ["liaison", "reviewer"]);
   assert.equal(plan.agents[0].mode, "primary");
   assert.equal(plan.agents[0].system, "Help the user.");
   assert.equal(plan.agents[0].description, "Liaison.");
-  assert.equal(plan.agents[1].mode, "subagent");
+  assert.deepEqual(plan.agents[1].mode, "subagent");
   assert.deepEqual(plan.agents[1].permissions, [{ action: "read", resource: "*", effect: "allow" }]);
   assert.deepEqual(plan.skills, []);
 });
 
-test("materialize: referenced skills follow a published mount, deduped", () => {
+test("materialize: a dual primary+subagent mount maps to mode 'all', not 'primary'", () => {
+  const plan = materializationPlan(
+    { agents: [{ id: "jack", model: "test/model", mounts: ["graph", "primary", "subagent"], prompt: "P." }] },
+    BASE,
+  );
+  assert.equal(plan.agents[0].mode, "all");
+});
+
+test("materialize: the model string becomes a Model.Ref object", () => {
+  const plan = materializationPlan(
+    { agents: [{ id: "a", model: "openrouter/~deepseek/deepseek-flash-latest", mounts: ["primary"], prompt: "P." }] },
+    BASE,
+  );
+  assert.deepEqual(plan.agents[0].model, { providerID: "openrouter", id: "~deepseek/deepseek-flash-latest" });
+
+  const varied = materializationPlan(
+    { agents: [{ id: "b", model: "prov/model#variant", mounts: ["subagent"], prompt: "P." }] },
+    BASE,
+  );
+  assert.deepEqual(varied.agents[0].model, { providerID: "prov", id: "model", variant: "variant" });
+});
+
+test("materialize: referenced skills follow a published mount, deduped, with an absolute path", () => {
   const skill = { id: "test-first", name: "Test-first", description: "TDD.", instructions: "Write the failing test first." };
   const config = {
     agents: [
@@ -34,8 +58,14 @@ test("materialize: referenced skills follow a published mount, deduped", () => {
       { id: "b", model: "test/model", mounts: ["subagent"], prompt: "B.", skillDocs: [skill] },
     ],
   };
-  const plan = materializationPlan(config);
+  const plan = materializationPlan(config, "/graph");
   assert.deepEqual(plan.skills, [
-    { id: "test-first", name: "Test-first", description: "TDD.", content: "Write the failing test first." },
+    {
+      id: "test-first",
+      name: "Test-first",
+      description: "TDD.",
+      path: "/graph/skills/test-first.md",
+      content: "Write the failing test first.",
+    },
   ]);
 });

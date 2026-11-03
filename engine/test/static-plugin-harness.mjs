@@ -139,6 +139,8 @@ export function createContext(editor, { directory = "/work/project", options = {
   const agentUpdates = [];
   const skillAdds = [];
   const mountDisposals = [];
+  let agentReload = null;
+  let skillReload = null;
   let nextSession = 0;
   let transformCalls = 0;
 
@@ -222,31 +224,56 @@ export function createContext(editor, { directory = "/work/project", options = {
       },
     },
     agent: {
+      // Editor.state: updates accumulate into one object per id (upsert), and a
+      // domain-level reload() re-plays the registered transform, mirroring the
+      // SDK's AgentEditor/AgentDomain contract.
       async transform(callback) {
+        const agents = new Map(); // id -> mutated Agent.Info-like object
         const editor = {
           update(id, fn) {
-            const draft = {};
+            const draft = agents.get(id) ?? {};
             fn(draft);
+            draft.id = id;
+            agents.set(id, draft);
             agentUpdates.push({ id, draft });
           },
         };
-        await callback(editor);
+        const run = () => callback(editor);
+        await run();
         const token = { disposed: false };
         mountDisposals.push(token);
+        agentReload = async () => {
+          await run();
+        };
         return { dispose: async () => { token.disposed = true; } };
+      },
+      async reload() {
+        await agentReload?.();
       },
     },
     skill: {
+      // add-on-absent, re-played by a domain-level reload().
       async transform(callback) {
+        const skills = new Map();
         const editor = {
           add(skill) {
-            skillAdds.push(skill);
+            if (!skills.has(skill.id)) {
+              skills.set(skill.id, skill);
+              skillAdds.push(skill);
+            }
           },
         };
-        await callback(editor);
+        const run = () => callback(editor);
+        await run();
         const token = { disposed: false };
         mountDisposals.push(token);
+        skillReload = async () => {
+          await run();
+        };
         return { dispose: async () => { token.disposed = true; } };
+      },
+      async reload() {
+        await skillReload?.();
       },
     },
     rpc: {
