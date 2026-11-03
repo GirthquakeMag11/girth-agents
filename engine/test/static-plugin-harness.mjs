@@ -41,10 +41,7 @@ const BUILDER_DOC = `---
 id: builder
 model: test/model
 mounts: [graph]
-permissions:
-  - action: read
-    resource: "*"
-    effect: allow
+tools: [read]
 ---
 Do the node within the dispatched scope.
 `;

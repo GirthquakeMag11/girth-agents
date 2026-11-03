@@ -16,7 +16,7 @@ function usage(cost, input = 0, output = 0) {
 test("executor: subagents become a launch allowlist after the deny-rest", () => {
   assert.deepEqual(
     permissionsFor({
-      allow: [{ action: "read", resource: "*", effect: "allow" }],
+      rules: [{ action: "read", resource: "*", effect: "allow" }],
       subagents: ["explore"],
     }),
     [
@@ -46,8 +46,8 @@ test("executor: a graph agent's subagents reach the session permissions", async 
 const config = {
   version: "5",
   agents: [
-    { id: "builder", model: "test/model", mounts: ["graph"], permissions: [{ action: "read", resource: "*", effect: "allow" }] },
-    { id: "reviewer", model: "test/model", mounts: ["graph"], permissions: [{ action: "read", resource: "*", effect: "allow" }] },
+    { id: "builder", model: "test/model", mounts: ["graph"], tools: ["read"] },
+    { id: "reviewer", model: "test/model", mounts: ["graph"], tools: ["read"] },
   ],
   graph: {
     maxSteps: 20,

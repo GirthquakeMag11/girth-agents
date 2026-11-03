@@ -186,7 +186,12 @@ async function runNode({ driver, node, graphAgent, record, previousMessage, onEv
       model: graphAgent.model,
       permissions: permissionsFor({
         handoff: node.handoff.mode !== "terminal",
-        allow: graphAgent.permissions,
+        rules: [
+          ...(graphAgent.tools ?? []).map((name) => ({ action: name, resource: "*", effect: "allow" })),
+          ...(graphAgent.permissions ?? []),
+          ...(node.tools ?? []).map((name) => ({ action: name, resource: "*", effect: "allow" })),
+          ...(node.permissions ?? []),
+        ],
         subagents: graphAgent.subagents ?? [],
       }),
     });

@@ -118,6 +118,51 @@ function validateMounts(value, atMounts, faults) {
   }
 }
 
+function validatePermissions(rules, atRules, faults, ruleCode, effectCode) {
+  if (!Array.isArray(rules) || rules.length === 0) {
+    faults.push(fault(ruleCode, `${atRules}: must be a non-empty array of {action, resource, effect} rules`));
+    return;
+  }
+  const seen = new Set();
+  for (const [i, rule] of rules.entries()) {
+    const atRule = `${atRules}[${i}]`;
+    if (!isObject(rule)) {
+      faults.push(fault(ruleCode, `${atRule}: must be an {action, resource, effect} rule`));
+      continue;
+    }
+    strict(rule, ["action", "resource", "effect"], atRule, faults);
+    string(rule.action, `${atRule}.action`, faults);
+    string(rule.resource, `${atRule}.resource`, faults);
+    if (typeof rule.effect !== "string" || !PERMISSION_EFFECTS.has(rule.effect)) {
+      faults.push(fault(effectCode, `${atRule}.effect: must be one of allow, ask, deny`));
+    }
+    const key = `${rule.action}\u0000${rule.resource}\u0000${rule.effect}`;
+    if (seen.has(key)) {
+      faults.push(fault(ruleCode, `${atRule}: duplicate rule`));
+    } else {
+      seen.add(key);
+    }
+  }
+}
+
+function validateToolNames(value, at, faults, code) {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    faults.push(fault(code, `${at}: must be an array of tool names`));
+    return;
+  }
+  const seen = new Set();
+  for (const [i, name] of value.entries()) {
+    if (typeof name !== "string" || name.trim() === "") {
+      faults.push(fault(code, `${at}[${i}]: must be a non-empty string`));
+    } else if (seen.has(name)) {
+      faults.push(fault(code, `${at}[${i}]: duplicate '${name}'`));
+    } else {
+      seen.add(name);
+    }
+  }
+}
+
 function validateAgentProperties(graphAgent, at, faults) {
   string(graphAgent.model, `${at}.model`, faults);
   validateMounts(graphAgent.mounts, `${at}.mounts`, faults);
@@ -127,29 +172,9 @@ function validateAgentProperties(graphAgent, at, faults) {
       faults.push(fault("schema.agent-model", `${at}.model: must be 'provider/model'`));
     }
   }
-  if (!Array.isArray(graphAgent.permissions) || graphAgent.permissions.length === 0) {
-    faults.push(fault("schema.agent-permissions", `${at}.permissions: must be a non-empty array of {action, resource, effect} rules`));
-  } else {
-    const seen = new Set();
-    for (const [i, rule] of graphAgent.permissions.entries()) {
-      const atRule = `${at}.permissions[${i}]`;
-      if (!isObject(rule)) {
-        faults.push(fault("schema.agent-permissions", `${atRule}: must be an {action, resource, effect} rule`));
-        continue;
-      }
-      strict(rule, ["action", "resource", "effect"], atRule, faults);
-      string(rule.action, `${atRule}.action`, faults);
-      string(rule.resource, `${atRule}.resource`, faults);
-      if (typeof rule.effect !== "string" || !PERMISSION_EFFECTS.has(rule.effect)) {
-        faults.push(fault("schema.agent-effect", `${atRule}.effect: must be one of allow, ask, deny`));
-      }
-      const key = `${rule.action}\u0000${rule.resource}\u0000${rule.effect}`;
-      if (seen.has(key)) {
-        faults.push(fault("schema.agent-permissions", `${atRule}: duplicate rule`));
-      } else {
-        seen.add(key);
-      }
-    }
+  validateToolNames(graphAgent.tools, `${at}.tools`, faults, "schema.agent-tools");
+  if (graphAgent.permissions !== undefined) {
+    validatePermissions(graphAgent.permissions, `${at}.permissions`, faults, "schema.agent-permissions", "schema.agent-effect");
   }
   if (graphAgent.skills !== undefined) {
     if (!Array.isArray(graphAgent.skills)) {
@@ -191,14 +216,14 @@ function validateGraphAgent(graphAgent, at, faults) {
     faults.push(fault("schema.agent", `${at}: must be an object`));
     return;
   }
-  strict(graphAgent, ["id", "model", "mounts", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
+  strict(graphAgent, ["id", "model", "mounts", "tools", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
   string(graphAgent.id, `${at}.id`, faults);
   validateAgentProperties(graphAgent, at, faults);
   if (graphAgent.prompt !== undefined) string(graphAgent.prompt, `${at}.prompt`, faults);
 }
 
 function validateAgentFrontmatter(data, rel, faults) {
-  strict(data, ["id", "model", "mounts", "permissions", "skills", "description", "subagents"], rel, faults);
+  strict(data, ["id", "model", "mounts", "tools", "permissions", "skills", "description", "subagents"], rel, faults);
   if (typeof data.id !== "string" || data.id.trim() === "") {
     faults.push(fault("agent.missing-id", `${rel}: frontmatter needs an id`));
   }
@@ -469,9 +494,13 @@ function validateGraph(graph, at, graphAgentIds, faults) {
       faults.push(fault("schema.node", `${nodeAt}: must be an object`));
       continue;
     }
-    strict(node, ["id", "agent", "objective", "budgetMs", "maxVisits", "handoff"], nodeAt, faults);
+    strict(node, ["id", "agent", "objective", "budgetMs", "maxVisits", "handoff", "tools", "permissions"], nodeAt, faults);
     string(node.id, `${nodeAt}.id`, faults);
     string(node.agent, `${nodeAt}.agent`, faults);
+    validateToolNames(node.tools, `${nodeAt}.tools`, faults, "schema.node-tools");
+    if (node.permissions !== undefined) {
+      validatePermissions(node.permissions, `${nodeAt}.permissions`, faults, "schema.node-permissions", "schema.node-effect");
+    }
     if (node.agent !== undefined && typeof node.agent === "string" && !graphAgentIds.has(node.agent)) {
       faults.push(fault("graph.unknown-agent", `${nodeAt}.agent: names no agent '${node.agent}'`));
     }
@@ -592,8 +621,9 @@ async function loadAgentDocs(paths, baseDir) {
       id: data.id,
       model: data.model,
       mounts: data.mounts,
+      ...(data.tools !== undefined ? { tools: data.tools } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
-      permissions: data.permissions,
+      ...(data.permissions !== undefined ? { permissions: data.permissions } : {}),
       ...(prompt !== "" ? { prompt } : {}),
       ...(data.skills !== undefined ? { skills: data.skills } : {}),
       ...(data.subagents !== undefined ? { subagents: data.subagents } : {}),
@@ -807,7 +837,8 @@ export function configSummary(doc, path) {
       model: graphAgent.model,
       mounts: graphAgent.mounts,
       description: graphAgent.description ?? null,
-      permissions: graphAgent.permissions,
+      tools: graphAgent.tools ?? [],
+      permissions: graphAgent.permissions ?? [],
       prompt: graphAgent.prompt ?? null,
       skills: (graphAgent.skillDocs ?? []).map((skill) => skill.id),
       subagents: graphAgent.subagents ?? [],

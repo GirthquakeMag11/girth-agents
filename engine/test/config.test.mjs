@@ -52,7 +52,8 @@ function agentDoc({
   id = "builder",
   model = "provider/model",
   mounts = ["graph"],
-  permissions = [{ action: "read", resource: "*", effect: "allow" }],
+  tools = ["read"],
+  permissions,
   skills = [],
   subagents = [],
   description,
@@ -64,7 +65,8 @@ function agentDoc({
     `model: ${model}`,
     `mounts: [${mounts.join(", ")}]`,
     ...(description !== undefined ? [`description: ${description}`] : []),
-    ...permissionLines(permissions),
+    ...(tools.length > 0 ? [`tools: [${tools.join(", ")}]`] : []),
+    ...(permissions !== undefined ? permissionLines(permissions) : []),
     ...(skills.length > 0 ? [`skills: [${skills.join(", ")}]`] : []),
     ...(subagents.length > 0 ? [`subagents: [${subagents.join(", ")}]`] : []),
     "---",
@@ -153,7 +155,7 @@ test("config: skills load from Markdown and resolve onto the graph agent", async
   assert.equal(agent.skillDocs.length, 1);
   assert.equal(agent.skillDocs[0].id, "test-first");
   assert.match(agent.skillDocs[0].instructions, /Write the failing test first/);
-  assert.deepEqual(Object.keys(agent).sort(), ["id", "model", "mounts", "permissions", "prompt", "skills"]);
+  assert.deepEqual(Object.keys(agent).sort(), ["id", "model", "mounts", "prompt", "skills", "tools"]);
 
   const summary = configSummary(loaded.doc, path);
   assert.equal(summary.agents[0].prompt, "Prompt.");
@@ -173,7 +175,7 @@ test("config: an agent carries description and subagents through the loader", as
   assert.deepEqual(agent.subagents, ["explore", "general"]);
   assert.deepEqual(
     Object.keys(agent).sort(),
-    ["description", "id", "model", "mounts", "permissions", "prompt", "subagents"],
+    ["description", "id", "model", "mounts", "prompt", "subagents", "tools"],
   );
 
   const summary = configSummary(loaded.doc, path);
@@ -312,6 +314,56 @@ test("config: the host agent field is rejected as unknown", async () => {
     },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("schema.unknown-field"));
+});
+
+test("config: agent tools are acquired by name and checked", async () => {
+  const { path } = await graphConfig({ agentDocs: { "builder.md": agentDoc({ tools: ["read", "edit"] }) } });
+  const loaded = await loadConfig(path);
+  assert.deepEqual(loaded.faults, []);
+  assert.deepEqual(loaded.doc.agents[0].tools, ["read", "edit"]);
+
+  const dup = await graphConfig({ agentDocs: { "builder.md": agentDoc({ tools: ["read", "read"] }) } });
+  assert.ok(codes((await loadConfig(dup.path)).faults).includes("schema.agent-tools"));
+
+  const nonString = await graphConfig({
+    agentDocs: { "builder.md": "---\nid: builder\nmodel: provider/model\nmounts: [graph]\ntools: [123]\n---\n\nPrompt.\n" },
+  });
+  assert.ok(codes((await loadConfig(nonString.path)).faults).includes("schema.agent-tools"));
+});
+
+test("config: a node carries its own tools and permissions rules", async () => {
+  const { path } = await graphConfig({
+    graph: {
+      nodes: [
+        {
+          id: "a",
+          agent: "builder",
+          objective: "A.",
+          tools: ["shell"],
+          permissions: [{ action: "edit", resource: "src/**", effect: "deny" }],
+          handoff: { mode: "terminal" },
+        },
+      ],
+    },
+  });
+  const loaded = await loadConfig(path);
+  assert.deepEqual(loaded.faults, []);
+  assert.deepEqual(loaded.doc.graph.nodes[0].tools, ["shell"]);
+  assert.deepEqual(loaded.doc.graph.nodes[0].permissions, [{ action: "edit", resource: "src/**", effect: "deny" }]);
+
+  const dupTools = await graphConfig({
+    graph: { nodes: [{ id: "a", agent: "builder", objective: "A.", tools: ["ok", "ok"], handoff: { mode: "terminal" } }] },
+  });
+  assert.ok(codes((await loadConfig(dupTools.path)).faults).includes("schema.node-tools"));
+
+  const badEffect = await graphConfig({
+    graph: {
+      nodes: [
+        { id: "a", agent: "builder", objective: "A.", permissions: [{ action: "read", resource: "*", effect: "nope" }], handoff: { mode: "terminal" } },
+      ],
+    },
+  });
+  assert.ok(codes((await loadConfig(badEffect.path)).faults).includes("schema.node-effect"));
 });
 
 test("config: a node must reference a loaded agent", async () => {

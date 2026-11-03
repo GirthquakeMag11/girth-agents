@@ -72,16 +72,7 @@ its prompt:
 id: builder
 model: openrouter/~deepseek/deepseek-flash-latest
 mounts: [graph]
-permissions:
-  - action: read
-    resource: "*"
-    effect: allow
-  - action: edit
-    resource: "*"
-    effect: allow
-  - action: shell
-    resource: "*"
-    effect: allow
+tools: [read, edit, shell]
 skills: [test-first]
 ---
 Standing instructions for this graph agent.
@@ -103,13 +94,14 @@ Write the failing test first, make it pass, then refactor within the green.
 
 - `version` is the string `"5"`.
 - `agents` lists Markdown agent document paths relative to the config. Each
-  agent document has required `id`, `model`, and `permissions`, and optional
-  `skills` references. `permissions` is a list of `{ action, resource, effect }` rules
-  (`effect` one of `allow`, `ask`, `deny`); `*` is a valid action or resource,
-  written block-style as `- action:` lines with `*` quoted (`"*"`) — a bare
-  `*` is a YAML alias. The body is the agent's prompt; the prompt is not a
-  frontmatter field. Agent documents resolve relative to the config; skill ids
-  resolve under `skills/`.
+  agent document has required `id`, `model`, and `mounts`, and optional `tools`,
+  `permissions`, `skills`, `description`, and `subagents`. `tools` lists tool
+  names acquired by name — tools are deny-by-default, exactly like skills.
+  `permissions` is an optional fine-grained list of `{ action, resource,
+  effect }` rules (`effect` one of `allow`, `ask`, `deny`), written block-style
+  as `- action:` lines with `*` quoted (`"*"`) — a bare `*` is a YAML alias.
+  The body is the agent's prompt; the prompt is not a frontmatter field. Agent
+  documents resolve relative to the config; skill ids resolve under `skills/`.
 - Each agent document has a required `mounts` list — a non-empty subset of
   `graph`, `primary`, `subagent`, with no assumed default and no duplicates.
   `graph` means it runs as a node's agent inside the engine; `primary` and
