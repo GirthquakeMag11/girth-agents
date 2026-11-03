@@ -5,13 +5,24 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runDispatch } from "../executor.mjs";
 import { createDispatchQueue } from "../queue.mjs";
-import { permissionsFor } from "../driver.mjs";
+import { permissionsFor, modelRef } from "../driver.mjs";
 
 const emptyTokens = () => ({ input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } });
 
 function usage(cost, input = 0, output = 0) {
   return { cost, tokens: { ...emptyTokens(), input, output } };
 }
+
+test("executor: modelRef mirrors Model.Ref.parse", () => {
+  assert.deepEqual(modelRef("openrouter/~deepseek/deepseek-flash-latest"), {
+    providerID: "openrouter",
+    id: "~deepseek/deepseek-flash-latest",
+  });
+  assert.deepEqual(modelRef("provider/id#variant"), { providerID: "provider", id: "id", variant: "variant" });
+  for (const bad of ["nope", "provider/", "provider/#v", "provider/id#", "provider#x/id", "/id"]) {
+    assert.throws(() => modelRef(bad), { kind: "model-ref" }, `'${bad}' should be rejected`);
+  }
+});
 
 test("executor: subagents become a launch allowlist after the deny-rest", () => {
   assert.deepEqual(

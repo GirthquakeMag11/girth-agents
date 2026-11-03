@@ -7,6 +7,8 @@
 // driver bound to a dispatching location so a graph session is created in the
 // directory the dispatch came from.
 
+import { modelRef } from "./driver.mjs";
+
 const OUTCOMES = new Set(["succeeded", "failed", "interrupted"]);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -24,7 +26,8 @@ export function createPluginDriver(ctx) {
     async createSession({ directory, title, model, permissions }) {
       const session = await ctx.session.create({
         title,
-        model,
+        // ctx.session.create wants a Model.Ref, not the graph's "provider/model" string.
+        model: modelRef(model),
         location: { directory },
         permissions,
       });

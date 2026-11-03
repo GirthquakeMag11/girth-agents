@@ -14,6 +14,7 @@
 // A graph-only mount is never published — its node sessions are provisioned by
 // the engine directly, and nothing graph-side enters the OpenCode catalog.
 import { resolve } from "node:path";
+import { modelRef } from "./driver.mjs";
 
 export function materializationPlan(config, baseDir) {
   const agents = [];
@@ -31,7 +32,7 @@ export function materializationPlan(config, baseDir) {
       id: graphAgent.id,
       mode,
       system: graphAgent.prompt ?? "",
-      model: parseModelRef(graphAgent.model),
+      model: modelRef(graphAgent.model),
       description: graphAgent.description ?? "",
       // Self-contained copy: the plan must not alias live engine state.
       permissions: (graphAgent.permissions ?? []).map((rule) => ({ ...rule })),
@@ -47,16 +48,4 @@ export function materializationPlan(config, baseDir) {
     }
   }
   return { agents, skills: [...skills.values()] };
-}
-
-// `"provider/id#variant"` -> `{ providerID, id, variant? }`, mirroring the
-// SDK's Model.Ref.parse (split on the first "/", then on "#").
-function parseModelRef(model) {
-  const slash = model.indexOf("/");
-  if (slash <= 0) return { providerID: "", id: model };
-  const providerID = model.slice(0, slash);
-  const rest = model.slice(slash + 1);
-  const hash = rest.indexOf("#");
-  if (hash === -1) return { providerID, id: rest };
-  return { providerID, id: rest.slice(0, hash), variant: rest.slice(hash + 1) };
 }

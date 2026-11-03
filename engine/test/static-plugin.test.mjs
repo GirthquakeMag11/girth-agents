@@ -77,6 +77,11 @@ test("static plugin: a foreground dispatch runs the engine directly, not fetch",
     assert.equal(plugin.permissionCalls[0].action, "dispatch");
     assert.equal(plugin.sessionCreates.length, 1);
     assert.equal(plugin.sessionCreates[0].location.directory, "/work/project");
+    assert.deepEqual(
+      plugin.sessionCreates[0].model,
+      { providerID: "test", id: "model" },
+      "the graph's model string becomes a Model.Ref for ctx.session.create",
+    );
   } finally {
     globalThis.fetch = previousFetch;
     await plugin.close();
