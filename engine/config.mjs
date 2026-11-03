@@ -14,6 +14,10 @@ const HANDOFF_MODES = new Set(["terminal", "unconditional", "conditional"]);
 // generated plugin can emit without normalization.
 const HANDOFF_LABEL = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
+// A skill id is its filename under `skills/`; keep it to a safe token so a
+// reference can never traverse out of the graph directory.
+const SKILL_ID = /^[A-Za-z][A-Za-z0-9_-]*$/;
+
 // The dispatching agent is a handoff target, not a graph node.
 export const DISPATCHER_TARGET = "$dispatcher";
 
@@ -87,14 +91,7 @@ function relativePath(value, at, faults, { required = true } = {}) {
   }
 }
 
-function pathArray(value, at, faults, code) {
-  if (value === undefined) return;
-  if (!Array.isArray(value)) {
-    faults.push(fault(code, `${at}: must be an array of relative paths`));
-    return;
-  }
-  for (const [i, entry] of value.entries()) relativePath(entry, `${at}[${i}]`, faults);
-}
+
 
 function validateAgentProperties(graphAgent, at, faults) {
   string(graphAgent.model, `${at}.model`, faults);
@@ -121,7 +118,22 @@ function validateAgentProperties(graphAgent, at, faults) {
       }
     }
   }
-  pathArray(graphAgent.skills, `${at}.skills`, faults, "schema.agent-skills");
+  if (graphAgent.skills !== undefined) {
+    if (!Array.isArray(graphAgent.skills)) {
+      faults.push(fault("schema.agent-skills", `${at}.skills: must be an array of skill ids`));
+    } else {
+      const seen = new Set();
+      for (const [i, id] of graphAgent.skills.entries()) {
+        if (typeof id !== "string" || !SKILL_ID.test(id)) {
+          faults.push(fault("schema.agent-skills", `${at}.skills[${i}]: must be a skill id like 'test-first'`));
+        } else if (seen.has(id)) {
+          faults.push(fault("schema.agent-skills", `${at}.skills[${i}]: duplicate skill '${id}'`));
+        } else {
+          seen.add(id);
+        }
+      }
+    }
+  }
   if (graphAgent.description !== undefined) string(graphAgent.description, `${at}.description`, faults);
   if (graphAgent.subagents !== undefined) {
     if (!Array.isArray(graphAgent.subagents)) {
@@ -558,20 +570,17 @@ async function loadAgentDocs(paths, baseDir) {
   return { agents, refs, faults };
 }
 
-async function loadSkillDocs(refs, baseDir) {
-  const byResolved = new Map();
-  const seen = new Set();
-  const ids = new Set();
+async function loadSkillDocs(ids, baseDir) {
+  const skillsDir = resolve(baseDir, "skills");
+  const skills = new Map();
   const faults = [];
-  for (const rel of refs) {
-    const abs = resolve(baseDir, rel);
-    if (seen.has(abs)) continue;
-    seen.add(abs);
+  for (const id of ids) {
+    if (skills.has(id)) continue;
     let text;
     try {
-      text = await readFile(abs, "utf8");
+      text = await readFile(resolve(skillsDir, `${id}.md`), "utf8");
     } catch (e) {
-      faults.push(fault("skill.unreadable", `${rel}: ${e.message}`));
+      faults.push(fault("skill.unreadable", `skill '${id}': ${e.message}`));
       continue;
     }
     let data;
@@ -579,37 +588,27 @@ async function loadSkillDocs(refs, baseDir) {
     try {
       ({ data, body } = parseFrontmatter(text));
     } catch (e) {
-      faults.push(fault("skill.frontmatter", `${rel}: ${e.message}`));
-      continue;
-    }
-    if (typeof data.id !== "string" || data.id.trim() === "") {
-      faults.push(fault("skill.missing-id", `${rel}: frontmatter needs an id`));
+      faults.push(fault("skill.frontmatter", `skill '${id}': ${e.message}`));
       continue;
     }
     const instructions = body.trim();
     if (instructions === "") {
-      faults.push(fault("skill.instructions", `${rel}: skill '${data.id}' has no instructions`));
+      faults.push(fault("skill.instructions", `skill '${id}' has no instructions`));
       continue;
     }
-    if (ids.has(data.id)) {
-      faults.push(fault("skill.duplicate-id", `${rel}: duplicate skill id '${data.id}'`));
-      continue;
-    }
-    ids.add(data.id);
-    byResolved.set(abs, { ...data, id: data.id, instructions, path: rel });
+    skills.set(id, { ...data, id, instructions, path: `skills/${id}.md` });
   }
-  return { byResolved, faults };
+  return { skills, faults };
 }
 
-function attachAgentSkills(agents, byResolved, baseDir) {
+function attachAgentSkills(agents, skills) {
   for (const graphAgent of agents) {
     const resolved = [];
     const seen = new Set();
-    for (const ref of graphAgent.skills ?? []) {
-      const abs = resolve(baseDir, ref);
-      if (seen.has(abs)) continue;
-      seen.add(abs);
-      const skill = byResolved.get(abs);
+    for (const id of graphAgent.skills ?? []) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const skill = skills.get(id);
       if (skill) resolved.push(skill);
     }
     Object.defineProperty(graphAgent, "skillDocs", {
@@ -640,10 +639,10 @@ export async function loadConfig(path) {
   const { agents, refs, faults: agentFaults } = await loadAgentDocs(doc.agents, baseDir);
   if (agentFaults.length > 0) return { doc: null, faults: agentFaults, path };
 
-  const { byResolved, faults: skillFaults } = await loadSkillDocs(refs, baseDir);
+  const { skills, faults: skillFaults } = await loadSkillDocs(refs, baseDir);
   if (skillFaults.length > 0) return { doc: null, faults: skillFaults, path };
 
-  attachAgentSkills(agents, byResolved, baseDir);
+  attachAgentSkills(agents, skills);
   const resolved = { version: doc.version, agents, graph: doc.graph };
   const faults = validateConfig(resolved);
   return { doc: faults.length === 0 ? resolved : null, faults, path };
@@ -775,7 +774,6 @@ export function configSummary(doc, path) {
       permissions: graphAgent.permissions,
       prompt: graphAgent.prompt ?? null,
       skills: (graphAgent.skillDocs ?? []).map((skill) => skill.id),
-      skillPaths: graphAgent.skills ?? [],
       subagents: graphAgent.subagents ?? [],
     })),
   };

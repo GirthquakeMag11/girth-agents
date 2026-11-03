@@ -126,7 +126,7 @@ test("config: the manifest takes agent paths and rejects inline agents", () => {
 test("config: skills load from Markdown and resolve onto the graph agent", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "builder.md": agentDoc({ skills: ["skills/test-first.md"] }),
+      "builder.md": agentDoc({ skills: ["test-first"] }),
     },
     skillFiles: {
       "test-first.md":
@@ -137,7 +137,7 @@ test("config: skills load from Markdown and resolve onto the graph agent", async
   assert.deepEqual(loaded.faults, []);
   const agent = loaded.doc.agents[0];
   assert.equal(agent.prompt, "Prompt.");
-  assert.deepEqual(agent.skills, ["skills/test-first.md"]);
+  assert.deepEqual(agent.skills, ["test-first"]);
   assert.equal(agent.skillDocs.length, 1);
   assert.equal(agent.skillDocs[0].id, "test-first");
   assert.match(agent.skillDocs[0].instructions, /Write the failing test first/);
@@ -146,7 +146,6 @@ test("config: skills load from Markdown and resolve onto the graph agent", async
   const summary = configSummary(loaded.doc, path);
   assert.equal(summary.agents[0].prompt, "Prompt.");
   assert.deepEqual(summary.agents[0].skills, ["test-first"]);
-  assert.deepEqual(summary.agents[0].skillPaths, ["skills/test-first.md"]);
 });
 
 test("config: an agent carries description and subagents through the loader", async () => {
@@ -264,32 +263,26 @@ test("config: version 3 is rejected", async () => {
 
 test("config: a missing referenced skill is named", async () => {
   const { path } = await graphConfig({
-    agentDocs: { "builder.md": agentDoc({ skills: ["skills/missing.md"] }) },
+    agentDocs: { "builder.md": agentDoc({ skills: ["missing"] }) },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("skill.unreadable"));
 });
 
-test("config: duplicate skill ids and missing ids are named", async () => {
-  const duplicate = await graphConfig({
-    agentDocs: { "builder.md": agentDoc({ skills: ["skills/a.md", "skills/b.md"] }) },
-    skillFiles: {
-      "a.md": "---\nid: dupe\n---\n\nA.\n",
-      "b.md": "---\nid: dupe\n---\n\nB.\n",
-    },
+test("config: a skill's id is its filename, not its frontmatter", async () => {
+  const { path } = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ skills: ["a"] }) },
+    skillFiles: { "a.md": "---\nname: A skill\n---\n\nA.\n" },
   });
-  assert.ok(codes((await loadConfig(duplicate.path)).faults).includes("skill.duplicate-id"));
-
-  const missing = await graphConfig({
-    agentDocs: { "builder.md": agentDoc({ skills: ["skills/a.md"] }) },
-    skillFiles: { "a.md": "---\nname: No id\n---\n\nA.\n" },
-  });
-  assert.ok(codes((await loadConfig(missing.path)).faults).includes("skill.missing-id"));
+  const loaded = await loadConfig(path);
+  assert.deepEqual(loaded.faults, []);
+  assert.equal(loaded.doc.agents[0].skillDocs[0].id, "a");
+  assert.equal(loaded.doc.agents[0].skillDocs[0].name, "A skill");
 });
 
 test("config: a skill must carry instructions", async () => {
   const { path } = await graphConfig({
-    agentDocs: { "builder.md": agentDoc({ skills: ["skills/a.md"] }) },
-    skillFiles: { "a.md": "---\nid: empty\n---\n\n   \n" },
+    agentDocs: { "builder.md": agentDoc({ skills: ["a"] }) },
+    skillFiles: { "a.md": "---\n---\n\n   \n" },
   });
   assert.ok(codes((await loadConfig(path)).faults).includes("skill.instructions"));
 });
@@ -297,8 +290,8 @@ test("config: a skill must carry instructions", async () => {
 test("config: a skill shared by two agents loads once", async () => {
   const { path } = await graphConfig({
     agentDocs: {
-      "builder.md": agentDoc({ skills: ["skills/shared.md"] }),
-      "reviewer.md": agentDoc({ id: "reviewer", skills: ["skills/shared.md"] }),
+      "builder.md": agentDoc({ skills: ["shared"] }),
+      "reviewer.md": agentDoc({ id: "reviewer", skills: ["shared"] }),
     },
     agentPaths: ["agents/builder.md", "agents/reviewer.md"],
     skillFiles: { "shared.md": "---\nid: shared\n---\n\nShared instructions.\n" },
@@ -320,18 +313,18 @@ test("config: an unreferenced malformed skill is ignored", async () => {
   assert.deepEqual((await loadConfig(path)).faults, []);
 });
 
-test("config: agent and skill paths must stay relative", async () => {
+test("config: agent paths stay relative and skill ids reject traversal", async () => {
   const agentPath = await graphConfig({ agentDocs: {}, agentPaths: ["../escape.md"] });
   assert.ok(codes((await loadConfig(agentPath.path)).faults).includes("schema.path"));
 
-  const skillPath = await graphConfig({
+  const skillId = await graphConfig({
     agentDocs: { "builder.md": agentDoc({ skills: ["../escape.md"] }) },
   });
-  assert.ok(codes((await loadConfig(skillPath.path)).faults).includes("schema.path"));
+  assert.ok(codes((await loadConfig(skillId.path)).faults).includes("schema.agent-skills"));
 
   const agent = structuredClone(SHIPPED);
   agent.agents[0].skills = ["../escape.md"];
-  assert.ok(codes(validateConfig(agent)).includes("schema.path"));
+  assert.ok(codes(validateConfig(agent)).includes("schema.agent-skills"));
 });
 
 test("config: graph_info carries the one graph and the graph agents, with no graph id", () => {

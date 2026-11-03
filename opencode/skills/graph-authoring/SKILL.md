@@ -73,16 +73,17 @@ id: builder
 model: openrouter/~deepseek/deepseek-flash-latest
 agent: build
 permissions: [read, edit, shell]
-skills: [skills/test-first.md]
+skills: [test-first]
 ---
 Standing instructions for this graph agent.
 ```
 
-A skill document is Markdown with frontmatter and a non-empty instruction body:
+A skill document is Markdown: its id is its filename (`skills/test-first.md`
+is skill `test-first`), its frontmatter carries an optional `name` and
+`description`, and its non-empty body is its instructions:
 
 ```markdown
 ---
-id: test-first
 name: Test-first at the seams
 description: Build the change test-first.
 ---
@@ -97,12 +98,12 @@ Write the failing test first, make it pass, then refactor within the green.
   `agent` (the OpenCode agent to run, default `build`), and optional `skills`
   references. The body is the agent's prompt; the prompt is not a frontmatter
   field. Agent and skill paths resolve relative to the config.
-- A graph agent's optional `skills` array references skill document paths.
-  Each skill needs a unique `id` and a non-empty instruction body. The loader
-  follows those references, deduplicates them, and reads each referenced skill
-  once; unreferenced skill files are not read. Unreadable, malformed,
-  duplicate, or empty skills are named faults. The brief appends each resolved
-  skill after the agent's prompt.
+- A graph agent's optional `skills` array references skill documents by id,
+  where the id is the skill's filename under `skills/`. The loader follows
+  those ids, deduplicates them, and reads each referenced skill once;
+  unreferenced skill files are not read. Unreadable, malformed, or empty skills
+  are named faults. The brief appends each resolved skill after the agent's
+  prompt.
 - There is exactly one `graph`. There is no graph id, no graph selector, and
   no "all graphs." A second graph is not part of this schema.
 - The graph has optional `maxSteps`, optional `workflows`, and `nodes`.
