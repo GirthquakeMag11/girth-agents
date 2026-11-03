@@ -30,13 +30,18 @@ its referenced skills into the skill registry via `ctx.agent.transform`
 `"provider/id#variant"`→`Model.Ref` object, `mode` is `primary|subagent|all`
 (dual mounts → `all`), and a skill carries its absolute `path` + `content`.
 Reload re-plays the transforms via `ctx.agent.reload()`/`ctx.skill.reload()`.
-Remaining:
+Live-confirmed on an isolated server (private `opencode serve`, isolated
+`XDG_*` roots, real installer): a graph agent with `mounts: [primary]`
+materialized into `/api/agent` with `system` = body, `description`, `model`
+as a `Model.Ref` object, no `allow *` baseline (deny-by-default), and its
+referenced skill followed into `/api/skill` with the absolute `path`, while
+graph-only agents stayed unregistered. Remaining:
 
-- Confirm live: the installed server is two schema versions behind (v5 graph,
-  pre-materializer plugin) and the engine is process-global, so surfacing a
-  mount needs a plugin reload plus an engine re-init (server restart) — gate
-  the materializer against the running server, and provision graph node
-  sessions from the document's own content (body-as-system), no host agent.
+- Provision graph node sessions from the document's own content
+  (body-as-system, no host agent), and decide how a primary/subagent mount's
+  `tools` acquisitions surface on the OpenCode side (today only
+  `permissions` triples map; `tools` is a session-provisioning concern — the
+  Engineer/Conductor re-root will make this concrete).
 - Re-derive the Engineer and Conductor as mounts of the shared schema rather
   than hand-authored OpenCode Markdown.
 
