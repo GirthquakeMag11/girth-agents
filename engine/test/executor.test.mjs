@@ -45,7 +45,7 @@ test("executor: a graph agent's subagents reach the session permissions", async 
 
 test("executor: tool acquisition, permission override, and node rules keep their order", async () => {
   const doc = {
-    version: "5",
+    version: "6",
     agents: [
       {
         id: "builder",
@@ -81,7 +81,7 @@ test("executor: tool acquisition, permission override, and node rules keep their
 });
 
 const config = {
-  version: "5",
+  version: "6",
   agents: [
     { id: "builder", model: "test/model", mounts: ["graph"], tools: ["read"] },
     { id: "reviewer", model: "test/model", mounts: ["graph"], tools: ["read"] },

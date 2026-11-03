@@ -3,7 +3,7 @@
 // must reach a terminal, and every cycle must carry a visit bound.
 
 import { readFile, readdir } from "node:fs/promises";
-import { dirname, isAbsolute, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { parseFrontmatter } from "./frontmatter.mjs";
 
 export const SCHEMA_VERSION = "6";
@@ -81,19 +81,7 @@ function boolean(value, at, faults) {
   if (typeof value !== "boolean") faults.push(fault("schema.boolean", `${at}: must be a boolean`));
 }
 
-function relativePath(value, at, faults, { required = true } = {}) {
-  if (value === undefined) {
-    if (required) faults.push(fault("schema.path", `${at}: required path is missing`));
-    return;
-  }
-  if (typeof value !== "string" || value.trim() === "") {
-    faults.push(fault("schema.path", `${at}: must be a non-empty relative path`));
-    return;
-  }
-  if (value.includes("\0") || isAbsolute(value) || value.split(/[\\/]/).includes("..")) {
-    faults.push(fault("schema.path", `${at}: must be a relative path without '..' or NUL`));
-  }
-}
+
 
 
 

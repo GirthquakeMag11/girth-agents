@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DashboardView } from "../src/view.tsx";
 import { PROJECT_VERSION } from "../../engine/version.mjs";
-import { SCHEMA_VERSION } from "../../engine/config.mjs";
+import { SCHEMA_VERSION, loadConfig } from "../../engine/config.mjs";
 
 process.env.TZ = "UTC";
 
@@ -33,7 +33,9 @@ const theme = {
 const repo = process.cwd();
 const captures = join(repo, "dashboard", "proof", "captures");
 await mkdir(captures, { recursive: true });
-const product = JSON.parse(await readFile(join(repo, "graph", "config.json"), "utf8"));
+const productLoaded = await loadConfig(join(repo, "graph", "config.json"));
+if (productLoaded.faults.length > 0) throw new Error(`shipped graph fails to load: ${productLoaded.faults.map((f) => f.code).join(", ")}`);
+const product = productLoaded.doc;
 const baseHistory = [{ seq: 1, at: "2026-10-30T14:00:00.000Z", kind: "queued", dispatchId: "d-1", workflow: "build-review", node: "implement" }];
 
 const productData = {

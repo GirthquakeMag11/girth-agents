@@ -19,67 +19,33 @@ its graph agents carry only standing prompts. Skills are already first-class in
 the schema and loader; the template should eventually reference one or two
 graph skills so the shipped example exercises the capability.
 
-## Nodes as Markdown documents
+## Agent materialization
 
-Agents, skills, and nodes are all the same shape at the graph-config level:
-properties plus a prompt. Agents are already Markdown documents; nodes should
-join them as their own Markdown documents, one file per node.
+The one-document/three-mounts schema is shipped: agents, skills, and nodes are
+Markdown, discovered by directory with id = filename, with `mounts` and the
+deny-by-default `tools`/fine-grained `permissions` layers. What remains is the
+materializer: a `primary`/`subagent` mount is published into OpenCode's live
+agent registry and its referenced skills into the skill registry, while a
+`graph` mount never is — its node sessions are provisioned by the plugin from
+the document's own content (body-as-system, model, permissions), no host agent.
 
-Today a node is a JSON object inline in `graph/config.json`; its `agent` key
-references a graph agent's `id`. The target gives each node its own document so
-a node can be edited and versioned independently of the agent embedded in it.
-
-A node is a second layer of context management over its agent. An OpenCode
-agent's versatility across contexts is limited because its base instructions
-are built entirely into its own configuration. A node, existing as a separate
-entity, can and will carry its own prompt, tools, permissions, and other
-properties, which are combined with the agent's. One semi-generic builder agent
-can then be optimized for several more specific roles by the nodes that embed
-it for those roles, each node supplying its own prompt and tools layered over
-the shared agent — instead of needing a distinct agent per role.
-
-Graph assembly, the merge rules for node and agent properties (prompts, tools,
-permissions), the node document schema, and the schema version are all still
-open, so the replacement schema is not being encoded yet. The current
-`graph/config.json` remains the placeholder build-review graph.
+- Publish primary/subagent mounts via `ctx.agent.transform` (update-as-upsert)
+  and skills via `ctx.skill.transform` (`add`) on graph load/reload, never
+  file-emission.
+- Spike the transform semantics and the graph-session provisioning against the
+  running server, early and gating.
+- Re-derive the Engineer and Conductor as mounts of the shared schema rather
+  than hand-authored OpenCode Markdown.
 
 Not implemented.
 
-## Agent taxonomy and materialization
+## Subagent catalog preflight
 
-The graph has two agent surfaces today: the OpenCode agents the product ships
-(the Engineer and Conductor are hand-authored OpenCode Markdown) and the graph
-agents in the config. The target is one document, three mounts — a single
-agent schema installed as a graph agent, a primary liaison, or a subagent,
-where the mount is a keyword and the graph-engine materializes the
-OpenCode-side artifacts.
-
-- One agent document schema (properties + prompt) with a field that names
-  where the document mounts — graph, primary, subagent, combinable; the field
-  name is not settled yet. The materializer carries the vocabulary mapping
-  between the two systems (`body ↔ system`, `description`, `mode`).
-- Layered composition the user controls: identity, operational discipline
-  (shared, installable, overridable — the existing skills path), and role.
-  This is the decomposition OpenCode's base prompt never made; the graph-engine
-  owns assembly so users never face inherit-vs-replace.
-- The materializer absorbs the platform's sharp edges, catalogued this cycle:
-  opaque base-prompt inherit/replace, plugin-only "mode" behavior,
-  no-`add` agent transform, undocumented `modes/` directory and `tool.hook`,
-  strict RPC schema requirements, silent agent switching.
-- Open fork before any emitter is built: **file-emission** (write mounts into
-  `$OPENCODE_CONFIG`; must resolve the seed-once / checksum / round-trip story)
-  vs **runtime registration** (live, but depends on undocumented surfaces).
-- The Engineer and Conductor are the first mounts to be re-derived from the
-  shared schema rather than hand-authored.
-
-Not implemented.
-
-## Graph agent subagents
-
-Graph agent configurations should accept an optional `subagents` list of exact
-OpenCode agent IDs. Only named subagents are launchable; omitted or empty means
-none. Validate at dispatch preflight so a typo is a named defect before a node
-runs.
+The `subagents` field is shape-validated and wired into the session launch
+allowlist. What remains is preflight against the live catalog: a named id that
+does not exist should be a named defect before a node runs, checked against
+OpenCode's live agent list (never a copied one), the same discipline as handoff
+labels against the tool catalog.
 
 Not implemented.
 

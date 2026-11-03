@@ -38,10 +38,11 @@ field, a dispatch record, or a dashboard field.
 
 ## Configuration names
 
-- The graph config's agent collection is `agents`; it lists Markdown agent
-  document paths.
+- Agents, skills, and nodes are Markdown documents discovered by directory; a
+  document's id is its filename (`agents/builder.md` is agent `builder`). The
+  config has no agent list and no inline nodes.
 - A node's reference to a graph agent is `agent`, and it names the agent
-  document's `id`.
+  document's id (its filename).
 - A graph agent is a Markdown document: its frontmatter carries its properties
   and its body is its prompt.
 - A graph agent's `skills` field references skill documents directly. There is

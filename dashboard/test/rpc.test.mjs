@@ -13,7 +13,7 @@ function fakeSnapshot() {
   return {
     ok: true,
     config: {
-      version: "5",
+      version: "6",
       agents: [{ id: "builder", model: "test/model", mounts: ["graph"], tools: ["read"] }],
       graph: {
         maxSteps: 100,

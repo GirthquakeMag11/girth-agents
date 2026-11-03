@@ -9,7 +9,7 @@ function snapshot(overrides = {}) {
   return {
     ok: true,
     config: {
-      version: "5",
+      version: "6",
       agents: [],
       graph: { nodes: [{ id: "review", agent: "builder", objective: "Review.", handoff: { mode: "terminal" } }] },
     },

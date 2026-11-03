@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DashboardView } from "../src/view.tsx";
 import { PROJECT_VERSION } from "../../engine/version.mjs";
-import { SCHEMA_VERSION } from "../../engine/config.mjs";
+import { SCHEMA_VERSION, loadConfig } from "../../engine/config.mjs";
 
 process.env.TZ = "UTC";
 
@@ -32,7 +32,9 @@ const theme = {
 };
 
 const repo = process.cwd();
-const config = JSON.parse(await readFile(join(repo, "graph", "config.json"), "utf8"));
+const configLoaded = await loadConfig(join(repo, "graph", "config.json"));
+if (configLoaded.faults.length > 0) throw new Error(`shipped graph fails to load: ${configLoaded.faults.map((f) => f.code).join(", ")}`);
+const config = configLoaded.doc;
 const baseHistory = [
   { seq: 1, at: "2026-10-30T13:59:58.000Z", kind: "queued", dispatchId: "d-1", workflow: "build-review", node: "implement" },
   { seq: 2, at: "2026-10-30T13:59:59.000Z", kind: "dispatched", dispatchId: "d-1", workflow: "build-review", node: "implement" },
