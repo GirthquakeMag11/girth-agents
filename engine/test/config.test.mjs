@@ -263,7 +263,7 @@ test("config: permission rules must be {action, resource, effect} objects", asyn
   const badEffect = await graphConfig({
     agentDocs: { "builder.md": agentDoc({ permissions: [{ action: "read", resource: "*", effect: "yes" }] }) },
   });
-  assert.ok(codes((await loadConfig(badEffect.path)).faults).includes("schema.agent-permissions"));
+  assert.ok(codes((await loadConfig(badEffect.path)).faults).includes("schema.agent-effect"));
 
   const duplicate = await graphConfig({
     agentDocs: {

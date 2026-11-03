@@ -118,7 +118,7 @@ function validateAgentProperties(graphAgent, at, faults) {
       string(rule.action, `${atRule}.action`, faults);
       string(rule.resource, `${atRule}.resource`, faults);
       if (typeof rule.effect !== "string" || !PERMISSION_EFFECTS.has(rule.effect)) {
-        faults.push(fault("schema.agent-permissions", `${atRule}.effect: must be one of allow, ask, deny`));
+        faults.push(fault("schema.agent-effect", `${atRule}.effect: must be one of allow, ask, deny`));
       }
       const key = `${rule.action}\u0000${rule.resource}\u0000${rule.effect}`;
       if (seen.has(key)) {
