@@ -54,10 +54,11 @@ agent schema installed as a graph agent, a primary liaison, or a subagent,
 where the mount is a keyword and the graph-engine materializes the
 OpenCode-side artifacts.
 
-- One agent document schema (properties + prompt) with an `access`/surface
-  field (graph, primary, subagent; combinable). The materializer carries the
-  vocabulary mapping between the two systems (`body ↔ system`,
-  `description`, the `agent:` runner, `mode`).
+- One agent document schema (properties + prompt) with a field that names
+  where the document mounts — graph, primary, subagent, combinable; the field
+  name is not settled yet. The materializer carries the vocabulary mapping
+  between the two systems (`body ↔ system`, `description`, the `agent:`
+  runner, `mode`).
 - Layered composition the user controls: identity, operational discipline
   (shared, installable, overridable — the existing skills path), and role.
   This is the decomposition OpenCode's base prompt never made; the graph-engine

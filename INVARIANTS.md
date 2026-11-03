@@ -95,7 +95,7 @@ field, a dispatch record, or a dashboard field.
    target and `resume`, express it?
 3. Does the engine already know the target from config, the active session, or
    a retained origin?
-4. Would the proposal define a new *kind* of agent instead of a new place to
+4. Would the proposal define a new kind of agent instead of a new place to
    mount the one agent document?
 
 If yes to any, do not introduce a new tool, endpoint, or agent kind.
