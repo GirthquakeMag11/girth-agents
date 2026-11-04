@@ -384,9 +384,21 @@ export default Plugin.define({
     };
     await reportSubagents();
 
+    // One snapshot of the tool catalog, captured after registration. The context
+    // hook below runs on every model request, so it must not re-read the
+    // catalog per request — `ctx.tool.list()` is a full registry reconcile and,
+    // under steer-mode delivery, fires once per keystroke, which is the root of
+    // the input lag. The collision check below uses this snapshot instead.
+    let registered: Map<string, any> | null = null;
+    try {
+      registered = new Map((await ctx.tool.list()).map((tool) => [tool.id ?? tool.name, tool]));
+    } catch {
+      registered = null;
+    }
+
     // The context hook asks the engine for the active session's allowed labels
     // and removes undeclared or colliding handoff tools. Ownership is judged
-    // against the server-side catalog entry, whose description/input are the
+    // against the captured catalog snapshot, whose description/input are the
     // values this plugin registered, not the event-side tool shape.
     const hookRegistration = await ctx.session.hook("context", async (event: any) => {
       // The graph agent's body is the node session's system prompt; its skills
@@ -399,12 +411,6 @@ export default Plugin.define({
       if (!event?.tools) return;
       const { labels: allowed } = runtime.handoffTools({ sessionID: event.sessionID });
       const allowedSet = new Set(allowed);
-      let registered: Map<string, any> | null = null;
-      try {
-        registered = new Map((await ctx.tool.list()).map((tool) => [tool.id ?? tool.name, tool]));
-      } catch {
-        registered = null;
-      }
       for (const label of generatedLabels) {
         const tool = event.tools[label];
         if (!tool) continue;
