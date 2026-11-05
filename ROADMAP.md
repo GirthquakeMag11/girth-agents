@@ -66,23 +66,15 @@ friction bars above.
 ## Control tools are interactive-only
 
 `dispatch` (with status/cancel/reload/graph_info/graph_map) is for the
-interactive agent alone, handed to it by the engine — never subagents, graph
-agents, or any non-interactive agent. The rule is **mechanical, not
-permission-derived**: no amount of the agent's own `tools`/`permissions` grants
-it. A graph agent instead gets only its node's baked handoff tools (dispatch
-partial-functions with everything but the message fixed). Node sessions already
-lose the control tools (deny-by-default), but allow-by-default subagents (e.g.
-`general`, `allow *`) still satisfy the permission gate, so the rule is not yet
-enforced there. Enforce by stripping the control tools from non-interactive
-sessions.
+interactive agent alone, enforced mechanically rather than by the session's
+permissions: subagents, graph agents, and non-interactive sessions never get
+them, and a graph agent gets only its node's handoff tools.
 
 Not implemented.
 
 ## Deferred
 
-- the `maxSubagentDepth` feature as a whole (field + enforcement) — deferred;
-  the global `experimental.subagent_depth` already caps subagent nesting, and a
-  field without its bound would be a false promise;
+- per-node `maxSubagentDepth` (a graph-owned subagent nesting cap);
 - parallel dispatches across the graph;
 - run archive or persisted dispatch history;
 - triggers, watches, and schedules;
