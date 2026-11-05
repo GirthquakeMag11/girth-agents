@@ -14,9 +14,9 @@ these before writing it down.
   agent. It is **mechanically unavailable** to subagents, to graph agents, and
   to any non-interactive agent — regardless of their settable permissions: an
   agent can never reach `dispatch` through its own `tools` or `permissions`.
-- A graph agent's handoff tools are `dispatch` partial-functions: every
-  parameter except the message is baked in by the engine. A graph agent gets
-  only its own node's labels — never another node's handoff tools, never
+- A graph agent's handoff tools are `dispatch` partial-functions: one tool per
+  label, with every parameter except the message baked in by the engine. A graph
+  agent gets only its own node's handoff tools — never another node's, never
   `dispatch` itself.
 - `resume: true` returns to the origin of the input the sender received. The
   engine already knows that origin.
