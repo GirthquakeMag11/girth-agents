@@ -99,6 +99,19 @@ create output, and participate in routing.
 
 Not implemented.
 
+## Graph-authored tools
+
+Tools are currently grant-by-name from the live catalog: a custom tool can
+only be *registered* by code (a plugin's `ctx.tool.transform`), while the
+graph — and the Engineer — relate to a tool by name only (select it, grant it,
+scope its permissions). Open question: whether tools become graph-authorable —
+a declarative/scripted tool document the engine materializes and registers, the
+tool-ward twin of "Programmatic node types" — and what sandbox runs the
+execution. Parked; no shape is committed until the scripting runtime question
+is charted.
+
+Not implemented.
+
 ## Dashboard editing and dispatch controls
 
 Edit the graph and control dispatches (dispatch/cancel) from the dashboard, not
