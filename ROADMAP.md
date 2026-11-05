@@ -80,9 +80,9 @@ Not implemented.
 
 ## Deferred
 
-- per-node `maxSubagentDepth` enforcement below an elevated global — deferred;
-  the global `experimental.subagent_depth` already caps subagent nesting, and
-  the `0` case is the empty `subagents` allowlist;
+- the `maxSubagentDepth` feature as a whole (field + enforcement) — deferred;
+  the global `experimental.subagent_depth` already caps subagent nesting, and a
+  field without its bound would be a false promise;
 - parallel dispatches across the graph;
 - run archive or persisted dispatch history;
 - triggers, watches, and schedules;
