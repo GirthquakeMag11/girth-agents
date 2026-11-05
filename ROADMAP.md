@@ -10,6 +10,8 @@ they carry only standing prompts. The primary mounts already reference
 eventually reference one too, so the shipped example exercises a graph-session
 skill.
 
+Not implemented.
+
 ## Dashboard placement
 
 The graph dashboard currently opens as a full-screen panel. The target is to
@@ -58,10 +60,9 @@ Not implemented.
   result. Engineering uses the meta-system to build systems; conducting uses
   the systems built.
 
-A real workflow dispatch reached a terminal on the live server; what remains
-is real use — dispatch from a second location on the same queue, read the
-dashboard snapshot live, and work the fail/repair loop — scored against the two
-friction bars above.
+What remains is real use — dispatch from a second location on the same queue,
+read the dashboard snapshot live, and work the fail/repair loop — scored against
+the two friction bars above.
 
 ## Control tools are interactive-only
 
@@ -72,21 +73,49 @@ them, and a graph agent gets only its node's handoff tools.
 
 Not implemented.
 
-## Deferred
+## Subagent depth cap
 
-- per-node `maxSubagentDepth` (a graph-owned subagent nesting cap);
-- parallel dispatches across the graph;
-- run archive or persisted dispatch history;
-- triggers, watches, and schedules;
-- programmatic node types;
-- dashboard editing or dispatch controls;
-- background subagent tracking and child-session aggregation.
+A per-node `maxSubagentDepth` property — a graph-owned cap on subagent nesting
+below a node, additional to OpenCode's global limit.
 
-Product-boundary guardrails (do not reverse without a decision):
+Not implemented.
 
-- distribution stays a plain archive plus a standalone `install.sh` and a SHA-256
-  checksum; no npm package, registry, or network step;
-- no bundled Node or other runtime, and no Node prerequisite at install time;
-- no in-place upgrade path in the first release;
-- no Windows installer in the first release;
-- no per-project engine or per-project install.
+## Parallel dispatches
+
+Run more than one dispatch concurrently across the graph; today the engine runs
+one at a time with the rest queued FIFO.
+
+Not implemented.
+
+## Dispatch history
+
+Persist completed dispatches and their records beyond the in-memory queue;
+today they are lost on process restart.
+
+Not implemented.
+
+## Triggers and schedules
+
+Start dispatches from triggers, watches, or a schedule rather than only an
+explicit prompt.
+
+Not implemented.
+
+## Programmatic node types
+
+Allow node definitions other than Markdown documents.
+
+Not implemented.
+
+## Dashboard editing and dispatch controls
+
+Edit the graph and control dispatches (dispatch/cancel) from the dashboard, not
+only through the interactive agent's tools.
+
+Not implemented.
+
+## Subagent tracking
+
+Track background subagents and aggregate child-session activity.
+
+Not implemented.
