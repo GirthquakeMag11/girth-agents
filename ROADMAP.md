@@ -65,12 +65,16 @@ friction bars above.
 
 ## Control tools are interactive-only
 
-The engine's dispatch/status/cancel/reload/graph_info/graph_map tools are meant
-for the interactive agent alone, handed to it by the engine; subagents and node
-sessions must not reach them. Node sessions already lose them (deny-by-default),
-but allow-by-default subagents (e.g. `general`, which ships `allow *`) currently
-satisfy the tools' permission gate, so the intent is not yet enforced there.
-Enforce it: deny/remove the engine control tools from subagent sessions.
+`dispatch` (with status/cancel/reload/graph_info/graph_map) is for the
+interactive agent alone, handed to it by the engine — never subagents, graph
+agents, or any non-interactive agent. The rule is **mechanical, not
+permission-derived**: no amount of the agent's own `tools`/`permissions` grants
+it. A graph agent instead gets only its node's baked handoff tools (dispatch
+partial-functions with everything but the message fixed). Node sessions already
+lose the control tools (deny-by-default), but allow-by-default subagents (e.g.
+`general`, `allow *`) still satisfy the permission gate, so the rule is not yet
+enforced there. Enforce by stripping the control tools from non-interactive
+sessions.
 
 Not implemented.
 

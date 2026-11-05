@@ -10,6 +10,14 @@ these before writing it down.
   the input is `{ message }`.
 - `dispatch` is the interactive agent's open-ended handoff tool. The same tool
   starts a node and sends a message back to a retained origin.
+- `dispatch` is available only to the interactive (top-level, user-driven)
+  agent. It is **mechanically unavailable** to subagents, to graph agents, and
+  to any non-interactive agent — regardless of their settable permissions: an
+  agent can never reach `dispatch` through its own `tools` or `permissions`.
+- A graph agent's handoff tools are `dispatch` partial-functions: every
+  parameter except the message is baked in by the engine. A graph agent gets
+  only its own node's labels — never another node's handoff tools, never
+  `dispatch` itself.
 - `resume: true` returns to the origin of the input the sender received. The
   engine already knows that origin.
 - `dispatchId` identifies a dispatch. It disambiguates retained origins; it is
