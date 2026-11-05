@@ -26,8 +26,11 @@ export function createPluginDriver(ctx) {
     async createSession({ directory, title, model, permissions }) {
       const session = await ctx.session.create({
         title,
-        // ctx.session.create wants a Model.Ref, not the graph's "provider/model" string.
-        model: modelRef(model),
+        // ctx.session.create wants a Model.Ref, not the graph's "provider/model"
+        // string. Emit the ref only when a model was declared: the node session
+        // inherits the session default otherwise, and an absent model must not
+        // reach modelRef() and throw a bare TypeError.
+        ...(model !== undefined ? { model: modelRef(model) } : {}),
         location: { directory },
         permissions,
       });

@@ -98,26 +98,26 @@ export default Plugin.define({
     // the six control-tool names from their model tool set in the context hook.
     // Keyed on session kind (child), never on mode or settable permissions, so a
     // `mode: "all"` agent launched as a subagent is stripped too.
+    // A FORK of a subagent becomes a top-level (interactive) session and thus
+    // legitimately keeps the control tools — intentional, not a leak.
     const childSessions = new Set<string>();
-    try {
-      const listed = await ctx.session.list();
-      for (const info of listed?.data ?? []) {
-        // Session.Info carries `id` (not `sessionID`); a set parent marks a child.
-        if (info.parentID) childSessions.add(info.id);
-      }
-    } catch {
-      // Seeding is best-effort: freshly created children are still tracked.
-    }
     const childController = new AbortController();
     const childSubscription = (async () => {
       try {
+        // Subscribe FIRST so a child created while we seed below is not missed —
+        // the created event lands in this loop even while the initial list is in
+        // flight. The same half-open subscription prunes deletions so the set
+        // never grows without bound.
         for await (const ev of ctx.event.subscribe({
-          types: ["session.created"],
+          types: ["session.created", "session.deleted"],
           signal: childController.signal,
         })) {
           const data = (ev as any).data ?? {};
-          if (typeof data.sessionID === "string" && data.parentID) {
-            childSessions.add(data.sessionID);
+          const sessionID: string | undefined = data.sessionID;
+          if ((ev as any).type === "session.deleted") {
+            if (typeof sessionID === "string") childSessions.delete(sessionID);
+          } else if (typeof sessionID === "string" && data.parentID) {
+            childSessions.add(sessionID);
           }
         }
       } catch (error) {
@@ -128,6 +128,18 @@ export default Plugin.define({
         }
       }
     })();
+    // Seed after the subscription is listening. Session.Info carries `id`
+    // (not `sessionID`); a set parent marks a child. session.list returns the
+    // newest 50 without pagination — sufficient here because subagent sessions
+    // are short-lived, so anything older is already gone or about to be.
+    try {
+      const listed = await ctx.session.list();
+      for (const info of listed?.data ?? []) {
+        if (info.parentID) childSessions.add(info.id);
+      }
+    } catch {
+      // Seeding is best-effort: freshly created children are still tracked.
+    }
 
     const rpcRegistration = await ctx.rpc.register(GraphEngine, {
       snapshot: async () => dashboardSnapshot(runtime),
@@ -436,16 +448,32 @@ const OWNED_AGENTS = new Set(["build", "plan", "general", "explore"]);
             if (!live.has(subagent)) missing.push({ agent: graphAgent.id, subagent });
           }
         }
-        // Collisions: compare only the parts we own (system/description). The
-        // user's global-config permissions are appended to every agent, so
+        // Collisions: compare only the parts we own (system/description/mode).
+        // The user's global-config permissions are appended to every agent, so
         // permissions always differ — comparing them would false-positive.
+        // `model` is deliberately not compared: these four inherit it unless the
+        // user pins one, which is pinning, not overriding us.
         const collisions = [];
         for (const graphAgent of runtime.config.agents ?? []) {
           if (!OWNED_AGENTS.has(graphAgent.id)) continue;
           const entry = live.get(graphAgent.id);
           const ownedSystem = graphAgent.prompt ?? "";
           const ownedDescription = graphAgent.description ?? "";
-          if (!entry || (entry.system ?? "") !== ownedSystem || (entry.description ?? "") !== ownedDescription) {
+          // The mode our materializer derives from the mounts (same derivation
+          // as engine/materialize.mjs). A config document that copies our
+          // system/description verbatim but changes the mode (e.g. makes a
+          // primary a subagent) overrides us — a named defect, never a silent
+          // loss.
+          const mounts = graphAgent.mounts ?? [];
+          const primary = mounts.includes("primary");
+          const subagent = mounts.includes("subagent");
+          const ownedMode = primary && subagent ? "all" : primary ? "primary" : subagent ? "subagent" : null;
+          if (
+            !entry ||
+            (entry.system ?? "") !== ownedSystem ||
+            (entry.description ?? "") !== ownedDescription ||
+            entry.mode !== ownedMode
+          ) {
             collisions.push(graphAgent.id);
           }
         }
@@ -481,8 +509,15 @@ const OWNED_AGENTS = new Set(["build", "plan", "general", "explore"]);
       const system = runtime.sessionSystem({ sessionID: event.sessionID });
       if (system) event.system.push({ type: "text", text: system });
       if (!event?.tools) return;
-      // A child (subagent) session never holds the control tools.
-      if (childSessions.has(event.sessionID)) {
+      // A child (subagent) session never holds the control tools. A graph node
+      // session has no parentID, so it is not in childSessions — match it
+      // against the engine's active node session and strip it the same way.
+      // Removal is mechanical, never permission-derived, so a graph agent that
+      // declares an allow-"*" permission cannot re-expose the control tools.
+      if (
+        childSessions.has(event.sessionID) ||
+        runtime.queue?.active?.sessionId === event.sessionID
+      ) {
         for (const name of CONTROL_TOOLS) delete event.tools[name];
       }
       const { labels: allowed } = runtime.handoffTools({ sessionID: event.sessionID });

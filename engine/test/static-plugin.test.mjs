@@ -164,6 +164,85 @@ test("static plugin: a child present at load loses the control tools (seed)", as
   }
 });
 
+test("static plugin: a deleted child is pruned so a reused id stops losing the control tools", async () => {
+  const plugin = await loadStaticPlugin({ graph: terminalGraph() });
+  try {
+    await plugin.setup();
+    const hook = plugin.lastHook("context");
+
+    await plugin.emitEvent("session.created", { sessionID: "child2", parentID: "parent" });
+    const whileChild = { sessionID: "child2", tools: {} };
+    for (const name of CONTROL_TOOLS) whileChild.tools[name] = true;
+    await hook(whileChild);
+    for (const name of CONTROL_TOOLS) assert.equal(whileChild.tools[name], undefined, `${name} removed while a child`);
+
+    await plugin.emitEvent("session.deleted", { sessionID: "child2" });
+    const afterDelete = { sessionID: "child2", tools: {} };
+    for (const name of CONTROL_TOOLS) afterDelete.tools[name] = true;
+    await hook(afterDelete);
+    for (const name of CONTROL_TOOLS) {
+      assert.equal(afterDelete.tools[name], true, `${name} kept after deletion prunes the id`);
+    }
+  } finally {
+    await plugin.close();
+  }
+});
+
+test("static plugin: the active node session loses the control tools regardless of permissions", async () => {
+  const runtimeKey = Symbol.for("graph-engine.runtime");
+  let release;
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    agentDocs: {
+      "builder.md": `---
+model: test/model
+mounts: [graph]
+tools: [read]
+permissions:
+  - action: "*"
+    resource: "*"
+    effect: allow
+---
+Do the node.
+`,
+    },
+    onPrompt: () => new Promise((resolve) => (release = resolve)),
+  });
+  try {
+    await plugin.setup();
+    const runtime = globalThis[runtimeKey];
+    runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, "/work/project");
+
+    const deadline = Date.now() + 2000;
+    while (Date.now() < deadline && runtime.queue.active?.sessionId == null) {
+      await new Promise((r) => setTimeout(r, 2));
+    }
+    const active = runtime.queue.active;
+    assert.ok(active?.sessionId, "a node session is active");
+
+    // Node sessions are created without a parentID (see engine/executor.mjs),
+    // so they are NOT childSessions; only the active-node-session match strips
+    // them. The graph agent declares an allow-"*" permission — removal is
+    // mechanical, never permission-derived.
+    const hook = plugin.lastHook("context");
+    const event = { sessionID: active.sessionId, system: [], tools: {} };
+    for (const name of CONTROL_TOOLS) event.tools[name] = true;
+    event.tools.other = true;
+    await hook(event);
+    for (const name of CONTROL_TOOLS) {
+      assert.equal(event.tools[name], undefined, `${name} removed from the active node session`);
+    }
+    assert.equal(event.tools.other, true, "unrelated tools are untouched");
+
+    release({ outcome: "succeeded" });
+    await runtime.wait(active.id, 2000).catch(() => {});
+  } finally {
+    release?.({ outcome: "succeeded" });
+    delete globalThis[runtimeKey];
+    await plugin.close();
+  }
+});
+
 test("static plugin: the context hook injects the node agent's body as system", async () => {
   const runtimeKey = Symbol.for("graph-engine.runtime");
   const body = "STANDING: build only within the dispatched scope.\n";
@@ -306,6 +385,21 @@ You are the default agent.
 
     live.description = "The default agent. Executes tools based on configured permissions.";
 
+    // A user config-document that copies our system/description verbatim but
+    // changes the mode (the doc is mounted primary) must fault too — the mode
+    // is a part we own, so overriding it is a named defect, not a silent loss.
+    live.mode = "subagent";
+    await assert.rejects(
+      () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
+      /agent.collision.*build/,
+    );
+    live.mode = "all";
+    await assert.rejects(
+      () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
+      /agent.collision.*build/,
+    );
+    live.mode = "primary";
+
     // Absent from the live catalog is a collision too.
     plugin.agentCatalog.delete("build");
     await assert.rejects(
@@ -315,7 +409,7 @@ You are the default agent.
     plugin.agentCatalog.set("build", live);
 
     // A permissions-only append (as opencode.config.agent does globally) must
-    // NOT false-positive — we own only system and description.
+    // NOT false-positive — we own only system, description, and mode.
     live.permissions.push({ action: "read", resource: "*", effect: "allow" });
     const ok = await dispatch.execute({ node: "a", prompt: "p", background: false }, context);
     assert.match(ok.content, /d-\d/, "a permissions-only change does not collide");

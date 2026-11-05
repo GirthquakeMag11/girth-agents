@@ -281,10 +281,22 @@ export function createContext(
       async transform(callback) {
         const editor = {
           update(id, fn) {
-            // Mirror OpenCode's Agent.Info.default seed: an absent id starts as
-            // a primary, unhidden agent with an empty permissions array (so a
-            // transform may `permissions.push` without a guard).
-            const draft = agentCatalog.get(id) ?? { name: id, mode: "primary", hidden: false, permissions: [] };
+            // Mirror OpenCode's Agent.Info.default(id) seed (packages/schema/src/agent.ts):
+            // an absent id starts as a primary, unhidden agent with an empty
+            // request triple and the four default permission rules, so a
+            // transform may `permissions.push` without a guard.
+            const draft = agentCatalog.get(id) ?? {
+              name: id,
+              request: { settings: {}, headers: {}, body: {} },
+              mode: "primary",
+              hidden: false,
+              permissions: [
+                { action: "*", resource: "*", effect: "allow" },
+                { action: "read", resource: "*.env", effect: "ask" },
+                { action: "read", resource: "*.env.*", effect: "ask" },
+                { action: "read", resource: "*.env.example", effect: "allow" },
+              ],
+            };
             fn(draft);
             draft.id = id;
             agentCatalog.set(id, draft);

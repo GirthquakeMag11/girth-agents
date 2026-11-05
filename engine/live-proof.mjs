@@ -32,6 +32,15 @@ const graph = { version: "6", maxSteps: loaded.doc.graph.maxSteps, workflows: lo
 const agentDocs = {
   "builder.md": await readFile(join(repo, "graph", "agents", "builder.md"), "utf8"),
   "reviewer.md": await readFile(join(repo, "graph", "agents", "reviewer.md"), "utf8"),
+  // A primary-mount doc with no model: the materialized primary mount must
+  // carry no `model` key (T0 inheritance), while a node session is created
+  // with its own concrete model ref.
+  "liaison.md": `---
+mounts: [primary]
+description: The interface agent.
+---
+Help the user run the pipeline.
+`,
 };
 
 const RUNTIME_KEY = Symbol.for("graph-engine.runtime");
@@ -74,6 +83,13 @@ const engine = globalThis[RUNTIME_KEY];
 assert.ok(engine, "the plugin creates the process-global engine");
 assert.equal(engine.config.graph.workflows[0].id, "build-review");
 
+// T0: the primary mount is materialized with no `model` key, so it inherits
+// the session default rather than carrying an explicit (or missing) model.
+const liaison = plugin.agentUpdates.find((update) => update.id === "liaison");
+assert.ok(liaison, "the primary mount is published to the agent catalog");
+assert.equal(liaison.draft.mode, "primary");
+assert.ok(!("model" in liaison.draft), "a primary mount without a declared model inherits the session default (no model key)");
+
 const rpcImplementation = plugin.rpcRegistrations[0].implementation;
 const dispatch = plugin.editor.get("dispatch");
 
@@ -88,6 +104,11 @@ async function runFrom({ sessionID, directory, prompt }) {
   for (const created of sessions) {
     assert.equal(created.location.directory, directory, `${directory}: every graph session uses the dispatching directory`);
   }
+  assert.deepEqual(
+    sessions[0].model,
+    { providerID: "openrouter", id: "~deepseek/deepseek-flash-latest" },
+    `${directory}: a node session is created with its own concrete model ref`,
+  );
   return result;
 }
 

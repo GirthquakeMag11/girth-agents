@@ -83,6 +83,7 @@ export default Plugin.define({
             sessionID: data.sessionID,
             description: "agent switch",
             text,
+            resume: false,
           });
         }
       } catch (error) {

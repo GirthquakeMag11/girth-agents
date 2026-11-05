@@ -225,6 +225,65 @@ assert_contains '"legacy-plugin"' "$(cat "$MERGE3/opencode.jsonc")" "JSONC entri
 assert_contains '"-opencode.agent"' "$(cat "$MERGE3/opencode.jsonc")" "the merge targets opencode.jsonc"
 assert_contains '"from-json"' "$(cat "$MERGE3/opencode.json")" "opencode.json is untouched when jsonc exists"
 
+# 6c. Regression: a nested "plugins" key must not hijack the merge. The disables
+# land in the TOP-LEVEL array, not the nested one.
+NEST="$WORK/nest"
+mkdir -p "$NEST"
+printf '{"settings":{"plugins":["nested-a"]},"plugins":["top-a"]}\n' > "$NEST/opencode.json"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$NEST" --yes > "$WORK/nest.out" 2>&1
+assert_eq '{"settings":{"plugins":["nested-a"]},"plugins":["top-a", "-opencode.agent", "-opencode.plan"]}' \
+  "$(cat "$NEST/opencode.json")" \
+  "the disables merge into the top-level plugins array, not the nested one"
+
+# 6d. Regression: a mention of the disable in a comment must not spoof presence.
+SPOOF="$WORK/spoof"
+mkdir -p "$SPOOF"
+printf '{\n  // note: "-opencode.agent" appears only in this comment\n  "plugins": ["foo"]\n}\n' > "$SPOOF/opencode.jsonc"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$SPOOF" --yes > "$WORK/spoof.out" 2>&1
+assert_eq '{
+  // note: "-opencode.agent" appears only in this comment
+  "plugins": ["foo", "-opencode.agent", "-opencode.plan"]
+}' "$(cat "$SPOOF/opencode.jsonc")" "a comment-only mention does not suppress the agent disable"
+
+# 6e. Regression: a trailing comma in the plugins array yields valid output with
+# each entry exactly once.
+TRAIL="$WORK/trail"
+mkdir -p "$TRAIL"
+printf '{"plugins":["legacy",]}\n' > "$TRAIL/opencode.json"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$TRAIL" --yes > "$WORK/trail.out" 2>&1
+assert_eq '{"plugins":["legacy", "-opencode.agent", "-opencode.plan"]}' \
+  "$(cat "$TRAIL/opencode.json")" \
+  "a trailing comma is resolved into a clean separator"
+
+# 6f. Regression: a single-line config with no top-level plugins key is refused
+# untouched, the install still completes, and the note is truthful.
+REFUSE="$WORK/refuse"
+mkdir -p "$REFUSE"
+printf '{"theme":"dark"}\n' > "$REFUSE/opencode.json"
+cp "$REFUSE/opencode.json" "$WORK/refuse.before"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$REFUSE" --yes > "$WORK/refuse.out" 2>&1
+assert_eq "$(cat "$WORK/refuse.before")" "$(cat "$REFUSE/opencode.json")" "a single-line config is left unchanged on refusal"
+assert_contains "installed:" "$(cat "$WORK/refuse.out")" "the install completes after a merge refusal"
+assert_contains "could not merge plugin disables" "$(cat "$WORK/refuse.out")" "the note truthfully reports the refused merge"
+
+# 6g. Regression: a comment between a trailing comma and the closing bracket
+# survives the merge (the splice lands after the comma, not through it), with
+# both disables added exactly once and no doubled comma.
+TRAILC="$WORK/trailc"
+mkdir -p "$TRAILC"
+printf '{"plugins":["legacy", /* keep me */]}\n' > "$TRAILC/opencode.json"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$TRAILC" --yes > "$WORK/trailc.out" 2>&1
+trailc_out="$(cat "$TRAILC/opencode.json")"
+assert_contains '/\* keep me \*/' "$trailc_out" "a comment after a trailing comma survives the merge"
+assert_contains '"-opencode.agent"' "$trailc_out" "the agent disable is added when a trailing-comma comment is present"
+assert_contains '"-opencode.plan"' "$trailc_out" "the plan disable is added when a trailing-comma comment is present"
+assert_eq "1" "$(grep -c '"-opencode.agent"' "$TRAILC/opencode.json")" "no duplicate agent disable beside a trailing-comma comment"
+if grep -q ',,' "$TRAILC/opencode.json"; then
+  fail "no doubled comma is produced by a trailing-comma comment merge"
+else
+  pass "no doubled comma is produced by a trailing-comma comment merge"
+fi
+
 # 7. Uninstall removes only checksum-matching files and warns on modified ones.
 printf '%s\n' "local change" >> "$CONFIG/plugins/graph-engine/server.ts"
 before=$(find "$CONFIG" -type f | wc -l | tr -d ' ')

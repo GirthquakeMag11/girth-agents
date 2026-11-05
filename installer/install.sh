@@ -95,22 +95,37 @@ confirm() {
 # merge_disables TARGET
 #
 # Idempotently merges the "-opencode.agent" and "-opencode.plan" plugin-removal
-# directives into TARGET's "plugins" array, using awk only (no jq; the installer
-# must not require Node). JSON(C)-aware: comments and string contents are blanked
-# for structural scanning, so the key and the array boundary are found without
-# ever matching inside a string or comment; everything else is preserved
-# byte-for-byte. Returns 0 regardless: a refusal is a note, never a failure.
+# directives into TARGET's top-level "plugins" array, using awk only (no jq; the
+# installer must not require Node). JSON(C)-aware: comments and string contents
+# are blanked for structural scanning, so the key and the array boundary are
+# found without ever matching inside a string or comment; everything else is
+# preserved byte-for-byte. The awk itself decides which of the two directives
+# are actually missing from the array, testing presence against the
+# comment-blanked (but string-keeping) shadow, so a mention in a comment cannot
+# spoof presence; a nested (non-string) array element — an invalid plugin
+# entry, since plugin ids are strings — is not specially disambiguated and
+# would still count as present. Returns nonzero when it refuses to touch the
+# file; callers treat that as a note, never a failure.
 merge_disables() {
   target="$1"
-  missing=""
-  grep -qF '"-opencode.agent"' "$target" 2>/dev/null || missing="${missing}agent "
-  grep -qF '"-opencode.plan"' "$target" 2>/dev/null || missing="${missing}plan "
-  if [ -z "$missing" ]; then
-    return 0
-  fi
+  # The candidate disable ids; awk decides which are actually missing from the
+  # top-level plugins array. Presence is tested against the C shadow (comments
+  # blanked, strings kept), so a mention in a comment cannot spoof presence,
+  # but a token inside a nested (non-string) array element — an invalid plugin
+  # entry — still counts as present.
+  missing="agent plan"
 
   awk_src="$TMP/merge-plugins.awk"
   cat > "$awk_src" <<'AWK'
+function brace_depth(s,  i, n) {
+  n = 0
+  for (i = 1; i <= length(s); i++) {
+    ch = substr(s, i, 1)
+    if (ch == "{") n++
+    else if (ch == "}") n--
+  }
+  return n
+}
 BEGIN {
   n = split(missing, M, " ")
   add = ""
@@ -171,7 +186,7 @@ END {
   keyPos = 0
   while (kp > 0) {
     ns = substr(SC, kp + 9)
-    if (ns ~ /^[ \t\n]*:/) { keyPos = kp; break }
+    if (ns ~ /^[ \t\n]*:/ && brace_depth(substr(SD, 1, kp)) == 1) { keyPos = kp; break }
     nx = index(substr(SC, kp + 1), "\"plugins\"")
     if (nx == 0) break
     kp += nx
@@ -195,19 +210,37 @@ END {
     if (depth > 0) { print "#unclosed"; exit 2 }
     closePos = i - 1
     inner = substr(SD, openPos + 1, closePos - openPos - 1)
+    innerC = substr(SC, openPos + 1, closePos - openPos - 1)
     empty = (inner ~ /^[ \t\n]*$/)
-    insert = empty ? add : ", " add
+    trailing = (inner ~ /,[ \t\n]*$/)
+    needed = ""
+    for (m = 1; m <= n; m++) {
+      if (M[m] == "") continue
+      token = "\"-opencode." M[m] "\""
+      if (index(innerC, token) == 0) needed = needed (needed == "" ? "" : ", ") token
+    }
+    if (needed == "") { ins = 1; tail = 1; insert = "" }
+    else if (empty) { ins = closePos; tail = closePos; insert = needed }
+    else if (trailing) {
+      t = closePos - 1
+      while (t > openPos && substr(SD, t, 1) != ",") t--
+      ins = t + 1
+      tail = t + 1
+      insert = " " needed
+    }
+    else { ins = closePos; tail = closePos; insert = ", " needed }
   } else {
     bp = index(SD, "{")
     if (bp == 0) { print "#noobj"; exit 2 }
     after = substr(SD, bp + 1)
     if (after !~ /^[ \t]*\n/) { print "#inline"; exit 2 }
+    ins = bp + 1
+    tail = bp + 1
     insert = "\n  \"plugins\": [" add "],"
-    closePos = bp + 1
   }
   R = ""
   for (j = 1; j <= N; j++) R = R raw[j] "\n"
-  printf "%s%s%s", substr(R, 1, closePos - 1), insert, substr(R, closePos)
+  printf "%s%s%s", substr(R, 1, ins - 1), insert, substr(R, tail)
 }
 AWK
 
@@ -216,6 +249,7 @@ AWK
     cat "$outp" > "$target"
   else
     echo "install: note: could not safely merge into $target; add \"-opencode.agent\" and \"-opencode.plan\" to its plugins list manually" >&2
+    return 1
   fi
 }
 
@@ -397,8 +431,11 @@ if [ -z "$config_target" ]; then
   printf '{\n  "plugins": [\n    "-opencode.agent",\n    "-opencode.plan"\n  ]\n}\n' > "$CONFIG_DIR/opencode.json"
   config_note="wrote $CONFIG_DIR/opencode.json (disabling opencode.agent + opencode.plan)"
 else
-  merge_disables "$config_target"
-  config_note="merged plugin disables into $config_target"
+  if merge_disables "$config_target"; then
+    config_note="merged plugin disables into $config_target"
+  else
+    config_note="could not merge plugin disables into $config_target"
+  fi
 fi
 
 # 12. Report.
