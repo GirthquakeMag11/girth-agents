@@ -110,6 +110,21 @@ test("materialize: the model string becomes a Model.Ref object", () => {
   assert.deepEqual(varied.agents[0].model, { providerID: "prov", id: "model", variant: "variant" });
 });
 
+test("materialize: an omitted model emits no model key (inherits the default)", () => {
+  const plan = materializationPlan(
+    { agents: [{ id: "a", mounts: ["primary"], prompt: "P." }] },
+    BASE,
+  );
+  assert.equal("model" in plan.agents[0], false);
+
+  const graphMount = materializationPlan(
+    { agents: [{ id: "b", model: "prov/model", mounts: ["graph"], prompt: "B." }] },
+    BASE,
+  );
+  // A graph mount is never published, so the plan is empty regardless of model.
+  assert.deepEqual(graphMount.agents, []);
+});
+
 test("materialize: referenced skills follow a published mount, deduped, with an absolute path", () => {
   const skill = { id: "test-first", name: "Test-first", description: "TDD.", instructions: "Write the failing test first." };
   const config = {

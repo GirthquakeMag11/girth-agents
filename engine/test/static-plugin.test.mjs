@@ -313,6 +313,27 @@ Your standing role: help the user run the build pipeline.
   }
 });
 
+test("static plugin: a no-model mount publishes without a model key (inherits)", async () => {
+  const liaisonDoc = `---
+mounts: [primary]
+description: Inherits the default model.
+---
+Help the user.
+`;
+  const plugin = await loadStaticPlugin({ graph: terminalGraph(), agentDocs: { "liaison.md": liaisonDoc } });
+  try {
+    await plugin.setup();
+    assert.equal(plugin.agentUpdates.length, 1, "exactly the primary mount is published");
+    const update = plugin.agentUpdates[0];
+    assert.equal(update.id, "liaison");
+    assert.equal(update.draft.mode, "primary");
+    assert.ok(!("model" in update.draft), "no model key means the session default is inherited");
+    assert.equal(update.draft.description, "Inherits the default model.");
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: a referenced skill follows a subagent mount", async () => {
   const reviewerDoc = `---
 model: test/model

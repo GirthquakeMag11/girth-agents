@@ -32,7 +32,10 @@ export function materializationPlan(config, baseDir) {
       id: graphAgent.id,
       mode,
       system: graphAgent.prompt ?? "",
-      model: modelRef(graphAgent.model),
+      // `model` is optional for primary/subagent mounts (they inherit the
+      // session default); omit the key entirely rather than emitting undefined,
+      // which would clear an inherited model on the OpenCode side.
+      ...(graphAgent.model !== undefined ? { model: modelRef(graphAgent.model) } : {}),
       description: graphAgent.description ?? "",
       // Mounts are deny-by-default, exactly like graph node sessions: tools
       // acquire by name, explicit permission triples win (appended later), and

@@ -100,7 +100,9 @@ export default Plugin.define({
         editor.update(entry.id, (agent) => {
           agent.mode = entry.mode;
           agent.system = entry.system;
-          agent.model = entry.model;
+          // Only assign a model when the document declares one; never assign
+          // `undefined`, which would clear an inherited (default) model.
+          if (entry.model !== undefined) agent.model = entry.model;
           agent.description = entry.description;
           agent.permissions = [...entry.permissions];
         });

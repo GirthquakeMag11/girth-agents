@@ -152,21 +152,35 @@ function validateToolNames(value, at, faults, code) {
 }
 
 function validateAgentProperties(graphAgent, at, faults) {
-  string(graphAgent.model, `${at}.model`, faults);
   validateMounts(graphAgent.mounts, `${at}.mounts`, faults);
-  if (graphAgent.model !== undefined && typeof graphAgent.model === "string") {
-    // Mirror the SDK's Model.Ref.parse: a provider, a non-empty id, and an
-    // optional non-empty variant. Reject otherwise so a malformed model faults
-    // at load instead of publishing a silently-unresolvable registry ref.
-    const slash = graphAgent.model.indexOf("/");
-    const hash = graphAgent.model.indexOf("#");
-    const provider = slash > 0 ? graphAgent.model.slice(0, slash) : "";
-    const id = slash > 0 ? graphAgent.model.slice(slash + 1, hash === -1 ? undefined : hash) : "";
-    const variant = hash === -1 ? "" : graphAgent.model.slice(hash + 1);
-    const bad =
-      slash <= 0 || id === "" || provider.includes("#") || (hash !== -1 && (variant === "" || variant.includes("#")));
-    if (bad) {
-      faults.push(fault("schema.agent-model", `${at}.model: must be 'provider/model' or 'provider/model#variant'`));
+  // A graph mount materializes node sessions that need a concrete model;
+  // primary/subagent mounts may omit `model` to inherit the session default.
+  const isGraph = Array.isArray(graphAgent.mounts) && graphAgent.mounts.includes("graph");
+  if (graphAgent.model === undefined) {
+    if (isGraph) {
+      faults.push(
+        fault(
+          "agent.missing-model",
+          `${at}.model: a 'graph' mount requires a model ('provider/model' or 'provider/model#variant')`,
+        ),
+      );
+    }
+  } else {
+    string(graphAgent.model, `${at}.model`, faults);
+    if (typeof graphAgent.model === "string") {
+      // Mirror the SDK's Model.Ref.parse: a provider, a non-empty id, and an
+      // optional non-empty variant. Reject otherwise so a malformed model faults
+      // at load instead of publishing a silently-unresolvable registry ref.
+      const slash = graphAgent.model.indexOf("/");
+      const hash = graphAgent.model.indexOf("#");
+      const provider = slash > 0 ? graphAgent.model.slice(0, slash) : "";
+      const id = slash > 0 ? graphAgent.model.slice(slash + 1, hash === -1 ? undefined : hash) : "";
+      const variant = hash === -1 ? "" : graphAgent.model.slice(hash + 1);
+      const bad =
+        slash <= 0 || id === "" || provider.includes("#") || (hash !== -1 && (variant === "" || variant.includes("#")));
+      if (bad) {
+        faults.push(fault("schema.agent-model", `${at}.model: must be 'provider/model' or 'provider/model#variant'`));
+      }
     }
   }
   validateToolNames(graphAgent.tools, `${at}.tools`, faults, "schema.agent-tools");

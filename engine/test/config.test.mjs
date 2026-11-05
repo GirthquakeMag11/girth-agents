@@ -303,6 +303,38 @@ test("config: invalid agent properties and unknown frontmatter fields are named"
   assert.ok(codes((await loadConfig(unknown.path)).faults).includes("schema.unknown-field"));
 });
 
+test("config: model is optional for non-graph mounts and required for graph mounts", async () => {
+  // builder stays graph-mounted for the default node; each case adds a second doc.
+  const primaryNoModel = await graphConfig({
+    agentDocs: {
+      "builder.md": agentDoc(),
+      "liaison.md": "---\nid: liaison\nmounts: [primary]\n---\n\nPrompt.\n",
+    },
+  });
+  assert.deepEqual((await loadConfig(primaryNoModel.path)).faults, []);
+
+  const subagentNoModel = await graphConfig({
+    agentDocs: {
+      "builder.md": agentDoc(),
+      "explore.md": "---\nid: explore\nmounts: [subagent]\n---\n\nSearch.\n",
+    },
+  });
+  assert.deepEqual((await loadConfig(subagentNoModel.path)).faults, []);
+
+  const graphNoModel = await graphConfig({
+    agentDocs: { "builder.md": "---\nid: builder\nmounts: [graph]\n---\n\nBuild.\n" },
+  });
+  assert.ok(codes((await loadConfig(graphNoModel.path)).faults).includes("agent.missing-model"));
+
+  const malformedNonGraph = await graphConfig({
+    agentDocs: {
+      "builder.md": agentDoc(),
+      "liaison.md": "---\nid: liaison\nmodel: nope\nmounts: [primary]\n---\n\nPrompt.\n",
+    },
+  });
+  assert.ok(codes((await loadConfig(malformedNonGraph.path)).faults).includes("schema.agent-model"));
+});
+
 test("config: permission rules must be {action, resource, effect} objects", async () => {
   const stringEntry = await graphConfig({
     agentDocs: { "builder.md": "---\nid: builder\nmodel: provider/model\nmounts: [graph]\npermissions: [read]\n---\n\nPrompt.\n" },
