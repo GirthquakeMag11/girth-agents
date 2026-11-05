@@ -111,6 +111,42 @@ function toolName(tool) {
   return name;
 }
 
+// A driveable event bus: `subscribe` returns an async iterable the plugin can
+// `for await` over, and `emit` delivers one `{ type, data }` event to every
+// active subscriber. Mirrors ctx.event.subscribe's async-iterable contract.
+function createEventBus() {
+  const subscribers = [];
+  return {
+    emit(type, data) {
+      for (const subscriber of subscribers) subscriber.push({ type, data });
+    },
+    subscribe() {
+      const queue = [];
+      const waiters = [];
+      const subscription = {
+        [Symbol.asyncIterator]() {
+          return {
+            async next() {
+              if (queue.length > 0) return { value: queue.shift(), done: false };
+              return await new Promise((resolve) => waiters.push(resolve));
+            },
+            async return() {
+              return { value: undefined, done: true };
+            },
+          };
+        },
+        push(event) {
+          const waiter = waiters.shift();
+          if (waiter) waiter({ value: event, done: false });
+          else queue.push(event);
+        },
+      };
+      subscribers.push(subscription);
+      return subscription;
+    },
+  };
+}
+
 export function createEditor(seedTools = []) {
   const tools = new Map();
   for (const tool of seedTools) tools.set(toolName(tool), tool);
@@ -131,7 +167,7 @@ export function createEditor(seedTools = []) {
 
 export function createContext(
   editor,
-  { directory = "/work/project", options = {}, onPrompt = null, locations = {}, seedAgents = [] } = {},
+  { directory = "/work/project", options = {}, onPrompt = null, locations = {}, seedAgents = [], seedSessions = [] } = {},
 ) {
   const hooks = new Map();
   const syntheticCalls = [];
@@ -143,6 +179,8 @@ export function createContext(
   const skillAdds = [];
   const mountDisposals = [];
   const agentCatalog = new Map(seedAgents.map((agent) => [agent.id, { ...agent }]));
+  const eventBus = createEventBus();
+  const sessionList = [...seedSessions];
   let agentReload = null;
   let skillReload = null;
   let nextSession = 0;
@@ -215,6 +253,14 @@ export function createContext(
       },
       async remove({ sessionID }) {
         graphSessions.delete(sessionID);
+      },
+      async list() {
+        return { location: { directory }, data: sessionList };
+      },
+    },
+    event: {
+      subscribe() {
+        return eventBus.subscribe();
       },
     },
     permission: {
@@ -307,6 +353,10 @@ export function createContext(
     lastHook(name) {
       return hooks.get(name)?.at(-1) ?? null;
     },
+    emitEvent(type, data) {
+      eventBus.emit(type, data);
+    },
+    sessionList,
   };
 }
 
@@ -321,6 +371,7 @@ export async function loadStaticPlugin({
   onPrompt = null,
   locations = {},
   seedAgents = [],
+  seedSessions = [],
 } = {}) {
   if (resetEngine) delete globalThis[Symbol.for("graph-engine.runtime")];
   const dir = await mkdtemp(join(tmpdir(), "static-plugin-"));
@@ -368,7 +419,7 @@ export async function loadStaticPlugin({
     await writeFile(modulePath, transformed, "utf8");
 
     const editor = createEditor(seedTools);
-    const context = createContext(editor, { directory, onPrompt, locations, seedAgents });
+    const context = createContext(editor, { directory, onPrompt, locations, seedAgents, seedSessions });
     context.ctx.options = { ...options, graphConfig: join(graphDir, "config.json") };
 
     const module = await import(pathToFileURL(modulePath).href);
@@ -395,6 +446,15 @@ export async function loadStaticPlugin({
       },
       lastHook(name) {
         return context.lastHook(name);
+      },
+      async emitEvent(type, data) {
+        context.emitEvent(type, data);
+        // Yield one macrotask so the plugin's `for await` subscriber has turned
+        // the tick (a microtask chain) before the test drives the context hook.
+        await new Promise((resolve) => setImmediate(resolve));
+      },
+      get sessionList() {
+        return context.sessionList;
       },
       async setup() {
         return definition.setup(context.ctx);

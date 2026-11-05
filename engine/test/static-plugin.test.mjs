@@ -119,6 +119,51 @@ test("static plugin: the context hook removes undeclared labels", async () => {
   }
 });
 
+test("static plugin: a child session loses the control tools, the interactive keeps them", async () => {
+  const plugin = await loadStaticPlugin({ graph: terminalGraph() });
+  try {
+    await plugin.setup();
+    const hook = plugin.lastHook("context");
+    assert.ok(hook, "the context hook is registered");
+
+    // A session.created with a parentID marks a subagent child. The strip is
+    // keyed on session kind (parentID), never on the agent's mode, so a
+    // mode:"all" agent launched as a subagent is stripped the same way.
+    await plugin.emitEvent("session.created", { sessionID: "child1", parentID: "parent" });
+    const childEvent = { sessionID: "child1", tools: {} };
+    for (const name of CONTROL_TOOLS) childEvent.tools[name] = true;
+    childEvent.tools.other = true;
+    await hook(childEvent);
+    for (const name of CONTROL_TOOLS) assert.equal(childEvent.tools[name], undefined, `${name} removed from a child`);
+    assert.equal(childEvent.tools.other, true, "unrelated tools are untouched");
+
+    // An unparented (interactive) session keeps all six.
+    const interactiveEvent = { sessionID: "root", tools: {} };
+    for (const name of CONTROL_TOOLS) interactiveEvent.tools[name] = true;
+    await hook(interactiveEvent);
+    for (const name of CONTROL_TOOLS) assert.equal(interactiveEvent.tools[name], true, `${name} kept for the interactive session`);
+  } finally {
+    await plugin.close();
+  }
+});
+
+test("static plugin: a child present at load loses the control tools (seed)", async () => {
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    seedSessions: [{ id: "pre-child", parentID: "parent" }],
+  });
+  try {
+    await plugin.setup();
+    const hook = plugin.lastHook("context");
+    const event = { sessionID: "pre-child", tools: {} };
+    for (const name of CONTROL_TOOLS) event.tools[name] = true;
+    await hook(event);
+    for (const name of CONTROL_TOOLS) assert.equal(event.tools[name], undefined, `${name} removed from a seeded child`);
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: the context hook injects the node agent's body as system", async () => {
   const runtimeKey = Symbol.for("graph-engine.runtime");
   const body = "STANDING: build only within the dispatched scope.\n";

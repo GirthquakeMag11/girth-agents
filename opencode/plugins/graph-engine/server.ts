@@ -18,6 +18,17 @@ const OWNED = Symbol.for("graph-engine.owned");
 
 const TERMINAL = new Set(["completed", "defect", "cancelled"]);
 
+// The six interactive-only control tools. A subagent (child) session must not
+// hold them at all — removal, never a permission guard (INVARIANTS).
+const CONTROL_TOOLS = new Set([
+  "dispatch",
+  "dispatch_status",
+  "dispatch_cancel",
+  "reload",
+  "graph_info",
+  "graph_map",
+]);
+
 // The graph config resolves from the plugin's installed location:
 //   $OPENCODE_CONFIG/plugins/graph-engine/../../graph-engine/graph/config.json
 // A plugin option or an environment override wins, which is what keeps the
@@ -81,6 +92,42 @@ export default Plugin.define({
   async setup(ctx) {
     const runtime = await engineFor(ctx);
     const labels = handoffLabels(runtime.config.graph);
+
+    // Control tools are available only to the interactive, top-level agent.
+    // A session with a `parentID` is a subagent child; track those ids and strip
+    // the six control-tool names from their model tool set in the context hook.
+    // Keyed on session kind (child), never on mode or settable permissions, so a
+    // `mode: "all"` agent launched as a subagent is stripped too.
+    const childSessions = new Set<string>();
+    try {
+      const listed = await ctx.session.list();
+      for (const info of listed?.data ?? []) {
+        // Session.Info carries `id` (not `sessionID`); a set parent marks a child.
+        if (info.parentID) childSessions.add(info.id);
+      }
+    } catch {
+      // Seeding is best-effort: freshly created children are still tracked.
+    }
+    const childController = new AbortController();
+    const childSubscription = (async () => {
+      try {
+        for await (const ev of ctx.event.subscribe({
+          types: ["session.created"],
+          signal: childController.signal,
+        })) {
+          const data = (ev as any).data ?? {};
+          if (typeof data.sessionID === "string" && data.parentID) {
+            childSessions.add(data.sessionID);
+          }
+        }
+      } catch (error) {
+        if (!childController.signal.aborted) {
+          console.error("graph-engine.child-session-subscription", {
+            error: error?.message ?? String(error),
+          });
+        }
+      }
+    })();
 
     const rpcRegistration = await ctx.rpc.register(GraphEngine, {
       snapshot: async () => dashboardSnapshot(runtime),
@@ -411,6 +458,10 @@ export default Plugin.define({
       const system = runtime.sessionSystem({ sessionID: event.sessionID });
       if (system) event.system.push({ type: "text", text: system });
       if (!event?.tools) return;
+      // A child (subagent) session never holds the control tools.
+      if (childSessions.has(event.sessionID)) {
+        for (const name of CONTROL_TOOLS) delete event.tools[name];
+      }
       const { labels: allowed } = runtime.handoffTools({ sessionID: event.sessionID });
       const allowedSet = new Set(allowed);
       for (const label of generatedLabels) {
@@ -438,6 +489,7 @@ export default Plugin.define({
     // Plugin cleanup disposes this instance's registrations; it never stops
     // the engine. The engine ends when the OpenCode server process ends.
     return () => {
+      childController.abort();
       void transformRegistration?.dispose?.();
       void rpcRegistration?.dispose?.();
       void hookRegistration?.dispose?.();
