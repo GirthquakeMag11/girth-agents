@@ -63,12 +63,14 @@ is real use — dispatch from a second location on the same queue, read the
 dashboard snapshot live, and work the fail/repair loop — scored against the two
 friction bars above.
 
-## Dispatch recursion
+## Control tools are interactive-only
 
-A session with broad permissions holding the `dispatch` tool (e.g. a `general`
-subagent with `allow *`) can start a fresh, unparented node session, which can
-itself subagent and dispatch again — a graph-level loop the subagent-depth limit
-does not bound. Decide whether to bound it (and how), or accept it.
+The engine's dispatch/status/cancel/reload/graph_info/graph_map tools are meant
+for the interactive agent alone, handed to it by the engine; subagents and node
+sessions must not reach them. Node sessions already lose them (deny-by-default),
+but allow-by-default subagents (e.g. `general`, which ships `allow *`) currently
+satisfy the tools' permission gate, so the intent is not yet enforced there.
+Enforce it: deny/remove the engine control tools from subagent sessions.
 
 Not implemented.
 
