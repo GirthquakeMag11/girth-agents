@@ -64,15 +64,6 @@ What remains is real use — dispatch from a second location on the same queue,
 read the dashboard snapshot live, and work the fail/repair loop — scored against
 the two friction bars above.
 
-## Control tools are interactive-only
-
-`dispatch` (with status/cancel/reload/graph_info/graph_map) is for the
-interactive agent alone, enforced mechanically rather than by the session's
-permissions: subagents, graph agents, and non-interactive sessions never get
-them, and a graph agent gets only its node's handoff tools.
-
-Not implemented.
-
 ## Subagent depth cap
 
 A per-node `maxSubagentDepth` property — a graph-owned cap on subagent nesting
@@ -96,14 +87,15 @@ Not implemented.
 
 ## Triggers and schedules
 
-Start dispatches from triggers, watches, or a schedule rather than only an
+Initiate work from triggers, watches, or a schedule rather than only an
 explicit prompt.
 
 Not implemented.
 
 ## Programmatic node types
 
-Allow node definitions other than Markdown documents.
+A new type of node that uses scripting instead of an agent to accept input,
+create output, and participate in routing.
 
 Not implemented.
 
