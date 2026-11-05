@@ -98,8 +98,10 @@ export default Plugin.define({
     // the six control-tool names from their model tool set in the context hook.
     // Keyed on session kind (child), never on mode or settable permissions, so a
     // `mode: "all"` agent launched as a subagent is stripped too.
-    // A FORK of a subagent becomes a top-level (interactive) session and thus
-    // legitimately keeps the control tools — intentional, not a leak.
+    // A FORK of a subagent is a top-level session with no `parentID`, but it
+    // inherits the subagent's agent and permissions — if it kept the control
+    // tools it would gain them through a side channel. Propagate child status
+    // through the fork (below), so a fork never acquires the tools.
     const childSessions = new Set<string>();
     const childController = new AbortController();
     const childSubscription = (async () => {
@@ -109,13 +111,44 @@ export default Plugin.define({
         // flight. The same half-open subscription prunes deletions so the set
         // never grows without bound.
         for await (const ev of ctx.event.subscribe({
-          types: ["session.created", "session.deleted"],
+          types: ["session.created", "session.deleted", "session.forked"],
           signal: childController.signal,
         })) {
+          const type = (ev as any).type;
           const data = (ev as any).data ?? {};
           const sessionID: string | undefined = data.sessionID;
-          if ((ev as any).type === "session.deleted") {
+          if (type === "session.deleted") {
             if (typeof sessionID === "string") childSessions.delete(sessionID);
+          } else if (type === "session.forked") {
+            // `Forked.parentID` is the fork SOURCE, not a parent marker: if the
+            // session being forked is a subagent child, its fork must not gain
+            // the control tools. When the source is not yet tracked — a fork
+            // that races the seed snapshot, or forks a child older than the
+            // seeded window — resolve its lineage lazily by walking child
+            // markers and fork ancestry via the session store.
+            if (typeof sessionID === "string") {
+              let isChild = childSessions.has(data.parentID);
+              let cursor: string | undefined = isChild ? undefined : data.parentID;
+              const seen = new Set<string>();
+              while (!isChild && cursor && !seen.has(cursor)) {
+                seen.add(cursor);
+                if (childSessions.has(cursor)) {
+                  isChild = true;
+                  break;
+                }
+                try {
+                  const info = await ctx.session.get({ sessionID: cursor });
+                  if (info?.parentID) {
+                    isChild = true;
+                    break;
+                  }
+                  cursor = info?.fork?.sessionID;
+                } catch {
+                  cursor = undefined;
+                }
+              }
+              if (isChild) childSessions.add(sessionID);
+            }
           } else if (typeof sessionID === "string" && data.parentID) {
             childSessions.add(sessionID);
           }
@@ -129,13 +162,30 @@ export default Plugin.define({
       }
     })();
     // Seed after the subscription is listening. Session.Info carries `id`
-    // (not `sessionID`); a set parent marks a child. session.list returns the
-    // newest 50 without pagination — sufficient here because subagent sessions
-    // are short-lived, so anything older is already gone or about to be.
+    // (not `sessionID`); a set parent marks a child. A fork of a child has a
+    // `fork.sessionID` pointing at its source, so resolve those too — to a
+    // fixpoint, so a fork of a fork is covered. session.list returns the newest
+    // 50 without pagination; that cap only bounds the snapshot here and cannot
+    // let a child keep the tools: a direct child older than the window can no
+    // longer issue a request (subagent sessions are one-shot, never resumed),
+    // and a fork of an old child is re-classified lazily in the `session.forked`
+    // branch above by resolving its source lineage through the session store.
     try {
       const listed = await ctx.session.list();
-      for (const info of listed?.data ?? []) {
+      const infos = listed?.data ?? [];
+      for (const info of infos) {
         if (info.parentID) childSessions.add(info.id);
+      }
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const info of infos) {
+          const source = info.fork?.sessionID;
+          if (source && childSessions.has(source) && !childSessions.has(info.id)) {
+            childSessions.add(info.id);
+            changed = true;
+          }
+        }
       }
     } catch {
       // Seeding is best-effort: freshly created children are still tracked.

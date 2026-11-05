@@ -188,6 +188,83 @@ test("static plugin: a deleted child is pruned so a reused id stops losing the c
   }
 });
 
+test("static plugin: a fork of a child loses the control tools; a fork of an interactive session keeps them", async () => {
+  const plugin = await loadStaticPlugin({ graph: terminalGraph() });
+  try {
+    await plugin.setup();
+    const hook = plugin.lastHook("context");
+
+    // child1 is a subagent; forking it must not confer the control tools.
+    await plugin.emitEvent("session.created", { sessionID: "child1", parentID: "parent" });
+    await plugin.emitEvent("session.forked", { sessionID: "fork1", parentID: "child1" });
+    const forked = { sessionID: "fork1", tools: {} };
+    for (const name of CONTROL_TOOLS) forked.tools[name] = true;
+    await hook(forked);
+    for (const name of CONTROL_TOOLS) {
+      assert.equal(forked.tools[name], undefined, `${name} removed from a fork of a subagent`);
+    }
+
+    // A fork of a non-child (interactive) session is genuinely top-level.
+    await plugin.emitEvent("session.forked", { sessionID: "fork2", parentID: "root" });
+    const interactive = { sessionID: "fork2", tools: {} };
+    for (const name of CONTROL_TOOLS) interactive.tools[name] = true;
+    await hook(interactive);
+    for (const name of CONTROL_TOOLS) {
+      assert.equal(interactive.tools[name], true, `${name} kept for a fork of an interactive session`);
+    }
+  } finally {
+    await plugin.close();
+  }
+});
+
+test("static plugin: a seeded fork of a child loses the control tools", async () => {
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    seedSessions: [
+      { id: "child3", parentID: "parent" },
+      { id: "fork3", fork: { sessionID: "child3" } },
+    ],
+  });
+  try {
+    await plugin.setup();
+    const hook = plugin.lastHook("context");
+    const event = { sessionID: "fork3", tools: {} };
+    for (const name of CONTROL_TOOLS) event.tools[name] = true;
+    await hook(event);
+    for (const name of CONTROL_TOOLS) {
+      assert.equal(event.tools[name], undefined, `${name} removed from a seeded fork of a child`);
+    }
+  } finally {
+    await plugin.close();
+  }
+});
+
+test("static plugin: a fork of an old, unseeded child is still classified via lazy resolution", async () => {
+  // `child5` is a subagent that predates the plugin load and is older than the
+  // seeded window: it is NOT in the `list` snapshot (so the seed never adds it),
+  // but `get` still resolves its lineage. Its fork must still lose the tools.
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    extraSessions: [{ id: "child5", parentID: "parent" }],
+  });
+  try {
+    await plugin.setup();
+    const hook = plugin.lastHook("context");
+
+    // The source is absent from the token set; the fork branch resolves it via
+    // ctx.session.get (parentID set) and classifies the fork as a child.
+    await plugin.emitEvent("session.forked", { sessionID: "fork5", parentID: "child5" });
+    const event = { sessionID: "fork5", tools: {} };
+    for (const name of CONTROL_TOOLS) event.tools[name] = true;
+    await hook(event);
+    for (const name of CONTROL_TOOLS) {
+      assert.equal(event.tools[name], undefined, `${name} removed from a fork of an unseeded child`);
+    }
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: the active node session loses the control tools regardless of permissions", async () => {
   const runtimeKey = Symbol.for("graph-engine.runtime");
   let release;

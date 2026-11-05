@@ -245,8 +245,11 @@ case to fix is subagent sessions.
   `{ type, data, … }`). Abort the subscription in the plugin's returned cleanup.
   Seed the set at setup from `ctx.session.list()` (sessions whose
   `Info.parentID` is set), so children predating a plugin load are covered too.
-  (A *fork* of a subagent emits a different event — the fork edge is accepted
-  out of scope for now.)
+  A *fork of a subagent* is a top-level session with no `parentID` that inherits
+  the subagent's agent and permissions, and it fires `session.forked` (not
+  `session.created`) — propagate child status through the fork: subscribe
+  `session.forked` and mark the fork a child when its source (`Forked.parentID`)
+  is one, and resolve `Info.fork.sessionID` in the seed to a fixpoint.
 - In `opencode/plugins/graph-engine/server.ts`'s `session.hook("context")`, before
   the handoff-label logic, DELETE the six control-tool names from `event.tools`
   whenever `event.sessionID` is in the child set.

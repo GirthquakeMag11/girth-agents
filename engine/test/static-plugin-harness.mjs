@@ -167,7 +167,7 @@ export function createEditor(seedTools = []) {
 
 export function createContext(
   editor,
-  { directory = "/work/project", options = {}, onPrompt = null, locations = {}, seedAgents = [], seedSessions = [] } = {},
+  { directory = "/work/project", options = {}, onPrompt = null, locations = {}, seedAgents = [], seedSessions = [], extraSessions = [] } = {},
 ) {
   const hooks = new Map();
   const syntheticCalls = [];
@@ -181,6 +181,10 @@ export function createContext(
   const agentCatalog = new Map(seedAgents.map((agent) => [agent.id, { ...agent }]));
   const eventBus = createEventBus();
   const sessionList = [...seedSessions];
+  // Sessions resolvable by `get` but deliberately absent from `list` (the seed
+  // window): models a child older than the seeded newest-50 that still exists
+  // in the store, so the fork branch's lazy lineage resolution can be tested.
+  const extraSessionMap = new Map(extraSessions.map((s) => [s.id, { ...s }]));
   let agentReload = null;
   let skillReload = null;
   let nextSession = 0;
@@ -233,6 +237,8 @@ export function createContext(
       async get({ sessionID }) {
         const tracked = graphSessions.get(sessionID);
         if (tracked) return tracked;
+        const extra = extraSessionMap.get(sessionID);
+        if (extra) return { id: sessionID, ...extra, location: { directory } };
         return { id: sessionID, location: { directory: locations[sessionID] ?? directory } };
       },
       async prompt({ sessionID, text }) {
@@ -391,6 +397,7 @@ export async function loadStaticPlugin({
   locations = {},
   seedAgents = [],
   seedSessions = [],
+  extraSessions = [],
 } = {}) {
   if (resetEngine) delete globalThis[Symbol.for("graph-engine.runtime")];
   const dir = await mkdtemp(join(tmpdir(), "static-plugin-"));
@@ -438,7 +445,7 @@ export async function loadStaticPlugin({
     await writeFile(modulePath, transformed, "utf8");
 
     const editor = createEditor(seedTools);
-    const context = createContext(editor, { directory, onPrompt, locations, seedAgents, seedSessions });
+    const context = createContext(editor, { directory, onPrompt, locations, seedAgents, seedSessions, extraSessions });
     context.ctx.options = { ...options, graphConfig: join(graphDir, "config.json") };
 
     const module = await import(pathToFileURL(modulePath).href);
