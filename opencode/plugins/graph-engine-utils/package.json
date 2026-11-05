@@ -1,0 +1,10 @@
+{
+  "name": "graph-engine-utils",
+  "type": "module",
+  "exports": {
+    ".": "./server.ts"
+  },
+  "dependencies": {
+    "@opencode/plugin": "latest"
+  }
+}

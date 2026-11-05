@@ -281,7 +281,10 @@ export function createContext(
       async transform(callback) {
         const editor = {
           update(id, fn) {
-            const draft = agentCatalog.get(id) ?? {};
+            // Mirror OpenCode's Agent.Info.default seed: an absent id starts as
+            // a primary, unhidden agent with an empty permissions array (so a
+            // transform may `permissions.push` without a guard).
+            const draft = agentCatalog.get(id) ?? { name: id, mode: "primary", hidden: false, permissions: [] };
             fn(draft);
             draft.id = id;
             agentCatalog.set(id, draft);
@@ -353,8 +356,11 @@ export function createContext(
     lastHook(name) {
       return hooks.get(name)?.at(-1) ?? null;
     },
-    emitEvent(type, data) {
+    async emitEvent(type, data) {
       eventBus.emit(type, data);
+      // Yield one macrotask so a `for await` subscriber turns the tick (a
+      // microtask chain) before the caller resumes.
+      await new Promise((resolve) => setImmediate(resolve));
     },
     sessionList,
   };
@@ -447,11 +453,8 @@ export async function loadStaticPlugin({
       lastHook(name) {
         return context.lastHook(name);
       },
-      async emitEvent(type, data) {
-        context.emitEvent(type, data);
-        // Yield one macrotask so the plugin's `for await` subscriber has turned
-        // the tick (a microtask chain) before the test drives the context hook.
-        await new Promise((resolve) => setImmediate(resolve));
+      emitEvent(type, data) {
+        return context.emitEvent(type, data);
       },
       get sessionList() {
         return context.sessionList;
