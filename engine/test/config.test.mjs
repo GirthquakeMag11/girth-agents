@@ -152,9 +152,10 @@ test("config: the shipped graph verifies clean", async () => {
   assert.equal(SHIPPED.graph.workflows[0].id, "build-review");
   assert.deepEqual(
     SHIPPED.agents.map((agent) => agent.id),
-    ["builder", "conductor", "engineer", "reviewer"],
+    ["build", "builder", "conductor", "engineer", "explore", "general", "plan", "reviewer"],
   );
-  assert.match(SHIPPED.agents[0].prompt, /Work only within/);
+  const builder = SHIPPED.agents.find((agent) => agent.id === "builder");
+  assert.match(builder.prompt, /Work only within/);
 });
 
 test("config: the manifest validates the authored shape", () => {
@@ -561,8 +562,8 @@ test("config: graph_info carries the one graph and the graph agents, with no gra
   assert.equal(summary.graph.workflows[0].id, "build-review");
   assert.equal("outputRoot" in summary.graph, false);
   assert.equal("output" in summary.graph.nodes[0], false);
-  assert.equal(summary.agents[0].id, "builder");
-  assert.match(summary.agents[0].prompt, /Work only within/);
+  const summaryBuilder = summary.agents.find((agent) => agent.id === "builder");
+  assert.match(summaryBuilder.prompt, /Work only within/);
   assert.equal(summary.graphs, undefined);
 });
 

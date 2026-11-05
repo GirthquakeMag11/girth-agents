@@ -13,8 +13,11 @@
 //
 // A graph-only mount is never published — its node sessions are provisioned by
 // the engine directly, and nothing graph-side enters the OpenCode catalog.
-import { resolve } from "node:path";
+import { resolve, join } from "node:path";
+import { homedir } from "node:os";
 import { modelRef, permissionsFor } from "./driver.mjs";
+
+const PLAN_DIR = join(homedir(), ".opencode", "plan");
 
 export function materializationPlan(config, baseDir) {
   const agents = [];
@@ -47,7 +50,12 @@ export function materializationPlan(config, baseDir) {
           ...(graphAgent.tools ?? []).map((name) => ({ action: name, resource: "*", effect: "allow" })),
           ...(graphAgent.permissions ?? []).map((rule) =>
             typeof rule.resource === "string"
-              ? { ...rule, resource: rule.resource.replaceAll("@GRAPH_DIR@", baseDir) }
+              ? {
+                  ...rule,
+                  resource: rule.resource
+                    .replaceAll("@GRAPH_DIR@", baseDir)
+                    .replaceAll("@PLAN_DIR@", PLAN_DIR),
+                }
               : rule,
           ),
         ],

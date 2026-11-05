@@ -96,6 +96,60 @@ test("materialize: @GRAPH_DIR@ in a permission resource expands to the graph dir
   ]);
 });
 
+test("materialize: @PLAN_DIR@ expands to the user's plan directory", () => {
+  const plan = materializationPlan(
+    {
+      agents: [
+        {
+          id: "plan",
+          mounts: ["primary"],
+          prompt: "P.",
+          permissions: [
+            { action: "edit", resource: "*", effect: "deny" },
+            { action: "edit", resource: "@PLAN_DIR@/**", effect: "allow" },
+          ],
+        },
+      ],
+    },
+    "/home/george/.config/opencode/graph-engine/graph",
+  );
+  assert.deepEqual(plan.agents[0].permissions, [
+    { action: "*", resource: "*", effect: "deny" },
+    { action: "edit", resource: "*", effect: "deny" },
+    { action: "edit", resource: "/home/george/.opencode/plan/**", effect: "allow" },
+  ]);
+});
+
+test("materialize: same-action rules keep document order so the last rule wins at eval time", () => {
+  // The engine EMITS the order; OpenCode's Permission.evaluate resolves
+  // last-match-wins. Pin the order so `edit * deny` then `edit <dir> allow`
+  // yields allow for the dir, and `* allow` then `question/subagent deny`
+  // yields deny for those two actions.
+  const plan = materializationPlan(
+    {
+      agents: [
+        {
+          id: "general",
+          mounts: ["subagent"],
+          prompt: "G.",
+          permissions: [
+            { action: "*", resource: "*", effect: "allow" },
+            { action: "question", resource: "*", effect: "deny" },
+            { action: "subagent", resource: "*", effect: "deny" },
+          ],
+        },
+      ],
+    },
+    BASE,
+  );
+  assert.deepEqual(plan.agents[0].permissions, [
+    { action: "*", resource: "*", effect: "deny" },
+    { action: "*", resource: "*", effect: "allow" },
+    { action: "question", resource: "*", effect: "deny" },
+    { action: "subagent", resource: "*", effect: "deny" },
+  ]);
+});
+
 test("materialize: the model string becomes a Model.Ref object", () => {
   const plan = materializationPlan(
     { agents: [{ id: "a", model: "openrouter/~deepseek/deepseek-flash-latest", mounts: ["primary"], prompt: "P." }] },
