@@ -92,6 +92,133 @@ confirm() {
   esac
 }
 
+# merge_disables TARGET
+#
+# Idempotently merges the "-opencode.agent" and "-opencode.plan" plugin-removal
+# directives into TARGET's "plugins" array, using awk only (no jq; the installer
+# must not require Node). JSON(C)-aware: comments and string contents are blanked
+# for structural scanning, so the key and the array boundary are found without
+# ever matching inside a string or comment; everything else is preserved
+# byte-for-byte. Returns 0 regardless: a refusal is a note, never a failure.
+merge_disables() {
+  target="$1"
+  missing=""
+  grep -qF '"-opencode.agent"' "$target" 2>/dev/null || missing="${missing}agent "
+  grep -qF '"-opencode.plan"' "$target" 2>/dev/null || missing="${missing}plan "
+  if [ -z "$missing" ]; then
+    return 0
+  fi
+
+  awk_src="$TMP/merge-plugins.awk"
+  cat > "$awk_src" <<'AWK'
+BEGIN {
+  n = split(missing, M, " ")
+  add = ""
+  for (m = 1; m <= n; m++) {
+    if (M[m] == "") continue
+    add = add (add == "" ? "" : ", ") ("\"" "-opencode." M[m] "\"")
+  }
+  inBlockComment = 0
+}
+{
+  raw[NR] = $0
+  line = $0
+  len = length(line)
+  c = ""
+  d = ""
+  inStr = 0
+  inLineComment = 0
+  for (i = 1; i <= len; i++) {
+    ch = substr(line, i, 1)
+    if (inBlockComment) {
+      if (ch == "*" && i < len && substr(line, i + 1, 1) == "/") { c = c "  "; d = d "  "; i++; inBlockComment = 0 }
+      else { c = c " "; d = d " " }
+      continue
+    }
+    if (inStr) {
+      if (ch == "\\") {
+        nxt = (i < len) ? substr(line, i + 1, 1) : ""
+        c = c "\\" nxt
+        d = d "  "
+        i++
+      } else if (ch == "\"") {
+        c = c "\""
+        d = d " "
+        inStr = 0
+      } else {
+        c = c ch
+        d = d " "
+      }
+      continue
+    }
+    if (inLineComment) { c = c " "; d = d " "; continue }
+    if (ch == "\"") { c = c "\""; d = d "\""; inStr = 1; continue }
+    if (ch == "/" && i < len && substr(line, i + 1, 1) == "/") { c = c "  "; d = d "  "; i++; inLineComment = 1; continue }
+    if (ch == "/" && i < len && substr(line, i + 1, 1) == "*") { c = c "  "; d = d "  "; i++; inBlockComment = 1; continue }
+    c = c ch
+    d = d ch
+  }
+  C[NR] = c
+  D[NR] = d
+  N = NR
+}
+END {
+  SC = ""
+  SD = ""
+  for (j = 1; j <= N; j++) { SC = SC C[j] "\n"; SD = SD D[j] "\n" }
+  L = length(SC)
+  kp = index(SC, "\"plugins\"")
+  keyPos = 0
+  while (kp > 0) {
+    ns = substr(SC, kp + 9)
+    if (ns ~ /^[ \t\n]*:/) { keyPos = kp; break }
+    nx = index(substr(SC, kp + 1), "\"plugins\"")
+    if (nx == 0) break
+    kp += nx
+  }
+  if (keyPos > 0) {
+    i = keyPos + 9
+    while (i <= L && (substr(SD, i, 1) == " " || substr(SD, i, 1) == "\t" || substr(SD, i, 1) == "\n")) i++
+    if (i > L || substr(SD, i, 1) != ":") { print "#noarray"; exit 2 }
+    i++
+    while (i <= L && (substr(SD, i, 1) == " " || substr(SD, i, 1) == "\t" || substr(SD, i, 1) == "\n")) i++
+    if (i > L || substr(SD, i, 1) != "[") { print "#noarray"; exit 2 }
+    openPos = i
+    depth = 1
+    i++
+    while (i <= L && depth > 0) {
+      ch = substr(SD, i, 1)
+      if (ch == "[") depth++
+      else if (ch == "]") depth--
+      i++
+    }
+    if (depth > 0) { print "#unclosed"; exit 2 }
+    closePos = i - 1
+    inner = substr(SD, openPos + 1, closePos - openPos - 1)
+    empty = (inner ~ /^[ \t\n]*$/)
+    insert = empty ? add : ", " add
+  } else {
+    bp = index(SD, "{")
+    if (bp == 0) { print "#noobj"; exit 2 }
+    after = substr(SD, bp + 1)
+    if (after !~ /^[ \t]*\n/) { print "#inline"; exit 2 }
+    insert = "\n  \"plugins\": [" add "],"
+    closePos = bp + 1
+  }
+  R = ""
+  for (j = 1; j <= N; j++) R = R raw[j] "\n"
+  printf "%s%s%s", substr(R, 1, closePos - 1), insert, substr(R, closePos)
+}
+AWK
+
+  outp="$TMP/merged-config"
+  if LC_ALL=C awk -v missing="$missing" -f "$awk_src" "$target" > "$outp" 2>/dev/null; then
+    cat "$outp" > "$target"
+  else
+    echo "install: note: could not safely merge into $target; add \"-opencode.agent\" and \"-opencode.plan\" to its plugins list manually" >&2
+  fi
+}
+
 # 1. Find the archive.
 ARCHIVE=${ARCHIVE:-}
 if [ -z "$ARCHIVE" ]; then
@@ -202,6 +329,7 @@ VERSION=$(read_conf PROJECT_VERSION)
 # there are no global agents or skills to clash on.
 fail=""
 [ -e "$CONFIG_DIR/plugins/graph-engine" ] && fail="plugins/graph-engine already exists"
+[ -e "$CONFIG_DIR/plugins/graph-engine-utils" ] && fail="plugins/graph-engine-utils already exists"
 [ -e "$CONFIG_DIR/graph-engine/manifest" ] && fail="graph-engine/manifest already exists"
 if [ -n "$fail" ]; then
   echo "install: refused: $fail" >&2
@@ -213,14 +341,18 @@ echo "install root: $CONFIG_DIR"
 
 # 10. Build the manifest from the installed plugin package (the graph is
 # user-owned and not manifest-tracked).
-( cd "$TOP" && find plugin -type f | sort ) > "$TMP/files"
+( cd "$TOP" && find plugin plugin-utils -type f | sort ) > "$TMP/files"
 MANIFEST_LINES="# graph-engine manifest v1
 version	$VERSION"
 while IFS= read -r rel; do
   abs="$TOP/$rel"
   [ -f "$abs" ] || continue
   hash=$(checksum_of "$abs")
-  config_rel=$(printf '%s' "$rel" | sed 's#^plugin/#plugins/graph-engine/#')
+  case "$rel" in
+    plugin/*) config_rel=$(printf '%s' "$rel" | sed 's#^plugin/#plugins/graph-engine/#') ;;
+    plugin-utils/*) config_rel=$(printf '%s' "$rel" | sed 's#^plugin-utils/#plugins/graph-engine-utils/#') ;;
+    *) echo "install: unexpected staged path '$rel'" >&2; exit 1 ;;
+  esac
   MANIFEST_LINES="$MANIFEST_LINES
 file	$hash	$config_rel"
 done < "$TMP/files"
@@ -239,6 +371,7 @@ fail() {
 
 mkdir -p "$CONFIG_DIR/plugins" || fail "cannot create $CONFIG_DIR/plugins"
 cp -R "$TOP/plugin" "$CONFIG_DIR/plugins/graph-engine" || fail "cannot install the plugin package"
+cp -R "$TOP/plugin-utils" "$CONFIG_DIR/plugins/graph-engine-utils" || fail "cannot install the utils plugin package"
 
 mkdir -p "$CONFIG_DIR/graph-engine" || fail "cannot create $CONFIG_DIR/graph-engine"
 if [ ! -e "$CONFIG_DIR/graph-engine/graph" ]; then
@@ -251,10 +384,29 @@ fi
 cp "$TOP/uninstall.sh" "$CONFIG_DIR/graph-engine/uninstall.sh" || fail "cannot install the uninstaller"
 printf '%s\n' "$MANIFEST_LINES" > "$CONFIG_DIR/graph-engine/manifest" || fail "cannot write the manifest"
 
+# Disable the two core plugins this package replaces (opencode.agent and
+# opencode.plan), by merging removal directives into the global config's
+# `plugins` array. opencode.jsonc is preferred over opencode.json; if neither
+# exists, create opencode.json. Idempotent; uninstall does not revert this edit.
+config_target=""
+if [ -f "$CONFIG_DIR/opencode.jsonc" ]; then config_target="$CONFIG_DIR/opencode.jsonc"
+elif [ -f "$CONFIG_DIR/opencode.json" ]; then config_target="$CONFIG_DIR/opencode.json"
+fi
+config_note=""
+if [ -z "$config_target" ]; then
+  printf '{\n  "plugins": [\n    "-opencode.agent",\n    "-opencode.plan"\n  ]\n}\n' > "$CONFIG_DIR/opencode.json"
+  config_note="wrote $CONFIG_DIR/opencode.json (disabling opencode.agent + opencode.plan)"
+else
+  merge_disables "$config_target"
+  config_note="merged plugin disables into $config_target"
+fi
+
 # 12. Report.
 echo "installed:  Graph Engine v$VERSION into $CONFIG_DIR"
 echo "graph:      $CONFIG_DIR/graph-engine/graph ($seeded)"
 echo "plugin:     OpenCode loads $CONFIG_DIR/plugins/graph-engine automatically"
+echo "plugin:     OpenCode loads $CONFIG_DIR/plugins/graph-engine-utils automatically"
+echo "config:     $config_note"
 if [ "$seeded" = "no (existing graph preserved)" ]; then
   echo "note:       an existing graph was preserved — the Engineer and Conductor"
   echo "            are now graph-mounted, so they stay absent until that graph"

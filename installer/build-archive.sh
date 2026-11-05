@@ -42,7 +42,7 @@ CHECKSUM="$ARCHIVE.sha256"
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE/plugin/engine" "$STAGE/plugin/dashboard/src" \
-  "$STAGE/graph"
+  "$STAGE/plugin-utils" "$STAGE/graph"
 
 # Plugin server, TUI, and RPC parts plus the self-contained engine and
 # dashboard sources.
@@ -57,6 +57,11 @@ for file in "$ROOT"/engine/*.mjs; do
   cp "$file" "$STAGE/plugin/engine/"
 done
 cp "$ROOT"/dashboard/src/* "$STAGE/plugin/dashboard/src/"
+
+# The second plugin id (opencode.utils): the title/compaction carriers and the
+# switch announcement, in its own tree alongside the graph-engine plugin.
+cp "$ROOT/opencode/plugins/graph-engine-utils/package.json" "$STAGE/plugin-utils/"
+cp "$ROOT/opencode/plugins/graph-engine-utils/server.ts" "$STAGE/plugin-utils/"
 
 # Graph template: agents (including the primary mounts), nodes, and skills.
 mkdir -p "$STAGE/graph/agents" "$STAGE/graph/nodes" "$STAGE/graph/skills"

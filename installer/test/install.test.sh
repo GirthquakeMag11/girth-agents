@@ -106,6 +106,11 @@ if grep -qE '(^|/)(test|proof|fixtures)(/|$)|\.opencode|node_modules|live-proof'
 else
   pass "the archive excludes tests, proofs, fixtures, and dev state"
 fi
+if grep -q 'plugin-utils/server\.ts$' "$WORK/archive.list"; then
+  pass "the archive carries the utils plugin tree"
+else
+  fail "the archive carries the utils plugin tree"
+fi
 
 # Neither script may need or check for Node.
 if grep -qE '\bnode\b|npm|npx' "$ROOT/installer/install.sh" "$ROOT/installer/uninstall.sh"; then
@@ -120,6 +125,11 @@ sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "
 assert_file "$CONFIG/plugins/graph-engine/server.ts" "the plugin package is installed"
 assert_file "$CONFIG/plugins/graph-engine/engine/runtime.mjs" "the engine is staged inside the plugin"
 assert_file "$CONFIG/plugins/graph-engine/tui.tsx" "the dashboard TUI is installed"
+assert_file "$CONFIG/plugins/graph-engine-utils/server.ts" "the utils plugin package is installed"
+assert_file "$CONFIG/plugins/graph-engine-utils/package.json" "the utils plugin package.json is installed"
+assert_file "$CONFIG/opencode.json" "install creates opencode.json with the disables"
+assert_contains '"-opencode.agent"' "$(cat "$CONFIG/opencode.json")" "opencode.json disables opencode.agent"
+assert_contains '"-opencode.plan"' "$(cat "$CONFIG/opencode.json")" "opencode.json disables opencode.plan"
 assert_file "$CONFIG/graph-engine/graph/config.json" "a user-owned graph is seeded"
 assert_file "$CONFIG/graph-engine/graph/agents/builder.md" "graph agents are seeded"
 assert_file "$CONFIG/graph-engine/graph/agents/engineer.md" "the Engineer is seeded as a graph agent"
@@ -187,6 +197,34 @@ printf '%s\n' "user edit" > "$KEEP/graph-engine/graph/keep.me"
 sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$KEEP" --yes > "$WORK/keep.out" 2>&1
 assert_file "$KEEP/graph-engine/graph/keep.me" "an existing graph file survives install"
 
+# 6b. The config merge: existing file, idempotency, and JSONC preference.
+MERGE1="$WORK/merge1"
+mkdir -p "$MERGE1"
+printf '{\n  "theme": "dark",\n  "plugins": ["foo"]\n}\n' > "$MERGE1/opencode.json"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$MERGE1" --yes > "$WORK/merge1.out" 2>&1
+assert_contains '"theme": "dark"' "$(cat "$MERGE1/opencode.json")" "merge preserves unrelated keys"
+assert_contains '"foo"' "$(cat "$MERGE1/opencode.json")" "merge preserves existing plugin entries"
+assert_contains '"-opencode.agent"' "$(cat "$MERGE1/opencode.json")" "merge adds the agent disable"
+assert_contains '"-opencode.plan"' "$(cat "$MERGE1/opencode.json")" "merge adds the plan disable"
+assert_eq "1" "$(grep -c '"-opencode.agent"' "$MERGE1/opencode.json")" "merge does not duplicate the agent disable"
+
+MERGE2="$WORK/merge2"
+mkdir -p "$MERGE2"
+printf '{\n  "plugins": ["-opencode.agent", "-opencode.plan", "foo"]\n}\n' > "$MERGE2/opencode.json"
+cp "$MERGE2/opencode.json" "$WORK/merge2.before"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$MERGE2" --yes > "$WORK/merge2.out" 2>&1
+assert_eq "$(cat "$WORK/merge2.before")" "$(cat "$MERGE2/opencode.json")" "an idempotent merge leaves the file byte-identical"
+
+MERGE3="$WORK/merge3"
+mkdir -p "$MERGE3"
+printf '{\n  // keep this comment\n  "plugins": ["legacy-plugin"]\n}\n' > "$MERGE3/opencode.jsonc"
+printf '{"plugins": ["from-json"]}\n' > "$MERGE3/opencode.json"
+sh "$DIST/install.sh" --archive "$ARCHIVE" --checksum "$CHECKSUM" --config-dir "$MERGE3" --yes > "$WORK/merge3.out" 2>&1
+assert_contains '// keep this comment' "$(cat "$MERGE3/opencode.jsonc")" "JSONC comments survive the merge"
+assert_contains '"legacy-plugin"' "$(cat "$MERGE3/opencode.jsonc")" "JSONC entries are preserved"
+assert_contains '"-opencode.agent"' "$(cat "$MERGE3/opencode.jsonc")" "the merge targets opencode.jsonc"
+assert_contains '"from-json"' "$(cat "$MERGE3/opencode.json")" "opencode.json is untouched when jsonc exists"
+
 # 7. Uninstall removes only checksum-matching files and warns on modified ones.
 printf '%s\n' "local change" >> "$CONFIG/plugins/graph-engine/server.ts"
 before=$(find "$CONFIG" -type f | wc -l | tr -d ' ')
@@ -196,6 +234,8 @@ assert_file "$CONFIG/graph-engine/graph/agents/engineer.md" "the Engineer is pre
 assert_contains "modified" "$(cat "$WORK/uninstall.out")" "a modified file is reported"
 assert_not_exists "$CONFIG/plugins/graph-engine/package.json" "unmodified plugin files are removed"
 assert_file "$CONFIG/plugins/graph-engine/server.ts" "a modified file is preserved"
+assert_not_exists "$CONFIG/plugins/graph-engine-utils/server.ts" "the utils plugin tree is removed"
+assert_not_exists "$CONFIG/plugins/graph-engine-utils/package.json" "the utils plugin package.json is removed"
 
 # 8. Uninstall is idempotent.
 sh "$CONFIG/graph-engine/uninstall.sh" --yes > "$WORK/uninstall2.out" 2>&1

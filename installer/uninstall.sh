@@ -154,5 +154,9 @@ else
     echo "nothing to remove"
   fi
   echo "Run /reload in OpenCode to drop the plugin if it was already running."
+  echo "note: the global config edit (opencode.json/opencode.jsonc) that disables"
+  echo "      opencode.agent and opencode.plan is NOT reverted; remove"
+  echo "      \"-opencode.agent\" and \"-opencode.plan\" from its plugins list by hand"
+  echo "      if you want the built-ins back."
 fi
 exit 0
