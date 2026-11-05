@@ -63,8 +63,20 @@ is real use — dispatch from a second location on the same queue, read the
 dashboard snapshot live, and work the fail/repair loop — scored against the two
 friction bars above.
 
+## Dispatch recursion
+
+A session with broad permissions holding the `dispatch` tool (e.g. a `general`
+subagent with `allow *`) can start a fresh, unparented node session, which can
+itself subagent and dispatch again — a graph-level loop the subagent-depth limit
+does not bound. Decide whether to bound it (and how), or accept it.
+
+Not implemented.
+
 ## Deferred
 
+- per-node `maxSubagentDepth` enforcement below an elevated global — deferred;
+  the global `experimental.subagent_depth` already caps subagent nesting, and
+  the `0` case is the empty `subagents` allowlist;
 - parallel dispatches across the graph;
 - run archive or persisted dispatch history;
 - triggers, watches, and schedules;
