@@ -363,6 +363,7 @@ export function createContext(
       await new Promise((resolve) => setImmediate(resolve));
     },
     sessionList,
+    agentCatalog,
   };
 }
 
@@ -458,6 +459,9 @@ export async function loadStaticPlugin({
       },
       get sessionList() {
         return context.sessionList;
+      },
+      get agentCatalog() {
+        return context.agentCatalog;
       },
       async setup() {
         return definition.setup(context.ctx);

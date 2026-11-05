@@ -269,6 +269,61 @@ test("static plugin: a valid reload re-checks the subagent catalog", async () =>
   }
 });
 
+test("static plugin: a user override of a derived agent faults agent.collision at dispatch", async () => {
+  const context = { sessionID: "ses", agent: "build", messageID: "m1", id: "t1" };
+  const buildDoc = `---
+mounts: [primary]
+description: The default agent. Executes tools based on configured permissions.
+---
+You are the default agent.
+`;
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    agentDocs: { "build.md": buildDoc },
+  });
+  try {
+    await plugin.setup();
+    const dispatch = toolByName(plugin.editor, "dispatch");
+
+    const clean = await dispatch.execute({ node: "a", prompt: "p", background: false }, context);
+    assert.match(clean.content, /d-\d/, "a clean catalog dispatches");
+
+    // A user config-document override (opencode.config.agent runs last) changes
+    // the system; the fresh preflight read names the collision.
+    const live = plugin.agentCatalog.get("build");
+    live.system = "Overridden by the user's config document";
+    await assert.rejects(
+      () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
+      /agent.collision.*build/,
+    );
+
+    live.system = "You are the default agent.";
+    live.description = "A different description";
+    await assert.rejects(
+      () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
+      /agent.collision.*build/,
+    );
+
+    live.description = "The default agent. Executes tools based on configured permissions.";
+
+    // Absent from the live catalog is a collision too.
+    plugin.agentCatalog.delete("build");
+    await assert.rejects(
+      () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
+      /agent.collision.*build/,
+    );
+    plugin.agentCatalog.set("build", live);
+
+    // A permissions-only append (as opencode.config.agent does globally) must
+    // NOT false-positive — we own only system and description.
+    live.permissions.push({ action: "read", resource: "*", effect: "allow" });
+    const ok = await dispatch.execute({ node: "a", prompt: "p", background: false }, context);
+    assert.match(ok.content, /d-\d/, "a permissions-only change does not collide");
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: a colliding label is not generated", async () => {
   const plugin = await loadStaticPlugin({
     graph: labelledGraph(),

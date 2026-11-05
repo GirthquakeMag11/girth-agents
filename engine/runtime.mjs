@@ -82,6 +82,9 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
               entry && typeof entry.agent === "string" && typeof entry.subagent === "string",
           )
         : [],
+      collisions: Array.isArray(body?.collisions)
+        ? body.collisions.filter((id) => typeof id === "string" && id.trim() !== "")
+        : [],
       catalogAvailable: body?.catalogAvailable !== false,
       at: new Date().toISOString(),
     };
@@ -143,6 +146,12 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
       return {
         code: "subagent.unknown",
         message: preflight.missing.map((entry) => `${entry.agent} -> ${entry.subagent}`).join(", "),
+      };
+    }
+    if (preflight.collisions.length > 0) {
+      return {
+        code: "agent.collision",
+        message: preflight.collisions.join(", "),
       };
     }
     return null;

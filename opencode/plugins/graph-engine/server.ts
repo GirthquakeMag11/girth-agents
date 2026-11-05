@@ -215,6 +215,11 @@ export default Plugin.define({
           if (typeof directory !== "string" || directory.trim() === "") {
             throw new Error("dispatch needs the dispatching session's directory");
           }
+          // Re-read the live agent catalog fresh so the gate sees
+          // `opencode.config.agent`'s overrides (it registers after this plugin
+          // at boot) — a user re-definition of one of our ids faults here,
+          // never silently wins.
+          await reportSubagents();
           const started = await runtime.dispatch(
             {
               node: input.node,
@@ -416,19 +421,37 @@ export default Plugin.define({
     // live agent catalog defects before a node runs. The live list (read after
     // materialization, so mounted agents count) is the authority; never a copy.
     // Re-run on a valid reload so the gate follows the catalog, not a snapshot.
+    // The built-in re-derivations this package owns (id). A user config document
+// for one of them overrides ours — `opencode.config.agent` runs last — so that
+// is a named defect, never a silent loss.
+const OWNED_AGENTS = new Set(["build", "plan", "general", "explore"]);
+
     const reportSubagents = async () => {
       try {
         const listed = await ctx.agent.list();
-        const live = new Set((listed?.data ?? []).map((agent) => agent.id));
+        const live = new Map((listed?.data ?? []).map((agent) => [agent.id, agent]));
         const missing = [];
         for (const graphAgent of runtime.config.agents ?? []) {
           for (const subagent of graphAgent.subagents ?? []) {
             if (!live.has(subagent)) missing.push({ agent: graphAgent.id, subagent });
           }
         }
-        runtime.reportSubagentPreflight({ missing, catalogAvailable: true });
+        // Collisions: compare only the parts we own (system/description). The
+        // user's global-config permissions are appended to every agent, so
+        // permissions always differ — comparing them would false-positive.
+        const collisions = [];
+        for (const graphAgent of runtime.config.agents ?? []) {
+          if (!OWNED_AGENTS.has(graphAgent.id)) continue;
+          const entry = live.get(graphAgent.id);
+          const ownedSystem = graphAgent.prompt ?? "";
+          const ownedDescription = graphAgent.description ?? "";
+          if (!entry || (entry.system ?? "") !== ownedSystem || (entry.description ?? "") !== ownedDescription) {
+            collisions.push(graphAgent.id);
+          }
+        }
+        runtime.reportSubagentPreflight({ missing, collisions, catalogAvailable: true });
       } catch {
-        runtime.reportSubagentPreflight({ missing: [], catalogAvailable: false });
+        runtime.reportSubagentPreflight({ missing: [], collisions: [], catalogAvailable: false });
       }
     };
     await reportSubagents();

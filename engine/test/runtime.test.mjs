@@ -219,6 +219,28 @@ test("runtime: dispatch is gated on a missing subagent id", async () => {
   }
 });
 
+test("runtime: dispatch is gated on a colliding built-in agent id", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "engine-runtime-collision-"));
+  try {
+    const configPath = await writeGraph(dir, terminalGraph());
+    const runtime = await createRuntime({ configPath, driver: fakePluginDriver() });
+    runtime.reportHandoffPreflight({ labels: [], collisions: [], catalogAvailable: true });
+
+    runtime.reportSubagentPreflight({ missing: [], collisions: ["build"], catalogAvailable: true });
+    await assert.rejects(
+      () => runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir),
+      /agent.collision.*build/,
+    );
+
+    runtime.reportSubagentPreflight({ missing: [], collisions: [], catalogAvailable: true });
+    const started = await runtime.dispatch({ node: "a", prompt: "p", sessionID: "ses" }, dir);
+    assert.equal(started.ok, true);
+    await runtime.wait(started.dispatchId, 1000);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("runtime: a terminal dispatch completes and its snapshot carries no output", async () => {
   const dir = await mkdtemp(join(tmpdir(), "engine-runtime-terminal-"));
   try {
