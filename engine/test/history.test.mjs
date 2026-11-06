@@ -26,7 +26,7 @@ test("history: every entry has exactly the allowlisted fields", () => {
   const inputs = [
     ["queued", { dispatchId: "d-1", node: "implement", workflow: "build-review", at: "2026-01-01T00:00:00.000Z" }],
     ["step", { dispatchId: "d-1", node: "implement", phase: "begin" }],
-    ["handoff", { dispatchId: "d-1", from: "implement", to: "review", label: "next" }],
+    ["handoff", { dispatchId: "d-1", from: "implement", to: "review", label: "handoff" }],
     ["defect", { dispatchId: "d-1", code: "session-failed", message: "secret", sessionId: "s-1" }],
     ["completion", { dispatchId: "d-1", status: "completed", terminal: "done", defect: null }],
     ["reloaded", { valid: true, faults: [], configPath: "/secret" }],
@@ -48,12 +48,12 @@ test("history: projections cover dispatch, step, handoff, completion, defect, re
     node: "implement",
     phase: "end",
     outcome: "succeeded",
-    label: "next",
+    label: "handoff",
     sessionMode: "fresh",
     resumed: false,
     usage: { cost: 1, tokens: { input: 2, output: 3 } },
   }, { workflow: "build-review" });
-  history.append("handoff", { dispatchId: "d-1", from: "implement", to: "review", label: "next" }, { workflow: "build-review" });
+  history.append("handoff", { dispatchId: "d-1", from: "implement", to: "review", label: "handoff" }, { workflow: "build-review" });
   history.append("defect", { dispatchId: "d-1", code: "session-failed", message: "session s-1 failed" }, { workflow: "build-review" });
   const completion = history.append("completion", {
     dispatchId: "d-1",
@@ -71,7 +71,7 @@ test("history: projections cover dispatch, step, handoff, completion, defect, re
   assert.equal(entries[0].workflow, "build-review");
   assert.equal(entries[2].phase, "begin");
   assert.equal(entries[3].outcome, "succeeded");
-  assert.equal(entries[3].label, "next");
+  assert.equal(entries[3].label, "handoff");
   assert.equal(entries[4].from, "implement");
   assert.equal(entries[4].to, "review");
   assert.equal(entries[5].code, "session-failed");
@@ -96,7 +96,7 @@ test("history: workflow enrichment falls back to null", () => {
 
   const noWorkflow = history.append("dispatched", { dispatchId: "d-1", node: "implement" });
   assert.equal(noWorkflow.workflow, null);
-  const enriched = history.append("handoff", { dispatchId: "d-1", from: "implement", to: "review", label: "next" }, { workflow: "build-review" });
+  const enriched = history.append("handoff", { dispatchId: "d-1", from: "implement", to: "review", label: "handoff" }, { workflow: "build-review" });
   assert.equal(enriched.workflow, "build-review");
   const engineDefect = history.append("defect", { code: "poke.malformed" });
   assert.equal(engineDefect.dispatchId, null);

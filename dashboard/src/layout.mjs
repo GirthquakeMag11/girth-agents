@@ -5,7 +5,9 @@ const LANE_STEP = 9;
 const RIGHT_LANE_RESERVE = 7;
 
 function edgeText(edge) {
-  return `${edge.label}${edge.resume ? " ↻" : ""}`;
+  const label = edge.label;
+  if (!label) return edge.resume ? "↻" : "";
+  return `${label}${edge.resume ? " ↻" : ""}`;
 }
 
 function chip(x, y, text) {
@@ -17,7 +19,8 @@ function extent(route) {
   for (const segment of route.segments) right = Math.max(right, segment.x + segment.width);
   for (const mark of route.marks) right = Math.max(right, mark.x + 1);
   for (const arrow of route.arrows) right = Math.max(right, arrow.x + 1);
-  right = Math.max(right, route.label.x + route.label.width, route.tick.x + 1);
+  if (route.label) right = Math.max(right, route.label.x + route.label.width);
+  if (route.tick) right = Math.max(right, route.tick.x + 1);
   return right;
 }
 
@@ -78,8 +81,10 @@ export function layoutGraph(nodes, edges, order, width, options = {}) {
               { x: center, y: lineTop },
               { x: center, y: targetY },
             ];
-      route.tick = { x: center + 1, y: labelY, glyph: "─" };
-      route.label = chip(center + 2, labelY, text);
+      if (text) {
+        route.tick = { x: center + 1, y: labelY, glyph: "─" };
+        route.label = chip(center + 2, labelY, text);
+      }
     } else if (to > from + 1) {
       const sourceAnchor = sourceY + Math.floor(nodeHeight / 2);
       const targetAnchor = targetY + Math.floor(nodeHeight / 2);
@@ -112,8 +117,10 @@ export function layoutGraph(nodes, edges, order, width, options = {}) {
               { x: lane, y: targetAnchor },
               { x: cardEdge, y: targetAnchor },
             ];
-      route.tick = { x: lane - 1, y: labelY, glyph: "─" };
-      route.label = chip(lane - text.length - 3, labelY, text);
+      if (text) {
+        route.tick = { x: lane - 1, y: labelY, glyph: "─" };
+        route.label = chip(lane - text.length - 3, labelY, text);
+      }
     } else {
       const sourceAnchor = sourceY + Math.floor(nodeHeight / 2);
       const targetAnchor = targetY + Math.floor(nodeHeight / 2);
@@ -146,8 +153,10 @@ export function layoutGraph(nodes, edges, order, width, options = {}) {
               { x: lane, y: targetAnchor },
               { x: cardEdge, y: targetAnchor },
             ];
-      route.tick = { x: lane - 1, y: labelY, glyph: "─" };
-      route.label = chip(lane - text.length - 3, labelY, text);
+      if (text) {
+        route.tick = { x: lane - 1, y: labelY, glyph: "─" };
+        route.label = chip(lane - text.length - 3, labelY, text);
+      }
     }
 
     contentWidth = Math.max(contentWidth, extent(route));

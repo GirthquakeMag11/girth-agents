@@ -237,7 +237,7 @@ test("executor: a failed resumed visit keeps the resumed session id", async () =
         calls += 1;
         if (node === "a" && calls === 3) return { outcome: "failed" };
         record.handoff = {
-          label: node === "a" ? "again" : "next",
+          label: node === "a" ? "again" : "handoff",
           callID: null,
           at: new Date().toISOString(),
         };
@@ -311,7 +311,7 @@ test("executor: resume reuses one builder session; fresh gives the reviewer a ne
         if (node !== "done") {
           const count = (visits.get(session.id) ?? 0) + 1;
           visits.set(session.id, count);
-          const label = node === "builder" ? (count >= 3 ? "finish" : "again") : "next";
+          const label = node === "builder" ? (count >= 3 ? "finish" : "again") : "handoff";
           record.handoff = {
             label,
             callID: null,
@@ -439,7 +439,7 @@ test("executor: resume is rejected when the target is not the input source", asy
     const driver = fakeDriver({
       onPrompt: async () => {
         record.handoff = {
-          label: "next",
+          label: "handoff",
           callID: null,
           at: new Date().toISOString(),
         };
@@ -496,7 +496,7 @@ test("executor: the handoff message is upstream context and history stays conten
         briefs.push({ node, brief });
         if (node === "a") {
           record.handoff = {
-            label: "next",
+            label: "handoff",
             message: "The implementation is ready.",
             callID: null,
             at: new Date().toISOString(),
@@ -531,10 +531,10 @@ test("executor: the handoff message is upstream context and history stays conten
     assert.equal(briefs.length, 2);
     assert.match(briefs[1].brief, /The implementation is ready\./);
     assert.doesNotMatch(briefs[1].brief, /# Output/);
-    assert.doesNotMatch(briefs[1].brief, /call the `next` tool/);
+    assert.doesNotMatch(briefs[1].brief, /call the `handoff` tool/);
     const handoffEvent = events.find((event) => event.kind === "handoff");
     assert.equal(handoffEvent.payload.message, undefined);
-    assert.equal(handoffEvent.payload.label, "next");
+    assert.equal(handoffEvent.payload.label, "handoff");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -565,7 +565,7 @@ test("executor: a read-only graph agent completes a terminal node", async () => 
         briefs.push({ node, brief });
         if (node === "a") {
           record.handoff = {
-            label: "next",
+            label: "handoff",
             message: "The message is the deliverable.",
             callID: null,
             at: new Date().toISOString(),

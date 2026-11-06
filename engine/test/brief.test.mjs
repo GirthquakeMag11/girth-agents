@@ -161,14 +161,15 @@ test("brief: no output section or file requirement", () => {
   assert.doesNotMatch(terminal, /Write the output/);
 });
 
-test("brief: unconditional uses next; terminal forbids the tool", () => {
+test("brief: unconditional uses the handoff tool; terminal forbids the tool", () => {
   const unconditional = composeBrief({
     graphAgent,
     node: { id: "a", objective: "A", handoff: { mode: "unconditional", to: "b", description: "Ready." } },
     prompt: "p",
     previousMessage: null,
   });
-  assert.match(unconditional, /call the `next` tool/);
+  assert.match(unconditional, /call the `handoff` tool/);
+  assert.doesNotMatch(unconditional, /call the `next` tool/);
   assert.match(unconditional, /Ready\./);
 
   const terminal = composeBrief({
@@ -178,5 +179,5 @@ test("brief: unconditional uses next; terminal forbids the tool", () => {
     previousMessage: "The previous message.",
   });
   assert.match(terminal, /Do not call a handoff tool/);
-  assert.doesNotMatch(terminal, /call the `next` tool/);
+  assert.doesNotMatch(terminal, /call the `handoff` tool/);
 });

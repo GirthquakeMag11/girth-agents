@@ -126,7 +126,7 @@ Write the failing test first, make it pass, then refactor within the green.
 - `handoff` is exactly one of:
   - `mode: terminal` — the node ends after its session succeeds.
   - `mode: unconditional` with `to`, `description`, optional `resume` — the
-    engine generates the tool `next`.
+    engine generates the single tool `handoff`.
   - `mode: conditional` with a `labels` list of `{ label, to, description,
     resume? }` — the engine generates one tool per label, named exactly the
     label. The agent calls exactly one generated tool with `{ message }`. A label

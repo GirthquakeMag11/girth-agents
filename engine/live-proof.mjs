@@ -48,7 +48,7 @@ const RUNTIME_KEY = Symbol.for("graph-engine.runtime");
 // The scripted model: on each node it calls the label the graph expects, the
 // same handoff tool a real model would invoke, and records the tool message
 // the session would carry.
-const labelFor = (node) => (node === "implement" ? "next" : node === "review" ? "pass" : null);
+const labelFor = (node) => (node === "implement" ? "handoff" : node === "review" ? "pass" : null);
 
 let toolset = null;
 const plugin = await loadStaticPlugin({

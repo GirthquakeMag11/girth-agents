@@ -74,13 +74,13 @@ type Route = {
   key: string;
   from: string;
   to: string;
-  labelText: string;
+  labelText: string | null;
   resume: boolean;
   segments: Segment[];
   marks: Mark[];
   arrows: Mark[];
-  tick: Mark;
-  label: Chip;
+  tick: Mark | null;
+  label: Chip | null;
   runnerPath: Array<{ x: number; y: number }>;
   self: boolean;
 };
@@ -119,7 +119,8 @@ type Layout = { width: number; height: number; cards: Card[]; routes: Route[]; c
 function handoffLines(node: ConfigNode) {
   if (node.handoff.mode === "terminal") return ["terminal"];
   if (node.handoff.mode === "unconditional") {
-    return [`next → ${node.handoff.to}${node.handoff.resume ? " · resume" : ""}`];
+    // An unconditional node has no label: only the arrow and target.
+    return [`→ ${node.handoff.to}${node.handoff.resume ? " · resume" : ""}`];
   }
   return node.handoff.labels.map((entry) => `${entry.label} → ${entry.to}${entry.resume ? " · resume" : ""}`);
 }
@@ -157,7 +158,7 @@ function stateColor(theme: Theme, color: string) {
   return theme.text.muted;
 }
 
-function edgeTone(theme: Theme, label: string) {
+function edgeTone(theme: Theme, label: string | null) {
   const color = edgeColor(label);
   if (color === "pass") return theme.text.feedback.success.base;
   if (color === "fail") return theme.text.feedback.error.base;
@@ -262,7 +263,7 @@ function Header(props: {
 function Outline(props: {
   workflows: () => Workflow[];
   nodes: () => ConfigNode[];
-  edges: () => Array<{ from: string; to: string; label: string; resume: boolean; key: string }>;
+  edges: () => Array<{ from: string; to: string; label: string | null; resume: boolean; key: string }>;
   runtime: () => Runtime;
   engagement: () => Engagement;
   width: number;
@@ -444,22 +445,30 @@ function Connector(props: { route: Route; theme: Theme }) {
           </text>
         )}
       </For>
-      <text position="absolute" left={props.route.tick.x} top={props.route.tick.y} fg={tone()} wrapMode="none">
-        {props.route.tick.glyph}
-      </text>
-      <box
-        position="absolute"
-        left={props.route.label.x}
-        top={props.route.label.y}
-        backgroundColor={props.theme.background.raised.high}
-        paddingLeft={1}
-        paddingRight={1}
-        flexShrink={0}
-      >
-        <text fg={tone()} wrapMode="none">
-          {props.route.label.text}
-        </text>
-      </box>
+      <Show when={props.route.tick} fallback={<text wrapMode="none">{" "}</text>}>
+        {(tick) => (
+          <text position="absolute" left={tick().x} top={tick().y} fg={tone()} wrapMode="none">
+            {tick().glyph}
+          </text>
+        )}
+      </Show>
+      <Show when={props.route.label} fallback={<box />}>
+        {(label) => (
+          <box
+            position="absolute"
+            left={label().x}
+            top={label().y}
+            backgroundColor={props.theme.background.raised.high}
+            paddingLeft={1}
+            paddingRight={1}
+            flexShrink={0}
+          >
+            <text fg={tone()} wrapMode="none">
+              {label().text}
+            </text>
+          </box>
+        )}
+      </Show>
     </>
   );
 }
@@ -556,7 +565,7 @@ function ConnectorRunner(props: { runner: Runner | null; routes: Route[]; tick: 
 
 function GraphPane(props: {
   nodes: () => ConfigNode[];
-  edges: () => Array<{ from: string; to: string; label: string; resume: boolean; key: string }>;
+  edges: () => Array<{ from: string; to: string; label: string | null; resume: boolean; key: string }>;
   order: () => { order: string[]; back: Set<string> };
   runtime: () => Runtime;
   workflows: () => Workflow[];
@@ -869,8 +878,8 @@ function historyTone(theme: Theme, entry: HistoryEntry) {
   return theme.text.muted;
 }
 
-function HistoryPane(props: { history: () => HistoryEntry[]; width: number; height: number; theme: Theme }) {
-  const rows = () => historyRows(props.history());
+function HistoryPane(props: { history: () => HistoryEntry[]; nodes: () => ConfigNode[]; width: number; height: number; theme: Theme }) {
+  const rows = () => historyRows(props.history(), { nodes: props.nodes() });
   return (
     <box
       width={props.width}
@@ -901,7 +910,7 @@ function HistoryPane(props: { history: () => HistoryEntry[]; width: number; heig
   );
 }
 
-function HistoryStrip(props: { history: () => HistoryEntry[]; visible?: boolean; theme: Theme }) {
+function HistoryStrip(props: { history: () => HistoryEntry[]; nodes: () => ConfigNode[]; visible?: boolean; theme: Theme }) {
   return (
     <box
       height={1}
@@ -912,7 +921,7 @@ function HistoryStrip(props: { history: () => HistoryEntry[]; visible?: boolean;
       visible={props.visible ?? true}
     >
       <text fg={props.theme.text.muted} wrapMode="none" truncate>
-        {historyStripText(props.history())}
+        {historyStripText(props.history(), { nodes: props.nodes() })}
       </text>
     </box>
   );
@@ -1131,13 +1140,14 @@ export function DashboardView(props: {
             />
             <HistoryPane
               history={history}
+              nodes={nodes}
               width={detailsWidth()}
               height={historyHeight()}
               theme={theme}
             />
           </box>
         </box>
-        <HistoryStrip history={history} visible={showHistoryStrip()} theme={theme} />
+        <HistoryStrip history={history} nodes={nodes} visible={showHistoryStrip()} theme={theme} />
         <RunConsole runtime={runtime} height={consoleHeight()} updated={fetchedAt} theme={theme} />
         <StatusBar runtime={runtime} updated={fetchedAt} width={width} theme={theme} />
       </Show>

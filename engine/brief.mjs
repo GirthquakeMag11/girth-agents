@@ -18,7 +18,7 @@ function handoffSection(node) {
     const description = node.handoff.description ? ` — ${node.handoff.description}` : "";
     return [
       "## Handoff",
-      `${when}, call the \`next\` tool exactly once with a message${description}.`,
+      `${when}, call the \`handoff\` tool exactly once with a message${description}.`,
       "Do not call more than one handoff tool. Stop after the call.",
     ].join("\n\n");
   }

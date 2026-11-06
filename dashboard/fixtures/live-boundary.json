@@ -40,7 +40,7 @@
       {
         "id": "a1",
         "agent": "builder",
-        "objective": "Complete the main node work. Then call the `next` tool with a message.",
+        "objective": "Complete the main node work. Then call the `handoff` tool with a message.",
         "maxVisits": 2,
         "handoff": {
           "mode": "unconditional",
@@ -51,7 +51,7 @@
       {
         "id": "b1",
         "agent": "builder",
-        "objective": "Complete the connected node work. Then call the `next` tool with a message.",
+        "objective": "Complete the connected node work. Then call the `handoff` tool with a message.",
         "maxVisits": 2,
         "handoff": {
           "mode": "unconditional",

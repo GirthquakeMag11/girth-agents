@@ -17,7 +17,15 @@ export function formatHistoryTime(at, timeZone) {
   }).format(date);
 }
 
-function summary(entry) {
+function unconditionalIds(nodes) {
+  return new Set(
+    (nodes ?? [])
+      .filter((node) => node?.handoff?.mode === "unconditional")
+      .map((node) => node.id),
+  );
+}
+
+function summary(entry, unconditional) {
   switch (entry.kind) {
     case "queued":
       return entry.workflow
@@ -28,11 +36,18 @@ function summary(entry) {
     case "step":
       if (entry.phase === "begin") return `${value(entry.node)} · begin`;
       if (entry.phase === "end") {
-        return `${value(entry.node)} · end · ${value(entry.outcome)} · ${value(entry.label)}`;
+        const end = `${value(entry.node)} · end · ${value(entry.outcome)}`;
+        return unconditional.has(entry.node) ? end : `${end} · ${value(entry.label)}`;
       }
       return `${value(entry.node)} · ${value(entry.phase)}`;
-    case "handoff":
-      return `${value(entry.from)} → ${value(entry.to)} · ${value(entry.label)}`;
+    case "handoff": {
+      const from = value(entry.from);
+      const to = value(entry.to);
+      // The label sits on the arrow between the nodes; an unconditional
+      // handoff has no label, so nothing goes between the nodes.
+      if (unconditional.has(entry.from) || !entry.label) return `${from} -> ${to}`;
+      return `${from} -${entry.label}-> ${to}`;
+    }
     case "completion":
       if (entry.status === "defect") return `defect · ${value(entry.code)}`;
       return `${value(entry.status)} · ${value(entry.terminal)}`;
@@ -49,7 +64,7 @@ export function historyToneKey(entry) {
   if (entry.kind === "handoff") {
     if (entry.label === "pass") return "success";
     if (entry.label === "fail") return "error";
-    if (entry.label === "next") return "muted";
+    if (entry.label === "handoff") return "muted";
     return "faint";
   }
   if (entry.kind === "queued") return "warning";
@@ -63,11 +78,12 @@ export function historyToneKey(entry) {
   return "muted";
 }
 
-export function historyRow(entry, options = {}) {
-  return `${formatHistoryTime(entry.at, options.timeZone)}  ${value(entry.dispatchId)}  ${summary(entry)}`;
+export function historyRow(entry, options = {}, unconditional = new Set()) {
+  return `${formatHistoryTime(entry.at, options.timeZone)}  ${value(entry.dispatchId)}  ${summary(entry, unconditional)}`;
 }
 
 export function historyRows(history = [], options = {}) {
+  const unconditional = unconditionalIds(options.nodes);
   return history
     .map((entry, index) => ({ entry, index }))
     .sort((a, b) => {
@@ -78,7 +94,7 @@ export function historyRows(history = [], options = {}) {
     .map(({ entry }) => ({
       seq: Number(entry.seq) || 0,
       entry,
-      text: historyRow(entry, options),
+      text: historyRow(entry, options, unconditional),
     }));
 }
 

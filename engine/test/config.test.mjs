@@ -635,7 +635,7 @@ test("config: engine control tool names are reserved as labels", () => {
 });
 
 test("config: handoffLabels returns the unique sorted tool set", () => {
-  assert.deepEqual(handoffLabels(SHIPPED.graph), ["fail", "next", "pass"]);
+  assert.deepEqual(handoffLabels(SHIPPED.graph), ["fail", "handoff", "pass"]);
 
   const shared = {
     nodes: [
@@ -666,16 +666,16 @@ test("config: handoffLabels returns the unique sorted tool set", () => {
   assert.deepEqual(handoffLabels({ nodes: [{ id: "end", handoff: { mode: "terminal" } }] }), []);
   assert.deepEqual(handoffLabels({}), []);
 
-  assert.deepEqual(nodeHandoffLabels({ handoff: { mode: "unconditional", to: "b" } }), ["next"]);
+  assert.deepEqual(nodeHandoffLabels({ handoff: { mode: "unconditional", to: "b" } }), ["handoff"]);
   assert.deepEqual(
     nodeHandoffLabels({ handoff: { mode: "conditional", labels: [{ label: "pass" }, { label: "fail" }] } }),
     ["pass", "fail"],
   );
   assert.deepEqual(nodeHandoffLabels({ handoff: { mode: "terminal" } }), []);
 
-  assert.equal(handoffToolsStale(["next", "pass"], ["pass", "next"]), null);
-  assert.equal(handoffToolsStale(["next"], ["next", "pass"]).code, "handoff.tools-stale");
-  assert.equal(handoffToolsStale(["next"], []).code, "handoff.tools-stale");
+  assert.equal(handoffToolsStale(["handoff", "pass"], ["pass", "handoff"]), null);
+  assert.equal(handoffToolsStale(["handoff"], ["handoff", "pass"]).code, "handoff.tools-stale");
+  assert.equal(handoffToolsStale(["handoff"], []).code, "handoff.tools-stale");
 });
 
 test("config: the dispatcher is a handoff target, not a node", () => {
@@ -707,7 +707,7 @@ test("config: the dispatcher is a handoff target, not a node", () => {
     },
   };
   assert.deepEqual(validateConfig(only), []);
-  assert.equal(handoffTarget(only.graph.nodes[0], "next"), DISPATCHER_TARGET);
+  assert.equal(handoffTarget(only.graph.nodes[0], "handoff"), DISPATCHER_TARGET);
 
   const onlyResumed = structuredClone(only);
   onlyResumed.graph.nodes[0].handoff.resume = true;

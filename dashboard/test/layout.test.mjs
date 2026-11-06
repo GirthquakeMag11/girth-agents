@@ -33,7 +33,11 @@ test("layout: every node gets one card and every edge gets a bounded route", () 
   assert.equal(new Set(layout.cards.map((card) => card.id)).size, 3);
   assert.equal(layout.routes.length, edges.length);
   assert.equal(layout.connectors, undefined);
-  assert.ok(layout.routes.every((route) => route.segments.length > 0 && route.label && route.tick));
+  assert.ok(
+    layout.routes.every(
+      (route) => route.segments.length > 0 && ((route.label && route.tick) || (!route.label && !route.tick)),
+    ),
+  );
 });
 
 test("layout: every handoff label is a chip attached to its connector", () => {
@@ -45,7 +49,13 @@ test("layout: every handoff label is a chip attached to its connector", () => {
   assert.equal(fail.label.text, "fail ↻");
   assert.equal(fail.resume, true);
 
-  for (const route of layout.routes) {
+  const unlabelled = layout.routes.find((route) => route.labelText === null);
+  assert.equal(unlabelled.from, "a");
+  assert.equal(unlabelled.to, "b");
+  assert.equal(unlabelled.label, null, "an unconditional edge carries no label chip");
+  assert.equal(unlabelled.tick, null, "an unconditional edge carries no chip tick");
+
+  for (const route of layout.routes.filter((entry) => entry.label)) {
     const vertical = route.segments.find((segment) => segment.width === 1 && segment.sides.includes("left"));
     assert.ok(vertical, `route ${route.key} must have a connector line`);
     assert.equal(Math.abs(route.tick.x - vertical.x), 1, `route ${route.key} tick must touch its connector`);
@@ -61,6 +71,7 @@ test("layout: a narrow graph remains inside its measured content width", () => {
   const layout = layoutGraph(nodes, edges, order.order, 54, { nodeWidth: 34, nodeHeight: 4, gap: 5 });
   assert.ok(layout.cardWidth <= 34 && layout.cardWidth >= 24);
   for (const route of layout.routes) {
+    if (!route.label) continue;
     assert.ok(route.label.x >= 0);
     assert.ok(route.label.x + route.label.width <= layout.width);
   }
@@ -244,7 +255,7 @@ test("layout: a token never paints over another route's label chip", () => {
   for (let index = 0; index <= 100; index += 1) {
     const point = runnerPoint(route.runnerPath, index / 100);
     if (point.x >= chip.x && point.x < chip.x + chip.width && point.y === chip.y) rawOverlap = true;
-    const token = runnerToken({ from: "b", to: "d", label: "next", start: 0 }, layout.routes, (index / 100) * 900);
+    const token = runnerToken({ from: "b", to: "d", label: "handoff", start: 0 }, layout.routes, (index / 100) * 900);
     if (!token) suppressed += 1;
     if (token) {
       const covered = layout.routes.some(

@@ -39,8 +39,8 @@ const baseHistory = [
   { seq: 1, at: "2026-10-30T13:59:58.000Z", kind: "queued", dispatchId: "d-1", workflow: "build-review", node: "implement" },
   { seq: 2, at: "2026-10-30T13:59:59.000Z", kind: "dispatched", dispatchId: "d-1", workflow: "build-review", node: "implement" },
   { seq: 3, at: "2026-10-30T13:59:59.200Z", kind: "step", dispatchId: "d-1", workflow: "build-review", node: "implement", phase: "begin" },
-  { seq: 4, at: "2026-10-30T14:00:31.000Z", kind: "step", dispatchId: "d-1", workflow: "build-review", node: "implement", phase: "end", outcome: "succeeded", label: "next" },
-  { seq: 5, at: "2026-10-30T14:00:31.100Z", kind: "handoff", dispatchId: "d-1", workflow: "build-review", from: "implement", to: "review", label: "next" },
+  { seq: 4, at: "2026-10-30T14:00:31.000Z", kind: "step", dispatchId: "d-1", workflow: "build-review", node: "implement", phase: "end", outcome: "succeeded", label: "handoff" },
+  { seq: 5, at: "2026-10-30T14:00:31.100Z", kind: "handoff", dispatchId: "d-1", workflow: "build-review", from: "implement", to: "review", label: "handoff" },
   { seq: 6, at: "2026-10-30T14:00:31.200Z", kind: "step", dispatchId: "d-1", workflow: "build-review", node: "review", phase: "begin" },
 ];
 

@@ -15,7 +15,7 @@ test("map: the workflow is a labelled box with entry and exit", () => {
   assert.match(map.mermaid, /n0\["implement · builder<br\/>entry"\]/);
   assert.match(map.mermaid, /n1\["review · reviewer"\]/);
   assert.match(map.mermaid, /n2\(\["done · builder<br\/>exit<br\/>terminal"\]\)/);
-  assert.match(map.mermaid, /n0 -->\|next\| n1/);
+  assert.match(map.mermaid, /n0 --> n1/);
   assert.match(map.mermaid, /n1 -->\|pass\| n2/);
   assert.match(map.mermaid, /n1 -->\|fail \(resume\)\| n0/);
   assert.match(map.mermaid, /class n2 terminal/);
@@ -26,6 +26,7 @@ test("map: the workflow and node tables carry the same config fields", () => {
   assert.match(map.workflowTable, /\| build-review \| implement \| done \| implement, review, done \| — \| no \|/);
   assert.match(map.nodeTable, /\| Node \| Graph agent \| Objective \| Handoff \| Max visits \|/);
   assert.match(map.nodeTable, /implement \| builder \| Implement the dispatched work\./);
+  assert.match(map.nodeTable, /\| → review \| 20 \|/);
   assert.match(map.nodeTable, /pass → done; fail → implement \(resume\)/);
   assert.match(map.legend, /resume = this route reuses/);
 });

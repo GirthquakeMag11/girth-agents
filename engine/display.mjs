@@ -1,12 +1,23 @@
 // Pure focused-display formatter for dispatch results and status snapshots.
 // The raw snapshot stays available through dispatch_status({ raw: true }).
 
+import { UNCONDITIONAL_TOOL } from "./config.mjs";
+
 function elapsed(start, end) {
   if (!start || !end) return null;
   const from = Date.parse(start);
   const to = Date.parse(end);
   if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) return null;
   return (to - from) / 1000;
+}
+
+function handoffText(handoff) {
+  // The label sits on the arrow between the nodes; an unconditional handoff
+  // has no label, so its arrow is plain.
+  const label = handoff.label;
+  const named = typeof label === "string" && label !== "" && label !== UNCONDITIONAL_TOOL;
+  const arrow = named ? ` -${label}-> ` : " -> ";
+  return `handoff ${handoff.from ?? "?"}${arrow}${handoff.to ?? "?"}`;
 }
 
 function visitsText(visits) {
@@ -30,7 +41,7 @@ function footer(snapshot, summary = true) {
   if (snapshot.terminal) {
     bits.push(`terminal ${snapshot.terminal}`);
   } else if (snapshot.handoff) {
-    bits.push(`handoff ${snapshot.handoff.from ?? "?"} · ${snapshot.handoff.label ?? "?"}`);
+    bits.push(handoffText(snapshot.handoff));
   } else if (snapshot.node) {
     bits.push(`node ${snapshot.node}`);
   }

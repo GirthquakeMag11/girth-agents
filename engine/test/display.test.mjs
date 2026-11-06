@@ -41,11 +41,21 @@ test("display: a dispatcher response is the content", () => {
   const text = renderDispatchDisplay({
     ...base,
     terminal: null,
-    handoff: { from: "review", label: "pass" },
+    handoff: { from: "review", label: "pass", to: "$dispatcher" },
     result: { response: "The review passed.", responseTruncated: false },
   });
   assert.match(text, /The review passed\./);
-  assert.match(text, /handoff review · pass/);
+  assert.match(text, /handoff review -pass-> \$dispatcher/);
+});
+
+test("display: the label sits on the arrow; an unconditional handoff has a plain arrow", () => {
+  const unconditional = renderDispatchDisplay({
+    ...base,
+    terminal: null,
+    handoff: { from: "implement", label: "handoff", to: "review" },
+  });
+  assert.match(unconditional, /handoff implement -> review/);
+  assert.doesNotMatch(unconditional, /handoff implement · handoff/);
 });
 
 test("display: truncated responses are marked", () => {

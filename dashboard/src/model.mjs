@@ -10,12 +10,13 @@ export function edgeList(nodes) {
   for (const node of nodes) {
     if (node.handoff.mode === "unconditional") {
       if (node.handoff.to === DISPATCHER_TARGET) continue;
+      // An unconditional node has no label: nothing goes between the nodes.
       edges.push({
         from: node.id,
         to: node.handoff.to,
-        label: "next",
+        label: null,
         resume: node.handoff.resume === true,
-        key: `${node.id}:next->${node.handoff.to}`,
+        key: `${node.id}->${node.handoff.to}`,
       });
     } else if (node.handoff.mode === "conditional") {
       for (const entry of node.handoff.labels) {
@@ -92,7 +93,7 @@ export function nodeState(node, activeDispatches, queue) {
 export function edgeColor(label) {
   if (label === "pass") return "pass";
   if (label === "fail") return "fail";
-  return "next";
+  return "plain";
 }
 
 export function liveDetails(config, activeDispatches = []) {

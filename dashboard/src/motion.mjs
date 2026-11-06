@@ -26,7 +26,7 @@ export function sweepCells(cardX, cardWidth, elapsedMs) {
 export function runnerToneKey(label) {
   if (label === "pass") return "success";
   if (label === "fail") return "error";
-  if (label === "next") return "muted";
+  if (label === "handoff") return "muted";
   return "faint";
 }
 

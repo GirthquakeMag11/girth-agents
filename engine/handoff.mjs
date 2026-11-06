@@ -42,7 +42,7 @@ export function createHandoffHandler({ getQueue, getConfig, Defect }) {
       if (messageFault) throw new ControlError(422, `${messageFault}: invalid handoff message`);
       const target = handoffTarget(node, label);
       if (!target) {
-        const allowed = node.handoff.mode === "unconditional" ? "next" : node.handoff.labels.map((entry) => entry.label).join(", ");
+        const allowed = node.handoff.mode === "unconditional" ? "handoff" : node.handoff.labels.map((entry) => entry.label).join(", ");
         throw new ControlError(422, `handoff.unknown-tool: label '${label}' is not declared for node '${node.id}' (allowed: ${allowed})`);
       }
 

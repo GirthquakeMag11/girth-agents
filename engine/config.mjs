@@ -37,8 +37,14 @@ export const ENGINE_TOOL_NAMES = new Set([
   "reload",
   "graph_info",
   "graph_map",
+  // The unconditional handoff tool's fixed name. Reserved so a conditional
+  // label can never collide with it.
   "handoff",
 ]);
+
+// The unconditional handoff tool's name. An unconditional node declares no
+// labels; the engine preconfigures this single tool instead.
+export const UNCONDITIONAL_TOOL = "handoff";
 
 // The engine's backstop, not the workflow's policy. A graph may set any
 // maxVisits up to this; the shipped build-review graph uses 20.
@@ -844,7 +850,7 @@ export function handoffToolsStale(current, next) {
 }
 
 export function nodeHandoffLabels(node) {
-  if (node?.handoff?.mode === "unconditional") return ["next"];
+  if (node?.handoff?.mode === "unconditional") return [UNCONDITIONAL_TOOL];
   if (node?.handoff?.mode === "conditional") {
     return (node.handoff.labels ?? [])
       .map((entry) => entry?.label)
@@ -863,7 +869,7 @@ export function handoffLabels(graph) {
 
 export function handoffTarget(node, label) {
   if (!node?.handoff) return null;
-  if (node.handoff.mode === "unconditional") return label === "next" ? node.handoff.to : null;
+  if (node.handoff.mode === "unconditional") return label === UNCONDITIONAL_TOOL ? node.handoff.to : null;
   if (node.handoff.mode === "conditional") {
     return node.handoff.labels.find((entry) => entry.label === label)?.to ?? null;
   }

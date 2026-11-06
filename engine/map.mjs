@@ -21,7 +21,8 @@ function handoffText(node) {
   if (!node.handoff) return "";
   if (node.handoff.mode === "terminal") return "terminal";
   if (node.handoff.mode === "unconditional") {
-    return `next → ${node.handoff.to}${sessionSuffix(node.handoff.resume)}`;
+    // An unconditional node has no labels; only the target is described.
+    return `→ ${node.handoff.to}${sessionSuffix(node.handoff.resume)}`;
   }
   return node.handoff.labels
     .map((label) => `${label.label} → ${label.to}${sessionSuffix(label.resume)}`)
@@ -90,7 +91,12 @@ export function renderMermaid(graph, { runtime = null, workflow = null } = {}) {
     if (!handoff || handoff.mode === "terminal") continue;
     if (handoff.mode === "unconditional") {
       const to = handoff.to === DISPATCHER_TARGET ? "dispatcher" : vars.get(handoff.to);
-      if (to) lines.push(`  ${from} -->|${mermaidText("next" + sessionSuffix(handoff.resume))}| ${to}`);
+      if (to) {
+        // An unconditional node has no label: a plain edge, annotated only
+        // when the route resumes the target session.
+        const annotation = handoff.resume === true ? `|${mermaidText("(resume)")}|` : "";
+        lines.push(`  ${from} -->${annotation} ${to}`);
+      }
     } else {
       for (const label of handoff.labels ?? []) {
         const to = label.to === DISPATCHER_TARGET ? "dispatcher" : vars.get(label.to);

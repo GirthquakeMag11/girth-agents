@@ -32,8 +32,8 @@ test("history rows: every kind maps exactly", () => {
   assert.equal(row({ kind: "dispatched" }), "14:03:22  d-4  dispatched · implement");
   assert.equal(row({ kind: "step", phase: "begin" }), "14:03:22  d-4  implement · begin");
   assert.equal(
-    row({ kind: "step", phase: "end", outcome: "succeeded", label: "next" }),
-    "14:03:22  d-4  implement · end · succeeded · next",
+    row({ kind: "step", phase: "end", outcome: "succeeded", label: "fail" }),
+    "14:03:22  d-4  implement · end · succeeded · fail",
   );
   assert.equal(
     row({ kind: "step", phase: "end", outcome: "succeeded", label: null }),
@@ -45,7 +45,7 @@ test("history rows: every kind maps exactly", () => {
   );
   assert.equal(
     row({ kind: "handoff", from: "review", to: "implement", label: "fail" }),
-    "14:03:22  d-4  review → implement · fail",
+    "14:03:22  d-4  review -fail-> implement",
   );
   assert.equal(
     row({ kind: "completion", status: "completed", terminal: "done" }),
@@ -71,7 +71,7 @@ test("history rows: missing values use the exact dash", () => {
   );
   assert.equal(
     row({ kind: "handoff", from: null, to: null, label: null }),
-    "14:03:22  d-4  — → — · —",
+    "14:03:22  d-4  — -> —",
   );
   assert.equal(
     row({ kind: "completion", status: "completed", terminal: null }),
@@ -95,7 +95,31 @@ test("history rows: empty pane and strip strings are exact", () => {
     ],
     { timeZone: "UTC" },
   );
-  assert.equal(strip, "History · 14:03:22  d-4  review → implement · fail");
+  assert.equal(strip, "History · 14:03:22  d-4  review -fail-> implement");
+});
+
+test("history rows: an unconditional handoff has no label between the nodes", () => {
+  const nodes = [{ id: "implement", handoff: { mode: "unconditional", to: "review" } }];
+  const options = { timeZone: "UTC", nodes };
+  assert.equal(historyToneKey({ ...base, kind: "handoff", label: "handoff" }), "muted");
+
+  const rows = historyRows(
+    [
+      { ...base, seq: 1, kind: "handoff", from: "implement", to: "review", label: "handoff" },
+      { ...base, seq: 1, kind: "step", phase: "end", outcome: "succeeded", node: "implement", label: "handoff" },
+      { ...base, seq: 3, kind: "handoff", from: "review", to: "implement", label: "fail" },
+      { ...base, seq: 2, kind: "dispatched" },
+    ],
+    options,
+  );
+  assert.equal(rows[0].text, "14:03:22  d-4  review -fail-> implement");
+  assert.equal(rows[1].text, "14:03:22  d-4  dispatched · implement");
+  assert.equal(rows[2].text, "14:03:22  d-4  implement · end · succeeded");
+  assert.equal(rows[3].text, "14:03:22  d-4  implement -> review");
+  assert.equal(
+    historyStripText([{ ...base, seq: 1, kind: "handoff", from: "implement", to: "review", label: "handoff" }], options),
+    "History · 14:03:22  d-4  implement -> review",
+  );
 });
 
 test("history rows: newest first uses seq, stable on equal timestamps", () => {

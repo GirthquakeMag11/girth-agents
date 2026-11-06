@@ -48,7 +48,7 @@ test("motion: only running cards at least six cells wide sweep", () => {
 test("motion: history cursor does not replay existing handoffs on mount", () => {
   const history = [
     { seq: 1, kind: "queued" },
-    { seq: 2, kind: "handoff", from: "implement", to: "review", label: "next" },
+    { seq: 2, kind: "handoff", from: "implement", to: "review", label: "handoff" },
   ];
   const next = advanceHistoryCursor(history, "boot-one", { epoch: undefined, watermark: 0 });
   assert.equal(next.reset, true);
@@ -60,7 +60,7 @@ test("motion: one new handoff animates and two new handoffs animate only the hig
   const first = advanceHistoryCursor(
     [
       { seq: 1, kind: "queued" },
-      { seq: 2, kind: "handoff", from: "implement", to: "review", label: "next" },
+      { seq: 2, kind: "handoff", from: "implement", to: "review", label: "handoff" },
     ],
     "boot-one",
     { epoch: "boot-one", watermark: 1 },
@@ -71,7 +71,7 @@ test("motion: one new handoff animates and two new handoffs animate only the hig
   const second = advanceHistoryCursor(
     [
       { seq: 1, kind: "queued" },
-      { seq: 2, kind: "handoff", from: "implement", to: "review", label: "next" },
+      { seq: 2, kind: "handoff", from: "implement", to: "review", label: "handoff" },
       { seq: 3, kind: "step", phase: "begin", node: "review" },
       { seq: 4, kind: "handoff", from: "review", to: "implement", label: "fail" },
     ],
@@ -101,7 +101,7 @@ test("motion: an epoch change resets even when the new maximum is equal or highe
 test("motion: non-handoff entries advance the watermark and suppress stale handoffs", () => {
   const next = advanceHistoryCursor(
     [
-      { seq: 1, kind: "handoff", from: "implement", to: "review", label: "next" },
+      { seq: 1, kind: "handoff", from: "implement", to: "review", label: "handoff" },
       { seq: 2, kind: "queued" },
       { seq: 3, kind: "dispatched" },
     ],
@@ -140,7 +140,7 @@ test("motion: runner path interpolation follows segments and self-handoffs have 
 
 
 test("motion: a newer handoff replaces the earlier runner token", () => {
-  const previous = { from: "implement", to: "review", label: "next", start: 1000 };
+  const previous = { from: "implement", to: "review", label: "handoff", start: 1000 };
   const next = nextRunner(previous, { from: "review", to: "implement", label: "fail" }, 2000);
   assert.deepEqual(next, { from: "review", to: "implement", label: "fail", start: 2000 });
   assert.equal(nextRunner(previous, null, 2000), previous);
@@ -165,8 +165,8 @@ test("motion: runner tokens are on-path, expire at 900ms, and self-handoffs emit
   assert.equal(token.label, "fail");
   assert.equal(runnerToken(runner, routes, 1899).point.y > 0, true);
   assert.equal(runnerToken(runner, routes, 1900), null);
-  assert.equal(runnerToken({ from: "x", to: "x", label: "next", start: 1000 }, routes, 1100), null);
-  assert.equal(runnerToken({ from: "missing", to: "implement", label: "next", start: 1000 }, routes, 1100), null);
+  assert.equal(runnerToken({ from: "x", to: "x", label: "handoff", start: 1000 }, routes, 1100), null);
+  assert.equal(runnerToken({ from: "missing", to: "implement", label: "handoff", start: 1000 }, routes, 1100), null);
 
   const coveredRoutes = [
     {
@@ -180,22 +180,22 @@ test("motion: runner tokens are on-path, expire at 900ms, and self-handoffs emit
     },
   ];
   assert.equal(
-    runnerToken({ from: "b", to: "d", label: "next", start: 1000 }, coveredRoutes, 1450),
+    runnerToken({ from: "b", to: "d", label: "handoff", start: 1000 }, coveredRoutes, 1450),
     null,
     "a token must not paint over a label chip",
   );
   assert.equal(
-    runnerToken({ from: "b", to: "d", label: "next", start: 1000 }, coveredRoutes, 1495),
+    runnerToken({ from: "b", to: "d", label: "handoff", start: 1000 }, coveredRoutes, 1495),
     null,
     "a fractional vertical point floors onto the chip row and must be suppressed",
   );
-  assert.notEqual(runnerToken({ from: "b", to: "d", label: "next", start: 1000 }, coveredRoutes, 1400), null);
+  assert.notEqual(runnerToken({ from: "b", to: "d", label: "handoff", start: 1000 }, coveredRoutes, 1400), null);
 });
 
 test("motion: runner tones and the 900ms lifetime are exact", () => {
   assert.equal(runnerToneKey("pass"), "success");
   assert.equal(runnerToneKey("fail"), "error");
-  assert.equal(runnerToneKey("next"), "muted");
+  assert.equal(runnerToneKey("handoff"), "muted");
   assert.equal(runnerToneKey("other"), "faint");
   assert.equal(runnerProgress(1000, 1000), 0);
   assert.equal(runnerProgress(1000, 1899), 899 / 900);
