@@ -2,7 +2,8 @@
 description: Cancel an in-flight test-drive — force idempotent cleanup, then verify
 ---
 
-Load the `test-drive` skill for context, then run its `scripts/cleanup.sh`
+Load the `test-drive` skill for context (if not already loaded), then run its
+`scripts/cleanup.sh`
 (the idempotent forced cleanup). Do not stop at its exit code: afterwards,
 verify manually and independently, and report the literal output of each:
 
