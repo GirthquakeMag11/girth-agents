@@ -30,7 +30,7 @@ sudo apt-get install -y podman crun slirp4netns
 grep -q "^$(whoami):" /etc/subuid /etc/subgid || sudo usermod \
   --add-subuids 100000-165535 --add-subgids 100000-165535 "$(whoami)"   # then re-login
 sudo apt-get install -y gnome-terminal   # or xterm / xfce4-terminal / konsole
-sudo apt-get install -y bash git tar coreutils curl findutils
+sudo apt-get install -y bash git tar awk sed coreutils curl findutils
 ```
 
 - `cgroup fs: cgroup2fs` failing means the kernel/systemd unified-hierarchy
@@ -60,9 +60,10 @@ DRIFT-REPORT
 - action taken: <stopped | noted in local-notes.md>
 ```
 
-`machine` drift goes to `local-notes.md` (and, if a launch form is missing,
-`scripts/launch.sh`'s terminal case). `project` and `runbook-bug` drift is for a
-human to patch through git, like any code that changes what is tested.
+`machine` drift goes to `local-notes.md`; a missing launch form is recorded
+there too, and a human patches `scripts/launch.sh` through git. `project` and
+`runbook-bug` drift is for a human to patch through git, like any code that
+changes what is tested. The agent never edits the skill or its scripts.
 
 ## Forced cleanup
 

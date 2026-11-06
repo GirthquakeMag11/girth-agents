@@ -83,6 +83,10 @@ Stop here. Tear nothing down until the user reports they have closed the TUI.
 
 ## Phase 2 — wrapup after the user closes the TUI
 
+Any clear signal that the drive is over — "closed it", "done", "that broke" —
+counts as the trigger. In doubt, run wrapup then teardown anyway; never leave a
+seat or the credentialed image standing.
+
 1. `bash scripts/wrapup.sh` — seat state (must be `Exited`; `Running` is a red
    flag), log scan, forensics copy. Classify, do not speculate:
    - `ModelUnavailableError` → RED, reject: credentials/model failed.

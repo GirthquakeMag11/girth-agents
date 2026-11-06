@@ -27,6 +27,10 @@ fi
 for m in INVARIANTS.md installer/build-archive.sh product.conf graph/config.json; do
   [ -f "$REPO/$m" ] || { echo "FAIL: not the girth-agents repository at $REPO (missing $m)" >&2; exit 1; }
 done
+# Content sentinel: filename presence alone is a weak identity; product.conf
+# must declare this product.
+grep -q '^PRODUCT_SLUG="graph-engine"$' "$REPO/product.conf" \
+  || { echo "FAIL: $REPO/product.conf does not declare graph-engine" >&2; exit 1; }
 
 # opencode binary: PATH, then the ~/.opencode install, then an explicit override.
 OC=$(command -v opencode 2>/dev/null || true)
