@@ -37,6 +37,8 @@ not the priority and leaks must be plugged, run `bash scripts/cleanup.sh`. It
 removes every harness container and image (including the credential copy),
 clears the workspace, and verifies empty. It is safe to run at any point,
 including before, between, or after the normal phases, and any number of times.
+Or invoke `/cancel-test-drive`, which runs the same cleanup and then verifies
+the emptiness of every surface manually.
 
 ## Drift: report, do not edit
 
