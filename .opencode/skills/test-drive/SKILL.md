@@ -1,23 +1,61 @@
 ---
 name: Test Drive
-description: Test-drive the current release of this project in an isolated throwaway container — install it cleanly, drive it like an end user, then tear it down leaving no process and no credential copy behind.
+description: Test-drive a release of the girth-agents project in an isolated throwaway container — install it cleanly, drive it like an end user, then tear it down leaving no process and no credential copy behind.
 ---
 
-# Sandbox test-drive
+# girth-agents sandbox test-drive
 
-Purpose: prove the current release works for an end user, inside a container that
-cannot touch the development machine, then tear it down leaving nothing behind.
+This skill belongs to the **girth-agents** repository and exists to test-drive a
+release of this project. It is not a general OpenCode skill. It relies on an
+isolated rootless-podman container so a broken release cannot touch the
+development machine.
 
 You have `shell`. Execute the exact commands in `references/commands.md`; do not
-improvise the podman flow. Work in `/tmp/opencode` (outside the repository).
+improvise the podman flow. The workspace is `/tmp/opencode` (outside the repo).
+
+## Locating the project
+
+OpenCode's working directory may be anything — **do not assume it is the
+repository**. The repository root is derived from this skill's own directory
+(the skill loader reports its base directory). `references/commands.md` §0
+resolves the root and verifies it is *this* project by marker files. If the
+markers are absent, stop — you are not pointed at the project, and nothing
+below may run.
+
+## Environment contract
+
+Every row is re-checked at the start of every run. Checks are capability-based,
+not version numbers, because these dependencies update over time and other
+machines will differ.
+
+| Need | Where the check lives | How its absence is handled |
+| --- | --- | --- |
+| Repository present, and it is *this* project | §0 | Stop, name the markers that failed |
+| Rootless podman with crun and cgroups v2 | §1 | Remediation in §1; needs `sudo` — stop and ask before applying |
+| A terminal emulator + graphical session (X11 or Wayland) | §1 | Remediation in §1 |
+| `opencode` binary exposing `auth export`, `auth import`, `--standalone` | §1 | Install/upgrade via the official installer; the check is on subcommands, not version |
+| Base tools: `bash`, `tar`, `curl`, `awk`, `sed`, `find`, a checksum tool (`sha256sum` or `shasum`) | §1 | `apt-get install` |
+
+Remediation commands are in `references/commands.md` §1. They assume a
+Debian-family Linux (Ubuntu/Mint). On another OS, stop and tell the user rather
+than guess. Anything requiring `sudo` or a reboot is **never** applied by the
+agent — report it and let the user decide.
+
+## Dependencies change over time
+
+- Gate on capability, never version. The runbook never matches a podman or
+  opencode version string; it tests that rootless operation, cgroups v2, crun,
+  and the required opencode subcommands actually hold **right now**.
+- Re-run preflight every invocation; do not trust a previous pass.
+- If a capability check fails, do not work around it in a way that weakens
+  isolation. Stop and report.
 
 ## Hard rules
 
 1. **No leaked processes.** The seat must be a foreground
    `podman run -it --name <seat>` container with opencode as its main process —
    never `podman exec` into a long-lived container. When the user quits the TUI,
-   the container stops and every opencode process dies with it. (A leaked
-   opencode client ignoring SIGTERM is a recorded failure of the exec approach.)
+   the container stops and every opencode process dies with it.
 2. **No leftover credentials.** Credentials are injected once, into the
    provisioned image. Teardown removes that image and verifies it is gone.
    Never publish or push the image anywhere.
@@ -32,9 +70,10 @@ improvise the podman flow. Work in `/tmp/opencode` (outside the repository).
 
 ## Phase 1 — setup to the seat
 
-1. Preflight, `references/commands.md` §1. If anything is missing, stop and
-   report it by name.
-2. Build the archive from the repository root, §2.
+1. Locate and verify the project, §0; then preflight, §1. If anything is
+   missing, stop and report it by name — with the remediation if it needs your
+   user's `sudo`.
+2. Build the archive, §2.
 3. Build the base image, §3. Use `--network host` — `apt` over the container
    network stalls.
 4. Provision the clean image, §4: install, inject credentials via
