@@ -51,6 +51,14 @@ export WORK REPO OC TERM_CMD LOCAL_NOTES LABEL_KEY LABEL_VAL
 # Read one image's ownership label; empty when absent.
 label_of() { podman image inspect --format "{{index .Labels \"$1\"}}" "$2" 2>/dev/null; }
 
+# The most recent seat container, running or already exited. Seat names are
+# `seat-<epoch seconds>`, so a descending lexical sort is the latest launch.
+# wait.sh and wrapup.sh both resolve through this so they can never disagree
+# on which seat a run refers to.
+latest_seat() {
+  podman ps -a --format '{{.Names}}' 2>/dev/null | grep -E '^seat-' | sort -r | head -n1
+}
+
 # Create (if needed) and mark the harness workspace.
 mark_workspace() {
   mkdir -p "$WORK"

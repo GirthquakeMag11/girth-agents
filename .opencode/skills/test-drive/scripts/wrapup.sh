@@ -6,7 +6,7 @@ set -euo pipefail
 
 mark_workspace
 
-SEAT=$(podman ps -a --format '{{.Names}}' 2>/dev/null | grep -E '^seat-' | head -n1)
+SEAT=$(latest_seat)
 [ -n "$SEAT" ] || { echo "FAIL: no seat container exists; nothing to wrap up"; exit 1; }
 echo "seat: $SEAT"
 

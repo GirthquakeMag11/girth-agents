@@ -71,23 +71,31 @@ changes go to a human through git. Never rewrite the skill or scripts yourself.
 2. `bash scripts/provision.sh` — archive, base image, clean credentialed image.
 3. `bash scripts/launch.sh` — opens the seat; confirm a `seat-*` container is
    running on the provisioned image.
-4. Hand the seat to the user to drive **the project, not the bare chat**: in
-   the seat, switch to the **Engineer** (or **Conductor**) — the graph's
-   primary agents pin `openrouter/~deepseek/deepseek-flash-latest`. Ask the
-   Engineer for the graph, have the Conductor dispatch `build-review`, and watch
-   it reach the `done` terminal. A dispatch that reaches a terminal is the
+4. Hand the seat to the user to drive **the project, not the bare chat**: tell
+   them to switch to the **Engineer** (or **Conductor**) — the graph's primary
+   agents pin `openrouter/~deepseek/deepseek-flash-latest` — ask the Engineer
+   for the graph, have the Conductor dispatch `build-review`, and watch it
+   reach the `done` terminal. A dispatch that reaches a terminal is the
    decidable proof the pinned model served — graph-node sessions pin the model
    and never fall back (a failure would defect with the model named instead).
    The seat's bare default session runs a free fallback model; do not judge the
    pinned model by messages typed there.
+5. `bash scripts/wait.sh` — blocks until the seat's opencode process ends.
+   Give it the longest timeout your shell tool allows (ideally none); a drive
+   takes minutes. Quitting the TUI ends the process and releases the wait.
 
-Stop here. Tear nothing down until the user reports they have closed the TUI.
+The seat process ending is the trigger to continue. Do not wait for a user
+message. If the wait is interrupted or times out, run `scripts/wait.sh` again —
+it is idempotent and returns immediately against an already-ended seat.
 
-## Phase 2 — wrapup after the user closes the TUI
+## Phase 2 — wrapup after the seat process ends
 
-Any clear signal that the drive is over — "closed it", "done", "that broke" —
-counts as the trigger. In doubt, run wrapup then teardown anyway; never leave a
-seat or the credentialed image standing.
+`scripts/wait.sh` returning after `launch.sh` **is** the trigger: the seat's
+opencode process has ended. User messages are corroboration only, never a
+trigger, and none is waited on — proceed through wrapup and teardown without
+further prompting. In doubt (an interrupted wait, an ambiguous state), run
+wrapup then teardown anyway; never leave a seat or the credentialed image
+standing.
 
 1. `bash scripts/wrapup.sh` — seat state (must be `Exited`; `Running` is a red
    flag), log scan, forensics copy. Classify, do not speculate:

@@ -11,6 +11,7 @@ the agent to reconstruct these commands from prose.
 | `scripts/status.sh` | List seats, containers, images | No |
 | `scripts/provision.sh` | Build archive + base image, provision the clean credentialed image | Builds/replaces images |
 | `scripts/launch.sh` | Open the per-seat container in a terminal | No (starts a container) |
+| `scripts/wait.sh` | Block until the launched seat's opencode process ends | No |
 | `scripts/wrapup.sh` | Seat state + log scan + forensics copy | No |
 | `scripts/teardown.sh` | Remove all test-drive containers and images, verify empty | Yes |
 | `scripts/cleanup.sh` | Forced idempotent cleanup: containers, images, workspace; verify empty | Yes |
