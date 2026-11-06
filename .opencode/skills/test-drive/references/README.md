@@ -13,6 +13,7 @@ the agent to reconstruct these commands from prose.
 | `scripts/launch.sh` | Open the per-seat container in a terminal | No (starts a container) |
 | `scripts/wrapup.sh` | Seat state + log scan + forensics copy | No |
 | `scripts/teardown.sh` | Remove all test-drive containers and images, verify empty | Yes |
+| `scripts/cleanup.sh` | Forced idempotent cleanup: containers, images, workspace; verify empty | Yes |
 
 Run each from any working directory: `bash <skill-dir>/scripts/<name>.sh`.
 `scripts/lib.sh` in the same directory holds the shared project/machine
@@ -62,3 +63,14 @@ DRIFT-REPORT
 `machine` drift goes to `local-notes.md` (and, if a launch form is missing,
 `scripts/launch.sh`'s terminal case). `project` and `runbook-bug` drift is for a
 human to patch through git, like any code that changes what is tested.
+
+## Forced cleanup
+
+`cleanup.sh` is the idempotent escape hatch: when a run was interrupted partway
+(start, a half-provisioning, a still-open seat) and gathering information is no
+longer the priority, it removes every harness container and image — including
+the credential-bearing provisioned image — clears the workspace that may hold
+forensic copies of the seeded database, and verifies empty. It is safe to fire
+at any time, repeatedly; running it against an already-clean machine reports
+`CLEANUP CLEAN` and exits 0. It does not touch host processes or podman
+artifacts of anything else.

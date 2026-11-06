@@ -29,6 +29,15 @@ requirement by name and exits nonzero on a hard failure. `references/README.md`
 carries the remediation for a substandard environment; anything needing `sudo`
 or a reboot is reported to the user, never applied by the agent.
 
+## Forced cleanup (idempotent, fire at any time)
+
+Starting and finishing span multiple turns, so a run may be interrupted halfway
+— during provisioning, or with a seat still open. When information gathering is
+not the priority and leaks must be plugged, run `bash scripts/cleanup.sh`. It
+removes every harness container and image (including the credential copy),
+clears the workspace, and verifies empty. It is safe to run at any point,
+including before, between, or after the normal phases, and any number of times.
+
 ## Drift: report, do not edit
 
 This skill and its scripts are a reviewed safety contract. If the project
