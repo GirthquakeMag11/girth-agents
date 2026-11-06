@@ -1,11 +1,11 @@
 ---
 name: Test Drive
-description: Test-drive a release of the girth-agents project in an isolated throwaway container — install it cleanly, drive it like an end user, then tear it down leaving no process and no credential copy behind.
+description: Test-drive a release of the graph-engine project in an isolated throwaway container — install it cleanly, drive it like an end user, then tear it down leaving no process and no credential copy behind.
 ---
 
-# girth-agents sandbox test-drive
+# graph-engine sandbox test-drive
 
-This skill belongs to the **girth-agents** repository and exists to test-drive a
+This skill belongs to the **graph-engine** repository and exists to test-drive a
 release of this project. It is not a general OpenCode skill. It relies on an
 isolated rootless-podman container so a broken release cannot touch the
 development machine.

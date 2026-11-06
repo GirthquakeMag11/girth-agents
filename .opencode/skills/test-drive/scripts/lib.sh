@@ -1,6 +1,6 @@
 # Shared resolution for the test-drive scripts. Sourced by each script; do not
 # execute directly. Fails fast if the repository cannot be located and verified
-# as the girth-agents project.
+# as the graph-engine project.
 set -euo pipefail
 
 # Workspace. Owned by the harness (a subtree under the shared scratch dir), so
@@ -9,7 +9,7 @@ WORK="${TESTDRIVE_WORK:-/tmp/opencode/testdrive}"
 
 # The ownership label every harness image carries, so sweep() can remove exactly
 # the harness's images — tagged or dangling — without a machine-global prune.
-LABEL_KEY="io.girth-agents.testdrive"
+LABEL_KEY="io.graph-engine.testdrive"
 LABEL_VAL="1"
 
 # Repository root, located from this file's own location — never from the
@@ -25,7 +25,7 @@ fi
 
 # The marker check is the authority: this skill is for this project only.
 for m in INVARIANTS.md installer/build-archive.sh product.conf graph/config.json; do
-  [ -f "$REPO/$m" ] || { echo "FAIL: not the girth-agents repository at $REPO (missing $m)" >&2; exit 1; }
+  [ -f "$REPO/$m" ] || { echo "FAIL: not the graph-engine repository at $REPO (missing $m)" >&2; exit 1; }
 done
 # Content sentinel: filename presence alone is a weak identity; product.conf
 # must declare this product.

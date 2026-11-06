@@ -9,7 +9,7 @@ verify manually and independently, and report the literal output of each:
 
 - `podman ps -a`
 - `podman images`
-- `podman images --filter "label=io.girth-agents.testdrive=1"`
+- `podman images --filter "label=io.graph-engine.testdrive=1"`
 - the workspace directory (default `/tmp/opencode/testdrive`, or `$TESTDRIVE_WORK` if set)
 
 Check specifically for any container named `provision-tmp` or `seat-*`, any
