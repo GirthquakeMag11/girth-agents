@@ -10,10 +10,14 @@ command -v podman || echo "MISSING podman"
 command -v gnome-terminal || echo "MISSING gnome-terminal"
 test -x "$HOME/.opencode/bin/opencode" || echo "MISSING opencode binary"
 test -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" || echo "MISSING display"
-podman info --format 'cgroup={{.Host.CgroupVersion}} runtime={{.Host.OCIRuntime.Name}}'
+podman info >/dev/null 2>&1 || echo "podman not functional"
+echo "cgroup fs: $(stat -fc %T /sys/fs/cgroup)"
+podman info 2>/dev/null | awk '/ociRuntime:/{f=1} f&&/name:/{print "runtime: "$2; exit}'
 ```
 
-Expect `cgroup=v2` and `runtime=crun`.
+Expect `cgroup fs: cgroup2fs` and `runtime: crun`. Do not use
+`podman info --format` Go templates — the field names differ across podman
+versions and this machine's 4.9.3 rejects `.Host.CgroupVersion`.
 
 ## §2 Build the archive (from the repo root)
 
@@ -121,8 +125,8 @@ podman rm -f $(podman ps -aq \
 podman rmi -f localhost/graph-engine-sandbox:provisioned \
               localhost/graph-engine-sandbox:base 2>/dev/null || true
 podman image prune -f
-podman ps -a --format '{{.Names}} {{.Image}}' | grep graph-engine-sandbox && echo "FAIL: containers remain"
-podman images --format '{{.Repository}}:{{.Tag}}' | grep graph-engine-sandbox && echo "FAIL: images remain"
+podman ps -a | grep graph-engine-sandbox && echo "FAIL: containers remain"
+podman images | grep graph-engine-sandbox && echo "FAIL: images remain"
 ```
 
 If either `FAIL` line prints, the teardown is incomplete — report the list, do
