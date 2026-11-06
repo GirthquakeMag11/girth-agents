@@ -4,14 +4,14 @@
 set -euo pipefail
 . "$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
-SEAT=$(podman ps -a --filter ancestor=localhost/graph-engine-sandbox:provisioned \
-  --format '{{.Names}}' 2>/dev/null | sed -n 1p)
-[ -n "$SEAT" ] || { echo "FAIL: no provisioned seat container exists; nothing to wrap up"; exit 1; }
+mark_workspace
+
+SEAT=$(podman ps -a --format '{{.Names}}' 2>/dev/null | grep -E '^seat-' | head -n1)
+[ -n "$SEAT" ] || { echo "FAIL: no seat container exists; nothing to wrap up"; exit 1; }
 echo "seat: $SEAT"
 
 echo "== state (must be Exited; Running = red flag) =="
-podman ps -a --filter ancestor=localhost/graph-engine-sandbox:provisioned \
-  --format '{{.Names}} {{.State}}'
+podman ps -a --format '{{.Names}} {{.State}}' | grep -E '^seat-'
 
 echo "== log scan =="
 if podman cp "$SEAT:/root/.local/share/opencode/log/opencode.log" "$WORK/seat-opencode.log" 2>/dev/null; then

@@ -3,8 +3,14 @@
 # as the girth-agents project.
 set -euo pipefail
 
-# Workspace (outside the repo); override with TESTDRIVE_WORK.
-WORK="${TESTDRIVE_WORK:-/tmp/opencode}"
+# Workspace. Owned by the harness (a subtree under the shared scratch dir), so
+# sweep() may remove it whole; a marker inside is the ownership token.
+WORK="${TESTDRIVE_WORK:-/tmp/opencode/testdrive}"
+
+# The ownership label every harness image carries, so sweep() can remove exactly
+# the harness's images — tagged or dangling — without a machine-global prune.
+LABEL_KEY="io.girth-agents.testdrive"
+LABEL_VAL="1"
 
 # Repository root, located from this file's own location — never from the
 # caller's working directory. The skill directory is one level above scripts/.
@@ -36,4 +42,68 @@ done
 # Machine-local, gitignored notes the running agent reads and appends.
 LOCAL_NOTES="$REPO/.opencode/testdrive/local-notes.md"
 
-export WORK REPO OC TERM_CMD LOCAL_NOTES
+export WORK REPO OC TERM_CMD LOCAL_NOTES LABEL_KEY LABEL_VAL
+
+# Read one image's ownership label; empty when absent.
+label_of() { podman image inspect --format "{{index .Labels \"$1\"}}" "$2" 2>/dev/null; }
+
+# Create (if needed) and mark the harness workspace.
+mark_workspace() {
+  mkdir -p "$WORK"
+  : > "$WORK/.testdrive-marker"
+}
+
+# Remove every harness container and image (by name/image and by ownership
+# label — catching dangling layers), clear the workspace that may hold forensic
+# credential copies, and verify nothing survives. Exits nonzero if podman is
+# nonfunctional or any artifact remains. Idempotent: safe at any time, any
+# number of times, from any interrupted state.
+sweep() {
+  local tag="${1:-cleanup}"
+  if ! podman info >/dev/null 2>&1; then
+    echo "FAIL: podman not functional; refusing to report clean" >&2
+    return 1
+  fi
+
+  echo "[$tag] remove harness containers"
+  local c
+  for c in $(podman ps -a --format '{{.ID}}\t{{.Names}}\t{{.Image}}' 2>/dev/null \
+      | awk -F'\t' '$2 ~ /^(provision-tmp|seat-)/ || $3 ~ /graph-engine-sandbox/ {print $1}'); do
+    echo "  removing container $c"
+    podman rm -f "$c" 2>/dev/null || true
+  done
+
+  echo "[$tag] remove harness images (ownership label: tagged and dangling)"
+  local i
+  for i in $(podman images --filter "label=${LABEL_KEY}=${LABEL_VAL}" -q 2>/dev/null); do
+    echo "  removing image $i"
+    podman rmi -f "$i" 2>/dev/null || true
+  done
+
+  echo "[$tag] clear workspace (forensic credential copies)"
+  if [ -f "$WORK/.testdrive-marker" ]; then
+    rm -rf "$WORK" && echo "  workspace removed"
+  else
+    echo "  WARN: $WORK has no ownership marker; left in place"
+  fi
+
+  echo "[$tag] verify empty"
+  local fail=0
+  if ! podman ps -a >/dev/null 2>&1; then echo "FAIL: podman ps -a failed at verification"; fail=1; fi
+  if podman ps -a --format '{{.Names}}' 2>/dev/null | grep -Eq '^(provision-tmp|seat-)'; then
+    echo "FAIL: containers remain"
+    podman ps -a --format '{{.Names}} {{.Image}}' | grep -E '^(provision-tmp|seat-)'
+    fail=1
+  fi
+  if ! podman images >/dev/null 2>&1; then echo "FAIL: podman images failed at verification"; fail=1; fi
+  if [ -n "$(podman images --filter "label=${LABEL_KEY}=${LABEL_VAL}" -q 2>/dev/null)" ]; then
+    echo "FAIL: harness images remain"
+    podman images --filter "label=${LABEL_KEY}=${LABEL_VAL}"
+    fail=1
+  fi
+  if [ -f "$WORK/.testdrive-marker" ] && [ -e "$WORK" ]; then
+    echo "FAIL: workspace remains"
+    fail=1
+  fi
+  if [ "$fail" = 0 ]; then echo "SWEEP CLEAN"; return 0; else return 1; fi
+}

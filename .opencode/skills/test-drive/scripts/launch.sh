@@ -6,7 +6,7 @@
 set -euo pipefail
 . "$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
-mkdir -p "$WORK"
+mark_workspace
 cat > "$WORK/seat.sh" <<'EOF'
 #!/bin/bash
 NAME="seat-$(date +%s)"
