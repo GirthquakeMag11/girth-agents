@@ -30,6 +30,18 @@ if [ "$ENGINE_VERSION" != "$VERSION" ]; then
   echo "build-archive: PROJECT_VERSION ($VERSION) does not match engine/version.mjs ($ENGINE_VERSION)" >&2
   exit 1
 fi
+NAME=$(read_conf PRODUCT_NAME)
+ENGINE_NAME=$(sed -n 's/^export const PRODUCT_NAME = "\(.*\)";$/\1/p' "$ROOT/engine/version.mjs")
+if [ "$ENGINE_NAME" != "$NAME" ]; then
+  echo "build-archive: PRODUCT_NAME ($NAME) does not match engine/version.mjs ($ENGINE_NAME)" >&2
+  exit 1
+fi
+STAGE=$(read_conf PRODUCT_STAGE)
+ENGINE_STAGE=$(sed -n 's/^export const PRODUCT_STAGE = "\(.*\)";$/\1/p' "$ROOT/engine/version.mjs")
+if [ "$ENGINE_STAGE" != "$STAGE" ]; then
+  echo "build-archive: PRODUCT_STAGE ($STAGE) does not match engine/version.mjs ($ENGINE_STAGE)" >&2
+  exit 1
+fi
 FILE_VERSION=$(cat "$ROOT/VERSION")
 if [ "$FILE_VERSION" != "$VERSION" ]; then
   echo "build-archive: PROJECT_VERSION ($VERSION) does not match VERSION ($FILE_VERSION)" >&2

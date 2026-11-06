@@ -19,7 +19,7 @@ import {
   handoffTarget,
   DISPATCHER_TARGET,
 } from "../config.mjs";
-import { PROJECT_VERSION } from "../version.mjs";
+import { PRODUCT_NAME, PRODUCT_STAGE, PROJECT_VERSION } from "../version.mjs";
 
 const shipped = await loadConfig(fileURLToPath(new URL("../../graph/config.json", import.meta.url)));
 const SHIPPED = shipped.doc;
@@ -858,10 +858,12 @@ test("config: workflow connections are transitive and node memberships are expli
   assert.deepEqual(workflowsForNode(graph, "n2"), ["b", "c"]);
 });
 
-test("config: graph_info carries project and schema versions", () => {
-  const info = graphInfoResponse(SHIPPED, "/tmp/graph.json", PROJECT_VERSION);
+test("config: graph_info carries the product identity and schema version", () => {
+  const info = graphInfoResponse(SHIPPED, "/tmp/graph.json", PROJECT_VERSION, PRODUCT_NAME, PRODUCT_STAGE);
   assert.equal(info.ok, true);
+  assert.equal(info.name, PRODUCT_NAME);
   assert.equal(info.version, PROJECT_VERSION);
+  assert.equal(info.stage, PRODUCT_STAGE);
   assert.equal(info.schemaVersion, SCHEMA_VERSION);
   assert.equal(info.valid, true);
   assert.equal(info.configPath, "/tmp/graph.json");

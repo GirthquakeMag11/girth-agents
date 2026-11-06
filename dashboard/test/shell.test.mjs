@@ -10,9 +10,25 @@ const fixtures = {
   "crossing.json": await readFile(new URL("../fixtures/crossing.json", import.meta.url), "utf8"),
 };
 
-test("shell: escape closes the panel and the palette opens it fullscreen", () => {
+test("shell: escape returns home and the palette opens the dashboard route from anywhere", () => {
   assert.match(tui, /id: "graph-dashboard\.close", bind: "escape"/);
-  assert.match(tui, /panel\.open\(PANEL, \{ presentation: "fullscreen" \}\)/);
+  assert.match(tui, /router\.navigate\(\{ type: "home" \}\)/);
+  assert.match(tui, /router\.register\(\{\s*\n\s*name: ROUTE,/);
+  assert.match(tui, /router\.navigate\(\{ type: "plugin", name: ROUTE \}\)/);
+  // A session panel cannot be opened without an active session; the dashboard
+  // must be a route so it opens from Home too.
+  assert.doesNotMatch(tui, /session\.panel/);
+  assert.doesNotMatch(tui, /panel\.open\(/);
+});
+
+test("shell: the dashboard open command binds alt+g, not a shift-collapsed chord", () => {
+  // ctrl+shift+<letter> is delivered as ctrl+<letter> in terminals without
+  // shift-bit reporting (gnome-terminal), so a ctrl+shift+g bind would never
+  // fire. alt+g is escape-prefixed and reliably delivered.
+  assert.match(tui, /id: "graph-dashboard\.open"/);
+  assert.match(tui, /bind: "alt\+g"/);
+  assert.match(tui, /palette: true/);
+  assert.doesNotMatch(tui, /bind: "ctrl\+shift\+g"/);
 });
 
 test("shell: every text element declares an explicit wrap policy", () => {

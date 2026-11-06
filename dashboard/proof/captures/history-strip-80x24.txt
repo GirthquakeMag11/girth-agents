@@ -1,6 +1,6 @@
-  graph.json                                          read-only · esc to close  
+  Graph Engine 0.5.0 ALPHA                            read-only · esc to close  
   1 workflow · 3 nodes  ● live                                                  
-  valid  v0.5.0                                                                 
+  valid                                                                         
 ────────────────────────────────────────────────────────────────────────────────
                                                                                 
  ╭─Graph──────────────────────────────────────────────────────────────────────╮ 

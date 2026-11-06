@@ -13,7 +13,7 @@ function snapshot(overrides = {}) {
       agents: [],
       graph: { nodes: [{ id: "review", agent: "builder", objective: "Review.", handoff: { mode: "terminal" } }] },
     },
-    info: { ok: true, version: "0.5.0", schemaVersion: "5", valid: true, configPath: "/graph/config.json" },
+    info: { ok: true, name: "Graph Engine", version: "0.5.0", stage: "ALPHA", schemaVersion: "5", valid: true, configPath: "/graph/config.json" },
     runtime: { paused: false, active: null, queue: [], lastDefect: null, lastEvent: null, history: [] },
     ...overrides,
   };

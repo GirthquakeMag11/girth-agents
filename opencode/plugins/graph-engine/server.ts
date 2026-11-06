@@ -78,13 +78,19 @@ function toolSource(context) {
 }
 
 function dashboardSnapshot(runtime: any) {
-  return {
-    ok: true,
-    config: runtime.config,
-    info: runtime.graphInfo(),
-    map: runtime.graphMap(),
-    runtime: runtime.snapshot(),
-  };
+  // The RPC output must be strict JSON. The raw config carries `undefined`
+  // (model-less mounts, omitted optional fields), which the RPC output
+  // validation rejects (`rpc.invalid_output: Expected JSON value at ["config"]`).
+  // A JSON round-trip drops `undefined` exactly as the wire transport would.
+  return JSON.parse(
+    JSON.stringify({
+      ok: true,
+      config: runtime.config,
+      info: runtime.graphInfo(),
+      map: runtime.graphMap(),
+      runtime: runtime.snapshot(),
+    }),
+  );
 }
 
 export default Plugin.define({

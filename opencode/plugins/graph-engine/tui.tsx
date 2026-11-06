@@ -3,14 +3,13 @@
 // from disk.
 
 import { Plugin, usePlugin } from "@opencode/plugin/tui";
-import type { PanelInput } from "@opencode/plugin/tui/context";
 import { useTerminalDimensions } from "@opentui/solid";
-import { Show, createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import { snapshotToDashboard } from "./dashboard/src/data.mjs";
 import { GraphEngine } from "./rpc.ts";
 import { DashboardView, type Dashboard } from "./dashboard/src/view.tsx";
 
-const PANEL = "graph-dashboard";
+const ROUTE = "graph-dashboard";
 
 // An RPC rejection is an object envelope, not an Error, so deriving a message
 // from it must walk `message`/`error` rather than `String(cause)`, which would
@@ -24,7 +23,11 @@ function errorMessage(cause: unknown): string {
   return String(cause);
 }
 
-function DashboardPanel(props: { panel: PanelInput }) {
+// A full-screen route, not a session panel. The dashboard shows engine-global
+// state — one graph, one runtime — while session panels silently return false
+// when opened with no active session, which leaves the dashboard unreachable
+// from Home. A route opens from anywhere.
+function DashboardRoute() {
   const context = usePlugin();
   const theme = context.theme;
   const dimensions = useTerminalDimensions();
@@ -32,7 +35,7 @@ function DashboardPanel(props: { panel: PanelInput }) {
   const [error, setError] = createSignal<string | null>(null);
 
   context.keymap.layer(() => ({
-    commands: [{ id: "graph-dashboard.close", bind: "escape", run: () => props.panel.close() }],
+    commands: [{ id: "graph-dashboard.close", bind: "escape", run: () => context.ui.router.navigate({ type: "home" }) }],
   }));
 
   onMount(() => {
@@ -75,13 +78,9 @@ function DashboardPanel(props: { panel: PanelInput }) {
 export default Plugin.define({
   id: "graph-engine.tui",
   setup(context) {
-    context.ui.slot({
-      append: "session.panel",
-      render: (panel) => (
-        <Show when={panel.name === PANEL}>
-          <DashboardPanel panel={panel} />
-        </Show>
-      ),
+    const unregister = context.ui.router.register({
+      name: ROUTE,
+      render: () => <DashboardRoute />,
     });
     context.keymap.layer(() => ({
       mode: "global",
@@ -90,12 +89,17 @@ export default Plugin.define({
           id: "graph-dashboard.open",
           title: "Open graph dashboard",
           group: "Graph",
-          bind: "ctrl+shift+g",
+          // alt+g, not ctrl+shift+g: the test-drive terminal (gnome-terminal)
+          // does not report the Shift bit on control characters, so
+          // ctrl+shift+g arrives as ctrl+g — OpenCode's default "first
+          // message" binding — and the dashboard key never fires there.
+          bind: "alt+g",
           palette: true,
-          run: () => context.ui.panel.open(PANEL, { presentation: "fullscreen" }),
+          run: () => context.ui.router.navigate({ type: "plugin", name: ROUTE }),
         },
       ],
       bindings: ["graph-dashboard.open"],
     }));
+    return unregister;
   },
 });

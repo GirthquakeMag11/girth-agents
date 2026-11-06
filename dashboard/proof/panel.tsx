@@ -2,7 +2,7 @@ import { testRender } from "@opentui/solid";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DashboardView } from "../src/view.tsx";
-import { PROJECT_VERSION } from "../../engine/version.mjs";
+import { PRODUCT_NAME, PRODUCT_STAGE, PROJECT_VERSION } from "../../engine/version.mjs";
 import { SCHEMA_VERSION, loadConfig } from "../../engine/config.mjs";
 
 process.env.TZ = "UTC";
@@ -89,7 +89,7 @@ const idleRuntime = {
   historyEpoch: "proof-boot",
 };
 
-const info = { ok: true, version: PROJECT_VERSION, schemaVersion: SCHEMA_VERSION, valid: true, configPath: "graph/config.json" };
+const info = { ok: true, name: PRODUCT_NAME, version: PROJECT_VERSION, stage: PRODUCT_STAGE, schemaVersion: SCHEMA_VERSION, valid: true, configPath: "graph/config.json" };
 const cases = [
   {
     name: "history-active-160x50",

@@ -14,7 +14,7 @@ import { renderGraphMapResponse } from "./map.mjs";
 import { dispatchStatusBody, renderDispatchDisplay } from "./display.mjs";
 import { createActivityHistory, workflowForEvent } from "./history.mjs";
 import { ControlError } from "./errors.mjs";
-import { PROJECT_VERSION } from "./version.mjs";
+import { PRODUCT_NAME, PRODUCT_STAGE, PROJECT_VERSION } from "./version.mjs";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -269,7 +269,7 @@ export async function createRuntime({ configPath, driver, onNotice = () => {} })
   }
 
   function graphInfo() {
-    return graphInfoResponse(config, configPath, PROJECT_VERSION);
+    return graphInfoResponse(config, configPath, PROJECT_VERSION, PRODUCT_NAME, PRODUCT_STAGE);
   }
 
   function snapshot() {

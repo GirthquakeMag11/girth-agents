@@ -3,7 +3,7 @@ import { createSignal } from "solid-js";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DashboardView } from "../src/view.tsx";
-import { PROJECT_VERSION } from "../../engine/version.mjs";
+import { PRODUCT_NAME, PRODUCT_STAGE, PROJECT_VERSION } from "../../engine/version.mjs";
 import { SCHEMA_VERSION, loadConfig } from "../../engine/config.mjs";
 
 process.env.TZ = "UTC";
@@ -40,7 +40,7 @@ const baseHistory = [{ seq: 1, at: "2026-10-30T14:00:00.000Z", kind: "queued", d
 
 const productData = {
   config: product,
-  info: { ok: true, version: PROJECT_VERSION, schemaVersion: SCHEMA_VERSION, valid: true, configPath: "graph/config.json" },
+  info: { ok: true, name: PRODUCT_NAME, version: PROJECT_VERSION, stage: PRODUCT_STAGE, schemaVersion: SCHEMA_VERSION, valid: true, configPath: "graph/config.json" },
   runtime: {
     active: {
       dispatchId: "d-1",

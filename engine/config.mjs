@@ -905,7 +905,7 @@ export function graphSummary(graph) {
     nodes: graph.nodes.map((node) => ({
       id: node.id,
       agent: node.agent,
-      objective: node.objective,
+      objective: node.objective ?? null,
       maxVisits: node.maxVisits ?? null,
       handoff:
         node.handoff.mode === "conditional"
@@ -915,8 +915,8 @@ export function graphSummary(graph) {
   };
 }
 
-export function graphInfoResponse(doc, path, version) {
-  return { ok: true, version, schemaVersion: doc.version, valid: true, ...configSummary(doc, path) };
+export function graphInfoResponse(doc, path, version, name, stage) {
+  return { ok: true, name, version, stage, schemaVersion: doc.version, valid: true, ...configSummary(doc, path) };
 }
 
 export function configSummary(doc, path) {
@@ -925,7 +925,7 @@ export function configSummary(doc, path) {
     graph: graphSummary(doc.graph),
     agents: doc.agents.map((graphAgent) => ({
       id: graphAgent.id,
-      model: graphAgent.model,
+      model: graphAgent.model ?? null,
       mounts: graphAgent.mounts,
       description: graphAgent.description ?? null,
       tools: graphAgent.tools ?? [],

@@ -127,6 +127,11 @@ assert.equal(snapshot.config.graph.workflows.map((workflow) => workflow.id).join
 assert.equal(snapshot.info.schemaVersion, "6");
 assert.equal(snapshot.runtime.active, null, "the queue is idle after both dispatches");
 assert.match(snapshot.map.mermaid, /implement/);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(snapshot)),
+  snapshot,
+  "the dashboard snapshot is strict JSON — no undefined survives (the RPC output validation rejects otherwise)",
+);
 const completions = snapshot.runtime.history.filter((entry) => entry.kind === "completion");
 assert.ok(completions.length >= 2, "history records both completions");
 console.log("PASS  the dashboard snapshot reads graph, info, map, and runtime through RPC");

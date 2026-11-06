@@ -350,7 +350,8 @@ read_conf() {
 }
 SLUG=$(read_conf PRODUCT_SLUG)
 VERSION=$(read_conf PROJECT_VERSION)
-[ -n "$SLUG" ] && [ -n "$VERSION" ] || { echo "install: archive product.conf is incomplete" >&2; exit 1; }
+STAGE=$(read_conf PRODUCT_STAGE)
+[ -n "$SLUG" ] && [ -n "$VERSION" ] && [ -n "$STAGE" ] || { echo "install: archive product.conf is incomplete" >&2; exit 1; }
 [ "$(basename "$TOP")" = "$SLUG-$VERSION" ] || {
   echo "install: archive directory '$(basename "$TOP")' does not match $SLUG-$VERSION" >&2
   exit 1
@@ -370,7 +371,7 @@ if [ -n "$fail" ]; then
   exit 1
 fi
 
-echo "version:    ${VERSION}"
+echo "version:    ${VERSION} ${STAGE}"
 echo "install root: $CONFIG_DIR"
 
 # 10. Build the manifest from the installed plugin package (the graph is
@@ -439,7 +440,7 @@ else
 fi
 
 # 12. Report.
-echo "installed:  Graph Engine v$VERSION into $CONFIG_DIR"
+echo "installed:  Graph Engine v$VERSION $STAGE into $CONFIG_DIR"
 echo "graph:      $CONFIG_DIR/graph-engine/graph ($seeded)"
 echo "plugin:     OpenCode loads $CONFIG_DIR/plugins/graph-engine automatically"
 echo "plugin:     OpenCode loads $CONFIG_DIR/plugins/graph-engine-utils automatically"

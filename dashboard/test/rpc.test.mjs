@@ -20,7 +20,7 @@ function fakeSnapshot() {
         nodes: [{ id: "implement", agent: "builder", objective: "Implement.", handoff: { mode: "unconditional", to: "review" } }],
       },
     },
-    info: { ok: true, version: "0.5.0", schemaVersion: "5", valid: true, configPath: "/config/graph/config.json" },
+    info: { ok: true, name: "Graph Engine", version: "0.5.0", stage: "ALPHA", schemaVersion: "5", valid: true, configPath: "/config/graph/config.json" },
     map: { ok: true, mermaid: "flowchart LR" },
     runtime: {
       paused: false,

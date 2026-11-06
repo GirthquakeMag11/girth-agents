@@ -28,7 +28,7 @@ type ConfigNode = {
 };
 type Workflow = { id: string; entry: string; exit: string; nodes: string[]; connections?: string[]; strict?: boolean };
 type Config = { graph: { workflows?: Workflow[]; nodes: ConfigNode[] } };
-type GraphInfo = { ok: boolean; version: string; schemaVersion?: string; valid: boolean; configPath: string };
+type GraphInfo = { ok: boolean; name: string; version: string; stage: string; schemaVersion?: string; valid: boolean; configPath: string };
 type DispatchStatus = {
   dispatchId: string;
   node: string;
@@ -147,8 +147,8 @@ function clock(value?: string | Date | null) {
 }
 
 function identity(info: GraphInfo) {
-  const file = info.configPath.split(/[\\/]/).pop() || "graph";
-  return file.length > 28 ? `${file.slice(0, 27)}…` : file;
+  const label = `${info.name} ${info.version} ${info.stage}`;
+  return label.length > 28 ? `${label.slice(0, 27)}…` : label;
 }
 
 function stateColor(theme: Theme, color: string) {
@@ -226,9 +226,6 @@ function Header(props: {
               <text fg={validityColor()} wrapMode="none" truncate>
                 {validity()}
               </text>
-              <text fg={props.theme.text.muted} wrapMode="none" truncate>
-                v{props.info().version}
-              </text>
               <text fg={props.theme.text.faint} wrapMode="none" truncate>
                 read-only · esc to close
               </text>
@@ -255,9 +252,6 @@ function Header(props: {
         <box flexDirection="row" gap={2}>
           <text fg={validityColor()} wrapMode="none" truncate>
             {validity()}
-          </text>
-          <text fg={props.theme.text.muted} wrapMode="none" truncate>
-            v{props.info().version}
           </text>
         </box>
       </Show>
