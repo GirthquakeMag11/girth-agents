@@ -4,8 +4,5 @@
 # Tooling
 node_modules/
 
-# Engine runtime installs
-.opencode/
-
 # Packaging
 /dist/
