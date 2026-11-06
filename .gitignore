@@ -6,3 +6,6 @@ node_modules/
 
 # Packaging
 /dist/
+
+# Machine-local test-drive notes (see .opencode/skills/test-drive)
+.opencode/testdrive/
