@@ -48,7 +48,7 @@ done
 
 echo "== provision clean image =="
 podman rm -f provision-tmp 2>/dev/null || true
-podman run -d --name provision-tmp -e HOME=/root --network podman \
+podman run -d --name provision-tmp -e HOME=/root \
   -v "$WORK/dist:/dist:ro" "$IMG_BASE" sleep infinity >/dev/null
 podman exec -e HOME=/root provision-tmp mkdir -p /root/.config/opencode
 podman exec -e HOME=/root provision-tmp /dist/install.sh \
@@ -65,10 +65,16 @@ fi
 rm -f "$WORK/auth-export.err"
 
 echo "== verify clean before commit =="
-podman exec provision-tmp sh -c \
-  'test -z "$(ls -A /root/.local/state/opencode/latest 2>/dev/null)" \
-   && test ! -f /root/.local/state/opencode/prompt-history.jsonl \
-   && opencode auth list | grep -q OpenRouter'
+podman exec provision-tmp sh -c '
+  test -z "$(ls -A /root/.local/state/opencode/latest 2>/dev/null)" \
+    || { echo "state/latest not empty"; exit 1; }
+  test ! -f /root/.local/state/opencode/prompt-history.jsonl \
+    || { echo "prompt-history present"; exit 1; }
+  find /root/.local/share/opencode -maxdepth 1 -name opencode.db -mmin -10 \
+    | grep . >/dev/null || { echo "FAIL: opencode.db not freshly created at provision"; exit 1; }
+  opencode auth list | grep OpenRouter >/dev/null \
+    || { echo "FAIL: OpenRouter credential missing"; exit 1; }
+'
 
 echo "== commit =="
 podman commit --change "LABEL $LABEL_KEY=$LABEL_VAL" provision-tmp \

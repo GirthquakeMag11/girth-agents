@@ -69,9 +69,15 @@ changes go to a human through git. Never rewrite the skill or scripts yourself.
 2. `bash scripts/provision.sh` — archive, base image, clean credentialed image.
 3. `bash scripts/launch.sh` — opens the seat; confirm a `seat-*` container is
    running on the provisioned image.
-4. Hand the seat to the user to drive (talk to the Engineer, dispatch
-   `build-review`, watch the dashboard). The first answer must come from the
-   pinned `openrouter/~deepseek/deepseek-flash-latest`, not the free default.
+4. Hand the seat to the user to drive **the project, not the bare chat**: in
+   the seat, switch to the **Engineer** (or **Conductor**) — the graph's
+   primary agents pin `openrouter/~deepseek/deepseek-flash-latest`. Ask the
+   Engineer for the graph, have the Conductor dispatch `build-review`, and watch
+   it reach the `done` terminal. A dispatch that reaches a terminal is the
+   decidable proof the pinned model served — graph-node sessions pin the model
+   and never fall back (a failure would defect with the model named instead).
+   The seat's bare default session runs a free fallback model; do not judge the
+   pinned model by messages typed there.
 
 Stop here. Tear nothing down until the user reports they have closed the TUI.
 
@@ -82,7 +88,10 @@ Stop here. Tear nothing down until the user reports they have closed the TUI.
    - `ModelUnavailableError` → RED, reject: credentials/model failed.
    - `models.dev` timeout → environment note (the host's own slow path to
      Cloudflare), not a sandbox failure.
-   - The pinned model never serving while the user drove → fallback, reject.
+   - The user drove the Engineer/Conductor and no answered session or completed
+     dispatch shows the pinned model, or the dispatch defected → fallback,
+     reject. The `deepseek mentions` count is corroboration only — a mention
+     does not prove a served answer.
 2. `bash scripts/teardown.sh` — remove everything and verify empty. If it exits
    nonzero, report the surviving artifacts.
 3. Report the verdict — accept or reject — each claim backed by its evidence

@@ -90,7 +90,7 @@ sweep() {
   echo "[$tag] verify empty"
   local fail=0
   if ! podman ps -a >/dev/null 2>&1; then echo "FAIL: podman ps -a failed at verification"; fail=1; fi
-  if podman ps -a --format '{{.Names}}' 2>/dev/null | grep -Eq '^(provision-tmp|seat-)'; then
+  if podman ps -a --format '{{.Names}}' 2>/dev/null | grep -E '^(provision-tmp|seat-)' >/dev/null; then
     echo "FAIL: containers remain"
     podman ps -a --format '{{.Names}} {{.Image}}' | grep -E '^(provision-tmp|seat-)'
     fail=1

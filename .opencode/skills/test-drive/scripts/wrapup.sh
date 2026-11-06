@@ -19,7 +19,7 @@ if podman cp "$SEAT:/root/.local/share/opencode/log/opencode.log" "$WORK/seat-op
   grep 'level=ERROR' "$WORK/seat-opencode.log" || echo "(none)"
   echo "-- counts --"
   echo "ModelUnavailableError            : $(grep -c 'ModelUnavailableError' "$WORK/seat-opencode.log" || true)"
-  echo "pinned deepseek served           : $(grep -c 'openrouter/~deepseek/deepseek-flash-latest' "$WORK/seat-opencode.log" || true)"
+  echo "deepseek mentions (corroboration): $(grep -c 'openrouter/~deepseek/deepseek-flash-latest' "$WORK/seat-opencode.log" || true)"
   echo "models.dev fetches mentioned     : $(grep -c 'models.dev' "$WORK/seat-opencode.log" || true)"
 else
   echo "WARN: no opencode.log existed in the seat"

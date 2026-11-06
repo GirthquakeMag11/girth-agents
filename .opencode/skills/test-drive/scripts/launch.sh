@@ -12,7 +12,7 @@ cat > "$WORK/seat.sh" <<'EOF'
 NAME="seat-$(date +%s)"
 echo "test-drive seat: $NAME (quit the TUI to end it; its processes die with the container)"
 podman run -it --name "$NAME" -e HOME=/root -e TERM=xterm-256color \
-  --network podman --pids-limit 256 --memory 4g \
+  --pids-limit 256 --memory 4g \
   localhost/graph-engine-sandbox:provisioned opencode
 echo "seat ended: $NAME"
 EOF
