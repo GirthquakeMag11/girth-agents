@@ -79,7 +79,9 @@ changes go to a human through git. Never rewrite the skill or scripts yourself.
    decidable proof the pinned model served — graph-node sessions pin the model
    and never fall back (a failure would defect with the model named instead).
    The seat's bare default session runs a free fallback model; do not judge the
-   pinned model by messages typed there.
+   pinned model by messages typed there. The user may end the drive without
+   starting any session at all — seeing what the seat shows is often exactly
+   what they came for. That is a completed drive, not a broken one.
 5. `bash scripts/wait.sh` — blocks until the seat's opencode process ends.
    Give it the longest timeout your shell tool allows (ideally none); a drive
    takes minutes. Quitting the TUI ends the process and releases the wait.
@@ -102,11 +104,16 @@ standing.
    - `ModelUnavailableError` → RED, reject: credentials/model failed.
    - `models.dev` timeout → environment note (the host's own slow path to
      Cloudflare), not a sandbox failure.
-   - The user drove the Engineer/Conductor and no answered session or completed
-     dispatch shows the pinned model, or the dispatch defected → fallback,
-     reject. The `deepseek mentions` count is corroboration only — a mention
-     does not prove a served answer.
+   - No session created in the seat is **not** a sign anything went wrong with
+     the process: it means the user got the information they needed before even
+     starting a session. Report it as such — the pinned-model proof was simply
+     not run this time — and never classify it as a failure.
+   - The user started an Engineer/Conductor session and no completed dispatch
+     shows the pinned model, or the dispatch defected → fallback, reject. The
+     `deepseek mentions` count is corroboration only — a mention does not prove
+     a served answer.
 2. `bash scripts/teardown.sh` — remove everything and verify empty. If it exits
    nonzero, report the surviving artifacts.
-3. Report the verdict — accept or reject — each claim backed by its evidence
-   line.
+3. Report the verdict — accept, reject, or (when no session was created) a
+   no-session note that the user got what they needed before starting one —
+   each claim backed by its evidence line.
