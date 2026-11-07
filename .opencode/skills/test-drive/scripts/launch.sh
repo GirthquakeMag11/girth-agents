@@ -13,7 +13,7 @@ NAME="seat-$(date +%s)"
 echo "test-drive seat: $NAME (quit the TUI to end it; its processes die with the container)"
 podman run -it --name "$NAME" -e HOME=/root -e TERM=xterm-256color \
   --pids-limit 256 --memory 4g \
-  localhost/graph-engine-sandbox:provisioned opencode
+  "$IMG_PROVISIONED" opencode
 echo "seat ended: $NAME"
 EOF
 chmod +x "$WORK/seat.sh"
@@ -28,5 +28,5 @@ case "$TERM_CMD" in
 esac
 
 sleep 3
-podman ps --filter ancestor=localhost/graph-engine-sandbox:provisioned \
+podman ps --filter ancestor="$IMG_PROVISIONED" \
   --format '{{.Names}} {{.Status}}'

@@ -53,6 +53,9 @@ field, a dispatch record, or a dashboard field.
   document's id (its filename).
 - A graph agent is a Markdown document: its frontmatter carries its properties
   and its body is its prompt.
+- An agent's id is its unique identifier. The graph is authoritative for every
+  id it declares, published or not; a second definition with the same id is a
+  named collision, and there is no special class of built-in agents.
 - A graph agent's `skills` field references skill documents directly. There is
   no top-level skill catalog.
 - Do not use `helpers`, `graphAgents`, or another alias.
@@ -97,6 +100,20 @@ field, a dispatch record, or a dashboard field.
   replacement, plugin-owned "mode" behavior, strict RPC shapes) are
   implementation details behind the materializer, never user surface. Do not
   leak them.
+
+## Synthetic messages carry model context
+
+- A synthetic session message has two audiences: its `text` is injected into
+  the model's message history (role `user`); its `description` is a transcript
+  label, and an absent or empty description keeps the row out of the transcript
+  while the `text` still reaches the model.
+- OpenCode's native switch messages (`agent-switched`, `model-switched`,
+  `location-switched`) are transcript-only: the model context drops them. A
+  switch that must be visible to the model therefore needs a synthetic in
+  addition to the native line — one for the user, one for the model.
+- Removing such a synthetic would silently strip model-facing context with no
+  visible evidence in the transcript. Never delete a synthetic to
+  "de-duplicate" it against a native transcript line.
 
 ## Check before proposing
 

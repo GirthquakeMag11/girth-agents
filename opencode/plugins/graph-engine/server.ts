@@ -5,7 +5,7 @@
 import { Plugin } from "@opencode/plugin";
 import { createPluginDriver } from "./engine/plugin-driver.mjs";
 import { createRuntime } from "./engine/runtime.mjs";
-import { handoffLabels } from "./engine/config.mjs";
+import { findNode, handoffLabels } from "./engine/config.mjs";
 import { materializationPlan } from "./engine/materialize.mjs";
 import { GraphEngine } from "./rpc.ts";
 import { dirname, resolve } from "node:path";
@@ -219,6 +219,9 @@ export default Plugin.define({
           // `undefined`, which would clear an inherited (default) model.
           if (entry.model !== undefined) agent.model = entry.model;
           agent.description = entry.description;
+          // Only assign a color when the document declares one; never assign
+          // `undefined`, which would clear a default/derived color.
+          if (entry.color !== undefined) agent.color = entry.color;
           agent.permissions = [...entry.permissions];
         });
       }
@@ -300,6 +303,31 @@ export default Plugin.define({
             },
             directory,
           );
+          // Completion is delivered the way a subagent completion is: a
+          // synthetic with `source: "subagent"` metadata renders the native
+          // "↳ <agent> finished · <title>" transcript line and links into the
+          // terminal node's session, while the synthetic `text` carries the
+          // full result to the model (a synthetic's `text` is model context,
+          // its `description` the transcript label — see INVARIANTS). Emitted
+          // in both modes so foreground and background render identically.
+          const deliver = async (result: any) => {
+            const display = result.display ?? JSON.stringify(result);
+            const node = findNode(runtime.config.graph, result.node ?? started.node);
+            const title = result.workflow ?? result.node ?? "graph dispatch";
+            await ctx.session.synthetic({
+              sessionID: context.sessionID,
+              description: title,
+              text: `<graph-dispatch dispatchID="${started.dispatchId}" state="${result.state}" description="${title}">\n${display}\n</graph-dispatch>`,
+              metadata: {
+                source: "subagent",
+                childID: result.state === "completed" ? result.sessionId : null,
+                agent: node?.agent ?? "graph",
+                state: result.state === "defect" ? "error" : result.state,
+                dispatchId: started.dispatchId,
+              },
+            });
+          };
+
           if (input.background === true) {
             void (async () => {
               try {
@@ -309,20 +337,7 @@ export default Plugin.define({
                 while (!TERMINAL.has(result.state)) {
                   result = await runtime.wait(started.dispatchId, 300000);
                 }
-                const display = result.display ?? JSON.stringify(result);
-                await ctx.session.synthetic({
-                  sessionID: context.sessionID,
-                  description: "graph dispatch " + started.dispatchId,
-                  text: `<graph-dispatch dispatchID="${started.dispatchId}" state="${result.state}">\n${display}\n</graph-dispatch>`,
-                  metadata: {
-                    source: "graph-dispatch",
-                    dispatchId: started.dispatchId,
-                    state: result.state,
-                    node: result.node ?? started.node,
-                    workflow: result.workflow ?? started.workflow ?? null,
-                    label: result.handoff?.label ?? null,
-                  },
-                });
+                await deliver(result);
               } catch (error) {
                 console.error("dispatch.notification-failed", {
                   dispatchId: started.dispatchId,
@@ -332,10 +347,12 @@ export default Plugin.define({
             })();
             return { content: started.display ?? JSON.stringify(started) };
           }
+
           let result = await runtime.wait(started.dispatchId, 300000);
           while (!TERMINAL.has(result.state)) {
             result = await runtime.wait(started.dispatchId, 300000);
           }
+          await deliver(result);
           return { content: result.display ?? JSON.stringify(result) };
         },
       });
@@ -489,11 +506,11 @@ export default Plugin.define({
     // live agent catalog defects before a node runs. The live list (read after
     // materialization, so mounted agents count) is the authority; never a copy.
     // Re-run on a valid reload so the gate follows the catalog, not a snapshot.
-    // The built-in re-derivations this package owns (id). A user config document
-// for one of them overrides ours — `opencode.config.agent` runs last — so that
-// is a named defect, never a silent loss.
-const OWNED_AGENTS = new Set(["build", "plan", "general", "explore"]);
-
+    //
+    // Name collisions are errors, full stop. The graph is the authoritative
+    // agent catalog: every id it declares is a unique identifier, published or
+    // not. A graph-only id must be absent from the catalog; a published id must
+    // be present with the graph's own definition.
     const reportSubagents = async () => {
       try {
         const listed = await ctx.agent.list();
@@ -504,32 +521,36 @@ const OWNED_AGENTS = new Set(["build", "plan", "general", "explore"]);
             if (!live.has(subagent)) missing.push({ agent: graphAgent.id, subagent });
           }
         }
-        // Collisions: compare only the parts we own (system/description/mode).
+        // Collisions: compare only the identity parts (system/description/mode).
         // The user's global-config permissions are appended to every agent, so
-        // permissions always differ — comparing them would false-positive.
-        // `model` is deliberately not compared: these four inherit it unless the
-        // user pins one, which is pinning, not overriding us.
+        // permissions always differ — comparing them would false-positive. A
+        // pinned `model` or a display `name` is a layer on top of one
+        // definition, not a second definition, so those stay out.
         const collisions = [];
         for (const graphAgent of runtime.config.agents ?? []) {
-          if (!OWNED_AGENTS.has(graphAgent.id)) continue;
-          const entry = live.get(graphAgent.id);
-          const ownedSystem = graphAgent.prompt ?? "";
-          const ownedDescription = graphAgent.description ?? "";
-          // The mode our materializer derives from the mounts (same derivation
-          // as engine/materialize.mjs). A config document that copies our
-          // system/description verbatim but changes the mode (e.g. makes a
-          // primary a subagent) overrides us — a named defect, never a silent
-          // loss.
           const mounts = graphAgent.mounts ?? [];
           const primary = mounts.includes("primary");
           const subagent = mounts.includes("subagent");
-          const ownedMode = primary && subagent ? "all" : primary ? "primary" : subagent ? "subagent" : null;
-          if (
-            !entry ||
-            (entry.system ?? "") !== ownedSystem ||
-            (entry.description ?? "") !== ownedDescription ||
-            entry.mode !== ownedMode
-          ) {
+          const entry = live.get(graphAgent.id);
+          if (primary || subagent) {
+            const expectedSystem = graphAgent.prompt ?? "";
+            const expectedDescription = graphAgent.description ?? "";
+            // The mode the materializer derives from the mounts (same derivation
+            // as engine/materialize.mjs). A catalog entry that copies our
+            // system/description verbatim but changes the mode (e.g. makes a
+            // primary a subagent) is a different definition — a named defect.
+            const expectedMode = primary && subagent ? "all" : primary ? "primary" : "subagent";
+            if (
+              !entry ||
+              (entry.system ?? "") !== expectedSystem ||
+              (entry.description ?? "") !== expectedDescription ||
+              entry.mode !== expectedMode
+            ) {
+              collisions.push(graphAgent.id);
+            }
+          } else if (entry) {
+            // graph-only: the id is owned without being published, so any
+            // catalog entry is a foreign definition.
             collisions.push(graphAgent.id);
           }
         }

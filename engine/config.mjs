@@ -22,6 +22,12 @@ const PERMISSION_EFFECTS = new Set(["allow", "ask", "deny"]);
 
 const MOUNTS = new Set(["graph", "primary", "subagent"]);
 
+// OpenCode's agent Color union, mirrored exactly so a document never carries a
+// value the live catalog would reject: a six-digit hex or a lowercase theme
+// token (the TUI tints the active agent with it).
+const COLOR_HEX = /^#[0-9a-fA-F]{6}$/;
+const COLOR_TOKENS = new Set(["primary", "secondary", "accent", "success", "warning", "error", "info"]);
+
 // The dispatching agent is a handoff target, not a graph node.
 export const DISPATCHER_TARGET = "$dispatcher";
 
@@ -157,26 +163,29 @@ function validateToolNames(value, at, faults, code) {
   }
 }
 
+function validateAgentColor(value, at, faults) {
+  if (value === undefined) return;
+  if (typeof value !== "string" || (!COLOR_HEX.test(value) && !COLOR_TOKENS.has(value))) {
+    faults.push(
+      fault(
+        "schema.agent-color",
+        `${at}: must be a '#RRGGBB' hex or a theme color (primary, secondary, accent, success, warning, error, info)`,
+      ),
+    );
+  }
+}
+
 function validateAgentProperties(graphAgent, at, faults) {
   validateMounts(graphAgent.mounts, `${at}.mounts`, faults);
-  // A graph mount materializes node sessions that need a concrete model;
-  // primary/subagent mounts may omit `model` to inherit the session default.
-  const isGraph = Array.isArray(graphAgent.mounts) && graphAgent.mounts.includes("graph");
-  if (graphAgent.model === undefined) {
-    if (isGraph) {
-      faults.push(
-        fault(
-          "agent.missing-model",
-          `${at}.model: a 'graph' mount requires a model ('provider/model' or 'provider/model#variant')`,
-        ),
-      );
-    }
-  } else {
+  // `model` is optional on every mount: an agent without one — graph, primary,
+  // or subagent — inherits the session default. A declared model is still
+  // validated so a malformed one faults at load instead of publishing a
+  // silently-unresolvable registry ref.
+  if (graphAgent.model !== undefined) {
     string(graphAgent.model, `${at}.model`, faults);
     if (typeof graphAgent.model === "string") {
       // Mirror the SDK's Model.Ref.parse: a provider, a non-empty id, and an
-      // optional non-empty variant. Reject otherwise so a malformed model faults
-      // at load instead of publishing a silently-unresolvable registry ref.
+      // optional non-empty variant.
       const slash = graphAgent.model.indexOf("/");
       const hash = graphAgent.model.indexOf("#");
       const provider = slash > 0 ? graphAgent.model.slice(0, slash) : "";
@@ -210,6 +219,7 @@ function validateAgentProperties(graphAgent, at, faults) {
     }
   }
   if (graphAgent.description !== undefined) string(graphAgent.description, `${at}.description`, faults);
+  validateAgentColor(graphAgent.color, `${at}.color`, faults);
   if (graphAgent.subagents !== undefined) {
     if (!Array.isArray(graphAgent.subagents)) {
       faults.push(fault("schema.agent-subagents", `${at}.subagents: must be an array of OpenCode agent ids`));
@@ -233,7 +243,7 @@ function validateGraphAgent(graphAgent, at, faults) {
     faults.push(fault("schema.agent", `${at}: must be an object`));
     return;
   }
-  strict(graphAgent, ["id", "model", "mounts", "tools", "permissions", "prompt", "skills", "description", "subagents"], at, faults);
+  strict(graphAgent, ["id", "model", "mounts", "tools", "permissions", "prompt", "skills", "description", "subagents", "color"], at, faults);
   string(graphAgent.id, `${at}.id`, faults);
   validateAgentProperties(graphAgent, at, faults);
   if (graphAgent.prompt !== undefined) string(graphAgent.prompt, `${at}.prompt`, faults);
@@ -241,7 +251,7 @@ function validateGraphAgent(graphAgent, at, faults) {
 
 function validateAgentFrontmatter(data, rel, faults) {
   // `id` is tolerated but ignored: the id is the filename.
-  strict(data, ["id", "model", "mounts", "tools", "permissions", "skills", "description", "subagents"], rel, faults);
+  strict(data, ["id", "model", "mounts", "tools", "permissions", "skills", "description", "subagents", "color"], rel, faults);
   validateAgentProperties(data, rel, faults);
 }
 
@@ -641,6 +651,7 @@ async function loadAgentDocs(paths, baseDir) {
       mounts: data.mounts,
       ...(data.tools !== undefined ? { tools: data.tools } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.color !== undefined ? { color: data.color } : {}),
       ...(data.permissions !== undefined ? { permissions: data.permissions } : {}),
       ...(prompt !== "" ? { prompt } : {}),
       ...(data.skills !== undefined ? { skills: data.skills } : {}),
@@ -934,6 +945,7 @@ export function configSummary(doc, path) {
       model: graphAgent.model ?? null,
       mounts: graphAgent.mounts,
       description: graphAgent.description ?? null,
+      color: graphAgent.color ?? null,
       tools: graphAgent.tools ?? [],
       permissions: graphAgent.permissions ?? [],
       prompt: graphAgent.prompt ?? null,

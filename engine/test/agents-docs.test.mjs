@@ -65,12 +65,14 @@ async function doc(name) {
 
 const body = async (name) => (await doc(name)).body.trim();
 
-test("agents-docs: build.md is the base prompt verbatim, allow-by-default", async () => {
-  const { data, body } = await doc("build");
+test("agents-docs: builder.md is the base prompt verbatim, triple-mounted, allow-by-default", async () => {
+  const { data, body } = await doc("builder");
   assert.equal(body.trim(), BLOCK_A.trim());
-  assert.equal(data.mounts[0], "primary");
+  assert.deepEqual(data.mounts, ["primary", "subagent", "graph"]);
   assert.equal(data.description, "The default agent. Executes tools based on configured permissions.");
-  assert.equal(data.model, undefined, "build inherits the default model");
+  assert.equal(data.model, undefined, "builder inherits the default model");
+  assert.equal(data.color, "#3B82F6");
+  assert.deepEqual(data.subagents, ["explore"]);
   assert.deepEqual(data.permissions, [
     { action: "*", resource: "*", effect: "allow" },
     ...ENV_RULES,
@@ -78,22 +80,13 @@ test("agents-docs: build.md is the base prompt verbatim, allow-by-default", asyn
   ]);
 });
 
-test("agents-docs: general.md is the base prompt verbatim, question/subagent denied", async () => {
-  const { data, body } = await doc("general");
-  assert.equal(body.trim(), BLOCK_A.trim());
-  assert.equal(data.mounts[0], "subagent");
-  assert.deepEqual(data.permissions, [
-    { action: "*", resource: "*", effect: "allow" },
-    ...ENV_RULES,
-    { action: "question", resource: "*", effect: "deny" },
-    { action: "subagent", resource: "*", effect: "deny" },
-  ]);
-});
-
-test("agents-docs: plan.md is the base prompt plus plan mode, edit scoped to the plan dir", async () => {
-  const { data, body } = await doc("plan");
+test("agents-docs: planner.md is the base prompt plus plan mode, triple-mounted, edit scoped to the plan dir", async () => {
+  const { data, body } = await doc("planner");
   assert.equal(body.trim(), `${BLOCK_A.trim()}\n\n${PLAN_MODE.trim()}`);
-  assert.equal(data.mounts[0], "primary");
+  assert.deepEqual(data.mounts, ["primary", "subagent", "graph"]);
+  assert.equal(data.model, undefined, "planner inherits the default model");
+  assert.equal(data.color, "#10B981");
+  assert.deepEqual(data.subagents, ["explore"]);
   assert.deepEqual(data.permissions, [
     { action: "*", resource: "*", effect: "allow" },
     ...ENV_RULES,

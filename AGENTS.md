@@ -33,7 +33,7 @@ Node is provided by `fnm`, not on `PATH`, so prefix with `fnm exec --using=defau
    repeat it.
 3. `opencode models` lists only the default provider's models. Inspect the full
    catalog with `opencode api get /api/model` before concluding a model is gone.
-4. Graph node sessions pin their model and do **not** fall back; interactive
-   sessions fall back to a default. So `ModelUnavailableError` from a node while
-   the interactive agent still talks is a credential/catalog problem, not a code
-   path that stopped working.
+4. A graph agent that declares a `model` pins its node sessions to it and they
+   do **not** fall back; an agent without one — which is every shipped agent
+   today — inherits the session default. So `ModelUnavailableError` from a node
+   is a credential/catalog problem, never a code path that stopped working.

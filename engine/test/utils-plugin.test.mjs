@@ -125,47 +125,48 @@ test("utils: the title and compaction carriers are seeded hidden; no summary", a
 
 test("utils: an agent switch emits exactly one 'Switched from A to B' synthetic", async () => {
   const plugin = await loadUtils({
-    seedAgents: [
-      { id: "build", name: "Build" },
-      { id: "plan", name: "Plan" },
-    ],
+    seedAgents: [{ id: "builder" }, { id: "planner" }],
   });
   try {
     await plugin.setup();
     await plugin.emitEvent("session.agent.selected", {
       sessionID: "ses_1",
-      agent: "plan",
-      previous: "build",
+      agent: "planner",
+      previous: "builder",
     });
     assert.equal(plugin.syntheticCalls.length, 1, "exactly one synthetic message per switch");
     assert.deepEqual(plugin.syntheticCalls[0], {
       sessionID: "ses_1",
-      description: "agent switch",
-      text: "Switched from Build to Plan",
+      text: "Switched from builder to planner",
       resume: false,
     });
+    assert.equal(
+      "description" in plugin.syntheticCalls[0],
+      false,
+      "no description: the synthetic is model-facing only and stays out of the transcript",
+    );
   } finally {
     await plugin.close();
   }
 });
 
 test("utils: a first selection and a no-change event behave", async () => {
-  const plugin = await loadUtils({ seedAgents: [{ id: "build", name: "Build" }] });
+  const plugin = await loadUtils({ seedAgents: [{ id: "builder" }] });
   try {
     await plugin.setup();
     // No previous: "Switched to <agent>".
-    await plugin.emitEvent("session.agent.selected", { sessionID: "ses_2", agent: "build" });
+    await plugin.emitEvent("session.agent.selected", { sessionID: "ses_2", agent: "builder" });
     assert.equal(plugin.syntheticCalls.length, 1);
-    assert.equal(plugin.syntheticCalls[0].text, "Switched to Build");
+    assert.equal(plugin.syntheticCalls[0].text, "Switched to builder");
 
     // Same agent reselected: no message.
-    await plugin.emitEvent("session.agent.selected", { sessionID: "ses_2", agent: "build", previous: "build" });
+    await plugin.emitEvent("session.agent.selected", { sessionID: "ses_2", agent: "builder", previous: "builder" });
     assert.equal(plugin.syntheticCalls.length, 1, "a no-change selection emits nothing");
 
     // Unknown agents fall back to the raw id.
-    await plugin.emitEvent("session.agent.selected", { sessionID: "ses_2", agent: "ghost", previous: "build" });
+    await plugin.emitEvent("session.agent.selected", { sessionID: "ses_2", agent: "ghost", previous: "builder" });
     assert.equal(plugin.syntheticCalls.length, 2);
-    assert.equal(plugin.syntheticCalls[1].text, "Switched from Build to ghost");
+    assert.equal(plugin.syntheticCalls[1].text, "Switched from builder to ghost");
   } finally {
     await plugin.close();
   }

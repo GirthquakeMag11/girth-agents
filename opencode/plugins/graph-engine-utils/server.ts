@@ -1,8 +1,8 @@
 // The generic OpenCode utilities, redistributed out of the core plugins so this
 // package can own them alongside the graph engine. Ships as a second plugin id
 // (`opencode.utils`): the hidden `title` and `compaction` carriers plus the
-// generic "Switched from A to B" announcement on agent selection. There is no
-// `summary` agent — it has no consumer anywhere in OpenCode.
+// model-facing agent-switch annotation (see the synthetic call below). There is
+// no `summary` agent — it has no consumer anywhere in OpenCode.
 
 import { Plugin } from "@opencode/plugin";
 
@@ -79,9 +79,18 @@ export default Plugin.define({
             previous === undefined
               ? `Switched to ${display(next)}`
               : `Switched from ${display(previous)} to ${display(next)}`;
+          // A model-facing annotation, not a user-facing announcement. OpenCode
+          // already shows the native "Switched agent from X to Y" transcript
+          // line (its `agent-switched` message is dropped from the model
+          // context); this synthetic's `text` is injected into the model's
+          // message history so the model knows its agent changed. The
+          // `description` is deliberately omitted: OpenCode drops an
+          // empty-description synthetic from the transcript, so the user sees
+          // nothing extra while the `text` still reaches the model. Never
+          // delete this emission — doing so would silently strip the model's
+          // switch context with no visible evidence.
           await ctx.session.synthetic({
             sessionID: data.sessionID,
-            description: "agent switch",
             text,
             resume: false,
           });

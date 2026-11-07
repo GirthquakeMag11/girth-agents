@@ -32,12 +32,15 @@ const graph = { version: "6", maxSteps: loaded.doc.graph.maxSteps, workflows: lo
 const agentDocs = {
   "builder.md": await readFile(join(repo, "graph", "agents", "builder.md"), "utf8"),
   "reviewer.md": await readFile(join(repo, "graph", "agents", "reviewer.md"), "utf8"),
+  // builder declares `subagents: [explore]`, so explore must be present in the
+  // live catalog for the subagent gate to pass.
+  "explore.md": await readFile(join(repo, "graph", "agents", "explore.md"), "utf8"),
   // A primary-mount doc with no model: the materialized primary mount must
-  // carry no `model` key (T0 inheritance), while a node session is created
-  // with its own concrete model ref.
+  // carry no `model` key (inherits the session default).
   "liaison.md": `---
 mounts: [primary]
 description: The interface agent.
+color: "#3B82F6"
 ---
 Help the user run the pipeline.
 `,
@@ -89,6 +92,7 @@ const liaison = plugin.agentUpdates.find((update) => update.id === "liaison");
 assert.ok(liaison, "the primary mount is published to the agent catalog");
 assert.equal(liaison.draft.mode, "primary");
 assert.ok(!("model" in liaison.draft), "a primary mount without a declared model inherits the session default (no model key)");
+assert.equal(liaison.draft.color, "#3B82F6", "a declared agent color follows the published mount");
 
 const rpcImplementation = plugin.rpcRegistrations[0].implementation;
 const dispatch = plugin.editor.get("dispatch");
@@ -104,10 +108,9 @@ async function runFrom({ sessionID, directory, prompt }) {
   for (const created of sessions) {
     assert.equal(created.location.directory, directory, `${directory}: every graph session uses the dispatching directory`);
   }
-  assert.deepEqual(
-    sessions[0].model,
-    { providerID: "openrouter", id: "~deepseek/deepseek-flash-latest" },
-    `${directory}: a node session is created with its own concrete model ref`,
+  assert.ok(
+    !("model" in sessions[0]),
+    `${directory}: a node session with no declared model inherits the session default (no model key)`,
   );
   return result;
 }

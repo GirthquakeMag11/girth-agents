@@ -61,12 +61,11 @@ its filename — and the body is its prompt:
 ```markdown
 <!-- agents/builder.md -->
 ---
-model: openrouter/~deepseek/deepseek-flash-latest
-mounts: [graph]
+mounts: [graph, primary, subagent]
 tools: [read, edit, shell]
 skills: [test-first]
 ---
-Standing instructions for this graph agent.
+Standing instructions for this agent.
 ```
 
 A skill document is Markdown: its id is its filename (`skills/test-first.md`
@@ -88,13 +87,20 @@ Write the failing test first, make it pass, then refactor within the green.
   Agents, skills, and nodes are discovered from `agents/`, `skills/`, and
   `nodes/` by filename; a document's id is its filename. There is no manifest
   listing of agents and no inline nodes.
-- Each agent document has required `model` (`provider/model`) and `mounts`, and
-  optional `tools`, `permissions`, `skills`, `description`, and `subagents`.
+- Each agent document has required `mounts`, and optional `model`
+  (`provider/model`), `tools`, `permissions`, `skills`, `description`,
+  `subagents`, and `color`. An agent without a `model` inherits the session
+  default on every mount.
   `mounts` is a non-empty subset of `graph`, `primary`, `subagent`, with no
   assumed default and no duplicates; `graph` means it runs as a node's agent
   inside the engine, while `primary` and `subagent` name the OpenCode surfaces
   the plugin materializes. The body is the agent's prompt; the prompt is not a
   frontmatter field.
+- An agent id is unique. The graph is the authoritative agent catalog: every id
+  it declares is owned, published or not. A second definition of that id
+  elsewhere (e.g. an OpenCode config-document agent) is a named
+  `agent.collision` defect at dispatch. Change an agent by editing its
+  document, or use an id the graph does not declare.
 - `tools` lists tool names acquired by name — tools are deny-by-default, the
   same shape as skills. On a `primary`/`subagent` mount the same acquisitions
   become the agent's OpenCode permissions (deny-by-default ruleset); on a
@@ -106,6 +112,11 @@ Write the failing test first, make it pass, then refactor within the green.
   `@GRAPH_DIR@` in a rule's `resource` expands to the graph's own directory
   at materialization, so a rule can scope to the graph without knowing the
   install path.
+- An agent's optional `color` is a six-digit hex (`#RRGGBB`, quoted or
+  unquoted) or a lowercase theme token (`primary`, `secondary`, `accent`,
+  `success`, `warning`, `error`, `info`), mirroring OpenCode's agent color.
+  It surfaces on `primary`/`subagent` mounts only; a `graph`-only mount
+  ignores it.
 - An agent's optional `skills` array references skill documents by id, where
   the id is the skill's filename under `skills/`. The loader follows those ids,
   deduplicates them, and reads each referenced skill once; unreferenced skill

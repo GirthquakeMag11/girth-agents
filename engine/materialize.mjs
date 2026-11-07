@@ -40,6 +40,9 @@ export function materializationPlan(config, baseDir) {
       // which would clear an inherited model on the OpenCode side.
       ...(graphAgent.model !== undefined ? { model: modelRef(graphAgent.model) } : {}),
       description: graphAgent.description ?? "",
+      // `color` is optional (a mount inherits/derives a color when undeclared);
+      // omit the key rather than emitting undefined, which would clear it.
+      ...(graphAgent.color !== undefined ? { color: graphAgent.color } : {}),
       // Mounts are deny-by-default, exactly like graph node sessions: tools
       // acquire by name, explicit permission triples win (appended later), and
       // `subagents` becomes the launch allowlist. `@GRAPH_DIR@` in a rule's

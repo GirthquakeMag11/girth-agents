@@ -88,6 +88,31 @@ test("static plugin: a foreground dispatch runs the engine directly, not fetch",
   }
 });
 
+test("static plugin: a dispatch completion is delivered as a subagent-style notice", async () => {
+  const context = { sessionID: "ses_dispatch", agent: "build", messageID: "m1", id: "t1" };
+  const plugin = await loadStaticPlugin({ graph: terminalGraph() });
+  try {
+    await plugin.setup();
+    const dispatch = toolByName(plugin.editor, "dispatch");
+    const result = await dispatch.execute({ node: "a", prompt: "p", background: false }, context);
+    assert.match(result.content, /d-1/);
+    assert.equal(plugin.syntheticCalls.length, 1, "one completion notice per dispatch");
+    const notice = plugin.syntheticCalls[0];
+    assert.equal(notice.sessionID, "ses_dispatch");
+    assert.equal(notice.description, "a", "the description is the dispatch title");
+    assert.match(notice.text, /<graph-dispatch dispatchID="d-1" state="completed"/);
+    assert.deepEqual(notice.metadata, {
+      source: "subagent",
+      childID: "s1",
+      agent: "worker",
+      state: "completed",
+      dispatchId: "d-1",
+    });
+  } finally {
+    await plugin.close();
+  }
+});
+
 test("static plugin: a handoff tool calls the engine and surfaces its gate", async () => {
   const plugin = await loadStaticPlugin({ graph: labelledGraph() });
   try {
@@ -271,7 +296,7 @@ test("static plugin: the active node session loses the control tools regardless 
   const plugin = await loadStaticPlugin({
     graph: terminalGraph(),
     agentDocs: {
-      "builder.md": `---
+      "worker.md": `---
 model: test/model
 mounts: [graph]
 tools: [read]
@@ -326,7 +351,7 @@ test("static plugin: the context hook injects the node agent's body as system", 
   let release;
   const plugin = await loadStaticPlugin({
     graph: terminalGraph(),
-    agentDocs: { "builder.md": `---\nmodel: test/model\nmounts: [graph]\ntools: [read]\n---\n${body}` },
+    agentDocs: { "worker.md": `---\nmodel: test/model\nmounts: [graph]\ntools: [read]\n---\n${body}` },
     onPrompt: () => new Promise((resolve) => (release = resolve)),
   });
   try {
@@ -360,7 +385,7 @@ test("static plugin: a graph agent's subagents are checked against the live cata
 
   const ghostPlugin = await loadStaticPlugin({
     graph: terminalGraph(),
-    agentDocs: { "builder.md": "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [ghost, explore]\n---\nDo the node.\n" },
+    agentDocs: { "worker.md": "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [ghost, explore]\n---\nDo the node.\n" },
     seedAgents: [{ id: "explore" }],
   });
   try {
@@ -368,7 +393,7 @@ test("static plugin: a graph agent's subagents are checked against the live cata
     const dispatch = toolByName(ghostPlugin.editor, "dispatch");
     await assert.rejects(
       () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
-      /subagent\.unknown.*builder -> ghost/,
+      /subagent\.unknown.*worker -> ghost/,
     );
   } finally {
     await ghostPlugin.close();
@@ -376,7 +401,7 @@ test("static plugin: a graph agent's subagents are checked against the live cata
 
   const validPlugin = await loadStaticPlugin({
     graph: terminalGraph(),
-    agentDocs: { "builder.md": "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [explore]\n---\nDo the node.\n" },
+    agentDocs: { "worker.md": "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [explore]\n---\nDo the node.\n" },
     seedAgents: [{ id: "explore" }],
   });
   try {
@@ -408,7 +433,7 @@ test("static plugin: a valid reload re-checks the subagent catalog", async () =>
     assert.match(first.content, /d-\d/, "a clean catalog dispatches");
 
     await writeFile(
-      join(plugin.graphDir, "agents", "builder.md"),
+      join(plugin.graphDir, "agents", "worker.md"),
       "---\nmodel: test/model\nmounts: [graph]\ntools: [read]\nsubagents: [ghost]\n---\nDo the node.\n",
       "utf8",
     );
@@ -417,7 +442,7 @@ test("static plugin: a valid reload re-checks the subagent catalog", async () =>
 
     await assert.rejects(
       () => toolByName(plugin.editor, "dispatch").execute({ node: "a", prompt: "p", background: false }, context),
-      /subagent\.unknown.*builder -> ghost/,
+      /subagent\.unknown.*worker -> ghost/,
       "the reload re-reported the missing subagent",
     );
   } finally {
@@ -425,9 +450,9 @@ test("static plugin: a valid reload re-checks the subagent catalog", async () =>
   }
 });
 
-test("static plugin: a user override of a derived agent faults agent.collision at dispatch", async () => {
-  const context = { sessionID: "ses", agent: "build", messageID: "m1", id: "t1" };
-  const buildDoc = `---
+test("static plugin: a divergent same-id catalog entry for a graph-published id faults agent.collision", async () => {
+  const context = { sessionID: "ses", agent: "builder", messageID: "m1", id: "t1" };
+  const builderDoc = `---
 mounts: [primary]
 description: The default agent. Executes tools based on configured permissions.
 ---
@@ -435,7 +460,7 @@ You are the default agent.
 `;
   const plugin = await loadStaticPlugin({
     graph: terminalGraph(),
-    agentDocs: { "build.md": buildDoc },
+    agentDocs: { "builder.md": builderDoc },
   });
   try {
     await plugin.setup();
@@ -446,18 +471,18 @@ You are the default agent.
 
     // A user config-document override (opencode.config.agent runs last) changes
     // the system; the fresh preflight read names the collision.
-    const live = plugin.agentCatalog.get("build");
+    const live = plugin.agentCatalog.get("builder");
     live.system = "Overridden by the user's config document";
     await assert.rejects(
       () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
-      /agent.collision.*build/,
+      /agent.collision.*builder/,
     );
 
     live.system = "You are the default agent.";
     live.description = "A different description";
     await assert.rejects(
       () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
-      /agent.collision.*build/,
+      /agent.collision.*builder/,
     );
 
     live.description = "The default agent. Executes tools based on configured permissions.";
@@ -468,22 +493,22 @@ You are the default agent.
     live.mode = "subagent";
     await assert.rejects(
       () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
-      /agent.collision.*build/,
+      /agent.collision.*builder/,
     );
     live.mode = "all";
     await assert.rejects(
       () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
-      /agent.collision.*build/,
+      /agent.collision.*builder/,
     );
     live.mode = "primary";
 
     // Absent from the live catalog is a collision too.
-    plugin.agentCatalog.delete("build");
+    plugin.agentCatalog.delete("builder");
     await assert.rejects(
       () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
-      /agent.collision.*build/,
+      /agent.collision.*builder/,
     );
-    plugin.agentCatalog.set("build", live);
+    plugin.agentCatalog.set("builder", live);
 
     // A permissions-only append (as opencode.config.agent does globally) must
     // NOT false-positive — we own only system, description, and mode.
@@ -492,6 +517,63 @@ You are the default agent.
     assert.match(ok.content, /d-\d/, "a permissions-only change does not collide");
   } finally {
     await plugin.close();
+  }
+});
+
+test("static plugin: a non-builtin published mount collides on a divergent catalog entry", async () => {
+  const context = { sessionID: "ses", agent: "build", messageID: "m1", id: "t1" };
+  const liaisonDoc = `---
+mounts: [primary]
+description: The user liaison.
+---
+Help the user run the pipeline.
+`;
+  const plugin = await loadStaticPlugin({
+    graph: terminalGraph(),
+    agentDocs: { "liaison.md": liaisonDoc },
+  });
+  try {
+    await plugin.setup();
+    const dispatch = toolByName(plugin.editor, "dispatch");
+    const live = plugin.agentCatalog.get("liaison");
+    live.system = "A different definition";
+    await assert.rejects(
+      () => dispatch.execute({ node: "a", prompt: "p", background: false }, context),
+      /agent.collision.*liaison/,
+    );
+  } finally {
+    await plugin.close();
+  }
+});
+
+test("static plugin: a graph-only id claimed by the catalog collides; unclaimed is clean", async () => {
+  const context = { sessionID: "ses", agent: "build", messageID: "m1", id: "t1" };
+
+  const clean = await loadStaticPlugin({ graph: terminalGraph() });
+  try {
+    await clean.setup();
+    const result = await toolByName(clean.editor, "dispatch").execute(
+      { node: "a", prompt: "p", background: false },
+      context,
+    );
+    assert.match(result.content, /d-\d/, "a graph-only id with no catalog entry dispatches clean");
+  } finally {
+    await clean.close();
+  }
+
+  const straddled = await loadStaticPlugin({
+    graph: terminalGraph(),
+    seedAgents: [{ id: "worker", name: "worker", mode: "primary" }],
+  });
+  try {
+    await straddled.setup();
+    await assert.rejects(
+      () =>
+        toolByName(straddled.editor, "dispatch").execute({ node: "a", prompt: "p", background: false }, context),
+      /agent.collision.*worker/,
+    );
+  } finally {
+    await straddled.close();
   }
 });
 
@@ -564,6 +646,7 @@ test("static plugin: a primary mount is published, a graph-only mount is not", a
 model: test/model
 mounts: [graph, primary]
 description: The user liaison.
+color: "#3B82F6"
 ---
 Your standing role: help the user run the build pipeline.
 `;
@@ -576,6 +659,7 @@ Your standing role: help the user run the build pipeline.
     assert.equal(update.draft.mode, "primary");
     assert.deepEqual(update.draft.model, { providerID: "test", id: "model" }, "model is a Model.Ref object");
     assert.equal(update.draft.description, "The user liaison.");
+    assert.equal(update.draft.color, "#3B82F6");
     assert.match(update.draft.system, /Your standing role/);
     assert.deepEqual(update.draft.permissions, [{ action: "*", resource: "*", effect: "deny" }], "a mount is deny-by-default");
     assert.ok(plugin.skillAdds.length === 0, "no skills follow a mount without references");
@@ -599,6 +683,7 @@ Help the user.
     assert.equal(update.id, "liaison");
     assert.equal(update.draft.mode, "primary");
     assert.ok(!("model" in update.draft), "no model key means the session default is inherited");
+    assert.ok(!("color" in update.draft), "no color key means a default/derived color is inherited");
     assert.equal(update.draft.description, "Inherits the default model.");
   } finally {
     await plugin.close();

@@ -179,6 +179,22 @@ test("materialize: an omitted model emits no model key (inherits the default)", 
   assert.deepEqual(graphMount.agents, []);
 });
 
+test("materialize: a declared color follows the published mount", () => {
+  const plan = materializationPlan(
+    { agents: [{ id: "a", model: "test/model", mounts: ["primary"], prompt: "P.", color: "#3B82F6" }] },
+    BASE,
+  );
+  assert.equal(plan.agents[0].color, "#3B82F6");
+});
+
+test("materialize: an omitted color emits no color key (inherits/derives)", () => {
+  const plan = materializationPlan(
+    { agents: [{ id: "a", mounts: ["primary"], prompt: "P." }] },
+    BASE,
+  );
+  assert.equal("color" in plan.agents[0], false);
+});
+
 test("materialize: referenced skills follow a published mount, deduped, with an absolute path", () => {
   const skill = { id: "test-first", name: "Test-first", description: "TDD.", instructions: "Write the failing test first." };
   const config = {

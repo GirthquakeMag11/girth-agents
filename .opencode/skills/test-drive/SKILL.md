@@ -34,9 +34,11 @@ or a reboot is reported to the user, never applied by the agent.
 Starting and finishing span multiple turns, so a run may be interrupted halfway
 — during provisioning, or with a seat still open. When information gathering is
 not the priority and leaks must be plugged, run `bash scripts/cleanup.sh`. It
-removes every harness container and image (including the credential copy),
-clears the workspace, and verifies empty. It is safe to run at any point,
-including before, between, or after the normal phases, and any number of times.
+removes every harness container and every credential-bearing image (the
+provisioned image and any dangling credential layer), clears the workspace, and
+verifies clean. The credential-free base image is retained so the next drive
+does not re-download its packages. It is safe to run at any point, including
+before, between, or after the normal phases, and any number of times.
 Or invoke `/cancel-test-drive`, which runs the same cleanup and then verifies
 the emptiness of every surface manually.
 
@@ -63,7 +65,8 @@ changes go to a human through git. Never rewrite the skill or scripts yourself.
 4. **Clean seats.** The provisioned image must contain zero session history;
    `provision.sh` verifies this before committing.
 5. **Verify every destructive step.** `teardown.sh` asserts no container or
-   image remains and exits nonzero otherwise — never report "clean" without it.
+   credential-bearing image remains (the credential-free base image is retained
+   across cycles) and exits nonzero otherwise — never report "clean" without it.
 
 ## Phase 1 — setup to the seat
 
@@ -72,14 +75,13 @@ changes go to a human through git. Never rewrite the skill or scripts yourself.
 3. `bash scripts/launch.sh` — opens the seat; confirm a `seat-*` container is
    running on the provisioned image.
 4. Hand the seat to the user to drive **the project, not the bare chat**: tell
-   them to switch to the **Engineer** (or **Conductor**) — the graph's primary
-   agents pin `openrouter/~deepseek/deepseek-flash-latest` — ask the Engineer
+   them to switch to the **Engineer** (or **Conductor**), ask the Engineer
    for the graph, have the Conductor dispatch `build-review`, and watch it
    reach the `done` terminal. A dispatch that reaches a terminal is the
-   decidable proof the pinned model served — graph-node sessions pin the model
-   and never fall back (a failure would defect with the model named instead).
-   The seat's bare default session runs a free fallback model; do not judge the
-   pinned model by messages typed there. The user may end the drive without
+   decidable proof the release drives end-to-end — the plugin loaded, the graph
+   loaded, and graph-node sessions ran to completion. No shipped agent pins a
+   model; agents inherit the session default, so the seat proves the release
+   works, not a specific model's credentials. The user may end the drive without
    starting any session at all — seeing what the seat shows is often exactly
    what they came for. That is a completed drive, not a broken one.
 5. `bash scripts/wait.sh` — blocks until the seat's opencode process ends.
@@ -101,17 +103,16 @@ standing.
 
 1. `bash scripts/wrapup.sh` — seat state (must be `Exited`; `Running` is a red
    flag), log scan, forensics copy. Classify, do not speculate:
-   - `ModelUnavailableError` → RED, reject: credentials/model failed.
+   - `ModelUnavailableError` → RED, reject: a model the engine needed was
+     unavailable.
    - `models.dev` timeout → environment note (the host's own slow path to
      Cloudflare), not a sandbox failure.
    - No session created in the seat is **not** a sign anything went wrong with
      the process: it means the user got the information they needed before even
-     starting a session. Report it as such — the pinned-model proof was simply
-     not run this time — and never classify it as a failure.
-   - The user started an Engineer/Conductor session and no completed dispatch
-     shows the pinned model, or the dispatch defected → fallback, reject. The
-     `deepseek mentions` count is corroboration only — a mention does not prove
-     a served answer.
+     starting a session. Report it as such — the release proof was simply not
+     run this time — and never classify it as a failure.
+   - The user started an Engineer/Conductor session and the `build-review`
+     dispatch did not reach `done`, or the dispatch defected → reject.
 2. `bash scripts/teardown.sh` — remove everything and verify empty. If it exits
    nonzero, report the surviving artifacts.
 3. Report the verdict — accept, reject, or (when no session was created) a

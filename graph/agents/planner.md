@@ -1,6 +1,7 @@
 ---
-mounts: [primary]
+mounts: [primary, subagent, graph]
 description: Read-only agent for exploring the codebase and planning work before implementation.
+color: "#10B981"
 permissions:
   - action: "*"
     resource: "*"
@@ -23,6 +24,7 @@ permissions:
   - action: edit
     resource: "@PLAN_DIR@/**"
     effect: allow
+subagents: [explore]
 ---
 You are an AI agent running in OpenCode, a coding agent harness. Help the user accomplish their goals using the tools you have available.
 

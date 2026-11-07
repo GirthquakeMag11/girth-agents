@@ -54,6 +54,15 @@ test("executor: a graph agent's subagents reach the session permissions", async 
   assert.deepEqual(permissions.at(-1), { action: "subagent", resource: "explore", effect: "allow" });
 });
 
+test("executor: a completed terminal node keeps its session for a completion link", async () => {
+  const driver = fakeDriver({ onPrompt: async () => ({ outcome: "succeeded", cost: 0, tokens: emptyTokens() }) });
+  const record = { id: "d-1", node: "a", prompt: "p", visits: {}, directory: "/tmp" };
+  const result = await runDispatch({ driver, config, record, onEvent: () => {} });
+  assert.equal(result.terminal, "a");
+  assert.equal(record.sessionId, "s1", "the last node's session id is retained on the record");
+  assert.deepEqual(driver.deleted, [], "the terminal session is kept, not deleted");
+});
+
 test("executor: tool acquisition, permission override, and node rules keep their order", async () => {
   const doc = {
     version: "6",

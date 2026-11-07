@@ -37,8 +37,8 @@ const ENGINE_DIR = fileURLToPath(new URL("../../engine", import.meta.url));
 const SERVER_TS = fileURLToPath(new URL("../../opencode/plugins/graph-engine/server.ts", import.meta.url));
 const RPC_TS = fileURLToPath(new URL("../../opencode/plugins/graph-engine/rpc.ts", import.meta.url));
 
-const BUILDER_DOC = `---
-id: builder
+const WORKER_DOC = `---
+id: worker
 model: test/model
 mounts: [graph]
 tools: [read]
@@ -83,14 +83,14 @@ function nodeDoc(node) {
 }
 
 export function terminalGraph() {
-  return graphConfig([{ id: "a", agent: "builder", objective: "A.", handoff: { mode: "terminal" } }]);
+  return graphConfig([{ id: "a", agent: "worker", objective: "A.", handoff: { mode: "terminal" } }]);
 }
 
 export function labelledGraph() {
   return graphConfig([
     {
       id: "review",
-      agent: "builder",
+      agent: "worker",
       objective: "Review.",
       maxVisits: 3,
       handoff: {
@@ -101,7 +101,7 @@ export function labelledGraph() {
         ],
       },
     },
-    { id: "done", agent: "builder", objective: "Finish.", handoff: { mode: "terminal" } },
+    { id: "done", agent: "worker", objective: "Finish.", handoff: { mode: "terminal" } },
   ]);
 }
 
@@ -414,7 +414,7 @@ export async function loadStaticPlugin({
       ),
       "utf8",
     );
-    const docs = { "builder.md": BUILDER_DOC, ...agentDocs };
+    const docs = { "worker.md": WORKER_DOC, ...agentDocs };
     for (const [name, content] of Object.entries(docs)) {
       await writeFile(join(graphDir, "agents", name), content, "utf8");
     }

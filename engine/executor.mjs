@@ -165,6 +165,7 @@ async function runNode({ driver, node, graphAgent, record, previousMessage, onEv
   record.handoffPending = false;
   record.sessionId = null;
   let keepForDispatcher = false;
+  let completed = false;
 
   let sessionId;
   let resumed = false;
@@ -243,6 +244,7 @@ async function runNode({ driver, node, graphAgent, record, previousMessage, onEv
     }
 
     if (node.handoff.mode === "terminal") {
+      completed = true;
       onEvent("step", {
         dispatchId: record.id,
         node: node.id,
@@ -289,7 +291,12 @@ async function runNode({ driver, node, graphAgent, record, previousMessage, onEv
       budgetRemainingMs: Math.max(0, budget - (Date.now() - promptStartedAt)),
     };
   } finally {
-    if (!resume && !resumable && !keepForDispatcher && process.env.ENGINE_KEEP_SESSIONS !== "1") {
+    // Keep the session of a successfully completed terminal node (the
+    // dispatch's last live session) so a completion notice can link into it,
+    // exactly like the retained $dispatcher origin. Failed or cancelled runs
+    // still clean up, and every other node session is ephemeral.
+    const keep = keepForDispatcher || completed;
+    if (!resume && !resumable && !keep && process.env.ENGINE_KEEP_SESSIONS !== "1") {
       await driver.deleteSession(sessionId);
     }
   }

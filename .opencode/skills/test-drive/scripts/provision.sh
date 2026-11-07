@@ -11,16 +11,21 @@ set -euo pipefail
 mark_workspace
 trap 'podman rm -f provision-tmp >/dev/null 2>&1 || true' EXIT
 
-IMG_BASE="localhost/graph-engine-sandbox:base"
+# The copied OpenCode binary's checksum is stamped into the base image, so a
+# host `opencode` upgrade forces exactly one rebuild instead of the retained
+# base silently freezing an old binary.
+LABEL_KEY_OC="io.graph-engine.testdrive.oc"
 
 echo "== build archive =="
 rm -rf "$WORK/dist"
 DIST_DIR="$WORK/dist" sh "$REPO/installer/build-archive.sh" >/dev/null
 
 echo "== base image =="
+OC_SHA=$(sha256sum "$OC" | awk '{print $1}')
 if podman image exists "$IMG_BASE" 2>/dev/null \
-   && [ "$(label_of "$LABEL_KEY" "$IMG_BASE")" = "$LABEL_VAL" ]; then
-  echo "base image present and labeled; skipping build"
+   && [ "$(label_of "$LABEL_KEY" "$IMG_BASE")" = "$LABEL_VAL" ] \
+   && [ "$(label_of "$LABEL_KEY_OC" "$IMG_BASE")" = "$OC_SHA" ]; then
+  echo "base image present, labeled, and current; skipping build"
 else
   mkdir -p "$WORK/base-image"
   cp "$OC" "$WORK/base-image/opencode"
@@ -31,12 +36,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \\
     && rm -rf /var/lib/apt/lists/*
 COPY opencode /usr/local/bin/opencode
 RUN chmod +x /usr/local/bin/opencode
-LABEL $LABEL_KEY="$LABEL_VAL"
+LABEL $LABEL_KEY="$LABEL_VAL" $LABEL_KEY_OC="$OC_SHA"
 ENV TERM=xterm-256color LANG=C.UTF-8 LC_ALL=C.UTF-8
 EOF
   podman build --network host -t "$IMG_BASE" "$WORK/base-image"
   [ "$(label_of "$LABEL_KEY" "$IMG_BASE")" = "$LABEL_VAL" ] \
     || { echo "FAIL: base image is missing the ownership label"; exit 1; }
+  [ "$(label_of "$LABEL_KEY_OC" "$IMG_BASE")" = "$OC_SHA" ] \
+    || { echo "FAIL: base image is missing the OpenCode checksum label"; exit 1; }
 fi
 
 echo "== build artifact path =="
@@ -78,9 +85,9 @@ podman exec provision-tmp sh -c '
 
 echo "== commit =="
 podman commit --change "LABEL $LABEL_KEY=$LABEL_VAL" provision-tmp \
-  localhost/graph-engine-sandbox:provisioned >/dev/null
-[ "$(label_of "$LABEL_KEY" localhost/graph-engine-sandbox:provisioned)" = "$LABEL_VAL" ] \
+  "$IMG_PROVISIONED" >/dev/null
+[ "$(label_of "$LABEL_KEY" "$IMG_PROVISIONED")" = "$LABEL_VAL" ] \
   || { echo "FAIL: provisioned image is missing the ownership label"; exit 1; }
 
-echo "provisioned: localhost/graph-engine-sandbox:provisioned (OpenRouter only; run launch.sh)"
+echo "provisioned: $IMG_PROVISIONED (OpenRouter only; run launch.sh)"
 # provision-tmp is removed by the EXIT trap.

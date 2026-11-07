@@ -57,6 +57,7 @@ function agentDoc({
   skills = [],
   subagents = [],
   description,
+  color,
   body = "Prompt.",
 } = {}) {
   return [
@@ -64,6 +65,7 @@ function agentDoc({
     `model: ${model}`,
     `mounts: [${mounts.join(", ")}]`,
     ...(description !== undefined ? [`description: ${description}`] : []),
+    ...(color !== undefined ? [`color: ${color}`] : []),
     ...(tools.length > 0 ? [`tools: [${tools.join(", ")}]`] : []),
     ...(permissions !== undefined ? permissionLines(permissions) : []),
     ...(skills.length > 0 ? [`skills: [${skills.join(", ")}]`] : []),
@@ -152,10 +154,10 @@ test("config: the shipped graph verifies clean", async () => {
   assert.equal(SHIPPED.graph.workflows[0].id, "build-review");
   assert.deepEqual(
     SHIPPED.agents.map((agent) => agent.id),
-    ["build", "builder", "conductor", "engineer", "explore", "general", "plan", "reviewer"],
+    ["builder", "conductor", "engineer", "explore", "planner", "reviewer"],
   );
   const builder = SHIPPED.agents.find((agent) => agent.id === "builder");
-  assert.match(builder.prompt, /Work only within/);
+  assert.match(builder.prompt, /You are an AI agent running in OpenCode/);
 });
 
 test("config: the manifest validates the authored shape", () => {
@@ -217,6 +219,33 @@ test("config: an agent carries description and subagents through the loader", as
   const summary = configSummary(loaded.doc, path);
   assert.equal(summary.agents[0].description, "Builds it.");
   assert.deepEqual(summary.agents[0].subagents, ["explore", "general"]);
+});
+
+test("config: an agent carries color through the loader and the summary", async () => {
+  const hex = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ color: "#3B82F6" }) },
+  });
+  const loadedHex = await loadConfig(hex.path);
+  assert.deepEqual(loadedHex.faults, []);
+  assert.equal(loadedHex.doc.agents[0].color, "#3B82F6");
+  assert.equal(configSummary(loadedHex.doc, hex.path).agents[0].color, "#3B82F6");
+
+  const token = await graphConfig({
+    agentDocs: { "builder.md": agentDoc({ color: "info" }) },
+  });
+  const loadedToken = await loadConfig(token.path);
+  assert.deepEqual(loadedToken.faults, []);
+  assert.equal(loadedToken.doc.agents[0].color, "info");
+});
+
+test("config: an invalid agent color is named", async () => {
+  for (const color of ["red", "#fff", "#12345g", "Primary"]) {
+    const { path } = await graphConfig({
+      agentDocs: { "builder.md": agentDoc({ color }) },
+    });
+    const faults = (await loadConfig(path)).faults;
+    assert.ok(codes(faults).includes("schema.agent-color"), `'${color}' must fault schema.agent-color`);
+  }
 });
 
 test("config: a non-string subagents entry is named", async () => {
@@ -304,7 +333,7 @@ test("config: invalid agent properties and unknown frontmatter fields are named"
   assert.ok(codes((await loadConfig(unknown.path)).faults).includes("schema.unknown-field"));
 });
 
-test("config: model is optional for non-graph mounts and required for graph mounts", async () => {
+test("config: model is optional for every mount", async () => {
   // builder stays graph-mounted for the default node; each case adds a second doc.
   const primaryNoModel = await graphConfig({
     agentDocs: {
@@ -322,10 +351,12 @@ test("config: model is optional for non-graph mounts and required for graph moun
   });
   assert.deepEqual((await loadConfig(subagentNoModel.path)).faults, []);
 
+  // A graph mount without a model inherits the session default, exactly like
+  // the other mounts.
   const graphNoModel = await graphConfig({
     agentDocs: { "builder.md": "---\nid: builder\nmounts: [graph]\n---\n\nBuild.\n" },
   });
-  assert.ok(codes((await loadConfig(graphNoModel.path)).faults).includes("agent.missing-model"));
+  assert.deepEqual((await loadConfig(graphNoModel.path)).faults, []);
 
   const malformedNonGraph = await graphConfig({
     agentDocs: {
@@ -563,7 +594,7 @@ test("config: graph_info carries the one graph and the graph agents, with no gra
   assert.equal("outputRoot" in summary.graph, false);
   assert.equal("output" in summary.graph.nodes[0], false);
   const summaryBuilder = summary.agents.find((agent) => agent.id === "builder");
-  assert.match(summaryBuilder.prompt, /Work only within/);
+  assert.match(summaryBuilder.prompt, /You are an AI agent running in OpenCode/);
   assert.equal(summary.graphs, undefined);
 });
 

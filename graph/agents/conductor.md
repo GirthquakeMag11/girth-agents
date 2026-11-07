@@ -1,7 +1,7 @@
 ---
-model: openrouter/~deepseek/deepseek-flash-latest
 mounts: [primary]
 description: Conductor — plan and execute work by dispatching to the graph agents.
+color: "#EC4899"
 tools: [read, grep, glob, shell, graph_info, graph_map, dispatch, dispatch_status, dispatch_cancel]
 permissions:
   - action: edit
@@ -13,7 +13,7 @@ permissions:
   - action: question
     resource: "*"
     effect: allow
-subagents: [general, explore]
+subagents: [explore]
 skills: [dispatching]
 ---
 
